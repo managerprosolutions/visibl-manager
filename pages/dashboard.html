@@ -22,20 +22,20 @@
         <nav>
             <ul>
 
-                <li><a href="#" class="nav-link">Tableau de bord</a></li>
-                <li><a href="#" class="nav-link">Produits</a></li>
-                <li><a href="#" class="nav-link">Approvisionnements</a></li>
-                <li><a href="#" class="nav-link">Clients</a></li>
-                <li><a href="#" class="nav-link">Livraisons</a></li>
-                <li><a href="#" class="nav-link">Commandes</a></li>
-                <li><a href="#" class="nav-link">Ventes</a></li>
-                <li><a href="#" class="nav-link">Paiements</a></li>
-                <li><a href="#" class="nav-link">Factures</a></li>
-                <li><a href="#" class="nav-link">Caisse</a></li>
-                <li><a href="#" class="nav-link">Comptabilité</a></li>
-                <li><a href="#" class="nav-link">Transitaires</a></li>
-                <li><a href="#" class="nav-link">Rapports</a></li>
-                <li><a href="#" class="nav-link">Paramètres</a></li>
+                <li><a href="#" class="nav-link">🏠 Tableau de bord</a></li>
+                <li><a href="#" class="nav-link">📦 Produits</a></li>
+                <li><a href="#" class="nav-link">🛒 Approvisionnements</a></li>
+                <li><a href="#" class="nav-link">👥 Clients</a></li>
+                <li><a href="#" class="nav-link">🚚 Livraisons</a></li>
+                <li><a href="#" class="nav-link">📝 Commandes</a></li>
+                <li><a href="#" class="nav-link">💰 Ventes</a></li>
+                <li><a href="#" class="nav-link">💳 Paiements</a></li>
+                <li><a href="#" class="nav-link">🧾 Factures</a></li>
+                <li><a href="#" class="nav-link">💵 Caisse</a></li>
+                <li><a href="#" class="nav-link">📊 Comptabilité</a></li>
+                <li><a href="#" class="nav-link">🚛 Transitaires</a></li>
+                <li><a href="#" class="nav-link">📈 Rapports</a></li>
+                <li><a href="#" class="nav-link">⚙️ Paramètres</a></li>
 
             </ul>
         </nav>
@@ -61,7 +61,105 @@
         <!-- Contenu -->
         <section class="content">
 
-            <h1>Tableau de bord</h1>
+            <div class="welcome-section">
+                <h2>Tableau de bord</h2>
+                <p>Bienvenue sur votre système de gestion commerciale</p>
+            </div>
+
+            <!-- Dashboard Cards -->
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-icon income">💰</div>
+                    <div class="card-content">
+                        <h3>Revenus</h3>
+                        <div class="card-value">45,200 €</div>
+                        <span class="card-trend up">↑ +12% ce mois</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon orders">📦</div>
+                    <div class="card-content">
+                        <h3>Commandes</h3>
+                        <div class="card-value">328</div>
+                        <span class="card-trend up">↑ +8% ce mois</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon products">🛍️</div>
+                    <div class="card-content">
+                        <h3>Produits</h3>
+                        <div class="card-value">1,245</div>
+                        <span class="card-trend up">↑ +5% ce mois</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon clients">👥</div>
+                    <div class="card-content">
+                        <h3>Clients</h3>
+                        <div class="card-value">892</div>
+                        <span class="card-trend down">↓ -2% ce mois</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Content Section -->
+            <div style="margin-top: 40px;">
+                <h3>Statistiques récentes</h3>
+                <p style="color: #6b7280; margin: 15px 0;">Voici un aperçu des performances de votre entreprise au cours de la dernière période.</p>
+                
+                <div class="dashboard-grid" style="margin-top: 20px;">
+                    <div class="card">
+                        <div class="card-icon income">📊</div>
+                        <div class="card-content">
+                            <h3>Taux de Conversion</h3>
+                            <div class="card-value">3.2%</div>
+                            <span class="card-trend up">↑ +0.5%</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon orders">🚚</div>
+                        <div class="card-content">
+                            <h3>Livraisons</h3>
+                            <div class="card-value">156</div>
+                            <span class="card-trend up">↑ +15%</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon products">💳</div>
+                        <div class="card-content">
+                            <h3>Paiements</h3>
+                            <div class="card-value">42,100 €</div>
+                            <span class="card-trend up">↑ +10%</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon clients">📋</div>
+                        <div class="card-content">
+                            <h3>Factures</h3>
+                            <div class="card-value">245</div>
+                            <span class="card-trend up">↑ +3%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Content -->
+            <div style="margin-top: 40px; padding: 20px; background: #f3f4f6; border-radius: 8px;">
+                <h3>Prochaines étapes</h3>
+                <ul style="margin-top: 15px; line-height: 2;">
+                    <li>✓ Vérifier les commandes en attente</li>
+                    <li>✓ Mettre à jour les stocks de produits</li>
+                    <li>✓ Valider les factures du mois</li>
+                    <li>✓ Consulter les rapports de performance</li>
+                    <li>✓ Gérer les paiements en suspens</li>
+                </ul>
+            </div>
 
         </section>
 
