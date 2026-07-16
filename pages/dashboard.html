@@ -15,6 +15,10 @@
     <!-- ===== Sidebar ===== -->
     <aside id="sidebar" class="sidebar">
 
+        <button id="sidebar-close" class="sidebar-close">
+        ✖
+    </button>
+
        <div class="logo">
     <img src="../LOGO BCA TECHNOLOGIES.png" alt="Logo">
 </div>
@@ -88,15 +92,64 @@
         <!-- Header -->
         <header class="header">
 
-            <div>
-                <h2>Bienvenue</h2>
+    <div class="header-left">
+
+        <button id="sidebar-toggle" class="sidebar-toggle">
+            ☰
+        </button>
+
+        <h2>Bienvenue</h2>
+
+    </div>
+
+    <div class="header-right">
+
+        <div class="search-container">
+            <input
+                type="text"
+                class="search-input"
+                placeholder="Rechercher..."
+            >
+
+            <button class="search-btn">
+                🔍
+            </button>
+        </div>
+
+        <div class="header-icons">
+
+            <button class="icon-btn notifications">
+                🔔
+                <span class="notification-badge">3</span>
+            </button>
+
+            <div class="profile-menu">
+
+                <button class="icon-btn">
+                    👤
+                </button>
+
+                <div class="dropdown-menu">
+
+                    <a href="#">Mon profil</a>
+
+                    <a href="#">Paramètres</a>
+
+                    <hr>
+
+                    <a href="#" class="logout">
+                        Déconnexion
+                    </a>
+
+                </div>
+
             </div>
 
-            <div>
-                🔍 Recherche | 🔔 Notifications | 👤 Admin
-            </div>
+        </div>
 
-        </header>
+    </div>
+
+</header>
 
         <!-- Contenu -->
         <section class="content">
