@@ -156,3 +156,20 @@ categories.forEach(function(category) {
     });
 
 });
+
+// ===== MOBILE SEARCH TOGGLE =====
+
+const mobileSearchBtn = document.getElementById("mobile-search-btn");
+const searchContainer = document.querySelector(".search-container");
+
+if (mobileSearchBtn && searchContainer) {
+
+    mobileSearchBtn.addEventListener("click", function(e){
+
+        e.stopPropagation();
+
+        searchContainer.classList.toggle("active");
+
+    });
+
+}
