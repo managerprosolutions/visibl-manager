@@ -1,4 +1,4 @@
-console.log("dashboard.js chargé");
+alert("dashboard.js chargé");
 // ===== SIDEBAR TOGGLE =====
 
 const sidebar = document.getElementById('sidebar');
