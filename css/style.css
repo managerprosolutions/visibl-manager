@@ -689,6 +689,12 @@ body {
 
 }
 
+/* ===== LOGO CLIQUABLE ===== */
+
+.logo {
+    text-decoration: none;
+}
+
 /* ===== RECHERCHE RESPONSIVE ===== */
 
 .search-box{
