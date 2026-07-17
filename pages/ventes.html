@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,115 +12,179 @@
 
 <div class="container">
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
 
-        <div class="logo">
-            <img src="../logo-vizibl.png" alt="Logo">
-        </div>
+        <button id="sidebar-close" class="sidebar-close">
+        ✖
+    </button>
+
+      <a href="dashboard.html" class="logo">
+    <img src="../logo-vizibl.png" alt="Logo">
+</a>
 
         <nav>
-            <ul>
+    <ul>
 
-                <li>
-                    <a href="dashboard.html" class="nav-link">
-                        📊 Tableau de bord
-                    </a>
-                </li>
+        <li>
+            <a href="#" class="nav-link">📊 Tableau de bord</a>
+        </li>
 
+        <li class="menu-category">
+            <a href="#" class="nav-link category-title">
+               <span>🛒 Commercial</span>
+                <span class="arrow">▼</span>
+            </a>
 
-                <li class="menu-category">
-
-                    <a href="#" class="nav-link category-title">
-                        🛒 Commercial
-                    </a>
-
-                    <ul class="submenu">
-
-                        <li>
-                            <a href="ventes.html" class="nav-link">
-                                Ventes
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#" class="nav-link">
-                                Commandes
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#" class="nav-link">
-                                Clients
-                            </a>
-                        </li>
-
-                    </ul>
-
-                </li>
-
-
+            <ul class="submenu">
+               <li><a href="ventes.html" class="nav-link">Ventes</a></li>
+                <li><a href="#" class="nav-link">Commandes</a></li>
+                <li><a href="#" class="nav-link">Clients</a></li>
+                <li><a href="#" class="nav-link">Livraisons</a></li>
+                <li><a href="#" class="nav-link">Livreurs</a></li>
             </ul>
-        </nav>
+        </li>
+
+        <li class="menu-category">
+            <a href="#" class="nav-link category-title">
+                <span>📦 Stock & Approvisionnement</span>
+                <span class="arrow">▼</span>
+            </a>
+
+            <ul class="submenu">
+                <li><a href="#" class="nav-link">Produits</a></li>
+                <li><a href="#" class="nav-link">Approvisionnements</a></li>
+                <li><a href="#" class="nav-link">Fournisseurs</a></li>
+                <li><a href="#" class="nav-link">Transitaires</a></li>
+            </ul>
+        </li>
+
+        <li class="menu-category">
+            <a href="#" class="nav-link category-title">
+                <span>💰 Finance</span>
+                <span class="arrow">▼</span>
+            </a>
+
+            <ul class="submenu">
+                <li><a href="#" class="nav-link">Caisse</a></li>
+                <li><a href="#" class="nav-link">Paiements</a></li>
+                <li><a href="#" class="nav-link">Factures</a></li>
+                <li><a href="#" class="nav-link">Comptabilité</a></li>
+            </ul>
+        </li>
+
+        <li>
+            <a href="#" class="nav-link">📈 Rapports</a>
+        </li>
+
+        <li>
+            <a href="#" class="nav-link">⚙️ Paramètres</a>
+        </li>
+
+    </ul>
+</nav>
 
     </aside>
 
-
-    <!-- Contenu principal -->
+    <!-- ===== Contenu ===== -->
     <main class="main-content">
 
-
+        <!-- Header -->
         <header class="header">
 
-            <div class="header-left">
+    <div class="header-left">
 
-                <button id="sidebar-toggle" class="sidebar-toggle">
-                    ☰
-                </button>
+        <button id="sidebar-toggle" class="sidebar-toggle">
+            ☰
+        </button>
 
-                <div class="logo">
-                    <img src="../logo-vizibl.png" alt="Logo">
-                </div>
+        <a href="dashboard.html" class="logo">
+    <img src="../logo-vizibl.png" alt="Logo">
+</a>
 
-                <h2>Ventes</h2>
+        <h2>Gestion des Ventes</h2>
 
-            </div>
+    </div>
 
+    <div class="header-right">
 
-            <div class="header-right">
+<div class="search-box">
 
-                🔔 👤
+    <!-- Icône visible sur mobile -->
+    <button class="icon-btn" id="mobile-search-btn">
+        🔍
+    </button>
 
-            </div>
+    <!-- Barre de recherche -->
+    <div class="search-container">
 
-        </header>
+        <input
+            type="text"
+            class="search-input"
+            placeholder="Rechercher un produit, client..."
+        >
 
+        <button class="search-btn">
+            🔍
+        </button>
 
-
-        <section class="content">
-
-            <div class="welcome-section">
-
-                <h2>Gestion des ventes</h2>
-
-                <p>
-                    Enregistrer et suivre les ventes de l'entrepriseer.
-                </p>
-
-            </div>
-
-
-        </section>
-
-
-    </main>
-
+    </div>
 
 </div>
 
+        <div class="header-icons">
+
+            <button class="icon-btn notifications">
+                🔔
+                <span class="notification-badge">3</span>
+            </button>
+
+            <div class="profile-menu">
+
+                <button class="icon-btn">
+                    👤
+                </button>
+
+                <div class="dropdown-menu">
+                    <a href="#">Mon profil</a>
+                    <a href="#">Paramètres</a>
+                    <hr>
+                    <a href="#" class="logout">
+                        Déconnexion
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+        <!-- Contenu -->
+        <section class="content">
+
+            <div class="welcome-section">
+                <h2>Gestion des ventes</h2>
+                <p>Enregistrez, consultez et gérez toutes les ventes de votre boutique.</p>
+            </div>
+
+            <div class="sales-toolbar">
+
+    <button class="btn-primary">
+        ➕ Nouvelle vente
+    </button>
+
+</div>       
+
+        </section>
+
+        </main>
+
+</div>
 
 <script src="../js/dashboard.js"></script>
 
 </body>
-
 </html>
