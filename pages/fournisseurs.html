@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Fournisseurs</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
+
+        <button id="sidebar-close" class="sidebar-close">
+            ✖
+        </button>
+
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo VISIBL">
+        </a>
+
+        <nav>
+            <ul>
+
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
+
+                <!-- ===== Menu Commercial ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>🛒 Commercial</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="ventes.html" class="nav-link">
+                                Ventes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="commandes.html" class="nav-link">
+                                Commandes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="clients.html" class="nav-link">
+                                Clients
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livraisons.html" class="nav-link">
+                                Livraisons
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livreurs.html" class="nav-link">
+                                Livreurs
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <!-- ===== Menu Stock et approvisionnement ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>📦 Stock & Approvisionnement</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="produits.html" class="nav-link">
+                                Produits
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="approvisionnements.html" class="nav-link">
+                                Approvisionnements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="fournisseurs.html" class="nav-link">
+                                Fournisseurs
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="transitaires.html" class="nav-link">
+                                Transitaires
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <!-- ===== Menu Finance ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>💰 Finance</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="caisse.html" class="nav-link">
+                                Caisse
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="paiements.html" class="nav-link">
+                                Paiements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="factures.html" class="nav-link">
+                                Factures
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="comptabilité.html" class="nav-link">
+                                Comptabilité
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="paramètres.html" class="nav-link">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </aside>
+
+    <!-- ===== Contenu principal ===== -->
+    <main class="main-content">
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
+                </a>
+
+                <h2>Fournisseurs</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            placeholder="Rechercher un fournisseur..."
+                        >
+
+                        <button class="search-btn">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <button class="icon-btn notifications">
+                        🔔
+                        <span class="notification-badge">3</span>
+                    </button>
+
+                    <div class="profile-menu">
+
+                        <button class="icon-btn">
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="#">
+                                Mon profil
+                            </a>
+
+                            <a href="#">
+                                Paramètres
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout">
+                                Déconnexion
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ===== Contenu de la page ===== -->
+        <section class="content">
+
+            <!-- ===== Présentation ===== -->
+            <div class="welcome-section">
+
+                <h2>Fournisseurs</h2>
+
+                <p>
+                    Enregistrez, consultez et gérez les fournisseurs
+                    qui approvisionnent votre entreprise.
+                </p>
+
+            </div>
+
+            <!-- ===== Bouton nouveau fournisseur ===== -->
+            <div class="sales-toolbar">
+
+                <button class="btn-primary" id="new-supplier-btn">
+                    ➕ Nouveau fournisseur
+                </button>
+
+            </div>
+
+            <!-- ===== Recherche et filtres ===== -->
+            <div class="sales-filters">
+
+                <div class="sales-search">
+
+                    <input
+                        type="text"
+                        id="suppliers-search-input"
+                        placeholder="Rechercher par nom, téléphone, email ou ville..."
+                    >
+
+                </div>
+
+                <!-- Filtre type de fournisseur -->
+                <select id="supplier-type-filter">
+
+                    <option value="">
+                        Tous les types
+                    </option>
+
+                    <option value="local">
+                        Fournisseur local
+                    </option>
+
+                    <option value="international">
+                        Fournisseur international
+                    </option>
+
+                    <option value="fabricant">
+                        Fabricant
+                    </option>
+
+                    <option value="grossiste">
+                        Grossiste
+                    </option>
+
+                    <option value="distributeur">
+                        Distributeur
+                    </option>
+
+                </select>
+
+                <!-- Filtre pays -->
+                <select id="supplier-country-filter">
+
+                    <option value="">
+                        Tous les pays
+                    </option>
+
+                    <option value="cote-divoire">
+                        Côte d'Ivoire
+                    </option>
+
+                    <option value="chine">
+                        Chine
+                    </option>
+
+                    <option value="france">
+                        France
+                    </option>
+
+                    <option value="dubai">
+                        Émirats arabes unis
+                    </option>
+
+                    <option value="turquie">
+                        Turquie
+                    </option>
+
+                    <option value="autre">
+                        Autre
+                    </option>
+
+                </select>
+
+                <!-- Filtre statut -->
+                <select id="supplier-status-filter">
+
+                    <option value="">
+                        Tous les statuts
+                    </option>
+
+                    <option value="actif">
+                        Actif
+                    </option>
+
+                    <option value="inactif">
+                        Inactif
+                    </option>
+
+                    <option value="suspendu">
+                        Suspendu
+                    </option>
+
+                    <option value="archive">
+                        Archivé
+                    </option>
+
+                </select>
+
+                <!-- Filtre paiement -->
+                <select id="supplier-payment-filter">
+
+                    <option value="">
+                        Toutes les conditions
+                    </option>
+
+                    <option value="comptant">
+                        Paiement comptant
+                    </option>
+
+                    <option value="credit">
+                        Paiement à crédit
+                    </option>
+
+                    <option value="avance">
+                        Paiement avec avance
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- ===== Tableau des fournisseurs ===== -->
+            <div class="sales-table-container">
+
+                <table class="sales-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>ID Fournisseur</th>
+                            <th>Nom du fournisseur</th>
+                            <th>Contact</th>
+                            <th>Téléphone</th>
+                            <th>Email</th>
+                            <th>Pays / Ville</th>
+                            <th>Type</th>
+                            <th>Solde dû</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="suppliers-table-body">
+
+                        <!-- ===== Exemple fournisseur 1 ===== -->
+                        <tr>
+
+                            <td>#FRN0001</td>
+
+                            <td>Tech Distribution CI</td>
+
+                            <td>Konan Marc</td>
+
+                            <td>07 12 34 56 78</td>
+
+                            <td>contact@techdistribution.ci</td>
+
+                            <td>Abidjan, Côte d'Ivoire</td>
+
+                            <td>Distributeur</td>
+
+                            <td>0 FCFA</td>
+
+                            <td>
+                                <span class="status-badge status-paid">
+                                    Actif
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <button
+                                        class="action-btn view-btn"
+                                        title="Voir le fournisseur"
+                                    >
+                                        👁
+                                    </button>
+
+                                    <button
+                                        class="action-btn edit-btn"
+                                        title="Modifier le fournisseur"
+                                    >
+                                        ✏️
+                                    </button>
+
+                                    <button
+                                        class="action-btn delete-btn"
+                                        title="Supprimer le fournisseur"
+                                    >
+                                        🗑️
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        <!-- ===== Exemple fournisseur 2 ===== -->
+                        <tr>
+
+                            <td>#FRN0002</td>
+
+                            <td>Shenzhen Security Equipment</td>
+
+                            <td>Li Wei</td>
+
+                            <td>+86 138 0000 0000</td>
+
+                            <td>sales@shenzhensecurity.com</td>
+
+                            <td>Shenzhen, Chine</td>
+
+                            <td>Fabricant</td>
+
+                            <td>850 000 FCFA</td>
+
+                            <td>
+                                <span class="status-badge status-paid">
+                                    Actif
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <button
+                                        class="action-btn view-btn"
+                                        title="Voir le fournisseur"
+                                    >
+                                        👁
+                                    </button>
+
+                                    <button
+                                        class="action-btn edit-btn"
+                                        title="Modifier le fournisseur"
+                                    >
+                                        ✏️
+                                    </button>
+
+                                    <button
+                                        class="action-btn delete-btn"
+                                        title="Supprimer le fournisseur"
+                                    >
+                                        🗑️
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        <!-- ===== Exemple fournisseur 3 ===== -->
+                        <tr>
+
+                            <td>#FRN0003</td>
+
+                            <td>Fibre Solutions Afrique</td>
+
+                            <td>Issa Traoré</td>
+
+                            <td>05 98 76 54 32</td>
+
+                            <td>contact@fibresolutions.africa</td>
+
+                            <td>Bamako, Mali</td>
+
+                            <td>Grossiste</td>
+
+                            <td>250 000 FCFA</td>
+
+                            <td>
+                                <span class="status-badge status-pending">
+                                    Inactif
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <button
+                                        class="action-btn view-btn"
+                                        title="Voir le fournisseur"
+                                    >
+                                        👁
+                                    </button>
+
+                                    <button
+                                        class="action-btn edit-btn"
+                                        title="Modifier le fournisseur"
+                                    >
+                                        ✏️
+                                    </button>
+
+                                    <button
+                                        class="action-btn delete-btn"
+                                        title="Supprimer le fournisseur"
+                                    >
+                                        🗑️
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="../js/dashboard.js"></script>
+
+</body>
+
+</html>
