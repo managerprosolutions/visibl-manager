@@ -962,3 +962,162 @@ body {
         padding: 12px;
     }
 }
+
+/* =====================================================
+   RÉSUMÉ DE LA CAISSE
+===================================================== */
+
+.cash-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+    margin: 25px 0;
+}
+
+.cash-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 130px;
+    padding: 22px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.cash-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px rgba(15, 23, 42, 0.11);
+}
+
+.cash-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    border-radius: 16px 0 0 16px;
+}
+
+.cash-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.cash-card-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.cash-card-title {
+    margin-bottom: 7px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.cash-card-value {
+    margin: 0 0 7px;
+    color: #0f172a;
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.cash-card-description {
+    color: #94a3b8;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Solde actuel */
+
+.cash-card-balance::before {
+    background: #2563eb;
+}
+
+.cash-card-balance .cash-card-icon {
+    color: #2563eb;
+    background: #dbeafe;
+}
+
+/* Entrées du mois */
+
+.cash-card-income::before {
+    background: #16a34a;
+}
+
+.cash-card-income .cash-card-icon {
+    color: #16a34a;
+    background: #dcfce7;
+}
+
+/* Sorties du mois */
+
+.cash-card-expense::before {
+    background: #dc2626;
+}
+
+.cash-card-expense .cash-card-icon {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+/* Opérations du mois */
+
+.cash-card-operations::before {
+    background: #9333ea;
+}
+
+.cash-card-operations .cash-card-icon {
+    color: #9333ea;
+    background: #f3e8ff;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media screen and (max-width: 1200px) {
+    .cash-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media screen and (max-width: 650px) {
+    .cash-summary {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .cash-card {
+        min-height: 110px;
+        padding: 18px;
+    }
+
+    .cash-card-icon {
+        width: 46px;
+        height: 46px;
+        font-size: 21px;
+    }
+
+    .cash-card-value {
+        font-size: 20px;
+    }
+}
