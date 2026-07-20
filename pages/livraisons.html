@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Livraisons</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
+
+        <button id="sidebar-close" class="sidebar-close">
+            ✖
+        </button>
+
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo VISIBL">
+        </a>
+
+        <nav>
+            <ul>
+
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
+
+                <!-- ===== Menu Commercial ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>🛒 Commercial</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="ventes.html" class="nav-link">
+                                Ventes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="commandes.html" class="nav-link">
+                                Commandes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="clients.html" class="nav-link">
+                                Clients
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livraisons.html" class="nav-link">
+                                Livraisons
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livreurs.html" class="nav-link">
+                                Livreurs
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <!-- ===== Menu Stock ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>📦 Stock & Approvisionnement</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="produits.html" class="nav-link">
+                                Produits
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="approvisionnements.html" class="nav-link">
+                                Approvisionnements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="fournisseurs.html" class="nav-link">
+                                Fournisseurs
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="transitaires.html" class="nav-link">
+                                Transitaires
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <!-- ===== Menu Finance ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>💰 Finance</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="caisse.html" class="nav-link">
+                                Caisse
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="paiements.html" class="nav-link">
+                                Paiements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="factures.html" class="nav-link">
+                                Factures
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="comptabilite.html" class="nav-link">
+                                Comptabilité
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="parametres.html" class="nav-link">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </aside>
+
+    <!-- ===== Contenu principal ===== -->
+    <main class="main-content">
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
+                </a>
+
+                <h2>Livraisons</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône de recherche mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            placeholder="Rechercher une livraison..."
+                        >
+
+                        <button class="search-btn">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <button class="icon-btn notifications">
+                        🔔
+                        <span class="notification-badge">3</span>
+                    </button>
+
+                    <div class="profile-menu">
+
+                        <button class="icon-btn">
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="#">
+                                Mon profil
+                            </a>
+
+                            <a href="#">
+                                Paramètres
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout">
+                                Déconnexion
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ===== Contenu de la page ===== -->
+        <section class="content">
+
+            <!-- ===== Présentation ===== -->
+            <div class="welcome-section">
+
+                <h2>Livraisons</h2>
+
+                <p>
+                    Enregistrez, suivez et gérez toutes les livraisons
+                    liées aux commandes de votre boutique.
+                </p>
+
+            </div>
+
+            <!-- ===== Bouton nouvelle livraison ===== -->
+            <div class="sales-toolbar">
+
+                <button class="btn-primary" id="new-delivery-btn">
+                    ➕ Nouvelle livraison
+                </button>
+
+            </div>
+
+            <!-- ===== Recherche et filtres ===== -->
+            <div class="sales-filters">
+
+                <div class="sales-search">
+
+                    <input
+                        type="text"
+                        id="deliveries-search-input"
+                        placeholder="Rechercher par livraison, commande, client ou livreur..."
+                    >
+
+                </div>
+
+                <!-- Filtre statut -->
+                <select id="delivery-status-filter">
+
+                    <option value="">
+                        Tous les statuts
+                    </option>
+
+                    <option value="en-attente">
+                        En attente
+                    </option>
+
+                    <option value="assignee">
+                        Assignée
+                    </option>
+
+                    <option value="en-preparation">
+                        En préparation
+                    </option>
+
+                    <option value="en-cours">
+                        En cours
+                    </option>
+
+                    <option value="livree">
+                        Livrée
+                    </option>
+
+                    <option value="echec">
+                        Échec de livraison
+                    </option>
+
+                    <option value="reportee">
+                        Reportée
+                    </option>
+
+                    <option value="annulee">
+                        Annulée
+                    </option>
+
+                </select>
+
+                <!-- Filtre mode de livraison -->
+                <select id="delivery-mode-filter">
+
+                    <option value="">
+                        Tous les modes
+                    </option>
+
+                    <option value="domicile">
+                        Livraison à domicile
+                    </option>
+
+                    <option value="express">
+                        Livraison express
+                    </option>
+
+                    <option value="standard">
+                        Livraison standard
+                    </option>
+
+                    <option value="retrait-boutique">
+                        Retrait en boutique
+                    </option>
+
+                </select>
+
+                <!-- Filtre livreur -->
+                <select id="delivery-driver-filter">
+
+                    <option value="">
+                        Tous les livreurs
+                    </option>
+
+                    <option value="ali-kone">
+                        Ali Koné
+                    </option>
+
+                    <option value="moussa-traore">
+                        Moussa Traoré
+                    </option>
+
+                    <option value="jean-kouassi">
+                        Jean Kouassi
+                    </option>
+
+                    <option value="non-assigne">
+                        Non assigné
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- ===== Tableau des livraisons ===== -->
+            <div class="sales-table-container">
+
+                <table class="sales-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>N° Livraison</th>
+                            <th>N° Commande</th>
+                            <th>Client</th>
+                            <th>Livreur</th>
+                            <th>Zone</th>
+                            <th>Date prévue</th>
+                            <th>Date livrée</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="deliveries-table-body">
+
+                        <!-- ===== Exemple livraison 1 ===== -->
+                        <tr>
+
+                            <td>#LIV0001</td>
+
+                            <td>#CMD0001</td>
+
+                            <td>Awa Traoré</td>
+
+                            <td>
+                                <span class="driver-name">
+                                    Ali Koné
+                                </span>
+                            </td>
+
+                            <td>Cocody</td>
+
+                            <td>21/07/2026</td>
+
+                            <td>—</td>
+
+                            <td>
+                                <span class="status-badge status-delivery">
+                                    En cours
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <button
+                                        class="action-btn view-btn"
+                                        title="Voir la livraison"
+                                    >
+                                        👁
+                                    </button>
+
+                                    <button
+                                        class="action-btn edit-btn"
+                                        title="Modifier la livraison"
+                                    >
+                                        ✏️
+                                    </button>
+
+                                    <button
+                                        class="action-btn delete-btn"
+                                        title="Supprimer la livraison"
+                                    >
+                                        🗑️
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        <!-- ===== Exemple livraison 2 ===== -->
+                        <tr>
+
+                            <td>#LIV0002</td>
+
+                            <td>#CMD0002</td>
+
+                            <td>Entreprise KDS</td>
+
+                            <td>
+                                <span class="driver-name">
+                                    Moussa Traoré
+                                </span>
+                            </td>
+
+                            <td>Marcory</td>
+
+                            <td>20/07/2026</td>
+
+                            <td>20/07/2026</td>
+
+                            <td>
+                                <span class="status-badge status-paid">
+                                    Livrée
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <button
+                                        class="action-btn view-btn"
+                                        title="Voir la livraison"
+                                    >
+                                        👁
+                                    </button>
+
+                                    <button
+                                        class="action-btn edit-btn"
+                                        title="Modifier la livraison"
+                                    >
+                                        ✏️
+                                    </button>
+
+                                    <button
+                                        class="action-btn delete-btn"
+                                        title="Supprimer la livraison"
+                                    >
+                                        🗑️
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        <!-- ===== Exemple livraison 3 ===== -->
+                        <tr>
+
+                            <td>#LIV0003</td>
+
+                            <td>#CMD0003</td>
+
+                            <td>Yao Serge</td>
+
+                            <td>
+                                <span class="driver-name">
+                                    Non assigné
+                                </span>
+                            </td>
+
+                            <td>Yopougon</td>
+
+                            <td>22/07/2026</td>
+
+                            <td>—</td>
+
+                            <td>
+                                <span class="status-badge status-pending">
+                                    En attente
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <button
+                                        class="action-btn view-btn"
+                                        title="Voir la livraison"
+                                    >
+                                        👁
+                                    </button>
+
+                                    <button
+                                        class="action-btn edit-btn"
+                                        title="Modifier la livraison"
+                                    >
+                                        ✏️
+                                    </button>
+
+                                    <button
+                                        class="action-btn delete-btn"
+                                        title="Supprimer la livraison"
+                                    >
+                                        🗑️
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="../js/dashboard.js"></script>
+
+</body>
+
+</html>
