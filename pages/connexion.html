@@ -277,8 +277,11 @@
             backdrop-filter: blur(10px);
         }
 
-        .brand-logo i {
-            font-size: 25px;
+        .brand-logo-image {
+            display: block;
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
         }
 
         .brand-name {
@@ -437,6 +440,13 @@
 
             box-shadow:
                 0 10px 25px rgba(37, 99, 235, 0.25);
+        }
+
+        .mobile-brand-logo-image {
+            display: block;
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
         }
 
         .mobile-brand-name {
@@ -908,7 +918,11 @@
                     <div class="brand">
 
                         <div class="brand-logo">
-                            <i class="fa-solid fa-chart-line"></i>
+                            <img
+                                src="../assets/logos/logo.png"
+                                alt="Logo VISIBL"
+                                class="brand-logo-image"
+                            >
                         </div>
 
                         <div>
@@ -991,7 +1005,11 @@
                     <div class="mobile-brand">
 
                         <div class="mobile-brand-logo">
-                            <i class="fa-solid fa-chart-line"></i>
+                            <img
+                                src="../assets/logos/logo.png"
+                                alt="Logo VISIBL"
+                                class="mobile-brand-logo-image"
+                            >
                         </div>
 
                         <span class="mobile-brand-name">
