@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Comptabilité</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- ===== Sidebar ===== -->
+<aside id="sidebar" class="sidebar">
+
+    <button id="sidebar-close" class="sidebar-close">
+        ✖
+    </button>
+
+    <a href="dashboard.html" class="logo">
+        <img src="../logo-vizibl.png" alt="Logo VISIBL">
+    </a>
+
+    <nav>
+        <ul>
+
+            <li>
+                <a href="dashboard.html" class="nav-link">
+                    📊 Tableau de bord
+                </a>
+            </li>
+
+            <!-- ===== Menu Commercial ===== -->
+            <li class="menu-category">
+
+                <a href="#" class="nav-link category-title">
+                    <span>🛒 Commercial</span>
+                    <span class="arrow">▼</span>
+                </a>
+
+                <ul class="submenu">
+
+                    <li>
+                        <a href="ventes.html" class="nav-link">
+                            Ventes
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="commandes.html" class="nav-link">
+                            Commandes
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="clients.html" class="nav-link">
+                            Clients
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="livraisons.html" class="nav-link">
+                            Livraisons
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="livreurs.html" class="nav-link">
+                            Livreurs
+                        </a>
+                    </li>
+
+                </ul>
+
+            </li>
+
+            <!-- ===== Menu Stock et approvisionnement ===== -->
+            <li class="menu-category">
+
+                <a href="#" class="nav-link category-title">
+                    <span>📦 Stock & Approvisionnement</span>
+                    <span class="arrow">▼</span>
+                </a>
+
+                <ul class="submenu">
+
+                    <li>
+                        <a href="produits.html" class="nav-link">
+                            Produits
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="approvisionnements.html" class="nav-link">
+                            Approvisionnements
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="fournisseurs.html" class="nav-link">
+                            Fournisseurs
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="transitaires.html" class="nav-link">
+                            Transitaires
+                        </a>
+                    </li>
+
+                </ul>
+
+            </li>
+
+            <!-- ===== Menu Finance ===== -->
+            <li class="menu-category">
+
+                <a href="#" class="nav-link category-title">
+                    <span>💰 Finance</span>
+                    <span class="arrow">▼</span>
+                </a>
+
+                <ul class="submenu">
+
+                    <li>
+                        <a href="caisse.html" class="nav-link">
+                            Caisse
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="paiements.html" class="nav-link">
+                            Paiements
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="factures.html" class="nav-link">
+                            Factures
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="comptabilité.html" class="nav-link">
+                            Comptabilité
+                        </a>
+                    </li>
+
+                </ul>
+
+            </li>
+
+            <li>
+                <a href="rapports.html" class="nav-link">
+                    📈 Rapports
+                </a>
+            </li>
+
+            <li>
+                <a href="paramètres.html" class="nav-link">
+                    ⚙️ Paramètres
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+
+</aside>
+
+<!-- ===== Contenu principal ===== -->
+<main class="main-content">
+
+    <!-- ===== Header ===== -->
+    <header class="header">
+
+        <div class="header-left">
+
+            <button id="sidebar-toggle" class="sidebar-toggle">
+                ☰
+            </button>
+
+            <a href="dashboard.html" class="logo">
+                <img src="../logo-vizibl.png" alt="Logo VISIBL">
+            </a>
+
+            <h2>Comptabilité</h2>
+
+        </div>
+
+        <div class="header-right">
+
+            <div class="search-box">
+
+                <!-- Icône de recherche visible sur mobile -->
+                <button class="icon-btn" id="mobile-search-btn">
+                    🔍
+                </button>
+
+                <!-- Barre de recherche du header -->
+                <div class="search-container">
+
+                    <input
+                        type="text"
+                        class="search-input"
+                        placeholder="Rechercher une opération comptable..."
+                    >
+
+                    <button class="search-btn">
+                        🔍
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="header-icons">
+
+                <button class="icon-btn notifications">
+                    🔔
+                    <span class="notification-badge">3</span>
+                </button>
+
+                <div class="profile-menu">
+
+                    <button class="icon-btn">
+                        👤
+                    </button>
+
+                    <div class="dropdown-menu">
+
+                        <a href="#">
+                            Mon profil
+                        </a>
+
+                        <a href="#">
+                            Paramètres
+                        </a>
+
+                        <hr>
+
+                        <a href="#" class="logout">
+                            Déconnexion
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- ===== Contenu de la page ===== -->
+    <section class="content">
+
+        <!-- ===== Présentation ===== -->
+        <div class="welcome-section">
+
+            <h2>Comptabilité</h2>
+
+            <p>
+                Enregistrez et suivez les opérations comptables de l'entreprise,
+                notamment les recettes, les dépenses, les encaissements et les décaissements.
+            </p>
+
+        </div>
+
+        <!-- ===== Bouton nouvelle opération ===== -->
+        <div class="sales-toolbar">
+
+            <button class="btn-primary" id="new-accounting-entry-btn">
+                ➕ Nouvelle opération
+            </button>
+
+        </div>
+
+        <!-- ===== Recherche et filtres ===== -->
+        <div class="sales-filters">
+
+            <div class="sales-search">
+
+                <input
+                    type="text"
+                    id="accounting-search-input"
+                    placeholder="Rechercher par référence, libellé ou compte..."
+                >
+
+            </div>
+
+            <!-- Filtre type d'opération -->
+            <select id="accounting-type-filter">
+
+                <option value="">
+                    Tous les types
+                </option>
+
+                <option value="recette">
+                    Recette
+                </option>
+
+                <option value="depense">
+                    Dépense
+                </option>
+
+                <option value="encaissement">
+                    Encaissement
+                </option>
+
+                <option value="decaissement">
+                    Décaissement
+                </option>
+
+                <option value="regularisation">
+                    Régularisation
+                </option>
+
+            </select>
+
+            <!-- Filtre catégorie -->
+            <select id="accounting-category-filter">
+
+                <option value="">
+                    Toutes les catégories
+                </option>
+
+                <option value="vente">
+                    Vente
+                </option>
+
+                <option value="achat">
+                    Achat
+                </option>
+
+                <option value="transport">
+                    Transport
+                </option>
+
+                <option value="salaire">
+                    Salaire
+                </option>
+
+                <option value="loyer">
+                    Loyer
+                </option>
+
+                <option value="charge">
+                    Charge générale
+                </option>
+
+                <option value="autre">
+                    Autre
+                </option>
+
+            </select>
+
+            <!-- Filtre mode de paiement -->
+            <select id="accounting-payment-method-filter">
+
+                <option value="">
+                    Tous les modes de paiement
+                </option>
+
+                <option value="especes">
+                    Espèces
+                </option>
+
+                <option value="mobile-money">
+                    Mobile Money
+                </option>
+
+                <option value="virement">
+                    Virement bancaire
+                </option>
+
+                <option value="cheque">
+                    Chèque
+                </option>
+
+                <option value="carte">
+                    Carte bancaire
+                </option>
+
+            </select>
+
+            <!-- Filtre période -->
+            <select id="accounting-period-filter">
+
+                <option value="">
+                    Toutes les périodes
+                </option>
+
+                <option value="aujourdhui">
+                    Aujourd'hui
+                </option>
+
+                <option value="semaine">
+                    Cette semaine
+                </option>
+
+                <option value="mois">
+                    Ce mois
+                </option>
+
+                <option value="trimestre">
+                    Ce trimestre
+                </option>
+
+                <option value="annee">
+                    Cette année
+                </option>
+
+            </select>
+
+        </div>
+
+        <!-- ===== Tableau des opérations comptables ===== -->
+        <div class="sales-table-container">
+
+            <table class="sales-table">
+
+                <thead>
+
+                    <tr>
+                        <th>ID Opération</th>
+                        <th>Date</th>
+                        <th>Référence</th>
+                        <th>Libellé</th>
+                        <th>Type</th>
+                        <th>Catégorie</th>
+                        <th>Compte</th>
+                        <th>Mode de paiement</th>
+                        <th>Débit</th>
+                        <th>Crédit</th>
+                        <th>Solde</th>
+                        <th>Utilisateur</th>
+                        <th>Actions</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="accounting-table-body">
+
+                    <!-- ===== Exemple opération 1 ===== -->
+                    <tr>
+
+                        <td>#CPT0001</td>
+
+                        <td>20/07/2026</td>
+
+                        <td>#FAC0001</td>
+
+                        <td>Règlement facture Société Kouadio SARL</td>
+
+                        <td>Encaissement</td>
+
+                        <td>Vente</td>
+
+                        <td>Caisse principale</td>
+
+                        <td>Virement bancaire</td>
+
+                        <td>0 FCFA</td>
+
+                        <td>450 000 FCFA</td>
+
+                        <td>450 000 FCFA</td>
+
+                        <td>Administrateur</td>
+
+                        <td>
+
+                            <div class="table-actions">
+
+                                <button
+                                    class="action-btn view-btn"
+                                    title="Voir l'opération"
+                                >
+                                    👁
+                                </button>
+
+                                <button
+                                    class="action-btn edit-btn"
+                                    title="Modifier l'opération"
+                                >
+                                    ✏️
+                                </button>
+
+                                <button
+                                    class="action-btn delete-btn"
+                                    title="Supprimer l'opération"
+                                >
+                                    🗑️
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    <!-- ===== Exemple opération 2 ===== -->
+                    <tr>
+
+                        <td>#CPT0002</td>
+
+                        <td>19/07/2026</td>
+
+                        <td>#APP0008</td>
+
+                        <td>Achat de marchandises auprès du fournisseur</td>
+
+                        <td>Décaissement</td>
+
+                        <td>Achat</td>
+
+                        <td>Caisse principale</td>
+
+                        <td>Mobile Money</td>
+
+                        <td>180 000 FCFA</td>
+
+                        <td>0 FCFA</td>
+
+                        <td>270 000 FCFA</td>
+
+                        <td>Comptable</td>
+
+                        <td>
+
+                            <div class="table-actions">
+
+                                <button
+                                    class="action-btn view-btn"
+                                    title="Voir l'opération"
+                                >
+                                    👁
+                                </button>
+
+                                <button
+                                    class="action-btn edit-btn"
+                                    title="Modifier l'opération"
+                                >
+                                    ✏️
+                                </button>
+
+                                <button
+                                    class="action-btn delete-btn"
+                                    title="Supprimer l'opération"
+                                >
+                                    🗑️
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    <!-- ===== Exemple opération 3 ===== -->
+                    <tr>
+
+                        <td>#CPT0003</td>
+
+                        <td>18/07/2026</td>
+
+                        <td>#DEP0004</td>
+
+                        <td>Paiement des frais de transport</td>
+
+                        <td>Dépense</td>
+
+                        <td>Transport</td>
+
+                        <td>Caisse principale</td>
+
+                        <td>Espèces</td>
+
+                        <td>35 000 FCFA</td>
+
+                        <td>0 FCFA</td>
+
+                        <td>235 000 FCFA</td>
+
+                        <td>Comptable</td>
+
+                        <td>
+
+                            <div class="table-actions">
+
+                                <button
+                                    class="action-btn view-btn"
+                                    title="Voir l'opération"
+                                >
+                                    👁
+                                </button>
+
+                                <button
+                                    class="action-btn edit-btn"
+                                    title="Modifier l'opération"
+                                >
+                                    ✏️
+                                </button>
+
+                                <button
+                                    class="action-btn delete-btn"
+                                    title="Supprimer l'opération"
+                                >
+                                    🗑️
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+</div>
+
+<script src="../js/dashboard.js"></script>
+
+</body>
+
+</html>
