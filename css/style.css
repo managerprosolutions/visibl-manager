@@ -1123,7 +1123,7 @@ body {
 }
 
 /* =====================================================
-   CARTES KPI - PAGE RAPPORTS
+   PAGE RAPPORTS — CARTES KPI
 ===================================================== */
 
 .report-kpi-grid {
@@ -1137,26 +1137,432 @@ body {
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: 220px;
+    min-height: 215px;
     padding: 22px;
     overflow: hidden;
-    background: var(--card-bg, #ffffff);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 18px;
-    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.06);
-    transition: transform .25s ease,
-                box-shadow .25s ease,
-                border-color .25s ease;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* ... tout le reste du CSS ... */
+.report-kpi-card::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    content: "";
+    background: linear-gradient(180deg, #6366f1, #8b5cf6);
+}
+
+.report-kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.1);
+}
+
+.report-kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.report-kpi-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    border-radius: 14px;
+}
+
+.income-icon {
+    background: rgba(34, 197, 94, 0.14);
+}
+
+.sales-icon {
+    background: rgba(59, 130, 246, 0.14);
+}
+
+.average-icon {
+    background: rgba(139, 92, 246, 0.14);
+}
+
+.collected-icon {
+    background: rgba(16, 185, 129, 0.14);
+}
+
+.pending-icon {
+    background: rgba(245, 158, 11, 0.16);
+}
+
+.product-icon {
+    background: rgba(234, 179, 8, 0.17);
+}
+
+.report-kpi-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 30px;
+}
+
+.report-kpi-badge.positive {
+    color: #15803d;
+    background: rgba(34, 197, 94, 0.12);
+}
+
+.report-kpi-badge.neutral {
+    color: #4338ca;
+    background: rgba(99, 102, 241, 0.12);
+}
+
+.report-kpi-badge.warning {
+    color: #b45309;
+    background: rgba(245, 158, 11, 0.14);
+}
+
+.report-kpi-badge.best {
+    color: #a16207;
+    background: rgba(234, 179, 8, 0.16);
+}
+
+.report-kpi-content {
+    flex: 1;
+}
+
+.report-kpi-title {
+    margin: 0 0 8px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.report-kpi-value {
+    margin: 0 0 10px;
+    color: #0f172a;
+    font-size: 25px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.report-kpi-value span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.report-kpi-value.product-name {
+    font-size: 20px;
+}
+
+.report-kpi-description {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.positive-text {
+    color: #15803d;
+}
+
+.warning-text {
+    color: #b45309;
+}
+
+.report-kpi-progress {
+    width: 100%;
+    height: 6px;
+    margin-top: 20px;
+    overflow: hidden;
+    background: #e2e8f0;
+    border-radius: 30px;
+}
+
+.report-kpi-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 30px;
+}
+
+.warning-bar {
+    background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+.product-bar {
+    background: linear-gradient(90deg, #eab308, #f59e0b);
+}
 
 /* =====================================================
-   RESPONSIVE
+   PAGE RAPPORTS — GRAPHIQUE PRINCIPAL
 ===================================================== */
 
-@media screen and (max-width:480px){
+.report-main-chart {
+    padding: 25px;
+    margin: 25px 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+}
 
-    /* ... */
+.report-chart-header {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
 
+.report-chart-title {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.report-chart-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    background: rgba(99, 102, 241, 0.12);
+    border-radius: 14px;
+}
+
+.report-chart-title h3 {
+    margin: 0 0 5px;
+    color: #0f172a;
+    font-size: 18px;
+}
+
+.report-chart-title p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.report-chart-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.report-chart-period {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: #f1f5f9;
+    border-radius: 12px;
+}
+
+.chart-period-btn {
+    padding: 8px 14px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    transition: 0.2s ease;
+}
+
+.chart-period-btn:hover,
+.chart-period-btn.active {
+    color: #ffffff;
+    background: #6366f1;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+}
+
+.chart-options-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    color: #64748b;
+    font-size: 20px;
+    cursor: pointer;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.report-chart-summary {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+
+.chart-summary-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.report-chart-summary strong {
+    color: #0f172a;
+    font-size: 24px;
+}
+
+.chart-summary-growth {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.chart-summary-growth span {
+    color: #15803d;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.chart-summary-growth small {
+    margin-top: 4px;
+    color: #64748b;
+}
+
+.report-chart-area {
+    position: relative;
+    min-height: 320px;
+    margin-top: 25px;
+}
+
+.report-chart-area canvas {
+    width: 100%;
+    max-height: 320px;
+}
+
+.report-chart-placeholder {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 300px;
+    padding: 25px 20px 10px;
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(148, 163, 184, 0.15) 1px,
+            transparent 1px
+        );
+    background-size: 100% 25%;
+    border-radius: 14px;
+}
+
+.fake-chart-bars {
+    display: flex;
+    gap: 18px;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 240px;
+}
+
+.fake-chart-bars span {
+    width: 8%;
+    min-width: 24px;
+    background: linear-gradient(180deg, #8b5cf6, #6366f1);
+    border-radius: 8px 8px 3px 3px;
+    box-shadow: 0 8px 15px rgba(99, 102, 241, 0.18);
+    transition: transform 0.2s ease;
+}
+
+.fake-chart-bars span:hover {
+    transform: translateY(-5px);
+}
+
+.fake-chart-labels {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 12px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* =====================================================
+   RESPONSIVE — PAGE RAPPORTS
+===================================================== */
+
+@media screen and (max-width: 1100px) {
+    .report-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .report-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .report-kpi-card {
+        min-height: auto;
+    }
+
+    .report-chart-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .report-chart-actions {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .report-chart-summary {
+        gap: 15px;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chart-summary-growth {
+        align-items: flex-start;
+    }
+
+    .fake-chart-bars {
+        gap: 8px;
+    }
+
+    .report-chart-title h3 {
+        font-size: 16px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .report-main-chart {
+        padding: 18px;
+    }
+
+    .report-chart-period {
+        width: 100%;
+    }
+
+    .chart-period-btn {
+        flex: 1;
+        padding: 8px;
+    }
+
+    .chart-options-btn {
+        display: none;
+    }
+
+    .report-chart-summary strong {
+        font-size: 20px;
+    }
+
+    .fake-chart-bars span {
+        min-width: 18px;
+    }
 }
