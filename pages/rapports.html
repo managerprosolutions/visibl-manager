@@ -208,7 +208,7 @@
                     <input
                         type="text"
                         class="search-input"
-                        placeholder="Rechercher un rapport..."
+                        placeholder="Rechercher dans les rapports..."
                     >
 
                     <button class="search-btn">
@@ -264,76 +264,20 @@
         <!-- ===== Présentation ===== -->
         <div class="welcome-section">
 
-            <h2>Rapports</h2>
+            <h2>Rapports et analyses</h2>
 
             <p>
-                Consultez, générez et exportez les rapports commerciaux,
-                financiers, logistiques et de gestion de l'entreprise.
+                Analysez les performances commerciales, financières,
+                logistiques et opérationnelles de votre entreprise.
             </p>
 
         </div>
 
-        <!-- ===== Bouton générer un rapport ===== -->
-        <div class="sales-toolbar">
-
-            <button class="btn-primary" id="generate-report-btn">
-                ➕ Générer un rapport
-            </button>
-
-        </div>
-
-        <!-- ===== Recherche et filtres ===== -->
+        <!-- ===== Filtres principaux ===== -->
         <div class="sales-filters">
 
-            <div class="sales-search">
-
-                <input
-                    type="text"
-                    id="reports-search-input"
-                    placeholder="Rechercher par titre, catégorie ou période..."
-                >
-
-            </div>
-
-            <!-- Filtre catégorie -->
-            <select id="report-category-filter">
-
-                <option value="">
-                    Toutes les catégories
-                </option>
-
-                <option value="commercial">
-                    Commercial
-                </option>
-
-                <option value="stock">
-                    Stock
-                </option>
-
-                <option value="approvisionnement">
-                    Approvisionnement
-                </option>
-
-                <option value="finance">
-                    Finance
-                </option>
-
-                <option value="comptabilite">
-                    Comptabilité
-                </option>
-
-                <option value="livraison">
-                    Livraison
-                </option>
-
-            </select>
-
-            <!-- Filtre type de rapport -->
+            <!-- Type de rapport -->
             <select id="report-type-filter">
-
-                <option value="">
-                    Tous les rapports
-                </option>
 
                 <option value="ventes">
                     Rapport des ventes
@@ -355,12 +299,12 @@
                     Rapport des approvisionnements
                 </option>
 
-                <option value="paiements">
-                    Rapport des paiements
-                </option>
-
                 <option value="caisse">
                     Rapport de caisse
+                </option>
+
+                <option value="paiements">
+                    Rapport des paiements
                 </option>
 
                 <option value="comptabilite">
@@ -371,14 +315,14 @@
                     Rapport des livraisons
                 </option>
 
+                <option value="livreurs">
+                    Performance des livreurs
+                </option>
+
             </select>
 
-            <!-- Filtre période -->
+            <!-- Période -->
             <select id="report-period-filter">
-
-                <option value="">
-                    Toutes les périodes
-                </option>
 
                 <option value="aujourdhui">
                     Aujourd'hui
@@ -388,7 +332,7 @@
                     Cette semaine
                 </option>
 
-                <option value="mois">
+                <option value="mois" selected>
                     Ce mois
                 </option>
 
@@ -406,30 +350,386 @@
 
             </select>
 
-            <!-- Filtre format -->
-            <select id="report-format-filter">
+            <!-- Date de début -->
+            <input
+                type="date"
+                id="report-start-date"
+                title="Date de début"
+            >
+
+            <!-- Date de fin -->
+            <input
+                type="date"
+                id="report-end-date"
+                title="Date de fin"
+            >
+
+            <!-- Bouton générer -->
+            <button class="btn-primary" id="generate-report-btn">
+                📊 Générer
+            </button>
+
+        </div>
+
+        <!-- ===== Actions d'export ===== -->
+        <div class="sales-toolbar">
+
+            <div>
+
+                <button class="btn-primary" id="export-pdf-btn">
+                    📄 Exporter en PDF
+                </button>
+
+                <button class="btn-primary" id="export-excel-btn">
+                    📊 Exporter en Excel
+                </button>
+
+                <button class="btn-primary" id="print-report-btn">
+                    🖨️ Imprimer
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- ===== Cartes KPI ===== -->
+        <div class="stats-grid">
+
+            <!-- Chiffre d'affaires -->
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    💰
+                </div>
+
+                <div class="stat-info">
+
+                    <p>Chiffre d'affaires</p>
+
+                    <h3>
+                        4 850 000 FCFA
+                    </h3>
+
+                    <span class="stat-growth">
+                        +12,5 % par rapport au mois dernier
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Nombre de ventes -->
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    🛒
+                </div>
+
+                <div class="stat-info">
+
+                    <p>Nombre de ventes</p>
+
+                    <h3>
+                        124
+                    </h3>
+
+                    <span class="stat-growth">
+                        +18 ventes ce mois
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Panier moyen -->
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    🧾
+                </div>
+
+                <div class="stat-info">
+
+                    <p>Panier moyen</p>
+
+                    <h3>
+                        39 113 FCFA
+                    </h3>
+
+                    <span>
+                        Moyenne par vente
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Montant encaissé -->
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    ✅
+                </div>
+
+                <div class="stat-info">
+
+                    <p>Montant encaissé</p>
+
+                    <h3>
+                        3 925 000 FCFA
+                    </h3>
+
+                    <span>
+                        80,9 % du chiffre d'affaires
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Reste à encaisser -->
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    ⏳
+                </div>
+
+                <div class="stat-info">
+
+                    <p>Reste à encaisser</p>
+
+                    <h3>
+                        925 000 FCFA
+                    </h3>
+
+                    <span>
+                        Paiements en attente
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- Meilleur produit -->
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    🏆
+                </div>
+
+                <div class="stat-info">
+
+                    <p>Produit le plus vendu</p>
+
+                    <h3>
+                        Caméra solaire 4G
+                    </h3>
+
+                    <span>
+                        28 unités vendues
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===== Graphique principal ===== -->
+        <div class="chart-container">
+
+            <div class="chart-header">
+
+                <div>
+
+                    <h3>
+                        Évolution du chiffre d'affaires
+                    </h3>
+
+                    <p>
+                        Comparaison des ventes réalisées sur la période sélectionnée
+                    </p>
+
+                </div>
+
+                <select id="sales-chart-filter">
+
+                    <option value="jour">
+                        Par jour
+                    </option>
+
+                    <option value="semaine">
+                        Par semaine
+                    </option>
+
+                    <option value="mois">
+                        Par mois
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="chart-placeholder">
+
+                <canvas id="sales-report-chart"></canvas>
+
+                <p class="chart-empty-message">
+                    Le graphique de l'évolution des ventes sera affiché ici.
+                </p>
+
+            </div>
+
+        </div>
+
+        <!-- ===== Graphiques secondaires ===== -->
+        <div class="charts-grid">
+
+            <!-- Répartition par produit -->
+            <div class="chart-container">
+
+                <div class="chart-header">
+
+                    <div>
+
+                        <h3>
+                            Ventes par produit
+                        </h3>
+
+                        <p>
+                            Répartition du chiffre d'affaires
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="chart-placeholder">
+
+                    <canvas id="products-report-chart"></canvas>
+
+                    <p class="chart-empty-message">
+                        Le graphique des ventes par produit sera affiché ici.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- Modes de paiement -->
+            <div class="chart-container">
+
+                <div class="chart-header">
+
+                    <div>
+
+                        <h3>
+                            Modes de paiement
+                        </h3>
+
+                        <p>
+                            Répartition des encaissements
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="chart-placeholder">
+
+                    <canvas id="payment-methods-chart"></canvas>
+
+                    <p class="chart-empty-message">
+                        Le graphique des modes de paiement sera affiché ici.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===== Titre du tableau détaillé ===== -->
+        <div class="welcome-section">
+
+            <h2>Détail des ventes</h2>
+
+            <p>
+                Consultez les opérations correspondant au rapport sélectionné.
+            </p>
+
+        </div>
+
+        <!-- ===== Recherche du tableau ===== -->
+        <div class="sales-filters">
+
+            <div class="sales-search">
+
+                <input
+                    type="text"
+                    id="report-details-search-input"
+                    placeholder="Rechercher par référence, client ou produit..."
+                >
+
+            </div>
+
+            <!-- Filtre statut -->
+            <select id="report-status-filter">
 
                 <option value="">
-                    Tous les formats
+                    Tous les statuts
                 </option>
 
-                <option value="pdf">
-                    PDF
+                <option value="payee">
+                    Payée
                 </option>
 
-                <option value="excel">
-                    Excel
+                <option value="partielle">
+                    Partiellement payée
                 </option>
 
-                <option value="csv">
-                    CSV
+                <option value="impayee">
+                    Impayée
+                </option>
+
+                <option value="annulee">
+                    Annulée
+                </option>
+
+            </select>
+
+            <!-- Filtre mode de paiement -->
+            <select id="report-payment-filter">
+
+                <option value="">
+                    Tous les modes de paiement
+                </option>
+
+                <option value="especes">
+                    Espèces
+                </option>
+
+                <option value="mobile-money">
+                    Mobile Money
+                </option>
+
+                <option value="virement">
+                    Virement bancaire
+                </option>
+
+                <option value="cheque">
+                    Chèque
+                </option>
+
+                <option value="carte">
+                    Carte bancaire
                 </option>
 
             </select>
 
         </div>
 
-        <!-- ===== Tableau des rapports ===== -->
+        <!-- ===== Tableau détaillé ===== -->
         <div class="sales-table-container">
 
             <table class="sales-table">
@@ -437,41 +737,47 @@
                 <thead>
 
                     <tr>
-                        <th>ID Rapport</th>
-                        <th>Titre du rapport</th>
-                        <th>Catégorie</th>
-                        <th>Période</th>
-                        <th>Date de génération</th>
-                        <th>Format</th>
-                        <th>Généré par</th>
+                        <th>Date</th>
+                        <th>Référence</th>
+                        <th>Client</th>
+                        <th>Produit</th>
+                        <th>Quantité</th>
+                        <th>Montant</th>
+                        <th>Montant payé</th>
+                        <th>Reste</th>
+                        <th>Mode de paiement</th>
                         <th>Statut</th>
                         <th>Actions</th>
                     </tr>
 
                 </thead>
 
-                <tbody id="reports-table-body">
+                <tbody id="report-details-table-body">
 
-                    <!-- ===== Exemple rapport 1 ===== -->
+                    <!-- ===== Exemple vente 1 ===== -->
                     <tr>
-
-                        <td>#RPT0001</td>
-
-                        <td>Rapport mensuel des ventes</td>
-
-                        <td>Commercial</td>
-
-                        <td>Juillet 2026</td>
 
                         <td>20/07/2026</td>
 
-                        <td>PDF</td>
+                        <td>#VTE0024</td>
 
-                        <td>Administrateur</td>
+                        <td>Société Kouadio SARL</td>
+
+                        <td>Caméra solaire 4G</td>
+
+                        <td>5</td>
+
+                        <td>450 000 FCFA</td>
+
+                        <td>450 000 FCFA</td>
+
+                        <td>0 FCFA</td>
+
+                        <td>Virement bancaire</td>
 
                         <td>
                             <span class="status-badge status-paid">
-                                Disponible
+                                Payée
                             </span>
                         </td>
 
@@ -481,30 +787,16 @@
 
                                 <button
                                     class="action-btn view-btn"
-                                    title="Voir le rapport"
+                                    title="Voir les détails"
                                 >
                                     👁
                                 </button>
 
                                 <button
                                     class="action-btn"
-                                    title="Télécharger le rapport"
-                                >
-                                    📥
-                                </button>
-
-                                <button
-                                    class="action-btn"
-                                    title="Imprimer le rapport"
+                                    title="Imprimer"
                                 >
                                     🖨️
-                                </button>
-
-                                <button
-                                    class="action-btn delete-btn"
-                                    title="Supprimer le rapport"
-                                >
-                                    🗑️
                                 </button>
 
                             </div>
@@ -513,87 +805,30 @@
 
                     </tr>
 
-                    <!-- ===== Exemple rapport 2 ===== -->
+                    <!-- ===== Exemple vente 2 ===== -->
                     <tr>
 
-                        <td>#RPT0002</td>
+                        <td>19/07/2026</td>
 
-                        <td>État actuel du stock</td>
+                        <td>#VTE0023</td>
 
-                        <td>Stock</td>
+                        <td>Boutique Grâce Divine</td>
 
-                        <td>Au 20 juillet 2026</td>
+                        <td>Kit caméra 4 canaux</td>
 
-                        <td>20/07/2026</td>
+                        <td>2</td>
 
-                        <td>Excel</td>
+                        <td>398 000 FCFA</td>
 
-                        <td>Gestionnaire de stock</td>
+                        <td>250 000 FCFA</td>
 
-                        <td>
-                            <span class="status-badge status-paid">
-                                Disponible
-                            </span>
-                        </td>
+                        <td>148 000 FCFA</td>
 
-                        <td>
-
-                            <div class="table-actions">
-
-                                <button
-                                    class="action-btn view-btn"
-                                    title="Voir le rapport"
-                                >
-                                    👁
-                                </button>
-
-                                <button
-                                    class="action-btn"
-                                    title="Télécharger le rapport"
-                                >
-                                    📥
-                                </button>
-
-                                <button
-                                    class="action-btn"
-                                    title="Imprimer le rapport"
-                                >
-                                    🖨️
-                                </button>
-
-                                <button
-                                    class="action-btn delete-btn"
-                                    title="Supprimer le rapport"
-                                >
-                                    🗑️
-                                </button>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
-                    <!-- ===== Exemple rapport 3 ===== -->
-                    <tr>
-
-                        <td>#RPT0003</td>
-
-                        <td>Rapport financier trimestriel</td>
-
-                        <td>Finance</td>
-
-                        <td>Deuxième trimestre 2026</td>
-
-                        <td>18/07/2026</td>
-
-                        <td>PDF</td>
-
-                        <td>Comptable</td>
+                        <td>Mobile Money</td>
 
                         <td>
                             <span class="status-badge status-pending">
-                                En préparation
+                                Partiellement payée
                             </span>
                         </td>
 
@@ -603,23 +838,16 @@
 
                                 <button
                                     class="action-btn view-btn"
-                                    title="Voir le rapport"
+                                    title="Voir les détails"
                                 >
                                     👁
                                 </button>
 
                                 <button
-                                    class="action-btn edit-btn"
-                                    title="Modifier le rapport"
+                                    class="action-btn"
+                                    title="Imprimer"
                                 >
-                                    ✏️
-                                </button>
-
-                                <button
-                                    class="action-btn delete-btn"
-                                    title="Supprimer le rapport"
-                                >
-                                    🗑️
+                                    🖨️
                                 </button>
 
                             </div>
@@ -628,26 +856,30 @@
 
                     </tr>
 
-                    <!-- ===== Exemple rapport 4 ===== -->
+                    <!-- ===== Exemple vente 3 ===== -->
                     <tr>
 
-                        <td>#RPT0004</td>
+                        <td>18/07/2026</td>
 
-                        <td>Performance des livreurs</td>
+                        <td>#VTE0022</td>
 
-                        <td>Livraison</td>
+                        <td>Entreprise Koffi Services</td>
 
-                        <td>Juillet 2026</td>
+                        <td>Câble fibre optique</td>
 
-                        <td>17/07/2026</td>
+                        <td>10</td>
 
-                        <td>Excel</td>
+                        <td>275 000 FCFA</td>
 
-                        <td>Responsable logistique</td>
+                        <td>275 000 FCFA</td>
+
+                        <td>0 FCFA</td>
+
+                        <td>Espèces</td>
 
                         <td>
                             <span class="status-badge status-paid">
-                                Disponible
+                                Payée
                             </span>
                         </td>
 
@@ -657,30 +889,67 @@
 
                                 <button
                                     class="action-btn view-btn"
-                                    title="Voir le rapport"
+                                    title="Voir les détails"
                                 >
                                     👁
                                 </button>
 
                                 <button
                                     class="action-btn"
-                                    title="Télécharger le rapport"
-                                >
-                                    📥
-                                </button>
-
-                                <button
-                                    class="action-btn"
-                                    title="Imprimer le rapport"
+                                    title="Imprimer"
                                 >
                                     🖨️
                                 </button>
 
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    <!-- ===== Exemple vente 4 ===== -->
+                    <tr>
+
+                        <td>17/07/2026</td>
+
+                        <td>#VTE0021</td>
+
+                        <td>Yao Bernard</td>
+
+                        <td>Caméra rotative Wi-Fi</td>
+
+                        <td>3</td>
+
+                        <td>105 000 FCFA</td>
+
+                        <td>0 FCFA</td>
+
+                        <td>105 000 FCFA</td>
+
+                        <td>Mobile Money</td>
+
+                        <td>
+                            <span class="status-badge status-cancelled">
+                                Impayée
+                            </span>
+                        </td>
+
+                        <td>
+
+                            <div class="table-actions">
+
                                 <button
-                                    class="action-btn delete-btn"
-                                    title="Supprimer le rapport"
+                                    class="action-btn view-btn"
+                                    title="Voir les détails"
                                 >
-                                    🗑️
+                                    👁
+                                </button>
+
+                                <button
+                                    class="action-btn"
+                                    title="Imprimer"
+                                >
+                                    🖨️
                                 </button>
 
                             </div>
@@ -690,6 +959,35 @@
                     </tr>
 
                 </tbody>
+
+                <!-- ===== Total du rapport ===== -->
+                <tfoot>
+
+                    <tr>
+
+                        <th colspan="5">
+                            Total de la période
+                        </th>
+
+                        <th>
+                            1 228 000 FCFA
+                        </th>
+
+                        <th>
+                            975 000 FCFA
+                        </th>
+
+                        <th>
+                            253 000 FCFA
+                        </th>
+
+                        <th colspan="3">
+                            4 opérations affichées
+                        </th>
+
+                    </tr>
+
+                </tfoot>
 
             </table>
 
