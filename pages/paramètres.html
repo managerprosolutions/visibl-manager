@@ -1,0 +1,2987 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Paramètres</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
+
+        <button id="sidebar-close" class="sidebar-close">
+            ✖
+        </button>
+
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo VISIBL">
+        </a>
+
+        <nav>
+
+            <ul>
+
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
+
+                <!-- ===== Menu Commercial ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+
+                        <span>
+                            🛒 Commercial
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="ventes.html" class="nav-link">
+                                Ventes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="commandes.html" class="nav-link">
+                                Commandes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="clients.html" class="nav-link">
+                                Clients
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livraisons.html" class="nav-link">
+                                Livraisons
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livreurs.html" class="nav-link">
+                                Livreurs
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <!-- ===== Menu Stock et approvisionnement ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+
+                        <span>
+                            📦 Stock & Approvisionnement
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="produits.html" class="nav-link">
+                                Produits
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="approvisionnements.html" class="nav-link">
+                                Approvisionnements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="fournisseurs.html" class="nav-link">
+                                Fournisseurs
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="transitaires.html" class="nav-link">
+                                Transitaires
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <!-- ===== Menu Finance ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+
+                        <span>
+                            💰 Finance
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="caisse.html" class="nav-link">
+                                Caisse
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="paiements.html" class="nav-link">
+                                Paiements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="factures.html" class="nav-link">
+                                Factures
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="comptabilité.html" class="nav-link">
+                                Comptabilité
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="paramètres.html" class="nav-link active">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </aside>
+
+    <!-- ===== Contenu principal ===== -->
+    <main class="main-content">
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
+                </a>
+
+                <h2>
+                    Paramètres
+                </h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            placeholder="Rechercher un paramètre..."
+                        >
+
+                        <button class="search-btn">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <button class="icon-btn notifications">
+
+                        🔔
+
+                        <span class="notification-badge">
+                            3
+                        </span>
+
+                    </button>
+
+                    <div class="profile-menu">
+
+                        <button class="icon-btn">
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="#">
+                                Mon profil
+                            </a>
+
+                            <a href="paramètres.html">
+                                Paramètres
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout">
+                                Déconnexion
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ===== Contenu de la page ===== -->
+        <section class="content">
+
+            <!-- ===== Présentation ===== -->
+            <div class="welcome-section">
+
+                <h2>
+                    Paramètres du système
+                </h2>
+
+                <p>
+                    Configurez les informations de l'entreprise, les utilisateurs,
+                    les préférences, les notifications et les paramètres de sécurité.
+                </p>
+
+            </div>
+
+            <!-- ===== Navigation des paramètres ===== -->
+            <div class="settings-layout">
+
+                <!-- ===== Menu latéral des paramètres ===== -->
+                <aside class="settings-sidebar">
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn active"
+                        data-settings-section="company-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🏢
+                        </span>
+
+                        <span>
+                            Entreprise
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="users-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            👥
+                        </span>
+
+                        <span>
+                            Utilisateurs
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="roles-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🔐
+                        </span>
+
+                        <span>
+                            Rôles et autorisations
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="sales-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🛒
+                        </span>
+
+                        <span>
+                            Ventes
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="stock-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            📦
+                        </span>
+
+                        <span>
+                            Stock
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="finance-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            💰
+                        </span>
+
+                        <span>
+                            Finance
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="notifications-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🔔
+                        </span>
+
+                        <span>
+                            Notifications
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="security-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🛡️
+                        </span>
+
+                        <span>
+                            Sécurité
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="backup-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            💾
+                        </span>
+
+                        <span>
+                            Sauvegarde
+                        </span>
+                    </button>
+
+                </aside>
+
+                <!-- ===== Contenu des paramètres ===== -->
+                <div class="settings-content">
+
+                    <!-- =====================================================
+                         PARAMÈTRES ENTREPRISE
+                    ====================================================== -->
+                    <div
+                        class="settings-section active"
+                        id="company-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Informations de l'entreprise
+                                </h3>
+
+                                <p>
+                                    Renseignez les informations générales qui apparaîtront
+                                    sur les documents commerciaux et comptables.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                🏢
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <!-- Logo -->
+                            <div class="settings-logo-area">
+
+                                <div class="settings-logo-preview">
+
+                                    <img
+                                        src="../logo-vizibl.png"
+                                        alt="Logo de l'entreprise"
+                                        id="company-logo-preview"
+                                    >
+
+                                </div>
+
+                                <div class="settings-logo-content">
+
+                                    <h4>
+                                        Logo de l'entreprise
+                                    </h4>
+
+                                    <p>
+                                        Formats recommandés : PNG ou JPG.
+                                        Taille maximale : 2 Mo.
+                                    </p>
+
+                                    <div class="settings-logo-actions">
+
+                                        <label
+                                            for="company-logo-input"
+                                            class="btn-primary"
+                                        >
+                                            Modifier le logo
+                                        </label>
+
+                                        <input
+                                            type="file"
+                                            id="company-logo-input"
+                                            accept="image/png, image/jpeg"
+                                            hidden
+                                        >
+
+                                        <button
+                                            type="button"
+                                            class="btn-secondary"
+                                            id="remove-company-logo-btn"
+                                        >
+                                            Supprimer
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="company-name">
+                                        Nom de l'entreprise
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-name"
+                                        value="VISIBL Entreprise"
+                                        placeholder="Nom de l'entreprise"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-legal-name">
+                                        Raison sociale
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-legal-name"
+                                        value="VISIBL SARL"
+                                        placeholder="Raison sociale"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-activity">
+                                        Secteur d'activité
+                                    </label>
+
+                                    <select id="company-activity">
+
+                                        <option value="">
+                                            Sélectionner un secteur
+                                        </option>
+
+                                        <option value="commerce" selected>
+                                            Commerce
+                                        </option>
+
+                                        <option value="services">
+                                            Services
+                                        </option>
+
+                                        <option value="telecom">
+                                            Télécommunications
+                                        </option>
+
+                                        <option value="construction">
+                                            Construction
+                                        </option>
+
+                                        <option value="transport">
+                                            Transport et livraison
+                                        </option>
+
+                                        <option value="autre">
+                                            Autre
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-tax-number">
+                                        Numéro contribuable
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-tax-number"
+                                        placeholder="Exemple : CC 1234567 A"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-register-number">
+                                        Numéro RCCM
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-register-number"
+                                        placeholder="Numéro RCCM"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-country">
+                                        Pays
+                                    </label>
+
+                                    <select id="company-country">
+
+                                        <option value="cote-ivoire" selected>
+                                            Côte d'Ivoire
+                                        </option>
+
+                                        <option value="mali">
+                                            Mali
+                                        </option>
+
+                                        <option value="senegal">
+                                            Sénégal
+                                        </option>
+
+                                        <option value="burkina-faso">
+                                            Burkina Faso
+                                        </option>
+
+                                        <option value="guinee">
+                                            Guinée
+                                        </option>
+
+                                        <option value="autre">
+                                            Autre
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-city">
+                                        Ville
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-city"
+                                        value="Abidjan"
+                                        placeholder="Ville"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-address">
+                                        Adresse
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-address"
+                                        placeholder="Adresse de l'entreprise"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-phone">
+                                        Téléphone
+                                    </label>
+
+                                    <input
+                                        type="tel"
+                                        id="company-phone"
+                                        placeholder="+225 00 00 00 00 00"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-email">
+                                        Adresse e-mail
+                                    </label>
+
+                                    <input
+                                        type="email"
+                                        id="company-email"
+                                        placeholder="contact@entreprise.com"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-website">
+                                        Site internet
+                                    </label>
+
+                                    <input
+                                        type="url"
+                                        id="company-website"
+                                        placeholder="https://www.entreprise.com"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-currency">
+                                        Devise principale
+                                    </label>
+
+                                    <select id="company-currency">
+
+                                        <option value="XOF" selected>
+                                            Franc CFA — FCFA
+                                        </option>
+
+                                        <option value="EUR">
+                                            Euro — EUR
+                                        </option>
+
+                                        <option value="USD">
+                                            Dollar américain — USD
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="company-description">
+                                    Description de l'entreprise
+                                </label>
+
+                                <textarea
+                                    id="company-description"
+                                    rows="4"
+                                    placeholder="Présentez brièvement l'activité de l'entreprise..."
+                                ></textarea>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                >
+                                    Annuler les modifications
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    💾 Enregistrer
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <!-- =====================================================
+                         UTILISATEURS
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="users-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Gestion des utilisateurs
+                                </h3>
+
+                                <p>
+                                    Ajoutez, modifiez ou désactivez les utilisateurs
+                                    autorisés à accéder au système.
+                                </p>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn-primary"
+                                id="add-user-btn"
+                            >
+                                + Nouvel utilisateur
+                            </button>
+
+                        </div>
+
+                        <div class="settings-summary-grid">
+
+                            <div class="settings-summary-card">
+
+                                <span class="settings-summary-icon">
+                                    👥
+                                </span>
+
+                                <div>
+
+                                    <span>
+                                        Utilisateurs
+                                    </span>
+
+                                    <strong>
+                                        4
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                            <div class="settings-summary-card">
+
+                                <span class="settings-summary-icon">
+                                    ✅
+                                </span>
+
+                                <div>
+
+                                    <span>
+                                        Utilisateurs actifs
+                                    </span>
+
+                                    <strong>
+                                        3
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                            <div class="settings-summary-card">
+
+                                <span class="settings-summary-icon">
+                                    ⛔
+                                </span>
+
+                                <div>
+
+                                    <span>
+                                        Utilisateurs inactifs
+                                    </span>
+
+                                    <strong>
+                                        1
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="sales-table-container">
+
+                            <table class="sales-table">
+
+                                <thead>
+
+                                    <tr>
+                                        <th>Utilisateur</th>
+                                        <th>E-mail</th>
+                                        <th>Rôle</th>
+                                        <th>Dernière connexion</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="settings-user-cell">
+
+                                                <div class="settings-user-avatar">
+                                                    AD
+                                                </div>
+
+                                                <div>
+
+                                                    <strong>
+                                                        Administrateur
+                                                    </strong>
+
+                                                    <span>
+                                                        Compte principal
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            admin@visibl.com
+                                        </td>
+
+                                        <td>
+                                            Administrateur
+                                        </td>
+
+                                        <td>
+                                            Aujourd'hui à 08:32
+                                        </td>
+
+                                        <td>
+
+                                            <span class="status-badge status-paid">
+                                                Actif
+                                            </span>
+
+                                        </td>
+
+                                        <td>
+
+                                            <div class="table-actions">
+
+                                                <button
+                                                    type="button"
+                                                    class="action-btn view-btn"
+                                                    title="Voir"
+                                                >
+                                                    👁
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    class="action-btn"
+                                                    title="Modifier"
+                                                >
+                                                    ✏️
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="settings-user-cell">
+
+                                                <div class="settings-user-avatar">
+                                                    MK
+                                                </div>
+
+                                                <div>
+
+                                                    <strong>
+                                                        Marie Kouassi
+                                                    </strong>
+
+                                                    <span>
+                                                        Équipe commerciale
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            marie.kouassi@visibl.com
+                                        </td>
+
+                                        <td>
+                                            Commercial
+                                        </td>
+
+                                        <td>
+                                            Hier à 17:45
+                                        </td>
+
+                                        <td>
+
+                                            <span class="status-badge status-paid">
+                                                Actif
+                                            </span>
+
+                                        </td>
+
+                                        <td>
+
+                                            <div class="table-actions">
+
+                                                <button
+                                                    type="button"
+                                                    class="action-btn view-btn"
+                                                    title="Voir"
+                                                >
+                                                    👁
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    class="action-btn"
+                                                    title="Modifier"
+                                                >
+                                                    ✏️
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="settings-user-cell">
+
+                                                <div class="settings-user-avatar">
+                                                    KS
+                                                </div>
+
+                                                <div>
+
+                                                    <strong>
+                                                        Kevin Seri
+                                                    </strong>
+
+                                                    <span>
+                                                        Gestionnaire de stock
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            kevin.seri@visibl.com
+                                        </td>
+
+                                        <td>
+                                            Gestionnaire de stock
+                                        </td>
+
+                                        <td>
+                                            19/07/2026 à 15:12
+                                        </td>
+
+                                        <td>
+
+                                            <span class="status-badge status-paid">
+                                                Actif
+                                            </span>
+
+                                        </td>
+
+                                        <td>
+
+                                            <div class="table-actions">
+
+                                                <button
+                                                    type="button"
+                                                    class="action-btn view-btn"
+                                                    title="Voir"
+                                                >
+                                                    👁
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    class="action-btn"
+                                                    title="Modifier"
+                                                >
+                                                    ✏️
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="settings-user-cell">
+
+                                                <div class="settings-user-avatar">
+                                                    YA
+                                                </div>
+
+                                                <div>
+
+                                                    <strong>
+                                                        Yao Alain
+                                                    </strong>
+
+                                                    <span>
+                                                        Ancien utilisateur
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            yao.alain@visibl.com
+                                        </td>
+
+                                        <td>
+                                            Caissier
+                                        </td>
+
+                                        <td>
+                                            10/07/2026 à 11:08
+                                        </td>
+
+                                        <td>
+
+                                            <span class="status-badge status-cancelled">
+                                                Inactif
+                                            </span>
+
+                                        </td>
+
+                                        <td>
+
+                                            <div class="table-actions">
+
+                                                <button
+                                                    type="button"
+                                                    class="action-btn view-btn"
+                                                    title="Voir"
+                                                >
+                                                    👁
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    class="action-btn"
+                                                    title="Modifier"
+                                                >
+                                                    ✏️
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                    <!-- =====================================================
+                         RÔLES ET AUTORISATIONS
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="roles-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Rôles et autorisations
+                                </h3>
+
+                                <p>
+                                    Définissez les modules et les actions accessibles
+                                    à chaque type d'utilisateur.
+                                </p>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn-primary"
+                                id="add-role-btn"
+                            >
+                                + Nouveau rôle
+                            </button>
+
+                        </div>
+
+                        <div class="role-settings-list">
+
+                            <div class="role-settings-card">
+
+                                <div class="role-settings-header">
+
+                                    <div>
+
+                                        <h4>
+                                            Administrateur
+                                        </h4>
+
+                                        <p>
+                                            Accès complet à tous les modules et paramètres.
+                                        </p>
+
+                                    </div>
+
+                                    <span class="status-badge status-paid">
+                                        1 utilisateur
+                                    </span>
+
+                                </div>
+
+                                <div class="role-permissions">
+
+                                    <span>
+                                        Tableau de bord
+                                    </span>
+
+                                    <span>
+                                        Commercial
+                                    </span>
+
+                                    <span>
+                                        Stock
+                                    </span>
+
+                                    <span>
+                                        Finance
+                                    </span>
+
+                                    <span>
+                                        Rapports
+                                    </span>
+
+                                    <span>
+                                        Paramètres
+                                    </span>
+
+                                </div>
+
+                                <div class="role-settings-actions">
+
+                                    <button
+                                        type="button"
+                                        class="btn-secondary"
+                                    >
+                                        Voir les autorisations
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="btn-primary"
+                                    >
+                                        Modifier
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            <div class="role-settings-card">
+
+                                <div class="role-settings-header">
+
+                                    <div>
+
+                                        <h4>
+                                            Commercial
+                                        </h4>
+
+                                        <p>
+                                            Accès aux ventes, commandes, clients et livraisons.
+                                        </p>
+
+                                    </div>
+
+                                    <span class="status-badge status-paid">
+                                        1 utilisateur
+                                    </span>
+
+                                </div>
+
+                                <div class="role-permissions">
+
+                                    <span>
+                                        Tableau de bord
+                                    </span>
+
+                                    <span>
+                                        Ventes
+                                    </span>
+
+                                    <span>
+                                        Commandes
+                                    </span>
+
+                                    <span>
+                                        Clients
+                                    </span>
+
+                                    <span>
+                                        Livraisons
+                                    </span>
+
+                                </div>
+
+                                <div class="role-settings-actions">
+
+                                    <button
+                                        type="button"
+                                        class="btn-secondary"
+                                    >
+                                        Voir les autorisations
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="btn-primary"
+                                    >
+                                        Modifier
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            <div class="role-settings-card">
+
+                                <div class="role-settings-header">
+
+                                    <div>
+
+                                        <h4>
+                                            Gestionnaire de stock
+                                        </h4>
+
+                                        <p>
+                                            Accès aux produits, approvisionnements et fournisseurs.
+                                        </p>
+
+                                    </div>
+
+                                    <span class="status-badge status-paid">
+                                        1 utilisateur
+                                    </span>
+
+                                </div>
+
+                                <div class="role-permissions">
+
+                                    <span>
+                                        Produits
+                                    </span>
+
+                                    <span>
+                                        Approvisionnements
+                                    </span>
+
+                                    <span>
+                                        Fournisseurs
+                                    </span>
+
+                                    <span>
+                                        Transitaires
+                                    </span>
+
+                                    <span>
+                                        Rapports de stock
+                                    </span>
+
+                                </div>
+
+                                <div class="role-settings-actions">
+
+                                    <button
+                                        type="button"
+                                        class="btn-secondary"
+                                    >
+                                        Voir les autorisations
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="btn-primary"
+                                    >
+                                        Modifier
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            <div class="role-settings-card">
+
+                                <div class="role-settings-header">
+
+                                    <div>
+
+                                        <h4>
+                                            Caissier
+                                        </h4>
+
+                                        <p>
+                                            Accès à la caisse, aux paiements et aux factures.
+                                        </p>
+
+                                    </div>
+
+                                    <span class="status-badge status-cancelled">
+                                        1 utilisateur inactif
+                                    </span>
+
+                                </div>
+
+                                <div class="role-permissions">
+
+                                    <span>
+                                        Caisse
+                                    </span>
+
+                                    <span>
+                                        Paiements
+                                    </span>
+
+                                    <span>
+                                        Factures
+                                    </span>
+
+                                </div>
+
+                                <div class="role-settings-actions">
+
+                                    <button
+                                        type="button"
+                                        class="btn-secondary"
+                                    >
+                                        Voir les autorisations
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="btn-primary"
+                                    >
+                                        Modifier
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- =====================================================
+                         PARAMÈTRES DES VENTES
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="sales-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Paramètres des ventes
+                                </h3>
+
+                                <p>
+                                    Configurez les règles de numérotation, de paiement
+                                    et de validation des ventes.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                🛒
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="sale-prefix">
+                                        Préfixe des ventes
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="sale-prefix"
+                                        value="VTE"
+                                        placeholder="Exemple : VTE"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="order-prefix">
+                                        Préfixe des commandes
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="order-prefix"
+                                        value="CMD"
+                                        placeholder="Exemple : CMD"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="default-payment-method">
+                                        Mode de paiement par défaut
+                                    </label>
+
+                                    <select id="default-payment-method">
+
+                                        <option value="especes">
+                                            Espèces
+                                        </option>
+
+                                        <option value="mobile-money" selected>
+                                            Mobile Money
+                                        </option>
+
+                                        <option value="virement">
+                                            Virement bancaire
+                                        </option>
+
+                                        <option value="cheque">
+                                            Chèque
+                                        </option>
+
+                                        <option value="carte">
+                                            Carte bancaire
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="default-payment-delay">
+                                        Délai de paiement par défaut
+                                    </label>
+
+                                    <select id="default-payment-delay">
+
+                                        <option value="immediat" selected>
+                                            Paiement immédiat
+                                        </option>
+
+                                        <option value="7">
+                                            7 jours
+                                        </option>
+
+                                        <option value="15">
+                                            15 jours
+                                        </option>
+
+                                        <option value="30">
+                                            30 jours
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Autoriser les paiements partiels
+                                        </strong>
+
+                                        <span>
+                                            Permettre l'enregistrement d'acomptes sur les ventes.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Autoriser les ventes à crédit
+                                        </strong>
+
+                                        <span>
+                                            Créer une vente même si le paiement n'est pas complet.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Mise à jour automatique du stock
+                                        </strong>
+
+                                        <span>
+                                            Déduire automatiquement les quantités après une vente.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Validation obligatoire des ventes
+                                        </strong>
+
+                                        <span>
+                                            Exiger la validation d'un responsable avant confirmation.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                >
+                                    Réinitialiser
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    💾 Enregistrer
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <!-- =====================================================
+                         PARAMÈTRES DU STOCK
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="stock-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Paramètres du stock
+                                </h3>
+
+                                <p>
+                                    Configurez les alertes, les seuils et les règles
+                                    de gestion des produits.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                📦
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="default-stock-threshold">
+                                        Seuil d'alerte par défaut
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="default-stock-threshold"
+                                        value="5"
+                                        min="0"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="stock-valuation-method">
+                                        Méthode de valorisation
+                                    </label>
+
+                                    <select id="stock-valuation-method">
+
+                                        <option value="cmp" selected>
+                                            Coût moyen pondéré
+                                        </option>
+
+                                        <option value="fifo">
+                                            FIFO
+                                        </option>
+
+                                        <option value="lifo">
+                                            LIFO
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="product-prefix">
+                                        Préfixe des produits
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="product-prefix"
+                                        value="PRD"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="supply-prefix">
+                                        Préfixe des approvisionnements
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="supply-prefix"
+                                        value="APP"
+                                    >
+
+                                </div>
+
+                            </div>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Activer les alertes de stock faible
+                                        </strong>
+
+                                        <span>
+                                            Avertir lorsque le stock atteint le seuil minimum.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Interdire les stocks négatifs
+                                        </strong>
+
+                                        <span>
+                                            Bloquer une vente si la quantité disponible est insuffisante.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Suivre les mouvements de stock
+                                        </strong>
+
+                                        <span>
+                                            Enregistrer chaque entrée, sortie et ajustement.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                >
+                                    Réinitialiser
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    💾 Enregistrer
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <!-- =====================================================
+                         PARAMÈTRES FINANCIERS
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="finance-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Paramètres financiers
+                                </h3>
+
+                                <p>
+                                    Configurez les factures, les taxes, la comptabilité
+                                    et les règles de paiement.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                💰
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="invoice-prefix">
+                                        Préfixe des factures
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="invoice-prefix"
+                                        value="FAC"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="payment-prefix">
+                                        Préfixe des paiements
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="payment-prefix"
+                                        value="PAY"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="default-tax-rate">
+                                        Taux de taxe par défaut
+                                    </label>
+
+                                    <div class="settings-input-suffix">
+
+                                        <input
+                                            type="number"
+                                            id="default-tax-rate"
+                                            value="18"
+                                            min="0"
+                                            step="0.01"
+                                        >
+
+                                        <span>
+                                            %
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="financial-year-start">
+                                        Début de l'exercice comptable
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="financial-year-start"
+                                        value="2026-01-01"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="invoice-payment-delay">
+                                        Délai de paiement des factures
+                                    </label>
+
+                                    <select id="invoice-payment-delay">
+
+                                        <option value="0">
+                                            Paiement immédiat
+                                        </option>
+
+                                        <option value="7">
+                                            7 jours
+                                        </option>
+
+                                        <option value="15" selected>
+                                            15 jours
+                                        </option>
+
+                                        <option value="30">
+                                            30 jours
+                                        </option>
+
+                                        <option value="45">
+                                            45 jours
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="accounting-method">
+                                        Méthode comptable
+                                    </label>
+
+                                    <select id="accounting-method">
+
+                                        <option value="cash">
+                                            Comptabilité de trésorerie
+                                        </option>
+
+                                        <option value="accrual" selected>
+                                            Comptabilité d'engagement
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="invoice-footer">
+                                    Mention de bas de facture
+                                </label>
+
+                                <textarea
+                                    id="invoice-footer"
+                                    rows="4"
+                                    placeholder="Merci pour votre confiance."
+                                >Merci pour votre confiance.</textarea>
+
+                            </div>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Appliquer automatiquement la taxe
+                                        </strong>
+
+                                        <span>
+                                            Ajouter le taux de taxe par défaut aux factures.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Générer automatiquement les écritures comptables
+                                        </strong>
+
+                                        <span>
+                                            Créer une écriture lors d'une vente ou d'un paiement.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                >
+                                    Réinitialiser
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    💾 Enregistrer
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <!-- =====================================================
+                         NOTIFICATIONS
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="notifications-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Notifications
+                                </h3>
+
+                                <p>
+                                    Choisissez les événements pour lesquels vous souhaitez
+                                    recevoir une alerte.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                🔔
+                            </div>
+
+                        </div>
+
+                        <div class="settings-options-list">
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Nouvelle commande
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une commande est enregistrée.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Stock faible
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'un produit atteint son seuil minimum.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Facture impayée
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une facture arrive à échéance.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Paiement reçu
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte après l'enregistrement d'un paiement.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Retard de livraison
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une livraison dépasse l'échéance.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Rapport hebdomadaire
+                                    </strong>
+
+                                    <span>
+                                        Recevoir un résumé automatique chaque semaine.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                        </div>
+
+                        <div class="settings-form-actions">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                            >
+                                Tout désactiver
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn-primary"
+                            >
+                                💾 Enregistrer
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- =====================================================
+                         SÉCURITÉ
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="security-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Sécurité du compte
+                                </h3>
+
+                                <p>
+                                    Modifiez votre mot de passe et contrôlez les paramètres
+                                    de sécurité du système.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                🛡️
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <h4 class="settings-form-title">
+                                Modifier le mot de passe
+                            </h4>
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="current-password">
+                                        Mot de passe actuel
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        id="current-password"
+                                        placeholder="Saisissez votre mot de passe actuel"
+                                    >
+
+                                </div>
+
+                                <div></div>
+
+                                <div class="form-group">
+
+                                    <label for="new-password">
+                                        Nouveau mot de passe
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        id="new-password"
+                                        placeholder="Saisissez le nouveau mot de passe"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="confirm-password">
+                                        Confirmer le mot de passe
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        id="confirm-password"
+                                        placeholder="Confirmez le nouveau mot de passe"
+                                    >
+
+                                </div>
+
+                            </div>
+
+                            <div class="password-requirements">
+
+                                <h4>
+                                    Le mot de passe doit contenir :
+                                </h4>
+
+                                <ul>
+                                    <li>Au moins 8 caractères</li>
+                                    <li>Une lettre majuscule</li>
+                                    <li>Une lettre minuscule</li>
+                                    <li>Un chiffre</li>
+                                    <li>Un caractère spécial</li>
+                                </ul>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="reset"
+                                    class="btn-secondary"
+                                >
+                                    Annuler
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    🔐 Modifier le mot de passe
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                        <div class="security-settings-block">
+
+                            <h4>
+                                Options de sécurité
+                            </h4>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Authentification à deux facteurs
+                                        </strong>
+
+                                        <span>
+                                            Ajouter une étape de vérification lors de la connexion.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Déconnexion automatique
+                                        </strong>
+
+                                        <span>
+                                            Déconnecter l'utilisateur après une période d'inactivité.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <div class="settings-inline-option">
+
+                                    <div>
+
+                                        <strong>
+                                            Durée avant déconnexion
+                                        </strong>
+
+                                        <span>
+                                            Temps maximum d'inactivité autorisé.
+                                        </span>
+
+                                    </div>
+
+                                    <select id="session-timeout">
+
+                                        <option value="15">
+                                            15 minutes
+                                        </option>
+
+                                        <option value="30" selected>
+                                            30 minutes
+                                        </option>
+
+                                        <option value="60">
+                                            1 heure
+                                        </option>
+
+                                        <option value="120">
+                                            2 heures
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- =====================================================
+                         SAUVEGARDE
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="backup-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Sauvegarde et restauration
+                                </h3>
+
+                                <p>
+                                    Protégez les informations de l'entreprise et restaurez
+                                    les données en cas de besoin.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                💾
+                            </div>
+
+                        </div>
+
+                        <div class="backup-status-card">
+
+                            <div class="backup-status-icon">
+                                ✅
+                            </div>
+
+                            <div>
+
+                                <h4>
+                                    Dernière sauvegarde réussie
+                                </h4>
+
+                                <p>
+                                    21 juillet 2026 à 02:00
+                                </p>
+
+                            </div>
+
+                            <span class="status-badge status-paid">
+                                À jour
+                            </span>
+
+                        </div>
+
+                        <div class="settings-form-grid">
+
+                            <div class="backup-action-card">
+
+                                <div class="backup-action-icon">
+                                    ☁️
+                                </div>
+
+                                <h4>
+                                    Sauvegarde manuelle
+                                </h4>
+
+                                <p>
+                                    Créez immédiatement une copie des données du système.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="btn-primary"
+                                    id="manual-backup-btn"
+                                >
+                                    Sauvegarder maintenant
+                                </button>
+
+                            </div>
+
+                            <div class="backup-action-card">
+
+                                <div class="backup-action-icon">
+                                    📥
+                                </div>
+
+                                <h4>
+                                    Exporter les données
+                                </h4>
+
+                                <p>
+                                    Téléchargez une copie des données au format Excel.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                    id="export-data-btn"
+                                >
+                                    Exporter les données
+                                </button>
+
+                            </div>
+
+                            <div class="backup-action-card">
+
+                                <div class="backup-action-icon">
+                                    🔄
+                                </div>
+
+                                <h4>
+                                    Restaurer les données
+                                </h4>
+
+                                <p>
+                                    Importez une sauvegarde précédente du système.
+                                </p>
+
+                                <label
+                                    for="restore-file-input"
+                                    class="btn-secondary"
+                                >
+                                    Choisir une sauvegarde
+                                </label>
+
+                                <input
+                                    type="file"
+                                    id="restore-file-input"
+                                    accept=".xlsx,.csv,.json"
+                                    hidden
+                                >
+
+                            </div>
+
+                            <div class="backup-action-card danger-card">
+
+                                <div class="backup-action-icon">
+                                    ⚠️
+                                </div>
+
+                                <h4>
+                                    Réinitialiser le système
+                                </h4>
+
+                                <p>
+                                    Supprimez toutes les données et restaurez les paramètres initiaux.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="btn-danger"
+                                    id="reset-system-btn"
+                                >
+                                    Réinitialiser
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="security-settings-block">
+
+                            <h4>
+                                Sauvegarde automatique
+                            </h4>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Activer les sauvegardes automatiques
+                                        </strong>
+
+                                        <span>
+                                            Créer automatiquement une copie des données.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <div class="settings-inline-option">
+
+                                    <div>
+
+                                        <strong>
+                                            Fréquence de sauvegarde
+                                        </strong>
+
+                                        <span>
+                                            Choisissez la fréquence de création des sauvegardes.
+                                        </span>
+
+                                    </div>
+
+                                    <select id="backup-frequency">
+
+                                        <option value="daily" selected>
+                                            Tous les jours
+                                        </option>
+
+                                        <option value="weekly">
+                                            Toutes les semaines
+                                        </option>
+
+                                        <option value="monthly">
+                                            Tous les mois
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="../js/dashboard.js"></script>
+
+<script>
+    const settingsButtons = document.querySelectorAll(".settings-nav-btn");
+    const settingsSections = document.querySelectorAll(".settings-section");
+
+    settingsButtons.forEach((button) => {
+
+        button.addEventListener("click", () => {
+
+            const sectionId = button.dataset.settingsSection;
+
+            settingsButtons.forEach((item) => {
+                item.classList.remove("active");
+            });
+
+            settingsSections.forEach((section) => {
+                section.classList.remove("active");
+            });
+
+            button.classList.add("active");
+
+            const selectedSection = document.getElementById(sectionId);
+
+            if (selectedSection) {
+                selectedSection.classList.add("active");
+            }
+
+        });
+
+    });
+
+    const companyLogoInput = document.getElementById("company-logo-input");
+    const companyLogoPreview = document.getElementById("company-logo-preview");
+    const removeCompanyLogoBtn = document.getElementById("remove-company-logo-btn");
+
+    if (companyLogoInput && companyLogoPreview) {
+
+        companyLogoInput.addEventListener("change", (event) => {
+
+            const selectedFile = event.target.files[0];
+
+            if (!selectedFile) {
+                return;
+            }
+
+            if (!selectedFile.type.startsWith("image/")) {
+                alert("Veuillez sélectionner une image valide.");
+                companyLogoInput.value = "";
+                return;
+            }
+
+            const imageUrl = URL.createObjectURL(selectedFile);
+
+            companyLogoPreview.src = imageUrl;
+
+        });
+
+    }
+
+    if (removeCompanyLogoBtn && companyLogoPreview) {
+
+        removeCompanyLogoBtn.addEventListener("click", () => {
+
+            companyLogoPreview.src = "../logo-vizibl.png";
+
+            if (companyLogoInput) {
+                companyLogoInput.value = "";
+            }
+
+        });
+
+    }
+
+    const settingsForms = document.querySelectorAll(".settings-form");
+
+    settingsForms.forEach((form) => {
+
+        form.addEventListener("submit", (event) => {
+
+            event.preventDefault();
+
+            alert("Les paramètres ont été enregistrés avec succès.");
+
+        });
+
+    });
+
+    const manualBackupBtn = document.getElementById("manual-backup-btn");
+
+    if (manualBackupBtn) {
+
+        manualBackupBtn.addEventListener("click", () => {
+
+            alert("La sauvegarde manuelle a été lancée.");
+
+        });
+
+    }
+
+    const exportDataBtn = document.getElementById("export-data-btn");
+
+    if (exportDataBtn) {
+
+        exportDataBtn.addEventListener("click", () => {
+
+            alert("L'exportation des données sera disponible après la connexion à Google Sheets.");
+
+        });
+
+    }
+
+    const resetSystemBtn = document.getElementById("reset-system-btn");
+
+    if (resetSystemBtn) {
+
+        resetSystemBtn.addEventListener("click", () => {
+
+            const confirmation = confirm(
+                "Êtes-vous sûr de vouloir réinitialiser le système ? Cette action supprimera toutes les données."
+            );
+
+            if (confirmation) {
+
+                const secondConfirmation = confirm(
+                    "Cette action est irréversible. Confirmez-vous la réinitialisation ?"
+                );
+
+                if (secondConfirmation) {
+                    alert("La réinitialisation sera activée après la connexion à la base de données.");
+                }
+
+            }
+
+        });
+
+    }
+</script>
+
+</body>
+
+</html>
