@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>VISIBL</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+
+        body{
+
+            display:flex;
+            justify-content:center;
+            align-items:center;
+
+            width:100%;
+            height:100vh;
+
+            background:#f5f7fb;
+
+            overflow:hidden;
+
+        }
+
+        .loading-container{
+
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+
+        }
+
+        .logo{
+
+            width:120px;
+            margin-bottom:30px;
+
+        }
+
+        h1{
+
+            color:#1f2937;
+            font-size:32px;
+            margin-bottom:10px;
+            letter-spacing:2px;
+
+        }
+
+        p{
+
+            color:#6b7280;
+            margin-bottom:30px;
+
+        }
+
+        .loader{
+
+            width:260px;
+            height:6px;
+
+            background:#dbe4f0;
+
+            border-radius:50px;
+
+            overflow:hidden;
+
+        }
+
+        .loader span{
+
+            display:block;
+
+            width:0%;
+            height:100%;
+
+            background:#2563eb;
+
+            animation:loading 2s linear forwards;
+
+        }
+
+        @keyframes loading{
+
+            from{
+
+                width:0%;
+
+            }
+
+            to{
+
+                width:100%;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="loading-container">
+
+        <!-- Remplace par ton logo -->
+        <img src="assets/logos/logo.png" class="logo" alt="VISIBL">
+
+        <h1>VISIBL</h1>
+
+        <p>Initialisation du logiciel...</p>
+
+        <div class="loader">
+
+            <span></span>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        setTimeout(function(){
+
+            window.location.href = "connexion.html";
+
+        },2000);
+
+    </script>
+
+</body>
+
+</html>
