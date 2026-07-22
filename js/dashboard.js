@@ -134,6 +134,73 @@ function afficherKPISecondaires() {
     );
 }
 
+// ========================================
+// GRAPHIQUE DES REVENUS
+// ========================================
+
+function afficherGraphiqueRevenus() {
+    const canvas = document.getElementById("revenus-chart");
+
+    if (!canvas) {
+        return;
+    }
+
+    new Chart(canvas, {
+        type: "line",
+
+        data: {
+            labels: [
+                "Février",
+                "Mars",
+                "Avril",
+                "Mai",
+                "Juin",
+                "Juillet"
+            ],
+
+            datasets: [
+                {
+                    label: "Revenus",
+                    data: [
+                        1800000,
+                        2200000,
+                        2600000,
+                        3100000,
+                        3600000,
+                        5000000
+                    ],
+
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+
+            scales: {
+                y: {
+                    beginAtZero: true,
+
+                    ticks: {
+                        callback: function (value) {
+                            return formatNombre(value) + " FCFA";
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 
 // ========================================
 // INITIALISATION DU DASHBOARD
@@ -144,6 +211,7 @@ function initialiserDashboard() {
 
     afficherKPIPrincipaux();
     afficherKPISecondaires();
+    afficherGraphiqueRevenus();
 }
 
 
