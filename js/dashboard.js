@@ -19,9 +19,25 @@ const dashboardData = {
     },
 
     clients: {
-        valeur: 892,
-        evolution: -2
-    }
+       conversion: {
+    valeur: 3.2,
+    evolution: 0.5
+},
+
+livraisons: {
+    valeur: 156,
+    evolution: 15
+},
+
+paiements: {
+    valeur: 4210000,
+    evolution: 10
+},
+
+factures: {
+    valeur: 245,
+    evolution: 3
+}
 };
 
 
@@ -89,6 +105,45 @@ function afficherKPIPrincipaux() {
         "clients",
         dashboardData.clients
     );
+}
+
+
+// <-- AJOUTE LA NOUVELLE FONCTION ICI
+
+function afficherKPISecondaires() {
+    mettreAJourCarte(
+        "conversion",
+        dashboardData.conversion,
+        "%"
+    );
+
+    mettreAJourCarte(
+        "livraisons",
+        dashboardData.livraisons
+    );
+
+    mettreAJourCarte(
+        "paiements",
+        dashboardData.paiements,
+        " FCFA"
+    );
+
+    mettreAJourCarte(
+        "factures",
+        dashboardData.factures
+    );
+}
+
+
+// ========================================
+// INITIALISATION DU DASHBOARD
+// ========================================
+
+function initialiserDashboard() {
+    console.log("dashboard.js chargé");
+
+    afficherKPIPrincipaux();
+    afficherKPISecondaires();
 }
 
 
