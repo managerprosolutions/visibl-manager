@@ -19,25 +19,29 @@ const dashboardData = {
     },
 
     clients: {
-       conversion: {
-    valeur: 3.2,
-    evolution: 0.5
-},
+        valeur: 186,
+        evolution: -2
+    },
 
-livraisons: {
-    valeur: 156,
-    evolution: 15
-},
+    conversion: {
+        valeur: 3.2,
+        evolution: 0.5
+    },
 
-paiements: {
-    valeur: 4210000,
-    evolution: 10
-},
+    livraisons: {
+        valeur: 156,
+        evolution: 15
+    },
 
-factures: {
-    valeur: 245,
-    evolution: 3
-}
+    paiements: {
+        valeur: 4210000,
+        evolution: 10
+    },
+
+    factures: {
+        valeur: 245,
+        evolution: 3
+    }
 };
 
 
@@ -84,6 +88,10 @@ function mettreAJourCarte(nom, donnees, unite = "") {
 }
 
 
+// ========================================
+// KPI PRINCIPAUX
+// ========================================
+
 function afficherKPIPrincipaux() {
     mettreAJourCarte(
         "revenus",
@@ -108,7 +116,9 @@ function afficherKPIPrincipaux() {
 }
 
 
-// <-- AJOUTE LA NOUVELLE FONCTION ICI
+// ========================================
+// KPI SECONDAIRES
+// ========================================
 
 function afficherKPISecondaires() {
     mettreAJourCarte(
@@ -134,6 +144,7 @@ function afficherKPISecondaires() {
     );
 }
 
+
 // ========================================
 // GRAPHIQUE DES REVENUS
 // ========================================
@@ -142,6 +153,12 @@ function afficherGraphiqueRevenus() {
     const canvas = document.getElementById("revenus-chart");
 
     if (!canvas) {
+        console.error("Canvas revenus-chart introuvable");
+        return;
+    }
+
+    if (typeof Chart === "undefined") {
+        console.error("La bibliothèque Chart.js n'est pas chargée");
         return;
     }
 
@@ -167,9 +184,8 @@ function afficherGraphiqueRevenus() {
                         2600000,
                         3100000,
                         3600000,
-                        5000000
+                        4520000
                     ],
-
                     borderWidth: 3,
                     tension: 0.4,
                     fill: true
@@ -184,6 +200,14 @@ function afficherGraphiqueRevenus() {
             plugins: {
                 legend: {
                     display: false
+                },
+
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return `${formatNombre(context.raw)} FCFA`;
+                        }
+                    }
                 }
             },
 
@@ -193,7 +217,7 @@ function afficherGraphiqueRevenus() {
 
                     ticks: {
                         callback: function (value) {
-                            return formatNombre(value) + " FCFA";
+                            return `${formatNombre(value)} FCFA`;
                         }
                     }
                 }
@@ -201,6 +225,7 @@ function afficherGraphiqueRevenus() {
         }
     });
 }
+
 
 // ========================================
 // INITIALISATION DU DASHBOARD
@@ -212,17 +237,6 @@ function initialiserDashboard() {
     afficherKPIPrincipaux();
     afficherKPISecondaires();
     afficherGraphiqueRevenus();
-}
-
-
-// ========================================
-// INITIALISATION DU DASHBOARD
-// ========================================
-
-function initialiserDashboard() {
-    console.log("dashboard.js chargé");
-
-    afficherKPIPrincipaux();
 }
 
 
