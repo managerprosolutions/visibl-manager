@@ -323,7 +323,7 @@
 
 .sales-table {
     width: 100%;
-    min-width: 1450px;
+    min-width: 1150px;
     border-collapse: separate;
     border-spacing: 0;
     color: var(--cash-text);
