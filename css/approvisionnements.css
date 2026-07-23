@@ -152,7 +152,7 @@
 
 .sales-table {
     width: 100%;
-    min-width: 1180px;
+    min-width: 1050px;
     border-collapse: separate;
     border-spacing: 0;
     color: var(--supply-text);
@@ -165,11 +165,11 @@
 }
 
 .sales-table th {
-    padding: 15px 16px;
+    padding: 12px 14px;
     border-bottom: 1px solid #dbe3ee;
     background: #f8fafc;
     color: #475569;
-    font-size: .78rem;
+    font-size: 0.85rem;
     font-weight: 750;
     letter-spacing: .035em;
     text-align: left;
