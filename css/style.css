@@ -1,6 +1,6 @@
 /* ==========================================================
-   STYLE GLOBAL
-   Styles communs à toutes les pages de VISIBL
+STYLE GLOBAL
+Styles communs à toutes les pages de VISIBL
 ========================================================== */
 
 /* ===== RESET ===== */
@@ -31,7 +31,7 @@ body {
 /* ===== SIDEBAR ===== */
 
 .sidebar {
-   width: 250px;
+    width: 250px;
     min-height: 100vh;
     position: fixed;
     top: 0;
@@ -137,7 +137,7 @@ body {
 /* ===== HEADER ===== */
 
 .header {
-     height: 70px;
+    height: 70px;
     background: white;
     display: flex;
     justify-content: space-between;
@@ -401,14 +401,14 @@ body {
         font-size: 22px;
     }
 
-.header-icons {
+    .header-icons {
         gap: 12px;
     }
 
     .icon-btn {
         font-size: 16px;
     }
-    
+
     .nav-link {
         font-size: 15px;
     }
@@ -455,7 +455,7 @@ body {
         font-size: 14px;
     }
 
-.nav-link {
+    .nav-link {
         font-size: 14px;
     }
 }
@@ -556,7 +556,6 @@ body {
         gap: 10px;
     }
 
-
     /* Recherche cachée sur mobile */
     .search-container {
         position: absolute;
@@ -566,11 +565,9 @@ body {
         display: none;
     }
 
-
     .search-container.active {
         display: flex;
     }
-
 
     .search-input {
         width: 100%;
