@@ -316,7 +316,16 @@ function afficherGraphiqueVentes() {
 // ========================================
 
 function initialiserDashboard() {
-    console.log("dashboard.js chargé");
+    if (!requireAuth()) {
+        return;
+    }
+
+    const utilisateurConnecte = getCurrentUser();
+
+    console.log(
+        "Utilisateur connecté :",
+        utilisateurConnecte
+    );
 
     afficherKPIPrincipaux();
     afficherKPISecondaires();
