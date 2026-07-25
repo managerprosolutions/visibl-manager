@@ -23,15 +23,6 @@ document.addEventListener("click", (e) => {
     }
 });
 
-// ===== PROFILE MENU DROPDOWN =====
-
-const profileBtn = document.querySelector(".profile-menu .icon-btn");
-const profileMenu = document.querySelector(".profile-menu");
-
-if (profileBtn) {
-    profileBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-
         // Sur mobile, fermer la recherche si elle existe
 if (window.innerWidth <= 768 && searchContainer) {
     searchContainer.classList.remove("active");
@@ -87,14 +78,6 @@ function performSearch() {
         // Ajouter la logique de recherche ici
     }
 }
-
-// ===== NOTIFICATIONS =====
-
-const notificationsBtn = document.querySelector(".notifications");
-
-if (notificationsBtn) {
-    notificationsBtn.addEventListener("click", () => {
-        console.log("Afficher les notifications");
 
         // Ajouter la logique des notifications ici
     });
@@ -192,61 +175,175 @@ searchContainer.classList.toggle("active");
 }
 
 // ========================================
-// NOTIFICATIONS
+// MENUS DU HEADER
 // ========================================
 
-function initialiserNotifications() {
-    const bouton =
+function initialiserMenusHeader() {
+    const profileButton =
+        document.getElementById("profile-button");
+
+    const profileMenu =
+        document.getElementById("profile-menu");
+
+    const notificationButton =
         document.getElementById("notification-button");
 
-    const panneau =
+    const notificationPanel =
         document.getElementById("notification-panel");
 
-    if (!bouton || !panneau) {
-        return;
-    }
 
-    bouton.addEventListener("click", function (event) {
-        event.stopPropagation();
-
-        const panneauFerme =
-            panneau.hasAttribute("hidden");
-
-        if (panneauFerme) {
-            panneau.removeAttribute("hidden");
-        } else {
-            panneau.setAttribute("hidden", "");
+    function fermerMenuProfil() {
+        if (!profileMenu) {
+            return;
         }
 
-        bouton.setAttribute(
-            "aria-expanded",
-            String(panneauFerme)
-        );
-    });
+        profileMenu.classList.remove("active");
 
-    panneau.addEventListener("click", function (event) {
-        event.stopPropagation();
-    });
-
-    document.addEventListener("click", function () {
-        panneau.setAttribute("hidden", "");
-
-        bouton.setAttribute(
-            "aria-expanded",
-            "false"
-        );
-    });
-
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-            panneau.setAttribute("hidden", "");
-
-            bouton.setAttribute(
+        if (profileButton) {
+            profileButton.setAttribute(
                 "aria-expanded",
                 "false"
             );
         }
-    });
+    }
+
+
+    function fermerNotifications() {
+        if (!notificationPanel) {
+            return;
+        }
+
+        notificationPanel.setAttribute("hidden", "");
+
+        if (notificationButton) {
+            notificationButton.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    }
+
+
+    // OUVRIR LE MENU DU PROFIL
+
+    if (profileButton && profileMenu) {
+        profileButton.addEventListener(
+            "click",
+            function (event) {
+                event.stopPropagation();
+
+                const menuEtaitOuvert =
+                    profileMenu.classList.contains("active");
+
+                // Fermer les notifications
+                fermerNotifications();
+
+                // Fermer la recherche sur mobile
+                if (
+                    window.innerWidth <= 768 &&
+                    searchContainer
+                ) {
+                    searchContainer.classList.remove("active");
+                }
+
+                if (menuEtaitOuvert) {
+                    fermerMenuProfil();
+                } else {
+                    profileMenu.classList.add("active");
+
+                    profileButton.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+                }
+            }
+        );
+
+        profileMenu.addEventListener(
+            "click",
+            function (event) {
+                event.stopPropagation();
+            }
+        );
+    }
+
+
+    // OUVRIR LES NOTIFICATIONS
+
+    if (notificationButton && notificationPanel) {
+        notificationButton.addEventListener(
+            "click",
+            function (event) {
+                event.stopPropagation();
+
+                const panneauEtaitOuvert =
+                    !notificationPanel.hasAttribute("hidden");
+
+                // Fermer le menu du profil
+                fermerMenuProfil();
+
+                // Fermer la recherche sur mobile
+                if (
+                    window.innerWidth <= 768 &&
+                    searchContainer
+                ) {
+                    searchContainer.classList.remove("active");
+                }
+
+                if (panneauEtaitOuvert) {
+                    fermerNotifications();
+                } else {
+                    notificationPanel.removeAttribute("hidden");
+
+                    notificationButton.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+                }
+            }
+        );
+
+        notificationPanel.addEventListener(
+            "click",
+            function (event) {
+                event.stopPropagation();
+            }
+        );
+    }
+
+
+    // CLIQUER EN DEHORS
+
+    document.addEventListener(
+        "click",
+        function () {
+            fermerMenuProfil();
+            fermerNotifications();
+        }
+    );
+
+
+    // TOUCHE ÉCHAP
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Escape") {
+                fermerMenuProfil();
+                fermerNotifications();
+            }
+        }
+    );
+}
+
+
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initialiserMenusHeader
+    );
+} else {
+    initialiserMenusHeader();
 }
 
 if (document.readyState === "loading") {
