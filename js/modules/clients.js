@@ -1,4 +1,26 @@
-document.addEventListener("DOMContentLoaded", () => {
+function initialiserDeconnexion() {
+    const logoutButton =
+        document.getElementById("logout-button");
+
+    if (!logoutButton) {
+        return;
+    }
+
+    logoutButton.addEventListener(
+        "click",
+        function (event) {
+            event.preventDefault();
+            logoutUser();
+        }
+    );
+}
+
+function initialiserClients() {
+
+    requireAuth();
+
+    initialiserDeconnexion();
+
     const openModalBtn = document.getElementById("new-client-btn");
     const openToolbarBtn = document.getElementById("new-client-toolbar-btn");
     const closeModalBtn = document.getElementById("close-client-modal");
@@ -25,4 +47,13 @@ document.addEventListener("DOMContentLoaded", () => {
             closeModal();
         }
     });
-});
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initialiserClients
+    );
+} else {
+    initialiserClients();
+}
