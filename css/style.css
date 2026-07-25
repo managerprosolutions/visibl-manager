@@ -748,3 +748,76 @@ body {
 .delete-btn:hover {
     background: #fee2e2;
 }
+
+/* ========================================
+   NOTIFICATIONS
+======================================== */
+
+.notification-menu {
+    position: relative;
+}
+
+.notification-panel {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 340px;
+    max-width: calc(100vw - 30px);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    z-index: 3000;
+}
+
+.notification-panel[hidden] {
+    display: none !important;
+}
+
+.notification-panel-header {
+    padding: 15px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.notification-panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background: #f8fafc;
+}
+
+.notification-item-icon {
+    font-size: 20px;
+}
+
+.notification-item strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.notification-item p {
+    margin: 0 0 5px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.notification-item small {
+    font-size: 11px;
+    color: #94a3b8;
+}
