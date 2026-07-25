@@ -33,11 +33,17 @@ if (profileBtn) {
         e.stopPropagation();
 
         // Sur mobile, fermer la recherche si elle existe
-if (window.innerWidth <= 768 && searchContainer) {
-    searchContainer.classList.remove("active");
-}
+        if (window.innerWidth <= 768 && searchContainer) {
+            searchContainer.classList.remove("active");
+        }
 
-profileMenu.classList.toggle("active");
+        const notificationPanel = document.getElementById("notification-panel");
+
+        if (notificationPanel) {
+            notificationPanel.setAttribute("hidden", "");
+        }
+
+        profileMenu.classList.toggle("active");
     });
 
     // Fermer le menu en cliquant ailleurs
