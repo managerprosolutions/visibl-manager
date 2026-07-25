@@ -1,397 +1,485 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Mon compte | VISIBL</title>
+<title>Tableau de bord</title>
 
-    <link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/dashboard.css">
+
 </head>
 
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <!-- ========================================
-             SIDEBAR
-        ======================================== -->
+    <!-- ========================================
+         SIDEBAR
+    ======================================== -->
 
-        <aside id="sidebar" class="sidebar">
+    <aside id="sidebar" class="sidebar">
 
-            <button id="sidebar-close" class="sidebar-close">
-                ✖
-            </button>
+        <button id="sidebar-close" class="sidebar-close">
+            ✖
+        </button>
 
-            <a href="dashboard.html" class="logo">
-                <img src="../logo-vizibl.png" alt="Logo VISIBL">
-            </a>
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo VISIBL">
+        </a>
 
-            <nav>
-                <ul>
+        <nav>
+            <ul>
 
-                    <li>
-                        <a href="dashboard.html" class="nav-link">
-                            📊 Tableau de bord
-                        </a>
-                    </li>
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
 
-                    <!-- COMMERCIAL -->
+                <li class="menu-category">
 
-                    <li class="menu-category">
-
-                        <a href="#" class="nav-link category-title">
-                            <span>🛒 Commercial</span>
-                            <span class="arrow">▼</span>
-                        </a>
-
-                        <ul class="submenu">
-
-                            <li>
-                                <a href="ventes.html" class="nav-link">
-                                    Ventes
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="commandes.html" class="nav-link">
-                                    Commandes
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="clients.html" class="nav-link">
-                                    Clients
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="livraisons.html" class="nav-link">
-                                    Livraisons
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="livreurs.html" class="nav-link">
-                                    Livreurs
-                                </a>
-                            </li>
-
-                        </ul>
-
-                    </li>
-
-                    <!-- STOCK ET APPROVISIONNEMENT -->
-
-                    <li class="menu-category">
-
-                        <a href="#" class="nav-link category-title">
-                            <span>📦 Stock & Approvisionnement</span>
-                            <span class="arrow">▼</span>
-                        </a>
-
-                        <ul class="submenu">
-
-                            <li>
-                                <a href="produits.html" class="nav-link">
-                                    Produits
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="approvisionnements.html" class="nav-link">
-                                    Approvisionnements
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="fournisseurs.html" class="nav-link">
-                                    Fournisseurs
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="transitaires.html" class="nav-link">
-                                    Transitaires
-                                </a>
-                            </li>
-
-                        </ul>
-
-                    </li>
-
-                    <!-- FINANCE -->
-
-                    <li class="menu-category">
-
-                        <a href="#" class="nav-link category-title">
-                            <span>💰 Finance</span>
-                            <span class="arrow">▼</span>
-                        </a>
-
-                        <ul class="submenu">
-
-                            <li>
-                                <a href="caisse.html" class="nav-link">
-                                    Caisse
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="paiements.html" class="nav-link">
-                                    Paiements
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="factures.html" class="nav-link">
-                                    Factures
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="comptabilité.html" class="nav-link">
-                                    Comptabilité
-                                </a>
-                            </li>
-
-                        </ul>
-
-                    </li>
-
-                    <li>
-                        <a href="rapports.html" class="nav-link">
-                            📈 Rapports
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="paramètres.html" class="nav-link">
-                            ⚙️ Paramètres
-                        </a>
-                    </li>
-
-                </ul>
-            </nav>
-
-        </aside>
-
-        <!-- ========================================
-             CONTENU PRINCIPAL
-        ======================================== -->
-
-        <main class="main-content">
-
-            <!-- ========================================
-                 HEADER
-            ======================================== -->
-
-            <header class="header">
-
-                <div class="header-left">
-
-                    <button id="sidebar-toggle" class="sidebar-toggle">
-                        ☰
-                    </button>
-
-                    <a href="dashboard.html" class="logo">
-                        <img src="../logo-vizibl.png" alt="Logo VISIBL">
+                    <a href="#" class="nav-link category-title">
+                        <span>🛒 Commercial</span>
+                        <span class="arrow">▼</span>
                     </a>
 
-                    <h2>Mon compte</h2>
+                    <ul class="submenu">
+                        <li>
+                            <a href="ventes.html" class="nav-link">Ventes</a>
+                        </li>
+
+                        <li>
+                            <a href="commandes.html" class="nav-link">Commandes</a>
+                        </li>
+
+                        <li>
+                            <a href="clients.html" class="nav-link">Clients</a>
+                        </li>
+
+                        <li>
+                            <a href="livraisons.html" class="nav-link">Livraisons</a>
+                        </li>
+
+                        <li>
+                            <a href="livreurs.html" class="nav-link">Livreurs</a>
+                        </li>
+                    </ul>
+
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>📦 Stock & Approvisionnement</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+                        <li>
+                            <a href="produits.html" class="nav-link">Produits</a>
+                        </li>
+
+                        <li>
+                            <a href="approvisionnements.html" class="nav-link">
+                                Approvisionnements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="fournisseurs.html" class="nav-link">Fournisseurs</a>
+                        </li>
+
+                        <li>
+                            <a href="transitaires.html" class="nav-link">Transitaires</a>
+                        </li>
+                    </ul>
+
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>💰 Finance</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+                        <li>
+                            <a href="caisse.html" class="nav-link">Caisse</a>
+                        </li>
+
+                        <li>
+                            <a href="paiements.html" class="nav-link">Paiements</a>
+                        </li>
+
+                        <li>
+                            <a href="factures.html" class="nav-link">Factures</a>
+                        </li>
+
+                        <li>
+                            <a href="comptabilité.html" class="nav-link">Comptabilité</a>
+                        </li>
+                    </ul>
+
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="paramètres.html" class="nav-link">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </aside>
+
+    <!-- ========================================
+         CONTENU PRINCIPAL
+    ======================================== -->
+
+    <main class="main-content">
+
+        <!-- ========================================
+             HEADER
+        ======================================== -->
+
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
+                </a>
+
+                <h2>Bienvenue</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="header-icons">
+
+                    <button class="icon-btn notifications">
+                        🔔
+                        <span class="notification-badge">3</span>
+                    </button>
+
+                    <div class="profile-menu">
+
+<button class="icon-btn" type="button">
+    👤
+</button>
+
+<div class="dropdown-menu">
+    <a href="moncompte.html">Mon compte</a>
+
+    <hr>
+
+    <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+</div>
+
+</div>
 
                 </div>
 
-                <div class="header-right">
+            </div>
 
-                    <div class="header-icons">
+        </header>
 
-                        <!-- Notifications -->
+        <!-- ========================================
+             CONTENU DU DASHBOARD
+        ======================================== -->
 
-                        <button
-                            class="icon-btn notifications"
-                            type="button"
-                            title="Notifications"
-                        >
-                            🔔
-                            <span class="notification-badge">3</span>
-                        </button>
+        <section class="content">
 
-                        <!-- Menu du compte -->
+            <div class="welcome-section">
+<h2>
+    Bienvenue,
+    <span id="user-name">Utilisateur</span>
+</h2>
 
-                        <div class="profile-menu">
+<p>
+    <span id="user-role">Rôle utilisateur</span>
+    — Tableau de bord VISIBL
+</p>
 
-                            <button
-                                class="icon-btn"
-                                type="button"
-                                title="Compte utilisateur"
-                            >
-                                👤
-                            </button>
+</div>
 
-                            <div class="dropdown-menu">
+            <!-- ========================================
+                 KPI PRINCIPAUX
+            ======================================== -->
 
-                                <a href="moncompte.html">
-                                    Mon compte
-                                </a>
+            <div class="dashboard-grid">
 
-                                <hr>
+                <div class="card">
 
-                                <a
-                                    href="#"
-                                    class="logout"
-                                    id="logout-button"
-                                >
-                                    Déconnexion
-                                </a>
+                    <div class="card-icon income">
+                        💰
+                    </div>
 
+                    <div class="card-content">
+                        <h3>Revenus</h3>
+
+                        <div class="card-value" id="revenus-value">
+                            0 FCFA
+                        </div>
+
+                        <span class="card-trend up" id="revenus-trend"></span>
+                    </div>
+
+                </div>
+
+                <div class="card">
+
+                    <div class="card-icon orders">
+                        📦
+                    </div>
+
+                    <div class="card-content">
+                        <h3>Commandes</h3>
+
+                        <div class="card-value" id="commandes-value">
+                            0
+                        </div>
+
+                        <span class="card-trend up" id="commandes-trend"></span>
+                    </div>
+
+                </div>
+
+                <div class="card">
+
+                    <div class="card-icon products">
+                        🛍️
+                    </div>
+
+                    <div class="card-content">
+                        <h3>Produits</h3>
+
+                        <div class="card-value" id="produits-value">
+                            0
+                        </div>
+
+                        <span class="card-trend up" id="produits-trend"></span>
+                    </div>
+
+                </div>
+
+                <div class="card">
+
+                    <div class="card-icon clients">
+                        👥
+                    </div>
+
+                    <div class="card-content">
+                        <h3>Clients</h3>
+
+                        <div class="card-value" id="clients-value">
+                            0
+                        </div>
+
+                        <span class="card-trend down" id="clients-trend"></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ========================================
+                 KPI SECONDAIRES
+            ======================================== -->
+
+            <div class="recent-statistics">
+
+                <h3>Statistiques récentes</h3>
+
+                <p class="statistics-description">
+                    Voici un aperçu des performances de votre entreprise
+                    au cours de la dernière période.
+                </p>
+
+                <div class="dashboard-grid">
+
+                    <div class="card">
+
+                        <div class="card-icon income">
+                            📊
+                        </div>
+
+                        <div class="card-content">
+                            <h3>Taux de conversion</h3>
+
+                            <div class="card-value" id="conversion-value">
+                                0%
                             </div>
 
+                            <span
+                                class="card-trend up"
+                                id="conversion-trend">
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="card">
+
+                        <div class="card-icon orders">
+                            🚚
+                        </div>
+
+                        <div class="card-content">
+                            <h3>Livraisons</h3>
+
+                            <div class="card-value" id="livraisons-value">
+                                0
+                            </div>
+
+                            <span
+                                class="card-trend up"
+                                id="livraisons-trend">
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="card">
+
+                        <div class="card-icon products">
+                            💳
+                        </div>
+
+                        <div class="card-content">
+                            <h3>Paiements</h3>
+
+                            <div class="card-value" id="paiements-value">
+                                0 FCFA
+                            </div>
+
+                            <span
+                                class="card-trend up"
+                                id="paiements-trend">
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="card">
+
+                        <div class="card-icon clients">
+                            📋
+                        </div>
+
+                        <div class="card-content">
+                            <h3>Factures</h3>
+
+                            <div class="card-value" id="factures-value">
+                                0
+                            </div>
+
+                            <span
+                                class="card-trend up"
+                                id="factures-trend">
+                            </span>
                         </div>
 
                     </div>
 
                 </div>
 
-            </header>
+            </div>
 
             <!-- ========================================
-                 CONTENU DE LA PAGE MON COMPTE
+                 GRAPHIQUES DU DASHBOARD
             ======================================== -->
 
-            <section class="content">
+            <section class="dashboard-charts">
 
-                <div class="welcome-section">
+                <!-- Graphique des revenus -->
 
-                    <h2>Mon compte</h2>
+                <div class="chart-card chart-card-large">
 
-                    <p>
-                        Consultez les informations liées à votre compte utilisateur.
-                    </p>
+                    <div class="chart-header">
+
+                        <div>
+                            <h2>Évolution des revenus</h2>
+                            <p>Revenus des six derniers mois</p>
+                        </div>
+
+                        <select id="periode-revenus">
+                            <option value="6">
+                                6 derniers mois
+                            </option>
+
+                            <option value="12">
+                                12 derniers mois
+                            </option>
+                        </select>
+
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="revenus-chart"></canvas>
+                    </div>
 
                 </div>
 
-                <div class="card">
+                <!-- Graphique de répartition des ventes -->
 
-                    <div class="card-content">
+                <div class="chart-card chart-card-small">
 
-                        <h3>Informations personnelles</h3>
+                    <div class="chart-header">
 
-                        <p>
-                            <strong>Nom complet :</strong>
-                            <span id="account-name">Utilisateur</span>
-                        </p>
+                        <div>
+                            <h2>Répartition des ventes</h2>
+                            <p>Ventes par catégorie</p>
+                        </div>
 
-                        <p>
-                            <strong>Email :</strong>
-                            <span id="account-email">Non renseigné</span>
-                        </p>
+                    </div>
 
-                        <p>
-                            <strong>Rôle :</strong>
-                            <span id="account-role">Utilisateur</span>
-                        </p>
-
-                        <p>
-                            <strong>Statut :</strong>
-                            <span id="account-status">Non renseigné</span>
-                        </p>
-
-                        <p>
-                            Les fonctions de modification du profil et du mot
-                            de passe seront ajoutées prochainement.
-                        </p>
-
+                    <div class="chart-container">
+                        <canvas id="ventes-chart"></canvas>
                     </div>
 
                 </div>
 
             </section>
 
-        </main>
+        </section>
 
-    </div>
+    </main>
 
-    <!-- ========================================
-         SCRIPTS
-    ======================================== -->
+</div>
 
-    <script src="../js/api.js"></script>
-    <script src="../js/auth.js"></script>
-    <script src="../js/app.js"></script>
+<!-- ========================================
+     SCRIPTS
+======================================== -->
 
-    <script>
-        function initialiserPageMonCompte() {
-            requireAuth();
+<script src="../js/api.js"></script>
 
-            const utilisateur = getCurrentUser();
+<script src="../js/auth.js"></script>
 
-            if (!utilisateur) {
-                return;
-            }
+<script src="../js/app.js"></script>
 
-            const accountName =
-                document.getElementById("account-name");
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-            const accountEmail =
-                document.getElementById("account-email");
-
-            const accountRole =
-                document.getElementById("account-role");
-
-            const accountStatus =
-                document.getElementById("account-status");
-
-            if (accountName) {
-                accountName.textContent =
-                    utilisateur.nomComplet ||
-                    `${utilisateur.prenom || ""} ${utilisateur.nom || ""}`.trim() ||
-                    "Utilisateur";
-            }
-
-            if (accountEmail) {
-                accountEmail.textContent =
-                    utilisateur.email ||
-                    "Non renseigné";
-            }
-
-            if (accountRole) {
-                accountRole.textContent =
-                    utilisateur.role ||
-                    "Utilisateur";
-            }
-
-            if (accountStatus) {
-                accountStatus.textContent =
-                    utilisateur.statut ||
-                    "Non renseigné";
-            }
-
-            const logoutButton =
-                document.getElementById("logout-button");
-
-            if (logoutButton) {
-                logoutButton.addEventListener(
-                    "click",
-                    function (event) {
-                        event.preventDefault();
-                        logoutUser();
-                    }
-                );
-            }
-        }
-
-        if (document.readyState === "loading") {
-            document.addEventListener(
-                "DOMContentLoaded",
-                initialiserPageMonCompte
-            );
-        } else {
-            initialiserPageMonCompte();
-        }
-    </script>
+<script src="../js/dashboard.js"></script>
 
 </body>
-
 </html>
