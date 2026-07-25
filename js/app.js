@@ -190,3 +190,70 @@ searchContainer.classList.toggle("active");
     });
 
 }
+
+// ========================================
+// NOTIFICATIONS
+// ========================================
+
+function initialiserNotifications() {
+    const bouton =
+        document.getElementById("notification-button");
+
+    const panneau =
+        document.getElementById("notification-panel");
+
+    if (!bouton || !panneau) {
+        return;
+    }
+
+    bouton.addEventListener("click", function (event) {
+        event.stopPropagation();
+
+        const panneauFerme =
+            panneau.hasAttribute("hidden");
+
+        if (panneauFerme) {
+            panneau.removeAttribute("hidden");
+        } else {
+            panneau.setAttribute("hidden", "");
+        }
+
+        bouton.setAttribute(
+            "aria-expanded",
+            String(panneauFerme)
+        );
+    });
+
+    panneau.addEventListener("click", function (event) {
+        event.stopPropagation();
+    });
+
+    document.addEventListener("click", function () {
+        panneau.setAttribute("hidden", "");
+
+        bouton.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            panneau.setAttribute("hidden", "");
+
+            bouton.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initialiserNotifications
+    );
+} else {
+    initialiserNotifications();
+}
