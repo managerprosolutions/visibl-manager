@@ -315,7 +315,7 @@ function afficherGraphiqueVentes() {
 // INITIALISATION DU DASHBOARD
 // ========================================
 
-function initialiserDashboard() {
+async function initialiserDashboard() {
     if (!requireAuth()) {
         return;
     }
@@ -324,6 +324,14 @@ function initialiserDashboard() {
 
     afficherInformationsUtilisateur(utilisateurConnecte);
     initialiserDeconnexion();
+
+    await chargerPermissionsUtilisateur();
+
+    if (!protegerPage("Dashboard", "Voir")) {
+        return;
+    }
+
+    appliquerPermissionsMenu();
 
     afficherKPIPrincipaux();
     afficherKPISecondaires();
