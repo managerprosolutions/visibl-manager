@@ -11,45 +11,240 @@
 
     <title>Mon compte | VISIBL</title>
 
-    <link
-        rel="stylesheet"
-        href="../css/styles.css"
-    >
+    <!-- CSS commun à toutes les pages -->
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 
 <body>
 
-    <main class="main-content">
+    <div class="app-container">
 
-        <div class="page-header">
-            <div>
-                <h1>Mon compte</h1>
-                <p>Informations de votre compte utilisateur.</p>
+        <!-- ========================================
+             SIDEBAR
+        ========================================= -->
+
+        <aside class="sidebar">
+
+            <div class="sidebar-header">
+                <h2>VISIBL</h2>
             </div>
 
-            <a href="dashboard.html" class="btn">
-                Retour au dashboard
-            </a>
+            <nav class="sidebar-menu">
+
+                <a href="dashboard.html" class="menu-item">
+                    <span>📊</span>
+                    <span>Tableau de bord</span>
+                </a>
+
+                <a href="clients.html" class="menu-item">
+                    <span>👥</span>
+                    <span>Clients</span>
+                </a>
+
+                <a href="fournisseurs.html" class="menu-item">
+                    <span>🏢</span>
+                    <span>Fournisseurs</span>
+                </a>
+
+                <a href="produits.html" class="menu-item">
+                    <span>📦</span>
+                    <span>Produits</span>
+                </a>
+
+                <a href="ventes.html" class="menu-item">
+                    <span>🛒</span>
+                    <span>Ventes</span>
+                </a>
+
+                <a href="parametres.html" class="menu-item">
+                    <span>⚙️</span>
+                    <span>Paramètres</span>
+                </a>
+
+            </nav>
+
+        </aside>
+
+
+        <!-- ========================================
+             CONTENU PRINCIPAL
+        ========================================= -->
+
+        <div class="main-wrapper">
+
+            <!-- HEADER -->
+
+            <header class="top-header">
+
+                <div class="header-left">
+                    <h1>Mon compte</h1>
+                </div>
+
+                <div class="header-right">
+
+                    <!-- Notifications -->
+
+                    <button
+                        class="icon-btn"
+                        type="button"
+                        title="Notifications"
+                    >
+                        🔔
+                    </button>
+
+                    <!-- Menu utilisateur -->
+
+                    <div class="profile-menu">
+
+                        <button class="icon-btn" type="button">
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a
+                                href="#"
+                                class="logout"
+                                id="logout-button"
+                            >
+                                Déconnexion
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- CONTENU DE LA PAGE -->
+
+            <main class="main-content">
+
+                <div class="page-header">
+
+                    <div>
+                        <h2>Mon compte</h2>
+
+                        <p>
+                            Consultez les informations liées à votre compte utilisateur.
+                        </p>
+                    </div>
+
+                </div>
+
+                <section class="content-card">
+
+                    <h3>Informations personnelles</h3>
+
+                    <div class="account-information">
+
+                        <p>
+                            <strong>Nom :</strong>
+                            <span id="account-name">Utilisateur</span>
+                        </p>
+
+                        <p>
+                            <strong>Email :</strong>
+                            <span id="account-email">Non renseigné</span>
+                        </p>
+
+                        <p>
+                            <strong>Rôle :</strong>
+                            <span id="account-role">Utilisateur</span>
+                        </p>
+
+                    </div>
+
+                    <p>
+                        Les fonctionnalités de modification du compte seront ajoutées prochainement.
+                    </p>
+
+                </section>
+
+            </main>
+
         </div>
 
-        <section class="content-card">
+    </div>
 
-            <h2>Informations personnelles</h2>
 
-            <p>
-                Cette page sera développée prochainement.
-            </p>
+    <!-- ========================================
+         SCRIPTS
+    ========================================= -->
 
-        </section>
-
-    </main>
-
+    <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        function initialiserPageMonCompte() {
             requireAuth();
-        });
+
+            const utilisateur = getCurrentUser();
+
+            if (!utilisateur) {
+                return;
+            }
+
+            const nomElement =
+                document.getElementById("account-name");
+
+            const emailElement =
+                document.getElementById("account-email");
+
+            const roleElement =
+                document.getElementById("account-role");
+
+            if (nomElement) {
+                nomElement.textContent =
+                    utilisateur.nomComplet ||
+                    utilisateur.nom ||
+                    "Utilisateur";
+            }
+
+            if (emailElement) {
+                emailElement.textContent =
+                    utilisateur.email ||
+                    "Non renseigné";
+            }
+
+            if (roleElement) {
+                roleElement.textContent =
+                    utilisateur.role ||
+                    "Utilisateur";
+            }
+
+            const logoutButton =
+                document.getElementById("logout-button");
+
+            if (logoutButton) {
+                logoutButton.addEventListener(
+                    "click",
+                    function (event) {
+                        event.preventDefault();
+                        logoutUser();
+                    }
+                );
+            }
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener(
+                "DOMContentLoaded",
+                initialiserPageMonCompte
+            );
+        } else {
+            initialiserPageMonCompte();
+        }
     </script>
 
 </body>
