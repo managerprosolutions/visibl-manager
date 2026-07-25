@@ -8,7 +8,7 @@
     <title>Clients</title>
 
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/clients.css">>
+    <link rel="stylesheet" href="../css/clients.css">
 </head>
 
 <body>
@@ -540,10 +540,10 @@
                         <th>Contact</th>
                         <th>Commune</th>
                         <th>Type</th>
-                        <th>Dernier achat</th>
+                        <th>Date d’inscription</th>
                         <th>Commandes</th>
                         <th>Total achats</th>
-                        <th>Solde</th>
+                        <th>Quartier</th>
                         <th>Statut</th>
                         <th>Actions</th>
                     </tr>
@@ -928,18 +928,12 @@
             <div class="modal-header">
 
                 <div>
-
-                    <h2 id="client-modal-title">
-                        Nouveau client
-                    </h2>
-
-                    <p>
-                        Renseignez les informations du client.
-                    </p>
-
+                    <h2 id="client-modal-title">Nouveau client</h2>
+                    <p>Renseignez les informations du client.</p>
                 </div>
 
                 <button
+                    type="button"
                     class="modal-close"
                     id="close-client-modal"
                     aria-label="Fermer la fenêtre"
@@ -948,7 +942,6 @@
                 </button>
 
             </div>
-
 
             <form id="client-form">
 
@@ -959,17 +952,14 @@
 
                         <div class="form-section-header">
 
-                            <span class="form-section-icon">
-                                👤
-                            </span>
+                            <span class="form-section-icon">👤</span>
 
                             <div>
                                 <h3>Informations générales</h3>
-                                <p>Identité et catégorie du client</p>
+                                <p>Identité, catégorie et statut du client</p>
                             </div>
 
                         </div>
-
 
                         <div class="form-grid">
 
@@ -980,76 +970,31 @@
                                     <span class="required">*</span>
                                 </label>
 
-                                <select id="client-type" required>
-
-                                    <option value="">
-                                        Sélectionner un type
-                                    </option>
-
-                                    <option value="particulier">
-                                        Particulier
-                                    </option>
-
-                                    <option value="entreprise">
-                                        Entreprise
-                                    </option>
-
-                                    <option value="revendeur">
-                                        Revendeur
-                                    </option>
-
-                                    <option value="client-comptoir">
-                                        Client comptoir
-                                    </option>
-
+                                <select id="client-type" name="typeClient" required>
+                                    <option value="">Sélectionner un type</option>
+                                    <option value="particulier">Particulier</option>
+                                    <option value="entreprise">Entreprise</option>
+                                    <option value="revendeur">Revendeur</option>
+                                    <option value="client-comptoir">Client comptoir</option>
                                 </select>
 
                             </div>
-
 
                             <div class="form-group">
 
                                 <label for="client-status">
                                     Statut
+                                    <span class="required">*</span>
                                 </label>
 
-                                <select id="client-status">
-
-                                    <option value="actif">
-                                        Actif
-                                    </option>
-
-                                    <option value="prospect">
-                                        Prospect
-                                    </option>
-
-                                    <option value="inactif">
-                                        Inactif
-                                    </option>
-
-                                    <option value="bloque">
-                                        Bloqué
-                                    </option>
-
+                                <select id="client-status" name="statut" required>
+                                    <option value="actif">Actif</option>
+                                    <option value="prospect">Prospect</option>
+                                    <option value="inactif">Inactif</option>
+                                    <option value="bloque">Bloqué</option>
                                 </select>
 
                             </div>
-
-
-                            <div class="form-group">
-
-                                <label for="client-firstname">
-                                    Prénom
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="client-firstname"
-                                    placeholder="Exemple : Awa"
-                                >
-
-                            </div>
-
 
                             <div class="form-group">
 
@@ -1061,23 +1006,24 @@
                                 <input
                                     type="text"
                                     id="client-lastname"
+                                    name="nom"
                                     placeholder="Exemple : Traoré"
+                                    autocomplete="family-name"
                                     required
                                 >
 
                             </div>
 
+                            <div class="form-group">
 
-                            <div class="form-group form-group-full">
-
-                                <label for="client-company">
-                                    Entreprise ou raison sociale
-                                </label>
+                                <label for="client-firstname">Prénom</label>
 
                                 <input
                                     type="text"
-                                    id="client-company"
-                                    placeholder="Nom de l’entreprise"
+                                    id="client-firstname"
+                                    name="prenom"
+                                    placeholder="Exemple : Awa"
+                                    autocomplete="given-name"
                                 >
 
                             </div>
@@ -1085,84 +1031,51 @@
                         </div>
 
                     </section>
-
 
                     <!-- ===== Coordonnées ===== -->
                     <section class="form-section">
 
                         <div class="form-section-header">
 
-                            <span class="form-section-icon">
-                                📞
-                            </span>
+                            <span class="form-section-icon">📞</span>
 
                             <div>
                                 <h3>Coordonnées</h3>
-                                <p>Informations de contact du client</p>
+                                <p>Téléphone et adresse email</p>
                             </div>
 
                         </div>
-
 
                         <div class="form-grid">
 
                             <div class="form-group">
 
                                 <label for="client-phone">
-                                    Téléphone principal
+                                    Téléphone
                                     <span class="required">*</span>
                                 </label>
 
                                 <input
                                     type="tel"
                                     id="client-phone"
+                                    name="telephone"
                                     placeholder="07 00 00 00 00"
+                                    autocomplete="tel"
                                     required
                                 >
 
                             </div>
 
-
                             <div class="form-group">
 
-                                <label for="client-secondary-phone">
-                                    Téléphone secondaire
-                                </label>
-
-                                <input
-                                    type="tel"
-                                    id="client-secondary-phone"
-                                    placeholder="05 00 00 00 00"
-                                >
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="client-email">
-                                    Adresse email
-                                </label>
+                                <label for="client-email">Email</label>
 
                                 <input
                                     type="email"
                                     id="client-email"
+                                    name="email"
                                     placeholder="client@email.com"
-                                >
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="client-whatsapp">
-                                    Numéro WhatsApp
-                                </label>
-
-                                <input
-                                    type="tel"
-                                    id="client-whatsapp"
-                                    placeholder="07 00 00 00 00"
+                                    autocomplete="email"
                                 >
 
                             </div>
@@ -1171,149 +1084,67 @@
 
                     </section>
 
-
                     <!-- ===== Adresse ===== -->
                     <section class="form-section">
 
                         <div class="form-section-header">
 
-                            <span class="form-section-icon">
-                                📍
-                            </span>
+                            <span class="form-section-icon">📍</span>
 
                             <div>
                                 <h3>Adresse</h3>
-                                <p>Localisation et adresse du client</p>
+                                <p>Commune, quartier et adresse détaillée</p>
                             </div>
 
                         </div>
-
 
                         <div class="form-grid">
 
                             <div class="form-group">
 
-                                <label for="client-country">
-                                    Pays
-                                </label>
+                                <label for="client-commune">Commune</label>
 
-                                <select id="client-country">
-
-                                    <option value="cote-divoire">
-                                        Côte d’Ivoire
-                                    </option>
-
-                                    <option value="autre">
-                                        Autre
-                                    </option>
-
+                                <select id="client-commune" name="commune">
+                                    <option value="">Sélectionner une commune</option>
+                                    <option value="abobo">Abobo</option>
+                                    <option value="adjame">Adjamé</option>
+                                    <option value="attecoube">Attécoubé</option>
+                                    <option value="cocody">Cocody</option>
+                                    <option value="koumassi">Koumassi</option>
+                                    <option value="marcory">Marcory</option>
+                                    <option value="plateau">Plateau</option>
+                                    <option value="port-bouet">Port-Bouët</option>
+                                    <option value="treichville">Treichville</option>
+                                    <option value="yopougon">Yopougon</option>
+                                    <option value="autre">Autre</option>
                                 </select>
 
                             </div>
 
-
                             <div class="form-group">
 
-                                <label for="client-city">
-                                    Ville
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="client-city"
-                                    value="Abidjan"
-                                    placeholder="Ville"
-                                >
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="client-commune">
-                                    Commune
-                                </label>
-
-                                <select id="client-commune">
-
-                                    <option value="">
-                                        Sélectionner une commune
-                                    </option>
-
-                                    <option value="abobo">
-                                        Abobo
-                                    </option>
-
-                                    <option value="adjame">
-                                        Adjamé
-                                    </option>
-
-                                    <option value="attecoube">
-                                        Attécoubé
-                                    </option>
-
-                                    <option value="cocody">
-                                        Cocody
-                                    </option>
-
-                                    <option value="koumassi">
-                                        Koumassi
-                                    </option>
-
-                                    <option value="marcory">
-                                        Marcory
-                                    </option>
-
-                                    <option value="plateau">
-                                        Plateau
-                                    </option>
-
-                                    <option value="port-bouet">
-                                        Port-Bouët
-                                    </option>
-
-                                    <option value="treichville">
-                                        Treichville
-                                    </option>
-
-                                    <option value="yopougon">
-                                        Yopougon
-                                    </option>
-
-                                    <option value="autre">
-                                        Autre
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="client-neighborhood">
-                                    Quartier
-                                </label>
+                                <label for="client-neighborhood">Quartier</label>
 
                                 <input
                                     type="text"
                                     id="client-neighborhood"
+                                    name="quartier"
                                     placeholder="Exemple : Riviera Anono"
+                                    autocomplete="address-level3"
                                 >
 
                             </div>
 
-
                             <div class="form-group form-group-full">
 
-                                <label for="client-address">
-                                    Adresse détaillée
-                                </label>
+                                <label for="client-address">Adresse</label>
 
                                 <textarea
                                     id="client-address"
+                                    name="adresse"
                                     rows="3"
                                     placeholder="Rue, bâtiment, repère ou indications supplémentaires"
+                                    autocomplete="street-address"
                                 ></textarea>
 
                             </div>
@@ -1322,208 +1153,44 @@
 
                     </section>
 
-
-                    <!-- ===== Informations commerciales ===== -->
+                    <!-- ===== Commentaire ===== -->
                     <section class="form-section">
 
                         <div class="form-section-header">
 
-                            <span class="form-section-icon">
-                                💼
-                            </span>
+                            <span class="form-section-icon">📝</span>
 
                             <div>
-                                <h3>Informations commerciales</h3>
-                                <p>Conditions de vente et suivi client</p>
+                                <h3>Commentaire</h3>
+                                <p>Informations complémentaires sur le client</p>
                             </div>
 
                         </div>
-
-
-                        <div class="form-grid">
-
-                            <div class="form-group">
-
-                                <label for="client-credit-limit">
-                                    Plafond de crédit
-                                </label>
-
-                                <input
-                                    type="number"
-                                    id="client-credit-limit"
-                                    min="0"
-                                    value="0"
-                                    placeholder="0"
-                                >
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="client-payment-delay">
-                                    Délai de paiement
-                                </label>
-
-                                <select id="client-payment-delay">
-
-                                    <option value="comptant">
-                                        Paiement comptant
-                                    </option>
-
-                                    <option value="7">
-                                        7 jours
-                                    </option>
-
-                                    <option value="15">
-                                        15 jours
-                                    </option>
-
-                                    <option value="30">
-                                        30 jours
-                                    </option>
-
-                                    <option value="45">
-                                        45 jours
-                                    </option>
-
-                                    <option value="60">
-                                        60 jours
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="client-source">
-                                    Source du client
-                                </label>
-
-                                <select id="client-source">
-
-                                    <option value="">
-                                        Sélectionner une source
-                                    </option>
-
-                                    <option value="facebook">
-                                        Facebook
-                                    </option>
-
-                                    <option value="linkedin">
-                                        LinkedIn
-                                    </option>
-
-                                    <option value="whatsapp">
-                                        WhatsApp
-                                    </option>
-
-                                    <option value="recommandation">
-                                        Recommandation
-                                    </option>
-
-                                    <option value="passage-boutique">
-                                        Passage en boutique
-                                    </option>
-
-                                    <option value="commercial">
-                                        Prospection commerciale
-                                    </option>
-
-                                    <option value="autre">
-                                        Autre
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="form-group">
-
-                                <label for="client-commercial">
-                                    Commercial responsable
-                                </label>
-
-                                <select id="client-commercial">
-
-                                    <option value="">
-                                        Aucun commercial
-                                    </option>
-
-                                    <option value="commercial-1">
-                                        Commercial 1
-                                    </option>
-
-                                    <option value="commercial-2">
-                                        Commercial 2
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="form-group form-group-full">
-
-                                <label for="client-tags">
-                                    Tags
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="client-tags"
-                                    placeholder="Exemple : VIP, Revendeur, Entreprise"
-                                >
-
-                                <small>
-                                    Séparez les tags par une virgule.
-                                </small>
-
-                            </div>
-
-                        </div>
-
-                    </section>
-
-
-                    <!-- ===== Notes ===== -->
-                    <section class="form-section">
-
-                        <div class="form-section-header">
-
-                            <span class="form-section-icon">
-                                📝
-                            </span>
-
-                            <div>
-                                <h3>Notes</h3>
-                                <p>Informations complémentaires</p>
-                            </div>
-
-                        </div>
-
 
                         <div class="form-group">
 
-                            <label for="client-notes">
-                                Notes internes
-                            </label>
+                            <label for="client-comment">Commentaire</label>
 
                             <textarea
-                                id="client-notes"
+                                id="client-comment"
+                                name="commentaire"
                                 rows="4"
-                                placeholder="Ajoutez des informations utiles concernant ce client..."
+                                placeholder="Ajoutez une information utile concernant ce client..."
                             ></textarea>
 
                         </div>
 
                     </section>
 
-                </div>
+                    <!--
+                        Champs générés automatiquement par le système :
+                        ID Client
+                        Date d’inscription
+                        Nombre de commandes
+                        Montant total achats
+                    -->
 
+                </div>
 
                 <div class="modal-footer">
 
