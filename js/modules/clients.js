@@ -20,12 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
     closeModalBtn?.addEventListener("click", closeModal);
     cancelModalBtn?.addEventListener("click", closeModal);
 
-    clientModal?.addEventListener("click", (event) => {
-        if (event.target === clientModal) {
-            closeModal();
-        }
-    });
-
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
             closeModal();
