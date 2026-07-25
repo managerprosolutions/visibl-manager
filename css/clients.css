@@ -476,6 +476,15 @@
     line-height: 1.6;
 }
 
+/* ===== LIGNE VIDE DU TABLEAU ===== */
+
+.empty-table {
+    padding: 40px 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    font-style: italic;
+
 /* ===== PAGINATION ===== */
 
 .table-pagination {
