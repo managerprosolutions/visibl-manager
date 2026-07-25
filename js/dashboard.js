@@ -325,11 +325,11 @@ async function initialiserDashboard() {
     afficherInformationsUtilisateur(utilisateurConnecte);
     initialiserDeconnexion();
 
-    afficherKPIPrincipaux();
-    afficherKPISecondaires();
-    afficherGraphiqueRevenus();
-    afficherGraphiqueVentes();
-}
+    await chargerPermissionsUtilisateur();
+
+    if (!protegerPage("Dashboard", "Voir")) {
+        return;
+    }
 
     appliquerPermissionsMenu();
 
