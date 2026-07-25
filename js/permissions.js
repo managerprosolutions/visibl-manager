@@ -28,6 +28,8 @@ async function chargerPermissionsUtilisateur() {
 
     const permissions = resultat.permissions || [];
 
+    console.log("Permissions chargées :", permissions);
+    
     localStorage.setItem(
       PERMISSIONS_STORAGE_KEY,
       JSON.stringify(permissions)
