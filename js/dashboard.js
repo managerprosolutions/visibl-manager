@@ -316,11 +316,13 @@ function afficherGraphiqueVentes() {
 // ========================================
 
 function initialiserDashboard() {
-    if (!requireAuth()) {
-        return;
-    }
+    requireAuth();
 
     const utilisateurConnecte = getCurrentUser();
+
+    if (!utilisateurConnecte) {
+        return;
+    }
 
     afficherInformationsUtilisateur(utilisateurConnecte);
     initialiserDeconnexion();
@@ -392,7 +394,11 @@ function initialiserDeconnexion() {
 // DÉMARRAGE
 // ========================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    initialiserDashboard
-);
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initialiserDashboard
+    );
+} else {
+    initialiserDashboard();
+}
