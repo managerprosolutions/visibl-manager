@@ -213,22 +213,27 @@ function initialiserNotifications() {
     }
 
     bouton.addEventListener("click", function (event) {
-        event.stopPropagation();
+    event.stopPropagation();
 
-        const panneauFerme =
-            panneau.hasAttribute("hidden");
+    // Fermer le menu profil s'il est ouvert
+    if (profileMenu) {
+        profileMenu.classList.remove("active");
+    }
 
-        if (panneauFerme) {
-            panneau.removeAttribute("hidden");
-        } else {
-            panneau.setAttribute("hidden", "");
-        }
+    const panneauFerme =
+        panneau.hasAttribute("hidden");
 
-        bouton.setAttribute(
-            "aria-expanded",
-            String(panneauFerme)
-        );
-    });
+    if (panneauFerme) {
+        panneau.removeAttribute("hidden");
+    } else {
+        panneau.setAttribute("hidden", "");
+    }
+
+    bouton.setAttribute(
+        "aria-expanded",
+        String(panneauFerme)
+    );
+});
 
     panneau.addEventListener("click", function (event) {
         event.stopPropagation();
