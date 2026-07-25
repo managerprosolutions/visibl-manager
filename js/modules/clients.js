@@ -1,8 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const openModalBtn = document.getElementById("openClientModal");
-    const closeModalBtn = document.getElementById("closeClientModal");
-    const cancelModalBtn = document.getElementById("cancelClientModal");
-    const clientModal = document.getElementById("clientModal");
+    const openModalBtn = document.getElementById("new-client-btn");
+    const openToolbarBtn = document.getElementById("new-client-toolbar-btn");
+    const closeModalBtn = document.getElementById("close-client-modal");
+    const cancelModalBtn = document.getElementById("cancel-client-btn");
+    const clientModal = document.getElementById("client-modal");
 
     function openModal() {
         clientModal.classList.add("active");
@@ -15,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     openModalBtn?.addEventListener("click", openModal);
+    openToolbarBtn?.addEventListener("click", openModal);
     closeModalBtn?.addEventListener("click", closeModal);
     cancelModalBtn?.addEventListener("click", closeModal);
 
