@@ -96,13 +96,21 @@ async function enregistrerClient(event) {
 
         if (resultat.success) {
 
-            alert(resultat.message);
+    showToast(resultat.message, "success");
 
-            clientForm.reset();
+    clientForm.reset();
 
-        } else {
+    document
+        .getElementById("client-modal")
+        .classList.remove("active");
 
-            alert(resultat.message);
+    document
+        .getElementById("client-modal")
+        .setAttribute("aria-hidden", "true");
+
+} else {
+
+            showToast(resultat.message, "success");
 
         }
 
@@ -110,7 +118,7 @@ async function enregistrerClient(event) {
 
         console.error(error);
 
-        alert("Impossible de communiquer avec le serveur.");
+        showToast("Impossible de communiquer avec le serveur.", "error");
 
     }
 
