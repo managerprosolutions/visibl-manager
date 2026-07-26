@@ -57,3 +57,61 @@ if (document.readyState === "loading") {
 } else {
     initialiserClients();
 }
+
+// ========================================
+// ENREGISTREMENT D'UN CLIENT
+// ========================================
+
+const clientForm =
+    document.getElementById("client-form");
+
+clientForm?.addEventListener(
+    "submit",
+    enregistrerClient
+);
+
+async function enregistrerClient(event) {
+
+    event.preventDefault();
+
+    const data = {
+        nom: document.getElementById("client-lastname").value.trim(),
+        prenom: document.getElementById("client-firstname").value.trim(),
+        telephone: document.getElementById("client-phone").value.trim(),
+        email: document.getElementById("client-email").value.trim(),
+        commune: document.getElementById("client-commune").value,
+        quartier: document.getElementById("client-neighborhood").value.trim(),
+        typeClient: document.getElementById("client-type").value,
+        statut: document.getElementById("client-status").value,
+        commentaire: document.getElementById("client-comment").value.trim()
+    };
+
+    try {
+
+        const resultat =
+            await apiPost(
+                "createClient",
+                data
+            );
+
+        if (resultat.success) {
+
+            alert(resultat.message);
+
+            clientForm.reset();
+
+        } else {
+
+            alert(resultat.message);
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Impossible de communiquer avec le serveur.");
+
+    }
+
+}
