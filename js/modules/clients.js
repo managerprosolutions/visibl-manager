@@ -21,6 +21,8 @@ function initialiserClients() {
 
     initialiserDeconnexion();
 
+    chargerClients();
+
     const openModalBtn = document.getElementById("new-client-btn");
     const openToolbarBtn = document.getElementById("new-client-toolbar-btn");
     const closeModalBtn = document.getElementById("close-client-modal");
@@ -100,6 +102,8 @@ async function enregistrerClient(event) {
 
     clientForm.reset();
 
+    await chargerClients();        
+
     document
         .getElementById("client-modal")
         .classList.remove("active");
@@ -110,7 +114,7 @@ async function enregistrerClient(event) {
 
 } else {
 
-            showToast(resultat.message, "success");
+            showToast(resultat.message, "error");
 
         }
 
@@ -122,4 +126,102 @@ async function enregistrerClient(event) {
 
     }
 
+}
+
+// ========================================
+// CHARGEMENT DES CLIENTS
+// ========================================
+
+async function chargerClients() {
+
+    try {
+
+        const resultat = await apiGet("getClients");
+
+        if (!resultat.success) {
+            showToast(
+                resultat.message || "Impossible de charger les clients.",
+                "error"
+            );
+            return;
+        }
+
+        afficherClients(resultat.clients || []);
+
+    } catch (error) {
+
+        console.error("Erreur chargement clients :", error);
+
+        showToast(
+            "Impossible de charger la liste des clients.",
+            "error"
+        );
+    }
+}
+
+
+function afficherClients(clients) {
+
+    const tbody = document.getElementById("clients-table-body");
+    const emptyState = document.getElementById("clients-empty-state");
+
+    if (!tbody) {
+        console.error(
+            'Le tableau doit contenir un tbody avec id="clients-table-body".'
+        );
+        return;
+    }
+
+    tbody.innerHTML = "";
+
+    if (clients.length === 0) {
+
+        if (emptyState) {
+            emptyState.style.display = "";
+        }
+
+        return;
+    }
+
+    if (emptyState) {
+        emptyState.style.display = "none";
+    }
+
+    clients.forEach(client => {
+
+        const ligne = document.createElement("tr");
+
+        ligne.innerHTML = `
+            <td>${echapperHTML(client.idClient)}</td>
+            <td>${echapperHTML(client.nom)}</td>
+            <td>${echapperHTML(client.prenom)}</td>
+            <td>${echapperHTML(client.telephone)}</td>
+            <td>${echapperHTML(client.email)}</td>
+            <td>${echapperHTML(client.commune)}</td>
+            <td>${echapperHTML(client.typeClient)}</td>
+            <td>${echapperHTML(client.statut)}</td>
+            <td>
+                <button
+                    type="button"
+                    class="table-action-btn"
+                    data-client-id="${echapperHTML(client.idClient)}"
+                >
+                    Voir
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(ligne);
+    });
+}
+
+
+function echapperHTML(valeur) {
+
+    return String(valeur ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
