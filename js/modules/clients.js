@@ -226,12 +226,12 @@ function afficherClients(clients) {
             </td>
 
             <td>
-                ${echapperHTML(client.commune)}
-            </td>
+    ${echapperHTML(mettreMajuscule(client.commune))}
+</td>
 
             <td>
-                ${echapperHTML(client.typeClient)}
-            </td>
+    ${echapperHTML(mettreMajuscule(client.typeClient))}
+</td>
 
             <td>
                 ${formaterDateClient(client.dateInscription)}
