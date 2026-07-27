@@ -983,119 +983,129 @@
 
     <!-- ===== Fenêtre Voir client ===== -->
     <div class="modal-overlay" id="view-client-modal" aria-hidden="true">
+        <div class="modal view-client-modal" role="dialog" aria-modal="true" aria-labelledby="view-client-modal-title">
 
-        <div
-            class="modal view-client-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="view-client-modal-title"
-        >
+            <div class="view-client-hero">
+                <button type="button" class="modal-close view-client-close" id="close-view-client-modal" aria-label="Fermer la fenêtre">✕</button>
 
-            <div class="modal-header">
+                <div class="view-client-profile">
+                    <div class="view-client-avatar" id="view-client-avatar" aria-hidden="true">CL</div>
 
-                <div>
-                    <h2 id="view-client-modal-title">
-                        Informations du client
-                    </h2>
+                    <div class="view-client-profile-main">
+                        <div class="view-client-title-row">
+                            <div>
+                                <p class="view-client-eyebrow">Fiche client</p>
+                                <h2 id="view-client-modal-title">
+                                    <span id="view-client-name">—</span>
+                                </h2>
+                            </div>
 
-                    <p>
-                        Consultez les informations détaillées du client.
-                    </p>
+                            <span class="view-client-status status-inconnu" id="view-client-status">—</span>
+                        </div>
+
+                        <div class="view-client-meta">
+                            <span><i class="fa-solid fa-fingerprint"></i><strong id="view-client-id">—</strong></span>
+                            <span><i class="fa-solid fa-user-tag"></i><strong id="view-client-type">—</strong></span>
+                            <span><i class="fa-regular fa-calendar"></i>Inscrit le <strong id="view-client-date">—</strong></span>
+                        </div>
+                    </div>
                 </div>
-
-                <button
-                    type="button"
-                    class="modal-close"
-                    id="close-view-client-modal"
-                    aria-label="Fermer la fenêtre"
-                >
-                    ✕
-                </button>
-
             </div>
 
-            <div class="modal-body">
+            <div class="modal-body view-client-body">
 
-                <div class="client-details-grid">
+                <section class="view-client-stats">
+                    <article class="view-client-stat-card">
+                        <div class="view-client-stat-icon"><i class="fa-solid fa-bag-shopping"></i></div>
+                        <div>
+                            <span>Commandes</span>
+                            <strong id="view-client-orders">0</strong>
+                            <small>Nombre total enregistré</small>
+                        </div>
+                    </article>
 
-                    <div class="client-detail">
-                        <span>Identifiant</span>
-                        <strong id="view-client-id">—</strong>
-                    </div>
+                    <article class="view-client-stat-card featured">
+                        <div class="view-client-stat-icon"><i class="fa-solid fa-coins"></i></div>
+                        <div>
+                            <span>Total des achats</span>
+                            <strong id="view-client-purchases">0 FCFA</strong>
+                            <small>Chiffre d’affaires généré</small>
+                        </div>
+                    </article>
+                </section>
 
-                    <div class="client-detail">
-                        <span>Nom complet</span>
-                        <strong id="view-client-name">—</strong>
-                    </div>
+                <div class="view-client-content-grid">
 
-                    <div class="client-detail">
-                        <span>Téléphone</span>
-                        <strong id="view-client-phone">—</strong>
-                    </div>
+                    <section class="view-client-card">
+                        <div class="view-client-card-header">
+                            <div class="view-client-card-icon"><i class="fa-solid fa-address-book"></i></div>
+                            <div>
+                                <h3>Coordonnées</h3>
+                                <p>Informations de contact du client</p>
+                            </div>
+                        </div>
 
-                    <div class="client-detail">
-                        <span>Email</span>
-                        <strong id="view-client-email">—</strong>
-                    </div>
+                        <div class="view-client-info-list">
+                            <div class="view-client-info-item">
+                                <span class="view-client-info-icon"><i class="fa-solid fa-phone"></i></span>
+                                <div><span>Téléphone</span><strong id="view-client-phone">—</strong></div>
+                            </div>
 
-                    <div class="client-detail">
-                        <span>Type de client</span>
-                        <strong id="view-client-type">—</strong>
-                    </div>
+                            <div class="view-client-info-item">
+                                <span class="view-client-info-icon"><i class="fa-solid fa-envelope"></i></span>
+                                <div><span>Email</span><strong id="view-client-email">—</strong></div>
+                            </div>
+                        </div>
+                    </section>
 
-                    <div class="client-detail">
-                        <span>Statut</span>
-                        <strong id="view-client-status">—</strong>
-                    </div>
+                    <section class="view-client-card">
+                        <div class="view-client-card-header">
+                            <div class="view-client-card-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div>
+                                <h3>Adresse</h3>
+                                <p>Localisation principale du client</p>
+                            </div>
+                        </div>
 
-                    <div class="client-detail">
-                        <span>Commune</span>
-                        <strong id="view-client-commune">—</strong>
-                    </div>
+                        <div class="view-client-info-list">
+                            <div class="view-client-info-item">
+                                <span class="view-client-info-icon"><i class="fa-solid fa-city"></i></span>
+                                <div><span>Commune</span><strong id="view-client-commune">—</strong></div>
+                            </div>
 
-                    <div class="client-detail">
-                        <span>Quartier</span>
-                        <strong id="view-client-neighborhood">—</strong>
-                    </div>
-
-                    <div class="client-detail">
-                        <span>Date d’inscription</span>
-                        <strong id="view-client-date">—</strong>
-                    </div>
-
-                    <div class="client-detail">
-                        <span>Nombre de commandes</span>
-                        <strong id="view-client-orders">0</strong>
-                    </div>
-
-                    <div class="client-detail">
-                        <span>Total des achats</span>
-                        <strong id="view-client-purchases">0 FCFA</strong>
-                    </div>
-
-                    <div class="client-detail client-detail-full">
-                        <span>Commentaire</span>
-                        <strong id="view-client-comment">—</strong>
-                    </div>
-
+                            <div class="view-client-info-item">
+                                <span class="view-client-info-icon"><i class="fa-solid fa-map-pin"></i></span>
+                                <div><span>Quartier</span><strong id="view-client-neighborhood">—</strong></div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
+                <section class="view-client-note">
+                    <div class="view-client-note-header">
+                        <span><i class="fa-solid fa-note-sticky"></i></span>
+                        <div>
+                            <h3>Commentaire</h3>
+                            <p>Notes et informations complémentaires</p>
+                        </div>
+                    </div>
+                    <p id="view-client-comment">—</p>
+                </section>
             </div>
 
-            <div class="modal-footer">
+            <div class="modal-footer view-client-footer">
+                <span class="view-client-footer-hint">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Les informations affichées proviennent de la fiche client.
+                </span>
 
-                <button
-                    type="button"
-                    class="btn-secondary"
-                    id="close-view-client-footer"
-                >
+                <button type="button" class="btn-primary" id="close-view-client-footer">
+                    <i class="fa-solid fa-check"></i>
                     Fermer
                 </button>
-
             </div>
 
         </div>
-
     </div>
 
 
