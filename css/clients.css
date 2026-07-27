@@ -1073,3 +1073,42 @@
     color: #475569;
     background-color: #f1f5f9;
 }
+
+.table-actions{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+}
+
+.table-action-btn{
+    width:36px;
+    height:36px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    transition:0.2s ease;
+}
+
+.table-action-btn:hover{
+    transform:translateY(-2px);
+}
+
+.view-btn{
+    background:#dbeafe;
+    color:#2563eb;
+}
+
+.edit-btn{
+    background:#fef3c7;
+    color:#d97706;
+}
+
+.delete-btn{
+    background:#fee2e2;
+    color:#dc2626;
+}
