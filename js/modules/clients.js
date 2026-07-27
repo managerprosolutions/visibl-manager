@@ -246,10 +246,6 @@ openModal();
 
             return;
         }
-    }
-);
-    
-
 
     // ========================================
     // FERMETURE AVEC LA TOUCHE ÉCHAP
