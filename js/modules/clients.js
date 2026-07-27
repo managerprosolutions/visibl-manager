@@ -250,10 +250,10 @@ function afficherClients(clients) {
             </td>
 
             <td>
-                <span class="status-badge">
-                    ${echapperHTML(client.statut)}
-                </span>
-            </td>
+    <span class="status-badge status-${obtenirClasseStatut(client.statut)}">
+        ${echapperHTML(mettreMajuscule(client.statut))}
+    </span>
+</td>
 
             <td>
                 <button
@@ -291,6 +291,37 @@ function formaterMontantClient(montant) {
     const valeur = Number(montant || 0);
 
     return valeur.toLocaleString("fr-FR") + " FCFA";
+}
+
+function obtenirClasseStatut(statut) {
+
+    const valeur = String(statut ?? "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+    const classes = {
+        actif: "actif",
+        inactif: "inactif",
+        prospect: "prospect",
+        bloque: "bloque"
+    };
+
+    return classes[valeur] || "inconnu";
+}
+
+
+function mettreMajuscule(valeur) {
+
+    const texte = String(valeur ?? "").trim();
+
+    if (!texte) {
+        return "";
+    }
+
+    return texte.charAt(0).toUpperCase()
+        + texte.slice(1).toLowerCase();
 }
 
 function echapperHTML(valeur) {
