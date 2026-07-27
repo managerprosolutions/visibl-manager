@@ -1,4 +1,5 @@
 let clientsCharges = [];
+let clientEnModificationId = null;
 
 // ========================================
 // INITIALISATION
@@ -241,6 +242,8 @@ clientsTableBody?.addEventListener(
                 return;
             }
 
+clientEnModificationId = client.idClient;
+            
             remplirFormulaireClient(client);
 openModal();
 
@@ -359,11 +362,27 @@ async function enregistrerClient(event) {
 
     try {
 
-        const resultat =
-            await apiPost(
-                "createClient",
-                data
-            );
+        let resultat;
+
+if (clientEnModificationId) {
+
+    data.idClient =
+        clientEnModificationId;
+
+    resultat =
+        await apiPost(
+            "updateClient",
+            data
+        );
+
+} else {
+
+    resultat =
+        await apiPost(
+            "createClient",
+            data
+        );
+}
 
 
         if (resultat.success) {
