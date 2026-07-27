@@ -394,6 +394,14 @@ if (clientEnModificationId) {
 
             clientForm?.reset();
 
+            clientEnModificationId = null;
+
+document.getElementById("client-modal-title").textContent =
+    "Nouveau client";
+
+document.getElementById("save-client-btn").textContent =
+    "Enregistrer";
+
             await chargerClients();
 
             const clientModal =
