@@ -250,6 +250,57 @@ openModal();
             return;
         }
 
+   // ========================================
+// BOUTON SUPPRIMER
+// ========================================
+
+const deleteButton =
+    event.target.closest(".delete-btn");
+
+if (deleteButton) {
+
+    const clientId =
+        deleteButton.dataset.clientId;
+
+    const client =
+        clientsCharges.find(
+            function (element) {
+
+                return String(element.idClient) ===
+                    String(clientId);
+            }
+        );
+
+    if (!client) {
+
+        showToast(
+            "Impossible de retrouver le client à supprimer.",
+            "error"
+        );
+
+        return;
+    }
+
+    const nomComplet = [
+        client.nom,
+        client.prenom
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+    const confirmation = confirm(
+        `Voulez-vous vraiment supprimer le client "${nomComplet}" ?`
+    );
+
+    if (!confirmation) {
+        return;
+    }
+
+    supprimerClient(client.idClient);
+
+    return;
+} 
+
     }
 );
 
@@ -436,6 +487,56 @@ document.getElementById("save-client-btn").textContent =
     }
 }
 
+
+
+
+// ========================================
+// SUPPRESSION D'UN CLIENT
+// ========================================
+
+async function supprimerClient(idClient) {
+
+    try {
+
+        const resultat =
+            await apiPost(
+                "deleteClient",
+                {
+                    idClient: idClient
+                }
+            );
+
+        if (resultat.success) {
+
+            showToast(
+                resultat.message,
+                "success"
+            );
+
+            await chargerClients();
+
+        } else {
+
+            showToast(
+                resultat.message ||
+                "Impossible de supprimer le client.",
+                "error"
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erreur suppression client :",
+            error
+        );
+
+        showToast(
+            "Impossible de communiquer avec le serveur.",
+            "error"
+        );
+    }
+}
 
 // ========================================
 // CHARGEMENT DES CLIENTS
