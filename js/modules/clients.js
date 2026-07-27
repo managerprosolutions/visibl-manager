@@ -202,9 +202,9 @@ function afficherClients(clients) {
             .join(" ");
 
         const contact = `
-            <div>${echapperHTML(client.telephone)}</div>
-            <div>${echapperHTML(client.email)}</div>
-        `;
+    <div>${echapperHTML(formaterTelephone(client.telephone))}</div>
+    <div>${echapperHTML(client.email)}</div>
+`;
 
         ligne.innerHTML = `
             <td>
@@ -322,6 +322,34 @@ function mettreMajuscule(valeur) {
 
     return texte.charAt(0).toUpperCase()
         + texte.slice(1).toLowerCase();
+}
+
+function formaterTelephone(telephone) {
+
+    let numero = String(telephone ?? "").replace(/\s+/g, "");
+
+    if (!numero) {
+        return "";
+    }
+
+    // Cas : +225XXXXXXXXXX
+    if (numero.startsWith("+225")) {
+
+        const reste = numero.substring(4);
+
+        if (reste.length === 10) {
+            return "+225 " + reste.match(/.{1,2}/g).join(" ");
+        }
+
+        return numero;
+    }
+
+    // Cas : numéro ivoirien sur 8 ou 10 chiffres
+    if (numero.length === 8 || numero.length === 10) {
+        return numero.match(/.{1,2}/g).join(" ");
+    }
+
+    return numero;
 }
 
 function echapperHTML(valeur) {
