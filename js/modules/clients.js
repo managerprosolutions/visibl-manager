@@ -162,8 +162,11 @@ async function chargerClients() {
 
 function afficherClients(clients) {
 
-    const tbody = document.getElementById("clients-table-body");
-    const emptyState = document.getElementById("clients-empty-state");
+    const tbody =
+        document.getElementById("clients-table-body");
+
+    const emptyState =
+        document.getElementById("clients-empty-state");
 
     if (!tbody) {
         console.error(
@@ -177,29 +180,81 @@ function afficherClients(clients) {
     if (clients.length === 0) {
 
         if (emptyState) {
-            emptyState.style.display = "";
+            emptyState.hidden = false;
         }
 
         return;
     }
 
     if (emptyState) {
-        emptyState.style.display = "none";
+        emptyState.hidden = true;
     }
 
     clients.forEach(client => {
 
         const ligne = document.createElement("tr");
 
+        const nomComplet = [
+            client.nom,
+            client.prenom
+        ]
+            .filter(Boolean)
+            .join(" ");
+
+        const contact = `
+            <div>${echapperHTML(client.telephone)}</div>
+            <div>${echapperHTML(client.email)}</div>
+        `;
+
         ligne.innerHTML = `
-            <td>${echapperHTML(client.idClient)}</td>
-            <td>${echapperHTML(client.nom)}</td>
-            <td>${echapperHTML(client.prenom)}</td>
-            <td>${echapperHTML(client.telephone)}</td>
-            <td>${echapperHTML(client.email)}</td>
-            <td>${echapperHTML(client.commune)}</td>
-            <td>${echapperHTML(client.typeClient)}</td>
-            <td>${echapperHTML(client.statut)}</td>
+            <td>
+                <input
+                    type="checkbox"
+                    class="client-checkbox"
+                    value="${echapperHTML(client.idClient)}"
+                    aria-label="Sélectionner ${echapperHTML(nomComplet)}"
+                >
+            </td>
+
+            <td>
+                <div>${echapperHTML(nomComplet)}</div>
+                <small>${echapperHTML(client.idClient)}</small>
+            </td>
+
+            <td>
+                ${contact}
+            </td>
+
+            <td>
+                ${echapperHTML(client.commune)}
+            </td>
+
+            <td>
+                ${echapperHTML(client.typeClient)}
+            </td>
+
+            <td>
+                ${formaterDateClient(client.dateInscription)}
+            </td>
+
+            <td>
+                ${echapperHTML(client.nombreCommandes ?? 0)}
+            </td>
+
+            <td>
+                ${formaterMontantClient(client.montantTotalAchats)}
+            </td>
+
+            <td>
+                ${echapperHTML(client.quartier)}
+            </td>
+
+            <td>
+                <span class="status-badge">
+                    ${echapperHTML(client.statut)}
+                </span>
+            </td>
+
             <td>
                 <button
                     type="button"
@@ -215,6 +270,28 @@ function afficherClients(clients) {
     });
 }
 
+function formaterDateClient(date) {
+
+    if (!date) {
+        return "";
+    }
+
+    const dateClient = new Date(date);
+
+    if (Number.isNaN(dateClient.getTime())) {
+        return echapperHTML(date);
+    }
+
+    return dateClient.toLocaleDateString("fr-FR");
+}
+
+
+function formaterMontantClient(montant) {
+
+    const valeur = Number(montant || 0);
+
+    return valeur.toLocaleString("fr-FR") + " FCFA";
+}
 
 function echapperHTML(valeur) {
 
