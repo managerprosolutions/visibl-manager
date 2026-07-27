@@ -63,13 +63,58 @@ function initialiserClients() {
 
     function closeModal() {
 
-        if (!clientModal) {
-            return;
-        }
-
-        clientModal.classList.remove("active");
-        clientModal.setAttribute("aria-hidden", "true");
+    if (!clientModal) {
+        return;
     }
+
+    clientModal.classList.remove("active");
+    clientModal.setAttribute("aria-hidden", "true");
+}
+
+
+function remplirFormulaireClient(client) {
+
+    document.getElementById("client-type").value =
+        client.typeClient || "";
+
+    document.getElementById("client-status").value =
+        client.statut || "actif";
+
+    document.getElementById("client-lastname").value =
+        client.nom || "";
+
+    document.getElementById("client-firstname").value =
+        client.prenom || "";
+
+    document.getElementById("client-phone").value =
+        client.telephone || "";
+
+    document.getElementById("client-email").value =
+        client.email || "";
+
+    document.getElementById("client-commune").value =
+        client.commune || "";
+
+    document.getElementById("client-neighborhood").value =
+        client.quartier || "";
+
+    document.getElementById("client-comment").value =
+        client.commentaire || "";
+
+    document.getElementById("client-modal-title").textContent =
+        "Modifier le client";
+
+    document.getElementById("save-client-btn").textContent =
+        "Enregistrer les modifications";
+}
+
+
+function ouvrirNouveauClient() {
+
+    console.log("Mode création");
+
+    openModal();
+}
 
 
     function ouvrirNouveauClient() {
@@ -196,7 +241,7 @@ clientsTableBody?.addEventListener(
                 return;
             }
 
-            console.log("Mode modification :", client);
+            remplirFormulaireClient(client);
 openModal();
 
             return;
