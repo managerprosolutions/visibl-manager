@@ -114,52 +114,91 @@ function initialiserClients() {
         fermerModalVoirClient
     );
 
+// ========================================
+// CLIC SUR LES ACTIONS DU TABLEAU
+// ========================================
 
-    // ========================================
-    // CLIC SUR LES ACTIONS DU TABLEAU
-    // ========================================
+const clientsTableBody =
+    document.getElementById("clients-table-body");
 
-    const clientsTableBody =
-        document.getElementById("clients-table-body");
+clientsTableBody?.addEventListener(
+    "click",
+    function (event) {
 
-    clientsTableBody?.addEventListener(
-        "click",
-        function (event) {
+        const viewButton =
+            event.target.closest(".view-btn");
 
-            const viewButton =
-                event.target.closest(".view-btn");
+        if (viewButton) {
 
-            if (viewButton) {
+            const clientId =
+                viewButton.dataset.clientId;
 
-                const clientId =
-                    viewButton.dataset.clientId;
+            const client =
+                clientsCharges.find(
+                    function (element) {
 
-                const client =
-                    clientsCharges.find(
-                        function (element) {
+                        return String(element.idClient) ===
+                            String(clientId);
+                    }
+                );
 
-                            return String(element.idClient) ===
-                                String(clientId);
-                        }
-                    );
+            if (!client) {
 
-                if (!client) {
-
-                    showToast(
-                        "Impossible de retrouver les informations du client.",
-                        "error"
-                    );
-
-                    return;
-                }
-
-                afficherDetailsClient(client);
-                ouvrirModalVoirClient();
+                showToast(
+                    "Impossible de retrouver les informations du client.",
+                    "error"
+                );
 
                 return;
             }
+
+            afficherDetailsClient(client);
+            ouvrirModalVoirClient();
+
+            return;
         }
-    );
+
+        // ========================================
+        // BOUTON MODIFIER
+        // ========================================
+
+        const editButton =
+            event.target.closest(".edit-btn");
+
+        if (editButton) {
+
+            const clientId =
+                editButton.dataset.clientId;
+
+            const client =
+                clientsCharges.find(
+                    function (element) {
+
+                        return String(element.idClient) ===
+                            String(clientId);
+                    }
+                );
+
+            if (!client) {
+
+                showToast(
+                    "Impossible de retrouver le client à modifier.",
+                    "error"
+                );
+
+                return;
+            }
+
+            console.log(
+                "Client à modifier :",
+                client
+            );
+
+            return;
+        }
+    }
+);
+    
 
 
     // ========================================
