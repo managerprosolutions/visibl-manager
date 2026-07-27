@@ -255,15 +255,36 @@ function afficherClients(clients) {
     </span>
 </td>
 
-            <td>
-                <button
-                    type="button"
-                    class="table-action-btn"
-                    data-client-id="${echapperHTML(client.idClient)}"
-                >
-                    Voir
-                </button>
-            </td>
+            <td class="table-actions">
+
+    <button
+        type="button"
+        class="table-action-btn view-btn"
+        data-client-id="${echapperHTML(client.idClient)}"
+        title="Voir"
+    >
+        👁️
+    </button>
+
+    <button
+        type="button"
+        class="table-action-btn edit-btn"
+        data-client-id="${echapperHTML(client.idClient)}"
+        title="Modifier"
+    >
+        ✏️
+    </button>
+
+    <button
+        type="button"
+        class="table-action-btn delete-btn"
+        data-client-id="${echapperHTML(client.idClient)}"
+        title="Supprimer"
+    >
+        🗑️
+    </button>
+
+</td>
         `;
 
         tbody.appendChild(ligne);
