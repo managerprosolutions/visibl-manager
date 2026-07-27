@@ -1,3 +1,5 @@
+let clientsCharges = [];
+
 // ========================================
 // INITIALISATION
 // ========================================
@@ -129,6 +131,29 @@ function initialiserClients() {
 
             if (viewButton) {
 
+                const clientId =
+                    viewButton.dataset.clientId;
+
+                const client =
+                    clientsCharges.find(
+                        function (element) {
+
+                            return String(element.idClient) ===
+                                String(clientId);
+                        }
+                    );
+
+                if (!client) {
+
+                    showToast(
+                        "Impossible de retrouver les informations du client.",
+                        "error"
+                    );
+
+                    return;
+                }
+
+                afficherDetailsClient(client);
                 ouvrirModalVoirClient();
 
                 return;
@@ -321,8 +346,13 @@ async function chargerClients() {
         }
 
 
+        clientsCharges =
+            Array.isArray(resultat.clients)
+                ? resultat.clients
+                : [];
+
         afficherClients(
-            resultat.clients || []
+            clientsCharges
         );
 
     } catch (error) {
@@ -382,6 +412,109 @@ function fermerModalVoirClient() {
         "aria-hidden",
         "true"
     );
+}
+
+
+
+// ========================================
+// INFORMATIONS DU CLIENT DANS LA FENÊTRE
+// ========================================
+
+function afficherDetailsClient(client) {
+
+    const nomComplet = [
+        client.nom,
+        client.prenom
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+    definirTexteClient(
+        "view-client-id",
+        client.idClient
+    );
+
+    definirTexteClient(
+        "view-client-name",
+        nomComplet
+    );
+
+    definirTexteClient(
+        "view-client-phone",
+        formaterTelephone(client.telephone)
+    );
+
+    definirTexteClient(
+        "view-client-email",
+        client.email
+    );
+
+    definirTexteClient(
+        "view-client-type",
+        mettreMajuscule(client.typeClient)
+    );
+
+    definirTexteClient(
+        "view-client-status",
+        mettreMajuscule(client.statut)
+    );
+
+    definirTexteClient(
+        "view-client-commune",
+        mettreMajuscule(client.commune)
+    );
+
+    definirTexteClient(
+        "view-client-neighborhood",
+        client.quartier
+    );
+
+    definirTexteClient(
+        "view-client-date",
+        formaterDateClient(
+            client.dateInscription
+        )
+    );
+
+    definirTexteClient(
+        "view-client-orders",
+        client.nombreCommandes ?? 0
+    );
+
+    definirTexteClient(
+        "view-client-purchases",
+        formaterMontantClient(
+            client.montantTotalAchats
+        )
+    );
+
+    definirTexteClient(
+        "view-client-comment",
+        client.commentaire
+    );
+}
+
+
+function definirTexteClient(idElement, valeur) {
+
+    const element =
+        document.getElementById(idElement);
+
+    if (!element) {
+
+        console.warn(
+            `Élément introuvable : ${idElement}`
+        );
+
+        return;
+    }
+
+    const texte =
+        String(valeur ?? "")
+            .trim();
+
+    element.textContent =
+        texte || "—";
 }
 
 
