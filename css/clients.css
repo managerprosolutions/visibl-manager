@@ -1112,3 +1112,12 @@
     background:#fee2e2;
     color:#dc2626;
 }
+
+.table-action-btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(15,23,42,.12);
+}
+
+.table-action-btn:active{
+    transform: scale(.96);
+}
