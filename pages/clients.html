@@ -942,122 +942,6 @@
 
                         </div>
 
-                       <!-- ===== Fenêtre Voir client ===== -->
-<div class="modal-overlay" id="view-client-modal" aria-hidden="true">
-
-    <div
-        class="modal view-client-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="view-client-modal-title"
-    >
-
-        <div class="modal-header">
-
-            <div>
-                <h2 id="view-client-modal-title">
-                    Informations du client
-                </h2>
-
-                <p>
-                    Consultez les informations détaillées du client.
-                </p>
-            </div>
-
-            <button
-                type="button"
-                class="modal-close"
-                id="close-view-client-modal"
-                aria-label="Fermer la fenêtre"
-            >
-                ✕
-            </button>
-
-        </div>
-
-        <div class="modal-body">
-
-            <div class="client-details-grid">
-
-                <div class="client-detail">
-                    <span>Identifiant</span>
-                    <strong id="view-client-id">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Nom complet</span>
-                    <strong id="view-client-name">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Téléphone</span>
-                    <strong id="view-client-phone">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Email</span>
-                    <strong id="view-client-email">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Type de client</span>
-                    <strong id="view-client-type">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Statut</span>
-                    <strong id="view-client-status">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Commune</span>
-                    <strong id="view-client-commune">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Quartier</span>
-                    <strong id="view-client-neighborhood">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Date d’inscription</span>
-                    <strong id="view-client-date">—</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Nombre de commandes</span>
-                    <strong id="view-client-orders">0</strong>
-                </div>
-
-                <div class="client-detail">
-                    <span>Total des achats</span>
-                    <strong id="view-client-purchases">0 FCFA</strong>
-                </div>
-
-                <div class="client-detail client-detail-full">
-                    <span>Commentaire</span>
-                    <strong id="view-client-comment">—</strong>
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="modal-footer">
-
-            <button
-                type="button"
-                class="btn-secondary"
-                id="close-view-client-footer"
-            >
-                Fermer
-            </button>
-
-        </div>
-
-    </div>
-
-</div> 
 
                     </section>
 
@@ -1096,6 +980,124 @@
         </div>
 
     </div>
+
+    <!-- ===== Fenêtre Voir client ===== -->
+    <div class="modal-overlay" id="view-client-modal" aria-hidden="true">
+
+        <div
+            class="modal view-client-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="view-client-modal-title"
+        >
+
+            <div class="modal-header">
+
+                <div>
+                    <h2 id="view-client-modal-title">
+                        Informations du client
+                    </h2>
+
+                    <p>
+                        Consultez les informations détaillées du client.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    id="close-view-client-modal"
+                    aria-label="Fermer la fenêtre"
+                >
+                    ✕
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="client-details-grid">
+
+                    <div class="client-detail">
+                        <span>Identifiant</span>
+                        <strong id="view-client-id">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Nom complet</span>
+                        <strong id="view-client-name">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Téléphone</span>
+                        <strong id="view-client-phone">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Email</span>
+                        <strong id="view-client-email">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Type de client</span>
+                        <strong id="view-client-type">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Statut</span>
+                        <strong id="view-client-status">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Commune</span>
+                        <strong id="view-client-commune">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Quartier</span>
+                        <strong id="view-client-neighborhood">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Date d’inscription</span>
+                        <strong id="view-client-date">—</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Nombre de commandes</span>
+                        <strong id="view-client-orders">0</strong>
+                    </div>
+
+                    <div class="client-detail">
+                        <span>Total des achats</span>
+                        <strong id="view-client-purchases">0 FCFA</strong>
+                    </div>
+
+                    <div class="client-detail client-detail-full">
+                        <span>Commentaire</span>
+                        <strong id="view-client-comment">—</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="close-view-client-footer"
+                >
+                    Fermer
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
 
     </section>
 
