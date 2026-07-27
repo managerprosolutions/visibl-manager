@@ -88,7 +88,6 @@ openToolbarBtn?.addEventListener(
     "click",
     ouvrirNouveauClient
 );
-    );
 
     closeModalBtn?.addEventListener(
         "click",
