@@ -1037,3 +1037,39 @@
     }
 
 }
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-actif {
+    color: #15803d;
+    background-color: #dcfce7;
+}
+
+.status-inactif {
+    color: #475569;
+    background-color: #e2e8f0;
+}
+
+.status-prospect {
+    color: #b45309;
+    background-color: #fef3c7;
+}
+
+.status-bloque {
+    color: #b91c1c;
+    background-color: #fee2e2;
+}
+
+.status-inconnu {
+    color: #475569;
+    background-color: #f1f5f9;
+}
