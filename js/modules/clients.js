@@ -72,14 +72,22 @@ function initialiserClients() {
     }
 
 
-    openModalBtn?.addEventListener(
-        "click",
-        openModal
-    );
+    function ouvrirNouveauClient() {
 
-    openToolbarBtn?.addEventListener(
-        "click",
-        openModal
+    console.log("Mode création");
+
+    openModal();
+}
+
+openModalBtn?.addEventListener(
+    "click",
+    ouvrirNouveauClient
+);
+
+openToolbarBtn?.addEventListener(
+    "click",
+    ouvrirNouveauClient
+);
     );
 
     closeModalBtn?.addEventListener(
@@ -189,7 +197,8 @@ clientsTableBody?.addEventListener(
                 return;
             }
 
-            alert("Bouton Modifier détecté : " + client.nom);
+            console.log("Mode modification :", client);
+openModal();
 
             return;
         }
