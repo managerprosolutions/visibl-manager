@@ -189,10 +189,7 @@ clientsTableBody?.addEventListener(
                 return;
             }
 
-            console.log(
-                "Client à modifier :",
-                client
-            );
+            alert("Bouton Modifier détecté : " + client.nom);
 
             return;
         }
