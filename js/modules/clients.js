@@ -262,8 +262,9 @@ function afficherClients(clients) {
         class="table-action-btn view-btn"
         data-client-id="${echapperHTML(client.idClient)}"
         title="Voir"
+        aria-label="Voir le client"
     >
-        👁️
+        <i class="fa-solid fa-eye"></i>
     </button>
 
     <button
@@ -271,8 +272,9 @@ function afficherClients(clients) {
         class="table-action-btn edit-btn"
         data-client-id="${echapperHTML(client.idClient)}"
         title="Modifier"
+        aria-label="Modifier le client"
     >
-        ✏️
+        <i class="fa-solid fa-pen"></i>
     </button>
 
     <button
@@ -280,8 +282,9 @@ function afficherClients(clients) {
         class="table-action-btn delete-btn"
         data-client-id="${echapperHTML(client.idClient)}"
         title="Supprimer"
+        aria-label="Supprimer le client"
     >
-        🗑️
+        <i class="fa-solid fa-trash"></i>
     </button>
 
 </td>
