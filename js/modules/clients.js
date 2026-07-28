@@ -1,5 +1,6 @@
 let clientsCharges = [];
 let clientEnModificationId = null;
+let clientASupprimer = null;
 
 // ========================================
 // INITIALISATION
@@ -49,6 +50,15 @@ function initialiserClients() {
 
     const clientModal =
         document.getElementById("client-modal");
+
+    const deleteModal =
+        document.getElementById("delete-client-modal");
+
+    const cancelDeleteBtn =
+        document.getElementById("cancel-delete-client-btn");
+
+    const confirmDeleteBtn =
+        document.getElementById("confirm-delete-client-btn");
 
 
     function openModal() {
@@ -143,6 +153,51 @@ openToolbarBtn?.addEventListener(
     cancelModalBtn?.addEventListener(
         "click",
         closeModal
+    );
+
+    cancelDeleteBtn?.addEventListener(
+        "click",
+        fermerModalSuppression
+    );
+
+    deleteModal?.addEventListener(
+        "click",
+        function (event) {
+
+            if (event.target === deleteModal) {
+                fermerModalSuppression();
+            }
+        }
+    );
+
+    confirmDeleteBtn?.addEventListener(
+        "click",
+        async function () {
+
+            if (!clientASupprimer || confirmDeleteBtn.disabled) {
+                return;
+            }
+
+            const idClient = clientASupprimer.idClient;
+
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.classList.add("is-loading");
+
+            try {
+
+                const suppressionReussie =
+                    await supprimerClient(idClient);
+
+                if (suppressionReussie) {
+                    fermerModalSuppression();
+                }
+
+            } finally {
+
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.classList.remove("is-loading");
+            }
+        }
     );
 
 
@@ -281,22 +336,7 @@ if (deleteButton) {
         return;
     }
 
-    const nomComplet = [
-        client.nom,
-        client.prenom
-    ]
-        .filter(Boolean)
-        .join(" ");
-
-    const confirmation = confirm(
-        `Voulez-vous vraiment supprimer le client "${nomComplet}" ?`
-    );
-
-    if (!confirmation) {
-        return;
-    }
-
-    supprimerClient(client.idClient);
+    ouvrirModalSuppression(client);
 
     return;
 } 
@@ -317,6 +357,8 @@ if (deleteButton) {
                 closeModal();
 
                 fermerModalVoirClient();
+
+                fermerModalSuppression();
             }
         }
     );
@@ -491,6 +533,91 @@ document.getElementById("save-client-btn").textContent =
 
 
 // ========================================
+// FENÊTRE DE CONFIRMATION DE SUPPRESSION
+// ========================================
+
+function ouvrirModalSuppression(client) {
+
+    const modal =
+        document.getElementById("delete-client-modal");
+
+    const clientName =
+        document.getElementById("delete-client-name");
+
+    if (!modal || !clientName) {
+
+        console.error(
+            'La fenêtre de suppression est introuvable.'
+        );
+
+        showToast(
+            "Impossible d’ouvrir la confirmation de suppression.",
+            "error"
+        );
+
+        return;
+    }
+
+    clientASupprimer = client;
+
+    const nomComplet = [
+        client.nom,
+        client.prenom
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+    clientName.textContent =
+        nomComplet || client.idClient || "Ce client";
+
+    modal.classList.add("active");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    const confirmDeleteBtn =
+        document.getElementById("confirm-delete-client-btn");
+
+    window.setTimeout(
+        function () {
+            confirmDeleteBtn?.focus();
+        },
+        50
+    );
+}
+
+
+function fermerModalSuppression() {
+
+    const modal =
+        document.getElementById("delete-client-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    const confirmDeleteBtn =
+        document.getElementById("confirm-delete-client-btn");
+
+    if (confirmDeleteBtn?.disabled) {
+        return;
+    }
+
+    modal.classList.remove("active");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    clientASupprimer = null;
+}
+
+
+// ========================================
 // SUPPRESSION D'UN CLIENT
 // ========================================
 
@@ -515,6 +642,8 @@ async function supprimerClient(idClient) {
 
             await chargerClients();
 
+            return true;
+
         } else {
 
             showToast(
@@ -522,6 +651,8 @@ async function supprimerClient(idClient) {
                 "Impossible de supprimer le client.",
                 "error"
             );
+
+            return false;
         }
 
     } catch (error) {
@@ -535,6 +666,8 @@ async function supprimerClient(idClient) {
             "Impossible de communiquer avec le serveur.",
             "error"
         );
+
+        return false;
     }
 }
 
