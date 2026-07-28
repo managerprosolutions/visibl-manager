@@ -1108,7 +1108,84 @@
         </div>
     </div>
 
+<!-- ===========================
+     MODAL SUPPRESSION CLIENT
+=========================== -->
 
+<div
+    class="modal-overlay"
+    id="delete-client-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal delete-client-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-client-title"
+    >
+
+        <div class="delete-client-top">
+
+            <div class="delete-client-circle">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+
+            <h2 id="delete-client-title">
+                Supprimer ce client ?
+            </h2>
+
+            <p>
+
+                Vous êtes sur le point de supprimer définitivement
+
+                <strong id="delete-client-name">
+                    Nom du client
+                </strong>
+
+            </p>
+
+        </div>
+
+        <div class="delete-warning">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            <span>
+
+                Cette opération est irréversible.
+                Toutes les informations du client seront supprimées.
+
+            </span>
+
+        </div>
+
+        <div class="modal-footer delete-footer">
+
+            <button
+                type="button"
+                class="btn-secondary"
+                id="cancel-delete-client-btn"
+            >
+                Annuler
+            </button>
+
+            <button
+                type="button"
+                class="btn-danger"
+                id="confirm-delete-client-btn"
+            >
+                <i class="fa-solid fa-trash"></i>
+
+                Supprimer définitivement
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+            
     </section>
 
     </main>
