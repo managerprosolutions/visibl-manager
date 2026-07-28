@@ -1,4 +1,5 @@
 let clientsCharges = [];
+let clientsAffiches = [];
 let clientEnModificationId = null;
 let clientASupprimer = null;
 
@@ -384,6 +385,7 @@ if (deleteButton) {
     // ========================================
 
     initialiserRechercheEtFiltresClients();
+    initialiserExportsClients();
 
     // ========================================
     // FORMULAIRE CLIENT
@@ -856,6 +858,213 @@ function convertirDateClient(date) {
 }
 
 
+
+
+// ========================================
+// EXPORT DES CLIENTS (PDF, EXCEL ET CSV)
+// ========================================
+
+function initialiserExportsClients() {
+
+    const menu = document.getElementById("export-clients-menu");
+    const bouton = document.getElementById("export-clients-btn");
+    const liste = document.getElementById("export-clients-dropdown");
+
+    if (!menu || !bouton || !liste) return;
+
+    const fermerMenu = function () {
+        menu.classList.remove("is-open");
+        liste.hidden = true;
+        bouton.setAttribute("aria-expanded", "false");
+    };
+
+    const ouvrirMenu = function () {
+        menu.classList.add("is-open");
+        liste.hidden = false;
+        bouton.setAttribute("aria-expanded", "true");
+        liste.querySelector(".export-option")?.focus();
+    };
+
+    bouton.addEventListener("click", function (event) {
+        event.stopPropagation();
+        liste.hidden ? ouvrirMenu() : fermerMenu();
+    });
+
+    liste.addEventListener("click", async function (event) {
+        const option = event.target.closest("[data-export-format]");
+        if (!option) return;
+
+        const format = option.dataset.exportFormat;
+        fermerMenu();
+
+        if (clientsAffiches.length === 0) {
+            showToast("Aucun client à exporter.", "error");
+            return;
+        }
+
+        try {
+            if (format === "pdf") exporterClientsPDF();
+            if (format === "xlsx") exporterClientsExcel();
+            if (format === "csv") exporterClientsCSV();
+        } catch (error) {
+            console.error("Erreur export clients :", error);
+            showToast("Impossible de générer le fichier d’export.", "error");
+        }
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!menu.contains(event.target)) fermerMenu();
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !liste.hidden) {
+            fermerMenu();
+            bouton.focus();
+        }
+    });
+}
+
+function obtenirDonneesExportClients() {
+    return clientsAffiches.map(function (client) {
+        return {
+            "Identifiant": client.idClient || "",
+            "Nom": client.nom || "",
+            "Prénom": client.prenom || "",
+            "Téléphone": formaterTelephone(client.telephone),
+            "Email": client.email || "",
+            "Commune": mettreMajuscule(client.commune),
+            "Quartier": client.quartier || "",
+            "Type": mettreMajuscule(client.typeClient),
+            "Date d’inscription": formaterDateClient(client.dateInscription),
+            "Commandes": Number(client.nombreCommandes || 0),
+            "Total achats (FCFA)": convertirMontantClient(client.montantTotalAchats),
+            "Statut": mettreMajuscule(client.statut)
+        };
+    });
+}
+
+function obtenirNomFichierExport(extension) {
+    const date = new Date();
+    const estampille = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+    return `VISIBL_clients_${estampille}.${extension}`;
+}
+
+function exporterClientsCSV() {
+    const donnees = obtenirDonneesExportClients();
+    const colonnes = Object.keys(donnees[0]);
+    const separateur = ";";
+
+    const protegerCSV = function (valeur) {
+        const texte = String(valeur ?? "").replace(/"/g, '""');
+        return `"${texte}"`;
+    };
+
+    const lignes = [
+        colonnes.map(protegerCSV).join(separateur),
+        ...donnees.map(function (ligne) {
+            return colonnes.map(function (colonne) {
+                return protegerCSV(ligne[colonne]);
+            }).join(separateur);
+        })
+    ];
+
+    telechargerBlob(
+        new Blob(["\ufeff" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8;" }),
+        obtenirNomFichierExport("csv")
+    );
+
+    showToast(`${donnees.length} client(s) exporté(s) en CSV.`, "success");
+}
+
+function exporterClientsExcel() {
+    if (typeof XLSX === "undefined") {
+        throw new Error("La bibliothèque Excel n’est pas chargée.");
+    }
+
+    const donnees = obtenirDonneesExportClients();
+    const feuille = XLSX.utils.json_to_sheet(donnees);
+    feuille["!cols"] = [
+        { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
+        { wch: 28 }, { wch: 16 }, { wch: 22 }, { wch: 14 },
+        { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 14 }
+    ];
+    feuille["!autofilter"] = { ref: feuille["!ref"] };
+
+    const classeur = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(classeur, feuille, "Clients");
+    XLSX.writeFile(classeur, obtenirNomFichierExport("xlsx"));
+
+    showToast(`${donnees.length} client(s) exporté(s) vers Excel.`, "success");
+}
+
+function exporterClientsPDF() {
+    if (!window.jspdf?.jsPDF) {
+        throw new Error("La bibliothèque PDF n’est pas chargée.");
+    }
+
+    const donnees = obtenirDonneesExportClients();
+    const { jsPDF } = window.jspdf;
+    const documentPDF = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const dateExport = new Date().toLocaleString("fr-FR");
+
+    documentPDF.setFontSize(18);
+    documentPDF.text("VISIBL — Liste des clients", 14, 16);
+    documentPDF.setFontSize(9);
+    documentPDF.text(`Exporté le ${dateExport} • ${donnees.length} client(s)`, 14, 23);
+
+    documentPDF.autoTable({
+        startY: 29,
+        head: [["ID", "Client", "Téléphone", "Email", "Commune", "Type", "Inscription", "Cmd.", "Achats", "Statut"]],
+        body: donnees.map(function (client) {
+            return [
+                client["Identifiant"],
+                `${client["Nom"]} ${client["Prénom"]}`.trim(),
+                client["Téléphone"],
+                client["Email"],
+                client["Commune"],
+                client["Type"],
+                client["Date d’inscription"],
+                client["Commandes"],
+                formaterMontantClient(client["Total achats (FCFA)"]),
+                client["Statut"]
+            ];
+        }),
+        styles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" },
+        headStyles: { fillColor: [30, 64, 175] },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+        margin: { left: 10, right: 10 },
+        didDrawPage: function () {
+            const numeroPage = documentPDF.internal.getNumberOfPages();
+            documentPDF.setFontSize(8);
+            documentPDF.text(
+                `VISIBL • Page ${numeroPage}`,
+                documentPDF.internal.pageSize.getWidth() - 10,
+                documentPDF.internal.pageSize.getHeight() - 6,
+                { align: "right" }
+            );
+        }
+    });
+
+    documentPDF.save(obtenirNomFichierExport("pdf"));
+    showToast(`${donnees.length} client(s) exporté(s) en PDF.`, "success");
+}
+
+function telechargerBlob(blob, nomFichier) {
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement("a");
+    lien.href = url;
+    lien.download = nomFichier;
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+
+
 // ========================================
 // RECHERCHE ET FILTRES DES CLIENTS
 // ========================================
@@ -1013,7 +1222,8 @@ function appliquerRechercheEtFiltresClients() {
             correspondCommune;
     });
 
-    afficherClients(clientsFiltres);
+    clientsAffiches = clientsFiltres.slice();
+    afficherClients(clientsAffiches);
     mettreAJourCompteurClients(clientsFiltres.length);
     mettreAJourEtatBoutonEffacer();
 }
