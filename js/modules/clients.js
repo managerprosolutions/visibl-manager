@@ -2,6 +2,14 @@ let clientsCharges = [];
 let clientEnModificationId = null;
 let clientASupprimer = null;
 
+// État de consultation de la page Clients
+let rechercheClients = "";
+let filtresClients = {
+    typeClient: "",
+    statut: "",
+    commune: ""
+};
+
 // ========================================
 // INITIALISATION
 // ========================================
@@ -122,15 +130,21 @@ function remplirFormulaireClient(client) {
 
 function ouvrirNouveauClient() {
 
-    console.log("Mode création");
+    clientEnModificationId = null;
 
-    openModal();
-}
+    const clientForm = document.getElementById("client-form");
+    clientForm?.reset();
 
+    const modalTitle = document.getElementById("client-modal-title");
+    const saveButton = document.getElementById("save-client-btn");
 
-    function ouvrirNouveauClient() {
+    if (modalTitle) {
+        modalTitle.textContent = "Nouveau client";
+    }
 
-    console.log("Mode création");
+    if (saveButton) {
+        saveButton.textContent = "Enregistrer le client";
+    }
 
     openModal();
 }
@@ -364,6 +378,12 @@ if (deleteButton) {
         }
     );
 
+
+    // ========================================
+    // RECHERCHE, FILTRES ET ACTUALISATION
+    // ========================================
+
+    initialiserRechercheEtFiltresClients();
 
     // ========================================
     // FORMULAIRE CLIENT
@@ -701,9 +721,7 @@ async function chargerClients() {
                 ? resultat.clients
                 : [];
 
-        afficherClients(
-            clientsCharges
-        );
+        appliquerRechercheEtFiltresClients();
 
     } catch (error) {
 
@@ -717,6 +735,214 @@ async function chargerClients() {
             "error"
         );
     }
+}
+
+
+// ========================================
+// RECHERCHE ET FILTRES DES CLIENTS
+// ========================================
+
+function initialiserRechercheEtFiltresClients() {
+
+    const recherchePage =
+        document.getElementById("clients-search-input");
+
+    const rechercheHeader =
+        document.querySelector(".header .search-input");
+
+    const boutonRechercheHeader =
+        document.querySelector(".header .search-btn");
+
+    const filtreType =
+        document.getElementById("client-type-filter");
+
+    const filtreStatut =
+        document.getElementById("client-status-filter");
+
+    const filtreCommune =
+        document.getElementById("client-commune-filter");
+
+    const boutonEffacer =
+        document.getElementById("reset-client-filters");
+
+    const boutonActualiser =
+        document.getElementById("refresh-clients-btn");
+
+    const synchroniserRecherche = function (valeur, source) {
+
+        rechercheClients = String(valeur ?? "");
+
+        if (source !== recherchePage && recherchePage) {
+            recherchePage.value = rechercheClients;
+        }
+
+        if (source !== rechercheHeader && rechercheHeader) {
+            rechercheHeader.value = rechercheClients;
+        }
+
+        appliquerRechercheEtFiltresClients();
+    };
+
+    recherchePage?.addEventListener("input", function () {
+        synchroniserRecherche(recherchePage.value, recherchePage);
+    });
+
+    rechercheHeader?.addEventListener("input", function () {
+        synchroniserRecherche(rechercheHeader.value, rechercheHeader);
+    });
+
+    boutonRechercheHeader?.addEventListener("click", function (event) {
+        event.preventDefault();
+        synchroniserRecherche(rechercheHeader?.value || "", rechercheHeader);
+    });
+
+    rechercheHeader?.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            synchroniserRecherche(rechercheHeader.value, rechercheHeader);
+        }
+    });
+
+    filtreType?.addEventListener("change", function () {
+        filtresClients.typeClient = filtreType.value;
+        appliquerRechercheEtFiltresClients();
+    });
+
+    filtreStatut?.addEventListener("change", function () {
+        filtresClients.statut = filtreStatut.value;
+        appliquerRechercheEtFiltresClients();
+    });
+
+    filtreCommune?.addEventListener("change", function () {
+        filtresClients.commune = filtreCommune.value;
+        appliquerRechercheEtFiltresClients();
+    });
+
+    boutonEffacer?.addEventListener("click", function () {
+
+        rechercheClients = "";
+        filtresClients = {
+            typeClient: "",
+            statut: "",
+            commune: ""
+        };
+
+        if (recherchePage) recherchePage.value = "";
+        if (rechercheHeader) rechercheHeader.value = "";
+        if (filtreType) filtreType.value = "";
+        if (filtreStatut) filtreStatut.value = "";
+        if (filtreCommune) filtreCommune.value = "";
+
+        appliquerRechercheEtFiltresClients();
+    });
+
+    boutonActualiser?.addEventListener("click", async function () {
+
+        if (boutonActualiser.disabled) return;
+
+        boutonActualiser.disabled = true;
+        boutonActualiser.classList.add("is-loading");
+
+        try {
+            await chargerClients();
+            showToast("Liste des clients actualisée.", "success");
+        } finally {
+            boutonActualiser.disabled = false;
+            boutonActualiser.classList.remove("is-loading");
+        }
+    });
+}
+
+
+function appliquerRechercheEtFiltresClients() {
+
+    const terme = normaliserValeurRecherche(rechercheClients);
+
+    const clientsFiltres = clientsCharges.filter(function (client) {
+
+        const correspondRecherche = !terme || [
+            client.idClient,
+            client.nom,
+            client.prenom,
+            client.telephone,
+            client.email,
+            client.commune,
+            client.quartier,
+            client.typeClient,
+            client.statut
+        ].some(function (valeur) {
+            return normaliserValeurRecherche(valeur).includes(terme);
+        });
+
+        const correspondType =
+            !filtresClients.typeClient ||
+            normaliserValeurRecherche(client.typeClient) ===
+            normaliserValeurRecherche(filtresClients.typeClient);
+
+        const correspondStatut =
+            !filtresClients.statut ||
+            normaliserValeurRecherche(client.statut) ===
+            normaliserValeurRecherche(filtresClients.statut);
+
+        const correspondCommune =
+            !filtresClients.commune ||
+            normaliserValeurRecherche(client.commune) ===
+            normaliserValeurRecherche(filtresClients.commune);
+
+        return correspondRecherche &&
+            correspondType &&
+            correspondStatut &&
+            correspondCommune;
+    });
+
+    afficherClients(clientsFiltres);
+    mettreAJourCompteurClients(clientsFiltres.length);
+    mettreAJourEtatBoutonEffacer();
+}
+
+
+function normaliserValeurRecherche(valeur) {
+
+    return String(valeur ?? "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9@.+-]+/g, " ")
+        .replace(/\s+/g, " ");
+}
+
+
+function mettreAJourCompteurClients(nombre) {
+
+    const compteur =
+        document.getElementById("filtered-client-count");
+
+    if (compteur) {
+        compteur.textContent = String(nombre);
+    }
+}
+
+
+function mettreAJourEtatBoutonEffacer() {
+
+    const bouton =
+        document.getElementById("reset-client-filters");
+
+    if (!bouton) return;
+
+    const filtreActif = Boolean(
+        rechercheClients.trim() ||
+        filtresClients.typeClient ||
+        filtresClients.statut ||
+        filtresClients.commune
+    );
+
+    bouton.disabled = !filtreActif;
+    bouton.setAttribute(
+        "aria-disabled",
+        filtreActif ? "false" : "true"
+    );
 }
 
 
