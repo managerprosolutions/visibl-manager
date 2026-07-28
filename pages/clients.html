@@ -37,6 +37,28 @@
     @media (max-width: 640px) {
         .export-clients-dropdown { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; }
     }
+
+
+    /* ===== Étape 4 : tri, pagination, sélection et colonnes ===== */
+    .bulk-clients-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 14px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; }
+    .bulk-clients-bar[hidden] { display:none; }
+    .bulk-clients-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .bulk-clients-count { font-weight:700; }
+    .columns-clients-menu { position:relative; display:inline-flex; }
+    .columns-clients-dropdown { position:absolute; top:calc(100% + 10px); right:0; z-index:1000; min-width:245px; padding:10px; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:#fff; box-shadow:0 18px 45px rgba(15,23,42,.16); }
+    .columns-clients-dropdown[hidden] { display:none; }
+    .column-option { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:8px; cursor:pointer; }
+    .column-option:hover { background:#f3f6fb; }
+    .clients-table th[data-sort-key] { cursor:pointer; user-select:none; white-space:nowrap; }
+    .sort-indicator { display:inline-block; min-width:14px; margin-left:5px; color:#64748b; font-size:.75rem; }
+    .clients-table tr.is-selected { background:#eff6ff; }
+    .pagination-controls { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+    .pagination-summary { margin:0 8px; color:#64748b; font-size:.88rem; }
+    .pagination-btn[hidden] { display:none; }
+    .btn-danger-soft { border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; }
+    .btn-danger-soft:hover { background:#ffe4e6; }
+    @media (max-width:760px) { .bulk-clients-bar { align-items:flex-start; flex-direction:column; } .columns-clients-dropdown { position:fixed; left:16px; right:16px; top:auto; bottom:16px; min-width:0; } }
+
 </style>
 
 </head>
@@ -465,6 +487,13 @@
                 🖨️ Imprimer
             </button>
 
+            <div class="columns-clients-menu" id="columns-clients-menu">
+                <button type="button" class="btn-secondary" id="columns-clients-btn" aria-haspopup="true" aria-expanded="false">
+                    ⚙️ Colonnes
+                </button>
+                <div class="columns-clients-dropdown" id="columns-clients-dropdown" hidden></div>
+            </div>
+
             <button class="btn-secondary" id="refresh-clients-btn">
                 🔄 Actualiser
             </button>
@@ -482,6 +511,17 @@
 
     </div>
 
+
+    <div class="bulk-clients-bar" id="bulk-clients-bar" hidden>
+        <span class="bulk-clients-count"><strong id="selected-clients-count">0</strong> client(s) sélectionné(s)</span>
+        <div class="bulk-clients-actions">
+            <button type="button" class="btn-secondary" id="bulk-export-pdf">📄 PDF</button>
+            <button type="button" class="btn-secondary" id="bulk-export-xlsx">📊 Excel</button>
+            <button type="button" class="btn-secondary" id="bulk-export-csv">📑 CSV</button>
+            <button type="button" class="btn-secondary btn-danger-soft" id="bulk-delete-clients">🗑️ Supprimer</button>
+            <button type="button" class="btn-secondary" id="bulk-clear-selection">✕ Désélectionner</button>
+        </div>
+    </div>
 
     <!-- ===== Recherche et filtres ===== -->
     <div class="clients-filters">
@@ -611,7 +651,7 @@
                 <thead>
 
                     <tr>
-                        <th>
+                        <th data-column="selection">
                             <input
                                 type="checkbox"
                                 id="select-all-clients"
@@ -619,16 +659,16 @@
                             >
                         </th>
 
-                        <th>Client</th>
-                        <th>Contact</th>
-                        <th>Commune</th>
-                        <th>Type</th>
-                        <th>Date d’inscription</th>
-                        <th>Commandes</th>
-                        <th>Total achats</th>
-                        <th>Quartier</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
+                        <th data-column="client" data-sort-key="nom">Client<span class="sort-indicator"></span></th>
+                        <th data-column="contact" data-sort-key="telephone">Contact<span class="sort-indicator"></span></th>
+                        <th data-column="commune" data-sort-key="commune">Commune<span class="sort-indicator"></span></th>
+                        <th data-column="type" data-sort-key="typeClient">Type<span class="sort-indicator"></span></th>
+                        <th data-column="date" data-sort-key="dateInscription">Date d’inscription<span class="sort-indicator"></span></th>
+                        <th data-column="commandes" data-sort-key="nombreCommandes">Commandes<span class="sort-indicator"></span></th>
+                        <th data-column="achats" data-sort-key="montantTotalAchats">Total achats<span class="sort-indicator"></span></th>
+                        <th data-column="quartier" data-sort-key="quartier">Quartier<span class="sort-indicator"></span></th>
+                        <th data-column="statut" data-sort-key="statut">Statut<span class="sort-indicator"></span></th>
+                        <th data-column="actions">Actions</th>
                     </tr>
 
                 </thead>
@@ -701,35 +741,11 @@
             </div>
 
 
-            <div class="pagination-controls">
-
-                <button
-                    class="pagination-btn"
-                    id="previous-page-btn"
-                    disabled
-                >
-                    ‹
-                </button>
-
-                <button class="pagination-btn active">
-                    1
-                </button>
-
-                <button class="pagination-btn">
-                    2
-                </button>
-
-                <button class="pagination-btn">
-                    3
-                </button>
-
-                <button
-                    class="pagination-btn"
-                    id="next-page-btn"
-                >
-                    ›
-                </button>
-
+            <div class="pagination-controls" id="clients-pagination-controls">
+                <button type="button" class="pagination-btn" id="previous-page-btn" aria-label="Page précédente">‹</button>
+                <span id="clients-page-buttons" class="pagination-controls"></span>
+                <span class="pagination-summary" id="clients-pagination-summary"></span>
+                <button type="button" class="pagination-btn" id="next-page-btn" aria-label="Page suivante">›</button>
             </div>
 
         </div>
@@ -1155,6 +1171,20 @@
 <!-- ===========================
      MODAL SUPPRESSION CLIENT
 =========================== -->
+
+
+    <div class="modal-overlay" id="bulk-delete-client-modal" aria-hidden="true">
+        <div class="modal delete-client-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-delete-client-title">
+            <div class="modal-header">
+                <div><h2 id="bulk-delete-client-title">Supprimer les clients sélectionnés</h2><p id="bulk-delete-client-message">Cette action est irréversible.</p></div>
+                <button type="button" class="modal-close" id="close-bulk-delete-client-btn" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancel-bulk-delete-client-btn">Annuler</button>
+                <button type="button" class="btn-danger" id="confirm-bulk-delete-client-btn">Supprimer</button>
+            </div>
+        </div>
+    </div>
 
 <div
     class="modal-overlay"
