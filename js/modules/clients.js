@@ -721,6 +721,7 @@ async function chargerClients() {
                 ? resultat.clients
                 : [];
 
+        mettreAJourKPIsClients();
         appliquerRechercheEtFiltresClients();
 
     } catch (error) {
@@ -735,6 +736,123 @@ async function chargerClients() {
             "error"
         );
     }
+}
+
+
+// ========================================
+// KPI DYNAMIQUES DES CLIENTS
+// ========================================
+
+function mettreAJourKPIsClients() {
+
+    const totalClients = clientsCharges.length;
+
+    const clientsActifs = clientsCharges.filter(function (client) {
+        return normaliserValeurRecherche(client.statut) === "actif";
+    }).length;
+
+    const pourcentageActifs = totalClients > 0
+        ? Math.round((clientsActifs / totalClients) * 100)
+        : 0;
+
+    const maintenant = new Date();
+    const moisActuel = maintenant.getMonth();
+    const anneeActuelle = maintenant.getFullYear();
+
+    const nouveauxCeMois = clientsCharges.filter(function (client) {
+
+        const dateInscription = convertirDateClient(client.dateInscription);
+
+        return dateInscription &&
+            dateInscription.getMonth() === moisActuel &&
+            dateInscription.getFullYear() === anneeActuelle;
+    }).length;
+
+    const achatsCumules = clientsCharges.reduce(function (total, client) {
+        return total + convertirMontantClient(client.montantTotalAchats);
+    }, 0);
+
+    const moyenneAchats = totalClients > 0
+        ? achatsCumules / totalClients
+        : 0;
+
+    definirTexteKPI("total-clients-value",
+        totalClients.toLocaleString("fr-FR"));
+
+    definirTexteKPI(
+        "total-clients-description",
+        `${nouveauxCeMois.toLocaleString("fr-FR")} nouveau${nouveauxCeMois > 1 ? "x" : ""} client${nouveauxCeMois > 1 ? "s" : ""} ce mois`
+    );
+
+    definirTexteKPI("active-clients-value",
+        clientsActifs.toLocaleString("fr-FR"));
+
+    definirTexteKPI(
+        "active-clients-description",
+        `${pourcentageActifs.toLocaleString("fr-FR")} % des clients`
+    );
+
+    definirTexteKPI("new-clients-value",
+        nouveauxCeMois.toLocaleString("fr-FR"));
+
+    definirTexteKPI(
+        "new-clients-description",
+        "Inscrits durant le mois en cours"
+    );
+
+    definirTexteKPI(
+        "client-revenue-value",
+        formaterMontantClient(achatsCumules)
+    );
+
+    definirTexteKPI(
+        "client-revenue-description",
+        `Moyenne : ${formaterMontantClient(moyenneAchats)} / client`
+    );
+}
+
+
+function definirTexteKPI(idElement, texte) {
+
+    const element = document.getElementById(idElement);
+
+    if (element) {
+        element.textContent = texte;
+    }
+}
+
+
+function convertirMontantClient(montant) {
+
+    if (typeof montant === "number") {
+        return Number.isFinite(montant) ? montant : 0;
+    }
+
+    const valeurNettoyee = String(montant ?? "")
+        .replace(/\s/g, "")
+        .replace(/FCFA/gi, "")
+        .replace(/[^0-9,.-]/g, "")
+        .replace(/,/g, ".");
+
+    const valeur = Number(valeurNettoyee);
+
+    return Number.isFinite(valeur) ? valeur : 0;
+}
+
+
+function convertirDateClient(date) {
+
+    if (!date) {
+        return null;
+    }
+
+    const dateClient = date instanceof Date
+        ? new Date(date.getTime())
+        : new Date(date);
+
+    return Number.isNaN(dateClient.getTime())
+        ? null
+        : dateClient;
 }
 
 
