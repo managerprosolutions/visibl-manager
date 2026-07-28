@@ -386,6 +386,7 @@ if (deleteButton) {
 
     initialiserRechercheEtFiltresClients();
     initialiserExportsClients();
+    initialiserImpressionClients();
 
     // ========================================
     // FORMULAIRE CLIENT
@@ -858,6 +859,123 @@ function convertirDateClient(date) {
 }
 
 
+
+
+// ========================================
+// IMPRESSION DES CLIENTS
+// ========================================
+
+function initialiserImpressionClients() {
+    const boutonImprimer = document.getElementById("print-clients-btn");
+    if (!boutonImprimer) return;
+
+    boutonImprimer.addEventListener("click", function () {
+        imprimerClients();
+    });
+}
+
+function imprimerClients() {
+    if (!Array.isArray(clientsAffiches) || clientsAffiches.length === 0) {
+        showToast("Aucun client à imprimer.", "error");
+        return;
+    }
+
+    const fenetreImpression = window.open("", "_blank", "width=1200,height=800");
+    if (!fenetreImpression) {
+        showToast("Autorisez les fenêtres contextuelles pour lancer l’impression.", "error");
+        return;
+    }
+
+    const echapperHTML = function (valeur) {
+        return String(valeur ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    const lignes = clientsAffiches.map(function (client, index) {
+        const nomComplet = `${client.nom || ""} ${client.prenom || ""}`.trim();
+        return `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${echapperHTML(client.idClient || "")}</td>
+                <td>${echapperHTML(nomComplet)}</td>
+                <td>${echapperHTML(formaterTelephone(client.telephone))}</td>
+                <td>${echapperHTML(client.email || "")}</td>
+                <td>${echapperHTML(mettreMajuscule(client.commune))}</td>
+                <td>${echapperHTML(mettreMajuscule(client.typeClient))}</td>
+                <td>${echapperHTML(formaterDateClient(client.dateInscription))}</td>
+                <td>${echapperHTML(client.nombreCommandes || 0)}</td>
+                <td>${echapperHTML(formaterMontantClient(convertirMontantClient(client.montantTotalAchats)))}</td>
+                <td>${echapperHTML(mettreMajuscule(client.statut))}</td>
+            </tr>`;
+    }).join("");
+
+    const dateImpression = new Date().toLocaleString("fr-FR");
+
+    fenetreImpression.document.open();
+    fenetreImpression.document.write(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>VISIBL — Liste des clients</title>
+    <style>
+        @page { size: landscape; margin: 12mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; color: #111827; }
+        .print-header { margin-bottom: 16px; }
+        h1 { margin: 0 0 6px; font-size: 22px; }
+        .meta { color: #4b5563; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #d1d5db; padding: 6px; font-size: 9px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+        th { background: #e5e7eb; font-weight: 700; }
+        tbody tr:nth-child(even) { background: #f9fafb; }
+        th:nth-child(1), td:nth-child(1) { width: 3%; text-align: center; }
+        th:nth-child(2), td:nth-child(2) { width: 8%; }
+        th:nth-child(3), td:nth-child(3) { width: 13%; }
+        th:nth-child(4), td:nth-child(4) { width: 10%; }
+        th:nth-child(5), td:nth-child(5) { width: 15%; }
+        th:nth-child(6), td:nth-child(6) { width: 9%; }
+        th:nth-child(7), td:nth-child(7) { width: 8%; }
+        th:nth-child(8), td:nth-child(8) { width: 10%; }
+        th:nth-child(9), td:nth-child(9) { width: 6%; text-align: center; }
+        th:nth-child(10), td:nth-child(10) { width: 10%; text-align: right; }
+        th:nth-child(11), td:nth-child(11) { width: 8%; }
+        thead { display: table-header-group; }
+        tr { break-inside: avoid; }
+        .no-print { margin-top: 12px; font-size: 11px; color: #6b7280; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="print-header">
+        <h1>VISIBL — Liste des clients</h1>
+        <div class="meta">Imprimé le ${echapperHTML(dateImpression)} • ${clientsAffiches.length} client(s)</div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th><th>ID</th><th>Client</th><th>Téléphone</th><th>Email</th>
+                <th>Commune</th><th>Type</th><th>Inscription</th><th>Cmd.</th><th>Achats</th><th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>${lignes}</tbody>
+    </table>
+    <p class="no-print">La fenêtre d’impression va s’ouvrir automatiquement.</p>
+</body>
+</html>`);
+    fenetreImpression.document.close();
+
+    fenetreImpression.onload = function () {
+        fenetreImpression.focus();
+        fenetreImpression.print();
+        fenetreImpression.onafterprint = function () {
+            fenetreImpression.close();
+        };
+    };
+}
 
 
 // ========================================
