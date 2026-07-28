@@ -1884,3 +1884,235 @@ function echapperHTML(valeur) {
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 }
+// ========================================
+// ÉTAPE 4 — TRI, PAGINATION, SÉLECTION ET COLONNES
+// ========================================
+let pageClientsCourante = 1;
+let clientsParPage = 10;
+let triClients = { cle: "", direction: "asc" };
+const idsClientsSelectionnes = new Set();
+let clientsPageCourante = [];
+
+const colonnesClients = [
+    { id: "client", label: "Client", index: 1, visible: true },
+    { id: "contact", label: "Contact", index: 2, visible: true },
+    { id: "commune", label: "Commune", index: 3, visible: true },
+    { id: "type", label: "Type", index: 4, visible: true },
+    { id: "date", label: "Date d’inscription", index: 5, visible: true },
+    { id: "commandes", label: "Commandes", index: 6, visible: true },
+    { id: "achats", label: "Total achats", index: 7, visible: true },
+    { id: "quartier", label: "Quartier", index: 8, visible: true },
+    { id: "statut", label: "Statut", index: 9, visible: true },
+    { id: "actions", label: "Actions", index: 10, visible: true }
+];
+
+function initialiserFonctionsAvanceesClients() {
+    const selectParPage = document.getElementById("clients-per-page");
+    clientsParPage = Number(selectParPage?.value) || 10;
+    selectParPage?.addEventListener("change", function () {
+        clientsParPage = Number(selectParPage.value) || 10;
+        pageClientsCourante = 1;
+        afficherClients(clientsAffiches);
+    });
+
+    document.getElementById("previous-page-btn")?.addEventListener("click", function () {
+        if (pageClientsCourante > 1) { pageClientsCourante--; afficherClients(clientsAffiches); }
+    });
+    document.getElementById("next-page-btn")?.addEventListener("click", function () {
+        const totalPages = Math.max(1, Math.ceil(clientsAffiches.length / clientsParPage));
+        if (pageClientsCourante < totalPages) { pageClientsCourante++; afficherClients(clientsAffiches); }
+    });
+
+    document.querySelector(".clients-table thead")?.addEventListener("click", function (event) {
+        const entete = event.target.closest("th[data-sort-key]");
+        if (!entete) return;
+        const cle = entete.dataset.sortKey;
+        triClients.direction = triClients.cle === cle && triClients.direction === "asc" ? "desc" : "asc";
+        triClients.cle = cle;
+        pageClientsCourante = 1;
+        afficherClients(clientsAffiches);
+    });
+
+    const tbody = document.getElementById("clients-table-body");
+    tbody?.addEventListener("change", function (event) {
+        const checkbox = event.target.closest(".client-checkbox");
+        if (!checkbox) return;
+        const id = String(checkbox.value);
+        checkbox.checked ? idsClientsSelectionnes.add(id) : idsClientsSelectionnes.delete(id);
+        checkbox.closest("tr")?.classList.toggle("is-selected", checkbox.checked);
+        mettreAJourSelectionClients();
+    });
+
+    document.getElementById("select-all-clients")?.addEventListener("change", function (event) {
+        const cocher = event.target.checked;
+        clientsPageCourante.forEach(function (client) {
+            const id = String(client.idClient);
+            cocher ? idsClientsSelectionnes.add(id) : idsClientsSelectionnes.delete(id);
+        });
+        afficherClients(clientsAffiches);
+    });
+
+    document.getElementById("bulk-clear-selection")?.addEventListener("click", function () {
+        idsClientsSelectionnes.clear(); afficherClients(clientsAffiches);
+    });
+    document.getElementById("bulk-export-pdf")?.addEventListener("click", function () { exporterSelectionClients("pdf"); });
+    document.getElementById("bulk-export-xlsx")?.addEventListener("click", function () { exporterSelectionClients("xlsx"); });
+    document.getElementById("bulk-export-csv")?.addEventListener("click", function () { exporterSelectionClients("csv"); });
+    document.getElementById("bulk-delete-clients")?.addEventListener("click", ouvrirModalSuppressionMultiple);
+    document.getElementById("cancel-bulk-delete-client-btn")?.addEventListener("click", fermerModalSuppressionMultiple);
+    document.getElementById("close-bulk-delete-client-btn")?.addEventListener("click", fermerModalSuppressionMultiple);
+    document.getElementById("bulk-delete-client-modal")?.addEventListener("click", function (event) { if (event.target === event.currentTarget) fermerModalSuppressionMultiple(); });
+    document.getElementById("confirm-bulk-delete-client-btn")?.addEventListener("click", supprimerClientsSelectionnes);
+
+    initialiserMenuColonnesClients();
+}
+
+function comparerClients(a, b, cle) {
+    if (["nombreCommandes", "montantTotalAchats"].includes(cle)) {
+        return convertirMontantClient(a[cle]) - convertirMontantClient(b[cle]);
+    }
+    if (cle === "dateInscription") {
+        const da = convertirDateClient(a[cle])?.getTime?.() || 0;
+        const db = convertirDateClient(b[cle])?.getTime?.() || 0;
+        return da - db;
+    }
+    const va = normaliserValeurRecherche(cle === "nom" ? `${a.nom || ""} ${a.prenom || ""}` : a[cle]);
+    const vb = normaliserValeurRecherche(cle === "nom" ? `${b.nom || ""} ${b.prenom || ""}` : b[cle]);
+    return va.localeCompare(vb, "fr", { numeric: true });
+}
+
+const afficherClientsOriginal = afficherClients;
+afficherClients = function (clients) {
+    const liste = Array.isArray(clients) ? clients.slice() : [];
+    if (triClients.cle) {
+        liste.sort(function (a, b) {
+            const valeur = comparerClients(a, b, triClients.cle);
+            return triClients.direction === "asc" ? valeur : -valeur;
+        });
+    }
+    const totalPages = Math.max(1, Math.ceil(liste.length / clientsParPage));
+    pageClientsCourante = Math.min(Math.max(1, pageClientsCourante), totalPages);
+    const debut = (pageClientsCourante - 1) * clientsParPage;
+    clientsPageCourante = liste.slice(debut, debut + clientsParPage);
+    afficherClientsOriginal(clientsPageCourante);
+    restaurerSelectionDansTableau();
+    appliquerVisibiliteColonnes();
+    mettreAJourPagination(liste.length, totalPages);
+    mettreAJourIndicateursTri();
+    mettreAJourSelectionClients();
+};
+
+function mettreAJourPagination(total, totalPages) {
+    const zone = document.getElementById("clients-page-buttons");
+    if (zone) {
+        zone.innerHTML = "";
+        const pages = [];
+        for (let p = 1; p <= totalPages; p++) {
+            if (p === 1 || p === totalPages || Math.abs(p - pageClientsCourante) <= 1) pages.push(p);
+        }
+        let precedente = 0;
+        pages.forEach(function (p) {
+            if (precedente && p - precedente > 1) { const dots=document.createElement("span"); dots.textContent="…"; zone.appendChild(dots); }
+            const bouton=document.createElement("button"); bouton.type="button"; bouton.className="pagination-btn"+(p===pageClientsCourante?" active":""); bouton.textContent=String(p);
+            bouton.addEventListener("click", function(){ pageClientsCourante=p; afficherClients(clientsAffiches); }); zone.appendChild(bouton); precedente=p;
+        });
+    }
+    const debut = total ? (pageClientsCourante - 1) * clientsParPage + 1 : 0;
+    const fin = Math.min(pageClientsCourante * clientsParPage, total);
+    const resume = document.getElementById("clients-pagination-summary");
+    if (resume) resume.textContent = `${debut}–${fin} sur ${total}`;
+    const precedent=document.getElementById("previous-page-btn"), suivant=document.getElementById("next-page-btn");
+    if (precedent) precedent.disabled = pageClientsCourante <= 1;
+    if (suivant) suivant.disabled = pageClientsCourante >= totalPages;
+}
+
+function mettreAJourIndicateursTri() {
+    document.querySelectorAll("th[data-sort-key]").forEach(function(th){
+        const indicateur=th.querySelector(".sort-indicator");
+        if (indicateur) indicateur.textContent = th.dataset.sortKey === triClients.cle ? (triClients.direction === "asc" ? "▲" : "▼") : "↕";
+        th.setAttribute("aria-sort", th.dataset.sortKey === triClients.cle ? (triClients.direction === "asc" ? "ascending" : "descending") : "none");
+    });
+}
+
+function restaurerSelectionDansTableau() {
+    document.querySelectorAll(".client-checkbox").forEach(function(cb){
+        cb.checked = idsClientsSelectionnes.has(String(cb.value));
+        cb.closest("tr")?.classList.toggle("is-selected", cb.checked);
+    });
+}
+
+function mettreAJourSelectionClients() {
+    const selectionValide = new Set(clientsCharges.map(c => String(c.idClient)));
+    [...idsClientsSelectionnes].forEach(id => { if (!selectionValide.has(id)) idsClientsSelectionnes.delete(id); });
+    const nombre = idsClientsSelectionnes.size;
+    const barre=document.getElementById("bulk-clients-bar"), compteur=document.getElementById("selected-clients-count");
+    if (barre) barre.hidden = nombre === 0;
+    if (compteur) compteur.textContent = String(nombre);
+    const selectAll=document.getElementById("select-all-clients");
+    if (selectAll) {
+        const coches=clientsPageCourante.filter(c=>idsClientsSelectionnes.has(String(c.idClient))).length;
+        selectAll.checked = clientsPageCourante.length > 0 && coches === clientsPageCourante.length;
+        selectAll.indeterminate = coches > 0 && coches < clientsPageCourante.length;
+    }
+}
+
+function obtenirClientsSelectionnes() {
+    return clientsCharges.filter(c => idsClientsSelectionnes.has(String(c.idClient)));
+}
+
+function exporterSelectionClients(format) {
+    const selection = obtenirClientsSelectionnes();
+    if (!selection.length) return showToast("Sélectionnez au moins un client.", "error");
+    const sauvegarde = clientsAffiches;
+    clientsAffiches = selection;
+    try { if(format==="pdf") exporterClientsPDF(); if(format==="xlsx") exporterClientsExcel(); if(format==="csv") exporterClientsCSV(); }
+    finally { clientsAffiches = sauvegarde; }
+}
+
+function ouvrirModalSuppressionMultiple() {
+    const nombre=idsClientsSelectionnes.size; if(!nombre) return;
+    const modal=document.getElementById("bulk-delete-client-modal"), message=document.getElementById("bulk-delete-client-message");
+    if(message) message.textContent=`Vous allez supprimer définitivement ${nombre} client(s). Cette action est irréversible.`;
+    modal?.classList.add("active"); modal?.setAttribute("aria-hidden","false");
+}
+function fermerModalSuppressionMultiple() { const modal=document.getElementById("bulk-delete-client-modal"); modal?.classList.remove("active"); modal?.setAttribute("aria-hidden","true"); }
+
+async function supprimerClientsSelectionnes() {
+    const bouton=document.getElementById("confirm-bulk-delete-client-btn");
+    const ids=[...idsClientsSelectionnes]; if(!ids.length || bouton?.disabled) return;
+    if(bouton){ bouton.disabled=true; bouton.classList.add("is-loading"); }
+    let succes=0, echecs=0;
+    try {
+        for (const idClient of ids) {
+            try { const r=await apiPost("deleteClient",{idClient}); r?.success ? succes++ : echecs++; } catch(e){ echecs++; }
+        }
+        idsClientsSelectionnes.clear();
+        await chargerClients();
+        fermerModalSuppressionMultiple();
+        if(succes) showToast(`${succes} client(s) supprimé(s).`,"success");
+        if(echecs) showToast(`${echecs} suppression(s) ont échoué.`,"error");
+    } finally { if(bouton){ bouton.disabled=false; bouton.classList.remove("is-loading"); } }
+}
+
+function initialiserMenuColonnesClients() {
+    const menu=document.getElementById("columns-clients-menu"), bouton=document.getElementById("columns-clients-btn"), liste=document.getElementById("columns-clients-dropdown");
+    if(!menu||!bouton||!liste) return;
+    liste.innerHTML = colonnesClients.map(c=>`<label class="column-option"><input type="checkbox" data-column-toggle="${c.id}" checked> <span>${c.label}</span></label>`).join("");
+    bouton.addEventListener("click",function(e){ e.stopPropagation(); const ouvrir=liste.hidden; liste.hidden=!ouvrir; bouton.setAttribute("aria-expanded",String(ouvrir)); });
+    liste.addEventListener("change",function(e){ const cb=e.target.closest("[data-column-toggle]"); if(!cb)return; const c=colonnesClients.find(x=>x.id===cb.dataset.columnToggle); if(c)c.visible=cb.checked; appliquerVisibiliteColonnes(); });
+    document.addEventListener("click",function(e){ if(!menu.contains(e.target)){liste.hidden=true; bouton.setAttribute("aria-expanded","false");} });
+}
+
+function appliquerVisibiliteColonnes() {
+    colonnesClients.forEach(function(c){
+        document.querySelectorAll(`.clients-table tr`).forEach(function(tr){ const cell=tr.children[c.index]; if(cell) cell.hidden=!c.visible; });
+    });
+}
+
+// Réinitialiser la page lors d'une nouvelle recherche ou d'un nouveau filtre.
+const appliquerRechercheEtFiltresClientsOriginal = appliquerRechercheEtFiltresClients;
+appliquerRechercheEtFiltresClients = function () { pageClientsCourante = 1; appliquerRechercheEtFiltresClientsOriginal(); };
+
+// L'initialisation principale a déjà été enregistrée : ajouter nos fonctions après le chargement du DOM.
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialiserFonctionsAvanceesClients);
+else initialiserFonctionsAvanceesClients();
