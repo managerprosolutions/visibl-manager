@@ -179,23 +179,24 @@ openToolbarBtn?.addEventListener(
             }
 
             const idClient = clientASupprimer.idClient;
+            let suppressionReussie = false;
 
             confirmDeleteBtn.disabled = true;
             confirmDeleteBtn.classList.add("is-loading");
 
             try {
 
-                const suppressionReussie =
+                suppressionReussie =
                     await supprimerClient(idClient);
-
-                if (suppressionReussie) {
-                    fermerModalSuppression();
-                }
 
             } finally {
 
                 confirmDeleteBtn.disabled = false;
                 confirmDeleteBtn.classList.remove("is-loading");
+            }
+
+            if (suppressionReussie) {
+                fermerModalSuppression();
             }
         }
     );
