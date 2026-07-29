@@ -1578,3 +1578,211 @@ body.modal-open {
         min-height: 44px;
     }
 }
+
+
+/* =========================================================
+   22. RÉFÉRENCE AUTOMATIQUE, FCFA ET UPLOAD IMAGE
+========================================================= */
+
+.reference-auto-field {
+    position: relative;
+}
+
+.reference-auto-field input {
+    padding-right: 112px !important;
+}
+
+.reference-auto-badge {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 9px;
+    color: #1d4ed8;
+    font-size: 10px;
+    font-weight: 750;
+    pointer-events: none;
+    background: #dbeafe;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    transform: translateY(-50%);
+}
+
+.form-help {
+    display: block;
+    color: var(--products-gray-500);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+/* Retirer les flèches haut/bas des champs number */
+#product-modal input[type="number"]::-webkit-inner-spin-button,
+#product-modal input[type="number"]::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+#product-modal input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+/* Zone d'ajout d'image */
+.image-upload-zone {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 210px;
+    padding: 18px;
+    overflow: hidden;
+    cursor: pointer;
+    background:
+        linear-gradient(135deg, #f8fafc, #eff6ff);
+    border: 2px dashed #bfdbfe;
+    border-radius: 14px;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.image-upload-zone:hover,
+.image-upload-zone:focus-visible,
+.image-upload-zone.dragover {
+    background:
+        linear-gradient(135deg, #eff6ff, #dbeafe);
+    border-color: var(--products-primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.image-upload-zone.dragover {
+    transform: scale(1.01);
+}
+
+.image-upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: var(--products-gray-600);
+    text-align: center;
+}
+
+.image-upload-placeholder[hidden],
+.image-preview-wrapper[hidden] {
+    display: none !important;
+}
+
+.image-upload-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    margin-bottom: 4px;
+    font-size: 30px;
+    background: var(--products-white);
+    border: 1px solid #dbeafe;
+    border-radius: 18px;
+    box-shadow: var(--products-shadow-sm);
+}
+
+.image-upload-placeholder strong {
+    color: var(--products-gray-800);
+    font-size: 14px;
+}
+
+.image-upload-placeholder span,
+.image-upload-placeholder small {
+    color: var(--products-gray-500);
+    font-size: 12px;
+}
+
+.image-preview-wrapper {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 14px;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-200);
+    border-radius: 12px;
+    box-shadow: var(--products-shadow-sm);
+}
+
+#product-image-preview {
+    width: 150px;
+    height: 120px;
+    object-fit: cover;
+    background: var(--products-gray-100);
+    border: 1px solid var(--products-gray-200);
+    border-radius: 10px;
+}
+
+.image-preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.image-preview-info strong {
+    overflow: hidden;
+    color: var(--products-gray-800);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.image-preview-info span {
+    color: var(--products-gray-500);
+    font-size: 11px;
+}
+
+.remove-image-btn {
+    min-height: 38px;
+    padding: 9px 12px;
+    color: #b91c1c;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.remove-image-btn:hover {
+    background: #fecaca;
+    transform: translateY(-1px);
+}
+
+@media screen and (max-width: 680px) {
+    .image-preview-wrapper {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    #product-image-preview {
+        width: 100%;
+        height: 190px;
+    }
+
+    .remove-image-btn {
+        width: 100%;
+    }
+
+    .reference-auto-field input {
+        padding-right: 105px !important;
+    }
+}
