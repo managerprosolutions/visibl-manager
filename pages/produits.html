@@ -2,154 +2,297 @@
 <html lang="fr">
 
 <head>
-    
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Produits</title>
 
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/produits.css">
+    <link
+        rel="stylesheet"
+        href="../css/style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/produits.css"
+    >
+
 </head>
 
 <body>
 
 <div class="container">
 
-    <!-- ===== Sidebar ===== -->
-    <aside id="sidebar" class="sidebar">
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
 
-        <button id="sidebar-close" class="sidebar-close">
+    <aside
+        id="sidebar"
+        class="sidebar"
+    >
+
+        <button
+            id="sidebar-close"
+            class="sidebar-close"
+            type="button"
+            aria-label="Fermer le menu"
+        >
             ✖
         </button>
 
-        <a href="dashboard.html" class="logo">
-            <img src="../logo-vizibl.png" alt="Logo VISIBL">
+        <a
+            href="dashboard.html"
+            class="logo"
+        >
+            <img
+                src="../logo-vizibl.png"
+                alt="Logo VISIBL"
+            >
         </a>
 
         <nav>
+
             <ul>
 
                 <li>
-                    <a href="dashboard.html" class="nav-link">
+
+                    <a
+                        href="dashboard.html"
+                        class="nav-link"
+                    >
                         📊 Tableau de bord
                     </a>
+
                 </li>
 
-                <!-- ===== Menu Commercial ===== -->
+
+                <!-- =========================================
+                     MENU COMMERCIAL
+                ========================================== -->
+
                 <li class="menu-category">
 
-                    <a href="#" class="nav-link category-title">
-                        <span>🛒 Commercial</span>
-                        <span class="arrow">▼</span>
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            🛒 Commercial
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
                     </a>
 
                     <ul class="submenu">
 
                         <li>
-                            <a href="ventes.html" class="nav-link">
+
+                            <a
+                                href="ventes.html"
+                                class="nav-link"
+                            >
                                 Ventes
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="commandes.html" class="nav-link">
+
+                            <a
+                                href="commandes.html"
+                                class="nav-link"
+                            >
                                 Commandes
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="clients.html" class="nav-link">
+
+                            <a
+                                href="clients.html"
+                                class="nav-link"
+                            >
                                 Clients
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="livraisons.html" class="nav-link">
+
+                            <a
+                                href="livraisons.html"
+                                class="nav-link"
+                            >
                                 Livraisons
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="livreurs.html" class="nav-link">
+
+                            <a
+                                href="livreurs.html"
+                                class="nav-link"
+                            >
                                 Livreurs
                             </a>
+
                         </li>
 
                     </ul>
 
                 </li>
 
-                <!-- ===== Menu Stock et approvisionnement ===== -->
+
+                <!-- =========================================
+                     MENU STOCK ET APPROVISIONNEMENT
+                ========================================== -->
+
                 <li class="menu-category">
 
-                    <a href="#" class="nav-link category-title">
-                        <span>📦 Stock & Approvisionnement</span>
-                        <span class="arrow">▼</span>
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            📦 Stock & Approvisionnement
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
                     </a>
 
                     <ul class="submenu">
 
                         <li>
-                            <a href="produits.html" class="nav-link">
+
+                            <a
+                                href="produits.html"
+                                class="nav-link active"
+                                aria-current="page"
+                            >
                                 Produits
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="approvisionnements.html" class="nav-link">
+
+                            <a
+                                href="approvisionnements.html"
+                                class="nav-link"
+                            >
                                 Approvisionnements
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="fournisseurs.html" class="nav-link">
+
+                            <a
+                                href="fournisseurs.html"
+                                class="nav-link"
+                            >
                                 Fournisseurs
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="transitaires.html" class="nav-link">
+
+                            <a
+                                href="transitaires.html"
+                                class="nav-link"
+                            >
                                 Transitaires
                             </a>
+
                         </li>
 
                     </ul>
 
                 </li>
 
-                <!-- ===== Menu Finance ===== -->
+
+                <!-- =========================================
+                     MENU FINANCE
+                ========================================== -->
+
                 <li class="menu-category">
 
-                    <a href="#" class="nav-link category-title">
-                        <span>💰 Finance</span>
-                        <span class="arrow">▼</span>
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            💰 Finance
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
                     </a>
 
                     <ul class="submenu">
 
                         <li>
-                            <a href="caisse.html" class="nav-link">
+
+                            <a
+                                href="caisse.html"
+                                class="nav-link"
+                            >
                                 Caisse
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="paiements.html" class="nav-link">
+
+                            <a
+                                href="paiements.html"
+                                class="nav-link"
+                            >
                                 Paiements
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="factures.html" class="nav-link">
+
+                            <a
+                                href="factures.html"
+                                class="nav-link"
+                            >
                                 Factures
                             </a>
+
                         </li>
 
                         <li>
-                            <a href="comptabilité.html" class="nav-link">
+
+                            <a
+                                href="comptabilité.html"
+                                class="nav-link"
+                            >
                                 Comptabilité
                             </a>
+
                         </li>
 
                     </ul>
@@ -157,61 +300,104 @@
                 </li>
 
                 <li>
-                    <a href="rapports.html" class="nav-link">
+
+                    <a
+                        href="rapports.html"
+                        class="nav-link"
+                    >
                         📈 Rapports
                     </a>
+
                 </li>
 
                 <li>
-                    <a href="parametres.html" class="nav-link">
+
+                    <a
+                        href="parametres.html"
+                        class="nav-link"
+                    >
                         ⚙️ Paramètres
                     </a>
+
                 </li>
 
             </ul>
+
         </nav>
 
     </aside>
 
-    <!-- ===== Contenu principal ===== -->
+
+    <!-- =====================================================
+         CONTENU PRINCIPAL
+    ====================================================== -->
+
     <main class="main-content">
 
-        <!-- ===== Header ===== -->
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
         <header class="header">
 
             <div class="header-left">
 
-                <button id="sidebar-toggle" class="sidebar-toggle">
+                <button
+                    id="sidebar-toggle"
+                    class="sidebar-toggle"
+                    type="button"
+                    aria-label="Ouvrir le menu"
+                >
                     ☰
                 </button>
 
-                <a href="dashboard.html" class="logo">
-                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
+                <a
+                    href="dashboard.html"
+                    class="logo"
+                >
+
+                    <img
+                        src="../logo-vizibl.png"
+                        alt="Logo VISIBL"
+                    >
+
                 </a>
 
-                <h2>Produits</h2>
+                <h2>
+                    Produits
+                </h2>
 
             </div>
+
 
             <div class="header-right">
 
                 <div class="search-box">
 
-                    <!-- Icône de recherche visible sur mobile -->
-                    <button class="icon-btn" id="mobile-search-btn">
+                    <button
+                        class="icon-btn"
+                        id="mobile-search-btn"
+                        type="button"
+                        aria-label="Ouvrir la recherche"
+                    >
                         🔍
                     </button>
 
-                    <!-- Barre de recherche du header -->
                     <div class="search-container">
 
                         <input
                             type="text"
                             class="search-input"
                             placeholder="Rechercher un produit..."
+                            aria-label="Recherche générale"
                         >
 
-                        <button class="search-btn">
+                        <button
+                            class="search-btn"
+                            type="button"
+                            aria-label="Rechercher"
+                        >
                             🔍
                         </button>
 
@@ -219,16 +405,31 @@
 
                 </div>
 
+
                 <div class="header-icons">
 
-                    <button class="icon-btn notifications">
+                    <button
+                        class="icon-btn notifications"
+                        type="button"
+                        aria-label="Notifications"
+                    >
+
                         🔔
-                        <span class="notification-badge">3</span>
+
+                        <span class="notification-badge">
+                            3
+                        </span>
+
                     </button>
+
 
                     <div class="profile-menu">
 
-                        <button class="icon-btn">
+                        <button
+                            class="icon-btn"
+                            type="button"
+                            aria-label="Menu du profil"
+                        >
                             👤
                         </button>
 
@@ -244,7 +445,10 @@
 
                             <hr>
 
-                            <a href="#" class="logout">
+                            <a
+                                href="#"
+                                class="logout"
+                            >
                                 Déconnexion
                             </a>
 
@@ -258,123 +462,220 @@
 
         </header>
 
-        <!-- ===== Contenu de la page ===== -->
+
+        <!-- =================================================
+             CONTENU DE LA PAGE
+        ================================================== -->
+
         <section class="content">
 
-            <!-- ===== Présentation ===== -->
+
+            <!-- =============================================
+                 PRÉSENTATION
+            ============================================== -->
+
             <div class="welcome-section">
 
-                <h2>Produits</h2>
+                <h2>
+                    Produits
+                </h2>
 
                 <p>
                     Enregistrez, consultez et gérez les produits,
-                    leurs coûts, leurs prix, leur stock initial et leur rentabilité.
+                    leurs coûts, leurs prix, leur stock initial
+                    et leur rentabilité.
                 </p>
 
             </div>
 
-            <!-- ===== Cartes KPI Produits ===== -->
-            <div class="kpi-grid" id="products-kpi-grid">
+
+            <!-- =============================================
+                 CARTES KPI
+            ============================================== -->
+
+            <div
+                class="kpi-grid"
+                id="products-kpi-grid"
+            >
+
 
                 <!-- Total des produits -->
+
                 <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">📦</div>
+
+                    <div
+                        class="kpi-icon"
+                        aria-hidden="true"
+                    >
+                        📦
+                    </div>
 
                     <div class="kpi-content">
-                        <h3>Total des produits</h3>
+
+                        <h3>
+                            Total des produits
+                        </h3>
 
                         <p
                             class="kpi-value"
                             id="kpi-total-products"
                             aria-live="polite"
                         >
-                            --
+                            0
                         </p>
 
-                        <small id="kpi-products-month" aria-live="polite">
-                            Données en cours de chargement
+                        <small
+                            id="kpi-products-month"
+                            aria-live="polite"
+                        >
+                            +0 ce mois
                         </small>
+
                     </div>
+
                 </article>
 
+
                 <!-- Valeur du stock initial -->
+
                 <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">💰</div>
+
+                    <div
+                        class="kpi-icon"
+                        aria-hidden="true"
+                    >
+                        💰
+                    </div>
 
                     <div class="kpi-content">
-                        <h3>Valeur du stock initial</h3>
+
+                        <h3>
+                            Valeur du stock initial
+                        </h3>
 
                         <p
                             class="kpi-value"
                             id="kpi-stock-value"
                             aria-live="polite"
                         >
-                            --
+                            0 FCFA
                         </p>
 
                         <small>
                             Prix de revient × stock initial
                         </small>
+
                     </div>
+
                 </article>
 
+
                 <!-- Marge moyenne -->
+
                 <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">📈</div>
+
+                    <div
+                        class="kpi-icon"
+                        aria-hidden="true"
+                    >
+                        📈
+                    </div>
 
                     <div class="kpi-content">
-                        <h3>Marge moyenne</h3>
+
+                        <h3>
+                            Marge moyenne
+                        </h3>
 
                         <p
                             class="kpi-value"
                             id="kpi-average-margin"
                             aria-live="polite"
                         >
-                            --
+                            0 %
                         </p>
 
                         <small
                             id="kpi-average-margin-fcfa"
                             aria-live="polite"
                         >
-                            Données en cours de chargement
+                            Marge moyenne
                         </small>
+
                     </div>
+
                 </article>
 
+
                 <!-- Produits actifs -->
+
                 <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">✅</div>
+
+                    <div
+                        class="kpi-icon"
+                        aria-hidden="true"
+                    >
+                        ✅
+                    </div>
 
                     <div class="kpi-content">
-                        <h3>Produits actifs</h3>
+
+                        <h3>
+                            Produits actifs
+                        </h3>
 
                         <p
                             class="kpi-value"
                             id="kpi-active-products"
                             aria-live="polite"
                         >
-                            --
+                            0
                         </p>
 
-                        <small id="kpi-active-percent" aria-live="polite">
-                            Données en cours de chargement
+                        <small
+                            id="kpi-active-percent"
+                            aria-live="polite"
+                        >
+                            0 % du catalogue
                         </small>
+
                     </div>
+
                 </article>
 
             </div>
 
-            <!-- ===== Bouton nouveau produit ===== -->
+
+            <!-- =============================================
+                 BARRE D'ACTIONS
+            ============================================== -->
+
             <div class="sales-toolbar">
 
-                <button class="btn-primary" id="new-product-btn">
+                <button
+                    type="button"
+                    class="btn-primary"
+                    id="new-product-btn"
+                >
                     ➕ Nouveau produit
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="refresh-products-btn"
+                    title="Actualiser les produits"
+                >
+                    🔄 Actualiser
                 </button>
 
             </div>
 
-            <!-- ===== Recherche et filtres ===== -->
+
+            <!-- =============================================
+                 RECHERCHE ET FILTRES
+            ============================================== -->
+
             <div class="sales-filters">
 
                 <div class="sales-search">
@@ -383,27 +684,22 @@
                         type="text"
                         id="products-search-input"
                         placeholder="Rechercher par référence, désignation ou fournisseur..."
+                        autocomplete="off"
+                        aria-label="Rechercher un produit"
                     >
 
                 </div>
 
+
                 <!-- Filtre fournisseur -->
-                <select id="product-supplier-filter">
+
+                <select
+                    id="product-supplier-filter"
+                    aria-label="Filtrer par fournisseur"
+                >
 
                     <option value="">
                         Tous les fournisseurs
-                    </option>
-
-                    <option value="fournisseur-1">
-                        Fournisseur 1
-                    </option>
-
-                    <option value="fournisseur-2">
-                        Fournisseur 2
-                    </option>
-
-                    <option value="fournisseur-3">
-                        Fournisseur 3
                     </option>
 
                     <option value="sans-fournisseur">
@@ -412,16 +708,39 @@
 
                 </select>
 
-                <!-- Filtre niveau du stock initial -->
-                <select id="product-stock-filter">
-                    <option value="">Tous les niveaux de stock initial</option>
-                    <option value="disponible">Stock disponible</option>
-                    <option value="faible">Sous le seuil d'alerte</option>
-                    <option value="rupture">Stock initial nul</option>
+
+                <!-- Filtre niveau de stock -->
+
+                <select
+                    id="product-stock-filter"
+                    aria-label="Filtrer par niveau de stock"
+                >
+
+                    <option value="">
+                        Tous les niveaux de stock initial
+                    </option>
+
+                    <option value="disponible">
+                        Stock disponible
+                    </option>
+
+                    <option value="faible">
+                        Sous le seuil d'alerte
+                    </option>
+
+                    <option value="rupture">
+                        Stock initial nul
+                    </option>
+
                 </select>
 
+
                 <!-- Filtre statut -->
-                <select id="product-status-filter">
+
+                <select
+                    id="product-status-filter"
+                    aria-label="Filtrer par statut"
+                >
 
                     <option value="">
                         Tous les statuts
@@ -443,43 +762,86 @@
 
             </div>
 
-            <!-- ===== Tableau des produits ===== -->
+
+            <!-- =============================================
+                 TABLEAU DES PRODUITS
+            ============================================== -->
+
             <div class="sales-table-container">
 
                 <table class="sales-table">
 
                     <thead>
+
                         <tr>
+
                             <th>ID Produit</th>
+
                             <th>Référence Produit</th>
+
                             <th>Désignation</th>
+
                             <th>Description</th>
+
                             <th>Prix d'Achat</th>
+
                             <th>Taux TVA (%)</th>
+
                             <th>Montant TVA</th>
+
                             <th>Frais de Transport</th>
+
                             <th>Frais de Douane</th>
+
                             <th>Autres Frais</th>
+
                             <th>Prix de Revient</th>
+
                             <th>Prix de Vente</th>
+
                             <th>Prix Minimum de Vente</th>
+
                             <th>Marge (FCFA)</th>
+
                             <th>Taux de Marge (%)</th>
+
                             <th>Stock Initial</th>
+
                             <th>Seuil d'Alerte</th>
+
                             <th>ID Fournisseur Principal</th>
+
                             <th>Garantie (mois)</th>
+
                             <th>Image URL</th>
+
                             <th>Date d'Ajout</th>
+
                             <th>Date de Modification</th>
+
                             <th>Statut</th>
+
                             <th>Commentaire</th>
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
 
                     <tbody id="products-table-body">
-                        <!-- Les produits seront chargés dynamiquement depuis Google Sheets -->
+
+                        <tr>
+
+                            <td
+                                colspan="25"
+                                class="table-message"
+                            >
+                                Chargement des produits...
+                            </td>
+
+                        </tr>
+
                     </tbody>
 
                 </table>
@@ -492,7 +854,19 @@
 
 </div>
 
+
+<!-- =========================================================
+     FICHIERS JAVASCRIPT
+     L'ordre est important :
+     1. api.js contient l'URL de l'API
+     2. app.js gère l'interface générale
+     3. produits.js gère le module Produits
+========================================================== -->
+
+<script src="../js/api.js"></script>
+
 <script src="../js/app.js"></script>
+
 <script src="../js/produits.js"></script>
 
 </body>
