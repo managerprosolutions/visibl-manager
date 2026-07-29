@@ -267,7 +267,7 @@
 
                 <p>
                     Enregistrez, consultez et gérez les produits,
-                    leurs prix et leur niveau de stock.
+                    leurs coûts, leurs prix, leur stock initial et leur rentabilité.
                 </p>
 
             </div>
@@ -289,47 +289,10 @@
                     <input
                         type="text"
                         id="products-search-input"
-                        placeholder="Rechercher par référence, désignation ou catégorie..."
+                        placeholder="Rechercher par référence, désignation ou fournisseur..."
                     >
 
                 </div>
-
-                <!-- Filtre catégorie -->
-                <select id="product-category-filter">
-
-                    <option value="">
-                        Toutes les catégories
-                    </option>
-
-                    <option value="camera">
-                        Caméras
-                    </option>
-
-                    <option value="alarme">
-                        Alarmes
-                    </option>
-
-                    <option value="fibre-optique">
-                        Fibre optique
-                    </option>
-
-                    <option value="reseau">
-                        Réseau
-                    </option>
-
-                    <option value="domotique">
-                        Domotique
-                    </option>
-
-                    <option value="accessoire">
-                        Accessoires
-                    </option>
-
-                    <option value="autre">
-                        Autres
-                    </option>
-
-                </select>
 
                 <!-- Filtre fournisseur -->
                 <select id="product-supplier-filter">
@@ -356,29 +319,12 @@
 
                 </select>
 
-                <!-- Filtre état du stock -->
+                <!-- Filtre niveau du stock initial -->
                 <select id="product-stock-filter">
-
-                    <option value="">
-                        Tous les niveaux de stock
-                    </option>
-
-                    <option value="disponible">
-                        Stock disponible
-                    </option>
-
-                    <option value="faible">
-                        Stock faible
-                    </option>
-
-                    <option value="rupture">
-                        Rupture de stock
-                    </option>
-
-                    <option value="surstock">
-                        Surstock
-                    </option>
-
+                    <option value="">Tous les niveaux de stock initial</option>
+                    <option value="disponible">Stock disponible</option>
+                    <option value="faible">Sous le seuil d'alerte</option>
+                    <option value="rupture">Stock initial nul</option>
                 </select>
 
                 <!-- Filtre statut -->
@@ -410,204 +356,37 @@
                 <table class="sales-table">
 
                     <thead>
-
                         <tr>
-                            <th>Référence</th>
+                            <th>ID Produit</th>
+                            <th>Référence Produit</th>
                             <th>Désignation</th>
-                            <th>Catégorie</th>
-                            <th>Prix d'achat</th>
-                            <th>Prix de vente</th>
-                            <th>Stock actuel</th>
-                            <th>Seuil d'alerte</th>
-                            <th>État du stock</th>
+                            <th>Description</th>
+                            <th>Prix d'Achat</th>
+                            <th>Taux TVA (%)</th>
+                            <th>Montant TVA</th>
+                            <th>Frais de Transport</th>
+                            <th>Frais de Douane</th>
+                            <th>Autres Frais</th>
+                            <th>Prix de Revient</th>
+                            <th>Prix de Vente</th>
+                            <th>Prix Minimum de Vente</th>
+                            <th>Marge (FCFA)</th>
+                            <th>Taux de Marge (%)</th>
+                            <th>Stock Initial</th>
+                            <th>Seuil d'Alerte</th>
+                            <th>ID Fournisseur Principal</th>
+                            <th>Garantie (mois)</th>
+                            <th>Image URL</th>
+                            <th>Date d'Ajout</th>
+                            <th>Date de Modification</th>
                             <th>Statut</th>
+                            <th>Commentaire</th>
                             <th>Actions</th>
                         </tr>
-
                     </thead>
 
                     <tbody id="products-table-body">
-
-                        <!-- ===== Exemple produit 1 ===== -->
-                        <tr>
-
-                            <td>#PRD0001</td>
-
-                            <td>Caméra rotative Wi-Fi</td>
-
-                            <td>Caméras</td>
-
-                            <td>22 000 FCFA</td>
-
-                            <td>35 000 FCFA</td>
-
-                            <td>24</td>
-
-                            <td>5</td>
-
-                            <td>
-                                <span class="status-badge status-paid">
-                                    Disponible
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="status-badge status-paid">
-                                    Actif
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="table-actions">
-
-                                    <button
-                                        class="action-btn view-btn"
-                                        title="Voir le produit"
-                                    >
-                                        👁
-                                    </button>
-
-                                    <button
-                                        class="action-btn edit-btn"
-                                        title="Modifier le produit"
-                                    >
-                                        ✏️
-                                    </button>
-
-                                    <button
-                                        class="action-btn delete-btn"
-                                        title="Supprimer le produit"
-                                    >
-                                        🗑️
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                        <!-- ===== Exemple produit 2 ===== -->
-                        <tr>
-
-                            <td>#PRD0002</td>
-
-                            <td>Caméra solaire 4G</td>
-
-                            <td>Caméras</td>
-
-                            <td>65 000 FCFA</td>
-
-                            <td>90 000 FCFA</td>
-
-                            <td>3</td>
-
-                            <td>5</td>
-
-                            <td>
-                                <span class="status-badge status-pending">
-                                    Stock faible
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="status-badge status-paid">
-                                    Actif
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="table-actions">
-
-                                    <button
-                                        class="action-btn view-btn"
-                                        title="Voir le produit"
-                                    >
-                                        👁
-                                    </button>
-
-                                    <button
-                                        class="action-btn edit-btn"
-                                        title="Modifier le produit"
-                                    >
-                                        ✏️
-                                    </button>
-
-                                    <button
-                                        class="action-btn delete-btn"
-                                        title="Supprimer le produit"
-                                    >
-                                        🗑️
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                        <!-- ===== Exemple produit 3 ===== -->
-                        <tr>
-
-                            <td>#PRD0003</td>
-
-                            <td>Câble fibre optique 100 mètres</td>
-
-                            <td>Fibre optique</td>
-
-                            <td>40 000 FCFA</td>
-
-                            <td>58 000 FCFA</td>
-
-                            <td>0</td>
-
-                            <td>2</td>
-
-                            <td>
-                                <span class="status-badge status-cancelled">
-                                    Rupture
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="status-badge status-paid">
-                                    Actif
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="table-actions">
-
-                                    <button
-                                        class="action-btn view-btn"
-                                        title="Voir le produit"
-                                    >
-                                        👁
-                                    </button>
-
-                                    <button
-                                        class="action-btn edit-btn"
-                                        title="Modifier le produit"
-                                    >
-                                        ✏️
-                                    </button>
-
-                                    <button
-                                        class="action-btn delete-btn"
-                                        title="Supprimer le produit"
-                                    >
-                                        🗑️
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
+                        <!-- Les produits seront chargés dynamiquement depuis Google Sheets -->
                     </tbody>
 
                 </table>
