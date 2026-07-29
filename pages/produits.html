@@ -927,13 +927,27 @@
                                 <span class="required">*</span>
                             </label>
 
-                            <input
-                                type="text"
-                                id="product-reference"
-                                name="referenceProduit"
-                                placeholder="Exemple : CAM-001"
-                                required
+                            <div class="reference-auto-field">
+                                <input
+                                    type="text"
+                                    id="product-reference"
+                                    name="referenceProduit"
+                                    value="Génération automatique..."
+                                    readonly
+                                    required
+                                    aria-describedby="product-reference-help"
+                                >
+                                <span class="reference-auto-badge">
+                                    Automatique
+                                </span>
+                            </div>
+
+                            <small
+                                class="form-help"
+                                id="product-reference-help"
                             >
+                                La référence est créée automatiquement par VISIBL.
+                            </small>
 
                         </div>
 
@@ -991,7 +1005,7 @@
                         <div class="form-group">
 
                             <label for="product-purchase-price">
-                                Prix d’achat
+                                Prix d’achat (FCFA)
                                 <span class="required">*</span>
                             </label>
 
@@ -1030,7 +1044,7 @@
                         <div class="form-group">
 
                             <label for="product-vat-amount">
-                                Montant TVA
+                                Montant TVA (FCFA)
                             </label>
 
                             <input
@@ -1047,7 +1061,7 @@
                         <div class="form-group">
 
                             <label for="product-transport-cost">
-                                Frais de transport
+                                Frais de transport (FCFA)
                             </label>
 
                             <input
@@ -1065,7 +1079,7 @@
                         <div class="form-group">
 
                             <label for="product-customs-cost">
-                                Frais de douane
+                                Frais de douane (FCFA)
                             </label>
 
                             <input
@@ -1083,7 +1097,7 @@
                         <div class="form-group">
 
                             <label for="product-other-costs">
-                                Autres frais
+                                Autres frais (FCFA)
                             </label>
 
                             <input
@@ -1101,7 +1115,7 @@
                         <div class="form-group">
 
                             <label for="product-cost-price">
-                                Prix de revient
+                                Prix de revient (FCFA)
                             </label>
 
                             <input
@@ -1118,7 +1132,7 @@
                         <div class="form-group">
 
                             <label for="product-sale-price">
-                                Prix de vente
+                                Prix de vente (FCFA)
                                 <span class="required">*</span>
                             </label>
 
@@ -1138,7 +1152,7 @@
                         <div class="form-group">
 
                             <label for="product-minimum-price">
-                                Prix minimum de vente
+                                Prix minimum de vente (FCFA)
                             </label>
 
                             <input
@@ -1291,16 +1305,83 @@
 
                         <div class="form-group form-group-full">
 
-                            <label for="product-image-url">
-                                Image URL
+                            <label for="product-image-file">
+                                Image du produit
                             </label>
 
-                            <input
-                                type="url"
-                                id="product-image-url"
-                                name="imageURL"
-                                placeholder="https://exemple.com/image.jpg"
+                            <div
+                                class="image-upload-zone"
+                                id="product-image-drop-zone"
+                                tabindex="0"
+                                role="button"
+                                aria-describedby="product-image-help"
                             >
+                                <input
+                                    type="file"
+                                    id="product-image-file"
+                                    name="imageFichier"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    hidden
+                                >
+
+                                <input
+                                    type="hidden"
+                                    id="product-image-url"
+                                    name="imageURL"
+                                >
+
+                                <div
+                                    class="image-upload-placeholder"
+                                    id="product-image-placeholder"
+                                >
+                                    <span
+                                        class="image-upload-icon"
+                                        aria-hidden="true"
+                                    >
+                                        📷
+                                    </span>
+
+                                    <strong>
+                                        Cliquez pour ajouter une image
+                                    </strong>
+
+                                    <span>
+                                        ou glissez-déposez votre fichier ici
+                                    </span>
+
+                                    <small id="product-image-help">
+                                        JPG, PNG ou WEBP — 5 Mo maximum
+                                    </small>
+                                </div>
+
+                                <div
+                                    class="image-preview-wrapper"
+                                    id="product-image-preview-wrapper"
+                                    hidden
+                                >
+                                    <img
+                                        id="product-image-preview"
+                                        alt="Aperçu de l’image du produit"
+                                    >
+
+                                    <div class="image-preview-info">
+                                        <strong id="product-image-name">
+                                            Image sélectionnée
+                                        </strong>
+
+                                        <span id="product-image-size"></span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="remove-image-btn"
+                                        id="remove-product-image-btn"
+                                    >
+                                        Retirer l’image
+                                    </button>
+                                </div>
+
+                            </div>
 
                         </div>
 
