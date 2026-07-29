@@ -1,533 +1,2118 @@
-/* =========================================================
-   VISIBL — PAGE PRODUITS
-   Fichier : produits.css
-   Ce fichier complète style.css.
-========================================================= */
+let clientsCharges = [];
+let clientsAffiches = [];
+let clientEnModificationId = null;
+let clientASupprimer = null;
 
-/* =========================
-   CONTENU PRINCIPAL
-========================= */
+// État de consultation de la page Clients
+let rechercheClients = "";
+let filtresClients = {
+    typeClient: "",
+    statut: "",
+    commune: ""
+};
 
-.content {
-    width: 100%;
-    max-width: 1450px;
-    margin: 0 auto;
-    padding: 24px;
-    overflow-x: hidden;
+// ========================================
+// INITIALISATION
+// ========================================
+
+function initialiserDeconnexion() {
+
+    const logoutButton =
+        document.getElementById("logout-button");
+
+    if (!logoutButton) {
+        return;
+    }
+
+    logoutButton.addEventListener(
+        "click",
+        function (event) {
+
+            event.preventDefault();
+            logoutUser();
+        }
+    );
 }
 
-/* =========================
-   PRÉSENTATION
-========================= */
 
-.welcome-section {
-    margin-bottom: 24px;
+function initialiserClients() {
+
+    requireAuth();
+
+    initialiserDeconnexion();
+
+    // ========================================
+    // FENÊTRE NOUVEAU CLIENT
+    // ========================================
+
+    const openModalBtn =
+        document.getElementById("new-client-btn");
+
+    const openToolbarBtn =
+        document.getElementById("new-client-toolbar-btn");
+
+    const closeModalBtn =
+        document.getElementById("close-client-modal");
+
+    const cancelModalBtn =
+        document.getElementById("cancel-client-btn");
+
+    const clientModal =
+        document.getElementById("client-modal");
+
+    const deleteModal =
+        document.getElementById("delete-client-modal");
+
+    const cancelDeleteBtn =
+        document.getElementById("cancel-delete-client-btn");
+
+    const confirmDeleteBtn =
+        document.getElementById("confirm-delete-client-btn");
+
+
+    function openModal() {
+
+        if (!clientModal) {
+            return;
+        }
+
+        clientModal.classList.add("active");
+        clientModal.setAttribute("aria-hidden", "false");
+    }
+
+
+    function closeModal() {
+
+    if (!clientModal) {
+        return;
+    }
+
+    clientModal.classList.remove("active");
+    clientModal.setAttribute("aria-hidden", "true");
 }
 
-.welcome-section h2 {
-    margin: 0 0 8px;
-    font-size: clamp(26px, 3vw, 34px);
-    font-weight: 800;
-    line-height: 1.2;
-    color: #0f172a;
-    letter-spacing: -0.6px;
+
+function remplirFormulaireClient(client) {
+
+    document.getElementById("client-type").value =
+        client.typeClient || "";
+
+    document.getElementById("client-status").value =
+        client.statut || "actif";
+
+    document.getElementById("client-lastname").value =
+        client.nom || "";
+
+    document.getElementById("client-firstname").value =
+        client.prenom || "";
+
+    document.getElementById("client-phone").value =
+        client.telephone || "";
+
+    document.getElementById("client-email").value =
+        client.email || "";
+
+    document.getElementById("client-commune").value =
+        client.commune || "";
+
+    document.getElementById("client-neighborhood").value =
+        client.quartier || "";
+
+    document.getElementById("client-comment").value =
+        client.commentaire || "";
+
+    document.getElementById("client-modal-title").textContent =
+        "Modifier le client";
+
+    document.getElementById("save-client-btn").textContent =
+        "Enregistrer les modifications";
 }
 
-.welcome-section p {
-    max-width: 760px;
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.7;
-    color: #64748b;
+
+function ouvrirNouveauClient() {
+
+    clientEnModificationId = null;
+
+    const clientForm = document.getElementById("client-form");
+    clientForm?.reset();
+
+    const modalTitle = document.getElementById("client-modal-title");
+    const saveButton = document.getElementById("save-client-btn");
+
+    if (modalTitle) {
+        modalTitle.textContent = "Nouveau client";
+    }
+
+    if (saveButton) {
+        saveButton.textContent = "Enregistrer le client";
+    }
+
+    openModal();
 }
 
-/* =========================
-   BARRE D'ACTIONS
-========================= */
+openModalBtn?.addEventListener(
+    "click",
+    ouvrirNouveauClient
+);
 
-.sales-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-bottom: 20px;
+openToolbarBtn?.addEventListener(
+    "click",
+    ouvrirNouveauClient
+);
+
+    closeModalBtn?.addEventListener(
+        "click",
+        closeModal
+    );
+
+    cancelModalBtn?.addEventListener(
+        "click",
+        closeModal
+    );
+
+    cancelDeleteBtn?.addEventListener(
+        "click",
+        fermerModalSuppression
+    );
+
+    deleteModal?.addEventListener(
+        "click",
+        function (event) {
+
+            if (event.target === deleteModal) {
+                fermerModalSuppression();
+            }
+        }
+    );
+
+    confirmDeleteBtn?.addEventListener(
+        "click",
+        async function () {
+
+            if (!clientASupprimer || confirmDeleteBtn.disabled) {
+                return;
+            }
+
+            const idClient = clientASupprimer.idClient;
+            let suppressionReussie = false;
+
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.classList.add("is-loading");
+
+            try {
+
+                suppressionReussie =
+                    await supprimerClient(idClient);
+
+            } finally {
+
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.classList.remove("is-loading");
+            }
+
+            if (suppressionReussie) {
+                fermerModalSuppression();
+            }
+        }
+    );
+
+
+    // ========================================
+    // FENÊTRE VOIR CLIENT
+    // ========================================
+
+    const closeViewBtn =
+        document.getElementById("close-view-client-modal");
+
+    const closeViewFooterBtn =
+        document.getElementById("close-view-client-footer");
+
+
+    closeViewBtn?.addEventListener(
+        "click",
+        fermerModalVoirClient
+    );
+
+    closeViewFooterBtn?.addEventListener(
+        "click",
+        fermerModalVoirClient
+    );
+
+// ========================================
+// CLIC SUR LES ACTIONS DU TABLEAU
+// ========================================
+
+const clientsTableBody =
+    document.getElementById("clients-table-body");
+
+clientsTableBody?.addEventListener(
+    "click",
+    function (event) {
+
+        const viewButton =
+            event.target.closest(".view-btn");
+
+        if (viewButton) {
+
+            const clientId =
+                viewButton.dataset.clientId;
+
+            const client =
+                clientsCharges.find(
+                    function (element) {
+
+                        return String(element.idClient) ===
+                            String(clientId);
+                    }
+                );
+
+            if (!client) {
+
+                showToast(
+                    "Impossible de retrouver les informations du client.",
+                    "error"
+                );
+
+                return;
+            }
+
+            afficherDetailsClient(client);
+            ouvrirModalVoirClient();
+
+            return;
+        }
+
+        // ========================================
+        // BOUTON MODIFIER
+        // ========================================
+
+        const editButton =
+            event.target.closest(".edit-btn");
+
+        if (editButton) {
+
+            const clientId =
+                editButton.dataset.clientId;
+
+            const client =
+                clientsCharges.find(
+                    function (element) {
+
+                        return String(element.idClient) ===
+                            String(clientId);
+                    }
+                );
+
+            if (!client) {
+
+                showToast(
+                    "Impossible de retrouver le client à modifier.",
+                    "error"
+                );
+
+                return;
+            }
+
+clientEnModificationId = client.idClient;
+            
+            remplirFormulaireClient(client);
+openModal();
+
+            return;
+        }
+
+   // ========================================
+// BOUTON SUPPRIMER
+// ========================================
+
+const deleteButton =
+    event.target.closest(".delete-btn");
+
+if (deleteButton) {
+
+    const clientId =
+        deleteButton.dataset.clientId;
+
+    const client =
+        clientsCharges.find(
+            function (element) {
+
+                return String(element.idClient) ===
+                    String(clientId);
+            }
+        );
+
+    if (!client) {
+
+        showToast(
+            "Impossible de retrouver le client à supprimer.",
+            "error"
+        );
+
+        return;
+    }
+
+    ouvrirModalSuppression(client);
+
+    return;
+} 
+
+    }
+);
+
+    // ========================================
+    // FERMETURE AVEC LA TOUCHE ÉCHAP
+    // ========================================
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Escape") {
+
+                closeModal();
+
+                fermerModalVoirClient();
+
+                fermerModalSuppression();
+            }
+        }
+    );
+
+
+    // ========================================
+    // RECHERCHE, FILTRES ET ACTUALISATION
+    // ========================================
+
+    initialiserRechercheEtFiltresClients();
+    initialiserExportsClients();
+    initialiserImpressionClients();
+
+    // ========================================
+    // FORMULAIRE CLIENT
+    // ========================================
+
+    const clientForm =
+        document.getElementById("client-form");
+
+    clientForm?.addEventListener(
+        "submit",
+        enregistrerClient
+    );
+
+
+    // Charger les clients au démarrage
+    chargerClients();
 }
 
-.sales-toolbar .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 18px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.2);
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        opacity 0.2s ease;
+
+// ========================================
+// DÉMARRAGE DE LA PAGE
+// ========================================
+
+if (document.readyState === "loading") {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initialiserClients
+    );
+
+} else {
+
+    initialiserClients();
 }
 
-.sales-toolbar .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.26);
+
+// ========================================
+// ENREGISTREMENT D'UN CLIENT
+// ========================================
+
+async function enregistrerClient(event) {
+
+    event.preventDefault();
+
+    const clientForm =
+        document.getElementById("client-form");
+
+    const data = {
+
+        nom: document
+            .getElementById("client-lastname")
+            .value
+            .trim(),
+
+        prenom: document
+            .getElementById("client-firstname")
+            .value
+            .trim(),
+
+        telephone: document
+            .getElementById("client-phone")
+            .value
+            .trim(),
+
+        email: document
+            .getElementById("client-email")
+            .value
+            .trim(),
+
+        commune: document
+            .getElementById("client-commune")
+            .value,
+
+        quartier: document
+            .getElementById("client-neighborhood")
+            .value
+            .trim(),
+
+        typeClient: document
+            .getElementById("client-type")
+            .value,
+
+        statut: document
+            .getElementById("client-status")
+            .value,
+
+        commentaire: document
+            .getElementById("client-comment")
+            .value
+            .trim()
+    };
+
+
+    try {
+
+        let resultat;
+
+if (clientEnModificationId) {
+
+    data.idClient =
+        clientEnModificationId;
+
+    resultat =
+        await apiPost(
+            "updateClient",
+            data
+        );
+
+} else {
+
+    resultat =
+        await apiPost(
+            "createClient",
+            data
+        );
 }
 
-.sales-toolbar .btn-primary:active {
-    transform: translateY(0);
-}
 
-/* =========================
-   FILTRES
-========================= */
+        if (resultat.success) {
 
-.sales-filters {
-    display: grid;
-    grid-template-columns:
-        minmax(280px, 1.7fr)
-        repeat(4, minmax(170px, 1fr));
-    gap: 14px;
-    margin-bottom: 22px;
-    padding: 18px;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    background: #ffffff;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
-}
+            showToast(
+                resultat.message,
+                "success"
+            );
 
-.sales-search {
-    min-width: 0;
-}
+            clientForm?.reset();
 
-.sales-search input,
-.sales-filters select {
-    width: 100%;
-    height: 44px;
-    padding: 0 14px;
-    border: 1px solid #dbe3ee;
-    border-radius: 11px;
-    outline: none;
-    background: #f8fafc;
-    color: #1e293b;
-    font: inherit;
-    font-size: 13px;
-    transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
-}
+            clientEnModificationId = null;
 
-.sales-search input::placeholder {
-    color: #94a3b8;
-}
+document.getElementById("client-modal-title").textContent =
+    "Nouveau client";
 
-.sales-search input:hover,
-.sales-filters select:hover {
-    border-color: #cbd5e1;
-}
+document.getElementById("save-client-btn").textContent =
+    "Enregistrer";
 
-.sales-search input:focus,
-.sales-filters select:focus {
-    border-color: #2563eb;
-    background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-}
+            await chargerClients();
 
-.sales-filters select {
-    cursor: pointer;
-}
+            const clientModal =
+                document.getElementById("client-modal");
 
-/* =========================
-   TABLEAU
-========================= */
+            clientModal?.classList.remove("active");
 
-.sales-table-container {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    background: #ffffff;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-}
+            clientModal?.setAttribute(
+                "aria-hidden",
+                "true"
+            );
 
-.sales-table-container::-webkit-scrollbar {
-    height: 9px;
-}
+        } else {
 
-.sales-table-container::-webkit-scrollbar-track {
-    background: transparent;
-}
+            showToast(
+                resultat.message,
+                "error"
+            );
+        }
 
-.sales-table-container::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: #cbd5e1;
-}
+    } catch (error) {
 
-.sales-table {
-    width: 100%;
-    min-width: 1180px;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: auto;
-}
+        console.error(error);
 
-.sales-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-}
-
-.sales-table th {
-    padding: 14px 13px;
-    border-bottom: 1px solid #dfe7f1;
-    background: #f8fafc;
-    color: #475569;
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 1.35;
-    text-align: left;
-    text-transform: uppercase;
-    letter-spacing: 0.45px;
-    white-space: nowrap;
-}
-
-.sales-table td {
-    padding: 15px 13px;
-    border-bottom: 1px solid #edf2f7;
-    color: #334155;
-    font-size: 13px;
-    line-height: 1.45;
-    vertical-align: middle;
-    white-space: nowrap;
-}
-
-.sales-table tbody tr {
-    transition:
-        background-color 0.18s ease,
-        box-shadow 0.18s ease;
-}
-
-.sales-table tbody tr:hover {
-    background: #f8fbff;
-}
-
-.sales-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.sales-table th:first-child,
-.sales-table td:first-child {
-    padding-left: 18px;
-}
-
-.sales-table th:last-child,
-.sales-table td:last-child {
-    padding-right: 18px;
-}
-
-.sales-table td:first-child {
-    color: #2563eb;
-    font-weight: 800;
-}
-
-.sales-table td:nth-child(2) {
-    min-width: 230px;
-    white-space: normal;
-    color: #0f172a;
-    font-weight: 800;
-}
-
-.sales-table td:nth-child(3) {
-    color: #475569;
-    font-weight: 700;
-}
-
-.sales-table th:nth-child(4),
-.sales-table th:nth-child(5),
-.sales-table th:nth-child(6),
-.sales-table th:nth-child(7),
-.sales-table td:nth-child(4),
-.sales-table td:nth-child(5),
-.sales-table td:nth-child(6),
-.sales-table td:nth-child(7) {
-    text-align: right;
-}
-
-.sales-table td:nth-child(4) {
-    color: #64748b;
-    font-weight: 700;
-}
-
-.sales-table td:nth-child(5) {
-    color: #15803d;
-    font-weight: 800;
-}
-
-.sales-table td:nth-child(6) {
-    color: #2563eb;
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.sales-table td:nth-child(7) {
-    color: #64748b;
-    font-weight: 700;
-}
-
-/* =========================
-   BADGES DE STATUT
-========================= */
-
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 28px;
-    padding: 5px 10px;
-    border: 1px solid transparent;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 1.2;
-    text-align: center;
-    white-space: nowrap;
-}
-
-.status-paid {
-    border-color: #bbf7d0;
-    background: #f0fdf4;
-    color: #15803d;
-}
-
-.status-pending {
-    border-color: #fde68a;
-    background: #fffbeb;
-    color: #b45309;
-}
-
-.status-cancelled {
-    border-color: #fecaca;
-    background: #fef2f2;
-    color: #b91c1c;
-}
-
-/* Classes supplémentaires utiles pour le futur JS */
-
-.status-overstock {
-    border-color: #c4b5fd;
-    background: #f5f3ff;
-    color: #6d28d9;
-}
-
-.status-inactive {
-    border-color: #cbd5e1;
-    background: #f8fafc;
-    color: #64748b;
-}
-
-.status-archived {
-    border-color: #d1d5db;
-    background: #f3f4f6;
-    color: #4b5563;
-}
-
-/* =========================
-   ACTIONS DU TABLEAU
-========================= */
-
-.table-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 7px;
-}
-
-.action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 9px;
-    background: #ffffff;
-    color: #475569;
-    cursor: pointer;
-    transition:
-        transform 0.18s ease,
-        border-color 0.18s ease,
-        background 0.18s ease,
-        box-shadow 0.18s ease;
-}
-
-.action-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.09);
-}
-
-.view-btn:hover {
-    border-color: #bfdbfe;
-    background: #eff6ff;
-}
-
-.edit-btn:hover {
-    border-color: #ddd6fe;
-    background: #f5f3ff;
-}
-
-.delete-btn:hover {
-    border-color: #fecaca;
-    background: #fef2f2;
-}
-
-/* =========================
-   ÉTAT VIDE FUTUR
-========================= */
-
-.sales-table .empty-row td {
-    padding: 50px 20px;
-    text-align: center;
-    color: #94a3b8;
-    white-space: normal;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media screen and (max-width: 1280px) {
-    .sales-filters {
-        grid-template-columns:
-            minmax(260px, 2fr)
-            repeat(2, minmax(180px, 1fr));
+        showToast(
+            "Impossible de communiquer avec le serveur.",
+            "error"
+        );
     }
 }
 
-@media screen and (max-width: 900px) {
-    .content {
-        padding: 20px;
+
+
+
+// ========================================
+// FENÊTRE DE CONFIRMATION DE SUPPRESSION
+// ========================================
+
+function ouvrirModalSuppression(client) {
+
+    const modal =
+        document.getElementById("delete-client-modal");
+
+    const clientName =
+        document.getElementById("delete-client-name");
+
+    if (!modal || !clientName) {
+
+        console.error(
+            'La fenêtre de suppression est introuvable.'
+        );
+
+        showToast(
+            "Impossible d’ouvrir la confirmation de suppression.",
+            "error"
+        );
+
+        return;
     }
 
-    .sales-filters {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    clientASupprimer = client;
+
+    const nomComplet = [
+        client.nom,
+        client.prenom
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+    clientName.textContent =
+        nomComplet || client.idClient || "Ce client";
+
+    modal.classList.add("active");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    const confirmDeleteBtn =
+        document.getElementById("confirm-delete-client-btn");
+
+    window.setTimeout(
+        function () {
+            confirmDeleteBtn?.focus();
+        },
+        50
+    );
+}
+
+
+function fermerModalSuppression() {
+
+    const modal =
+        document.getElementById("delete-client-modal");
+
+    if (!modal) {
+        return;
     }
 
-    .sales-search {
-        grid-column: 1 / -1;
+    const confirmDeleteBtn =
+        document.getElementById("confirm-delete-client-btn");
+
+    if (confirmDeleteBtn?.disabled) {
+        return;
+    }
+
+    modal.classList.remove("active");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    clientASupprimer = null;
+}
+
+
+// ========================================
+// SUPPRESSION D'UN CLIENT
+// ========================================
+
+async function supprimerClient(idClient) {
+
+    try {
+
+        const resultat =
+            await apiPost(
+                "deleteClient",
+                {
+                    idClient: idClient
+                }
+            );
+
+        if (resultat.success) {
+
+            showToast(
+                resultat.message,
+                "success"
+            );
+
+            await chargerClients();
+
+            return true;
+
+        } else {
+
+            showToast(
+                resultat.message ||
+                "Impossible de supprimer le client.",
+                "error"
+            );
+
+            return false;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erreur suppression client :",
+            error
+        );
+
+        showToast(
+            "Impossible de communiquer avec le serveur.",
+            "error"
+        );
+
+        return false;
     }
 }
 
-@media screen and (max-width: 640px) {
-    .content {
-        padding: 16px 14px;
-    }
+// ========================================
+// CHARGEMENT DES CLIENTS
+// ========================================
 
-    .welcome-section {
-        margin-bottom: 20px;
-    }
+async function chargerClients() {
 
-    .welcome-section h2 {
-        font-size: 26px;
-    }
+    try {
 
-    .sales-toolbar {
-        align-items: stretch;
-    }
+        const resultat =
+            await apiGet("getClients");
 
-    .sales-toolbar .btn-primary {
-        width: 100%;
-    }
 
-    .sales-filters {
-        grid-template-columns: 1fr;
-        gap: 11px;
-        padding: 14px;
-        border-radius: 14px;
-    }
+        if (!resultat.success) {
 
-    .sales-search {
-        grid-column: auto;
-    }
+            showToast(
+                resultat.message ||
+                "Impossible de charger les clients.",
+                "error"
+            );
 
-    .sales-search input,
-    .sales-filters select {
-        height: 46px;
-    }
+            return;
+        }
 
-    .sales-table-container {
-        border-radius: 14px;
-    }
 
-    .sales-table th {
-        padding-top: 12px;
-        padding-bottom: 12px;
-    }
+        clientsCharges =
+            Array.isArray(resultat.clients)
+                ? resultat.clients
+                : [];
 
-    .sales-table td {
-        padding-top: 13px;
-        padding-bottom: 13px;
+        mettreAJourKPIsClients();
+        appliquerRechercheEtFiltresClients();
+
+    } catch (error) {
+
+        console.error(
+            "Erreur chargement clients :",
+            error
+        );
+
+        showToast(
+            "Impossible de charger la liste des clients.",
+            "error"
+        );
     }
 }
 
-/* =========================
-   IMPRESSION
-========================= */
 
-@media print {
-    .sidebar,
-    .header,
-    .sales-toolbar,
-    .sales-filters,
-    .table-actions {
-        display: none !important;
-    }
+// ========================================
+// KPI DYNAMIQUES DES CLIENTS
+// ========================================
 
-    .main-content {
-        margin: 0 !important;
-        width: 100% !important;
-    }
+function mettreAJourKPIsClients() {
 
-    .content {
-        max-width: none;
-        padding: 0;
-    }
+    const totalClients = clientsCharges.length;
 
-    .welcome-section p {
-        display: none;
-    }
+    const clientsActifs = clientsCharges.filter(function (client) {
+        return normaliserValeurRecherche(client.statut) === "actif";
+    }).length;
 
-    .sales-table-container {
-        overflow: visible;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-    }
+    const pourcentageActifs = totalClients > 0
+        ? Math.round((clientsActifs / totalClients) * 100)
+        : 0;
 
-    .sales-table {
-        min-width: 100%;
-        font-size: 10px;
-    }
+    const maintenant = new Date();
+    const moisActuel = maintenant.getMonth();
+    const anneeActuelle = maintenant.getFullYear();
 
-    .sales-table th,
-    .sales-table td {
-        padding: 7px 5px;
-        color: #000000 !important;
-        background: #ffffff !important;
-    }
+    const nouveauxCeMois = clientsCharges.filter(function (client) {
 
-    .status-badge {
-        border: 1px solid #777777;
-        color: #000000 !important;
-        background: #ffffff !important;
+        const dateInscription = convertirDateClient(client.dateInscription);
+
+        return dateInscription &&
+            dateInscription.getMonth() === moisActuel &&
+            dateInscription.getFullYear() === anneeActuelle;
+    }).length;
+
+    const achatsCumules = clientsCharges.reduce(function (total, client) {
+        return total + convertirMontantClient(client.montantTotalAchats);
+    }, 0);
+
+    const moyenneAchats = totalClients > 0
+        ? achatsCumules / totalClients
+        : 0;
+
+    definirTexteKPI("total-clients-value",
+        totalClients.toLocaleString("fr-FR"));
+
+    definirTexteKPI(
+        "total-clients-description",
+        `${nouveauxCeMois.toLocaleString("fr-FR")} nouveau${nouveauxCeMois > 1 ? "x" : ""} client${nouveauxCeMois > 1 ? "s" : ""} ce mois`
+    );
+
+    definirTexteKPI("active-clients-value",
+        clientsActifs.toLocaleString("fr-FR"));
+
+    definirTexteKPI(
+        "active-clients-description",
+        `${pourcentageActifs.toLocaleString("fr-FR")} % des clients`
+    );
+
+    definirTexteKPI("new-clients-value",
+        nouveauxCeMois.toLocaleString("fr-FR"));
+
+    definirTexteKPI(
+        "new-clients-description",
+        "Inscrits durant le mois en cours"
+    );
+
+    definirTexteKPI(
+        "client-revenue-value",
+        formaterMontantClient(achatsCumules)
+    );
+
+    definirTexteKPI(
+        "client-revenue-description",
+        `Moyenne : ${formaterMontantClient(moyenneAchats)} / client`
+    );
+}
+
+
+function definirTexteKPI(idElement, texte) {
+
+    const element = document.getElementById(idElement);
+
+    if (element) {
+        element.textContent = texte;
     }
 }
+
+
+function convertirMontantClient(montant) {
+
+    if (typeof montant === "number") {
+        return Number.isFinite(montant) ? montant : 0;
+    }
+
+    const valeurNettoyee = String(montant ?? "")
+        .replace(/\s/g, "")
+        .replace(/FCFA/gi, "")
+        .replace(/[^0-9,.-]/g, "")
+        .replace(/,/g, ".");
+
+    const valeur = Number(valeurNettoyee);
+
+    return Number.isFinite(valeur) ? valeur : 0;
+}
+
+
+function convertirDateClient(date) {
+
+    if (!date) {
+        return null;
+    }
+
+    const dateClient = date instanceof Date
+        ? new Date(date.getTime())
+        : new Date(date);
+
+    return Number.isNaN(dateClient.getTime())
+        ? null
+        : dateClient;
+}
+
+
+
+
+// ========================================
+// IMPRESSION DES CLIENTS
+// ========================================
+
+function initialiserImpressionClients() {
+    const boutonImprimer = document.getElementById("print-clients-btn");
+    if (!boutonImprimer) return;
+
+    boutonImprimer.addEventListener("click", function () {
+        imprimerClients();
+    });
+}
+
+function imprimerClients() {
+    if (!Array.isArray(clientsAffiches) || clientsAffiches.length === 0) {
+        showToast("Aucun client à imprimer.", "error");
+        return;
+    }
+
+    const fenetreImpression = window.open("", "_blank", "width=1200,height=800");
+    if (!fenetreImpression) {
+        showToast("Autorisez les fenêtres contextuelles pour lancer l’impression.", "error");
+        return;
+    }
+
+    const echapperHTML = function (valeur) {
+        return String(valeur ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    const lignes = clientsAffiches.map(function (client, index) {
+        const nomComplet = `${client.nom || ""} ${client.prenom || ""}`.trim();
+        return `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${echapperHTML(client.idClient || "")}</td>
+                <td>${echapperHTML(nomComplet)}</td>
+                <td>${echapperHTML(formaterTelephone(client.telephone))}</td>
+                <td>${echapperHTML(client.email || "")}</td>
+                <td>${echapperHTML(mettreMajuscule(client.commune))}</td>
+                <td>${echapperHTML(mettreMajuscule(client.typeClient))}</td>
+                <td>${echapperHTML(formaterDateClient(client.dateInscription))}</td>
+                <td>${echapperHTML(client.nombreCommandes || 0)}</td>
+                <td>${echapperHTML(formaterMontantClient(convertirMontantClient(client.montantTotalAchats)))}</td>
+                <td>${echapperHTML(mettreMajuscule(client.statut))}</td>
+            </tr>`;
+    }).join("");
+
+    const dateImpression = new Date().toLocaleString("fr-FR");
+
+    fenetreImpression.document.open();
+    fenetreImpression.document.write(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>VISIBL — Liste des clients</title>
+    <style>
+        @page { size: landscape; margin: 12mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; color: #111827; }
+        .print-header { margin-bottom: 16px; }
+        h1 { margin: 0 0 6px; font-size: 22px; }
+        .meta { color: #4b5563; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #d1d5db; padding: 6px; font-size: 9px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+        th { background: #e5e7eb; font-weight: 700; }
+        tbody tr:nth-child(even) { background: #f9fafb; }
+        th:nth-child(1), td:nth-child(1) { width: 3%; text-align: center; }
+        th:nth-child(2), td:nth-child(2) { width: 8%; }
+        th:nth-child(3), td:nth-child(3) { width: 13%; }
+        th:nth-child(4), td:nth-child(4) { width: 10%; }
+        th:nth-child(5), td:nth-child(5) { width: 15%; }
+        th:nth-child(6), td:nth-child(6) { width: 9%; }
+        th:nth-child(7), td:nth-child(7) { width: 8%; }
+        th:nth-child(8), td:nth-child(8) { width: 10%; }
+        th:nth-child(9), td:nth-child(9) { width: 6%; text-align: center; }
+        th:nth-child(10), td:nth-child(10) { width: 10%; text-align: right; }
+        th:nth-child(11), td:nth-child(11) { width: 8%; }
+        thead { display: table-header-group; }
+        tr { break-inside: avoid; }
+        .no-print { margin-top: 12px; font-size: 11px; color: #6b7280; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="print-header">
+        <h1>VISIBL — Liste des clients</h1>
+        <div class="meta">Imprimé le ${echapperHTML(dateImpression)} • ${clientsAffiches.length} client(s)</div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th><th>ID</th><th>Client</th><th>Téléphone</th><th>Email</th>
+                <th>Commune</th><th>Type</th><th>Inscription</th><th>Cmd.</th><th>Achats</th><th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>${lignes}</tbody>
+    </table>
+    <p class="no-print">La fenêtre d’impression va s’ouvrir automatiquement.</p>
+</body>
+</html>`);
+    fenetreImpression.document.close();
+
+    fenetreImpression.onload = function () {
+        fenetreImpression.focus();
+        fenetreImpression.print();
+        fenetreImpression.onafterprint = function () {
+            fenetreImpression.close();
+        };
+    };
+}
+
+
+// ========================================
+// EXPORT DES CLIENTS (PDF, EXCEL ET CSV)
+// ========================================
+
+function initialiserExportsClients() {
+
+    const menu = document.getElementById("export-clients-menu");
+    const bouton = document.getElementById("export-clients-btn");
+    const liste = document.getElementById("export-clients-dropdown");
+
+    if (!menu || !bouton || !liste) return;
+
+    const fermerMenu = function () {
+        menu.classList.remove("is-open");
+        liste.hidden = true;
+        bouton.setAttribute("aria-expanded", "false");
+    };
+
+    const ouvrirMenu = function () {
+        menu.classList.add("is-open");
+        liste.hidden = false;
+        bouton.setAttribute("aria-expanded", "true");
+        liste.querySelector(".export-option")?.focus();
+    };
+
+    bouton.addEventListener("click", function (event) {
+        event.stopPropagation();
+        liste.hidden ? ouvrirMenu() : fermerMenu();
+    });
+
+    liste.addEventListener("click", async function (event) {
+        const option = event.target.closest("[data-export-format]");
+        if (!option) return;
+
+        const format = option.dataset.exportFormat;
+        fermerMenu();
+
+        if (clientsAffiches.length === 0) {
+            showToast("Aucun client à exporter.", "error");
+            return;
+        }
+
+        try {
+            if (format === "pdf") exporterClientsPDF();
+            if (format === "xlsx") exporterClientsExcel();
+            if (format === "csv") exporterClientsCSV();
+        } catch (error) {
+            console.error("Erreur export clients :", error);
+            showToast("Impossible de générer le fichier d’export.", "error");
+        }
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!menu.contains(event.target)) fermerMenu();
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !liste.hidden) {
+            fermerMenu();
+            bouton.focus();
+        }
+    });
+}
+
+function obtenirDonneesExportClients() {
+    return clientsAffiches.map(function (client) {
+        return {
+            "Identifiant": client.idClient || "",
+            "Nom": client.nom || "",
+            "Prénom": client.prenom || "",
+            "Téléphone": formaterTelephone(client.telephone),
+            "Email": client.email || "",
+            "Commune": mettreMajuscule(client.commune),
+            "Quartier": client.quartier || "",
+            "Type": mettreMajuscule(client.typeClient),
+            "Date d’inscription": formaterDateClient(client.dateInscription),
+            "Commandes": Number(client.nombreCommandes || 0),
+            "Total achats (FCFA)": convertirMontantClient(client.montantTotalAchats),
+            "Statut": mettreMajuscule(client.statut)
+        };
+    });
+}
+
+function obtenirNomFichierExport(extension) {
+    const date = new Date();
+    const estampille = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+    return `VISIBL_clients_${estampille}.${extension}`;
+}
+
+function exporterClientsCSV() {
+    const donnees = obtenirDonneesExportClients();
+    const colonnes = Object.keys(donnees[0]);
+    const separateur = ";";
+
+    const protegerCSV = function (valeur) {
+        const texte = String(valeur ?? "").replace(/"/g, '""');
+        return `"${texte}"`;
+    };
+
+    const lignes = [
+        colonnes.map(protegerCSV).join(separateur),
+        ...donnees.map(function (ligne) {
+            return colonnes.map(function (colonne) {
+                return protegerCSV(ligne[colonne]);
+            }).join(separateur);
+        })
+    ];
+
+    telechargerBlob(
+        new Blob(["\ufeff" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8;" }),
+        obtenirNomFichierExport("csv")
+    );
+
+    showToast(`${donnees.length} client(s) exporté(s) en CSV.`, "success");
+}
+
+function exporterClientsExcel() {
+    if (typeof XLSX === "undefined") {
+        throw new Error("La bibliothèque Excel n’est pas chargée.");
+    }
+
+    const donnees = obtenirDonneesExportClients();
+    const feuille = XLSX.utils.json_to_sheet(donnees);
+    feuille["!cols"] = [
+        { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
+        { wch: 28 }, { wch: 16 }, { wch: 22 }, { wch: 14 },
+        { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 14 }
+    ];
+    feuille["!autofilter"] = { ref: feuille["!ref"] };
+
+    const classeur = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(classeur, feuille, "Clients");
+    XLSX.writeFile(classeur, obtenirNomFichierExport("xlsx"));
+
+    showToast(`${donnees.length} client(s) exporté(s) vers Excel.`, "success");
+}
+
+function exporterClientsPDF() {
+    if (!window.jspdf?.jsPDF) {
+        throw new Error("La bibliothèque PDF n’est pas chargée.");
+    }
+
+    const donnees = obtenirDonneesExportClients();
+    const { jsPDF } = window.jspdf;
+    const documentPDF = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const dateExport = new Date().toLocaleString("fr-FR");
+
+    documentPDF.setFontSize(18);
+    documentPDF.text("VISIBL — Liste des clients", 14, 16);
+    documentPDF.setFontSize(9);
+    documentPDF.text(`Exporté le ${dateExport} • ${donnees.length} client(s)`, 14, 23);
+
+    documentPDF.autoTable({
+        startY: 29,
+        head: [["ID", "Client", "Téléphone", "Email", "Commune", "Type", "Inscription", "Cmd.", "Achats", "Statut"]],
+        body: donnees.map(function (client) {
+            return [
+                client["Identifiant"],
+                `${client["Nom"]} ${client["Prénom"]}`.trim(),
+                client["Téléphone"],
+                client["Email"],
+                client["Commune"],
+                client["Type"],
+                client["Date d’inscription"],
+                client["Commandes"],
+                formaterMontantClient(client["Total achats (FCFA)"]),
+                client["Statut"]
+            ];
+        }),
+        styles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" },
+        headStyles: { fillColor: [30, 64, 175] },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+        margin: { left: 10, right: 10 },
+        didDrawPage: function () {
+            const numeroPage = documentPDF.internal.getNumberOfPages();
+            documentPDF.setFontSize(8);
+            documentPDF.text(
+                `VISIBL • Page ${numeroPage}`,
+                documentPDF.internal.pageSize.getWidth() - 10,
+                documentPDF.internal.pageSize.getHeight() - 6,
+                { align: "right" }
+            );
+        }
+    });
+
+    documentPDF.save(obtenirNomFichierExport("pdf"));
+    showToast(`${donnees.length} client(s) exporté(s) en PDF.`, "success");
+}
+
+function telechargerBlob(blob, nomFichier) {
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement("a");
+    lien.href = url;
+    lien.download = nomFichier;
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+
+
+// ========================================
+// RECHERCHE ET FILTRES DES CLIENTS
+// ========================================
+
+function initialiserRechercheEtFiltresClients() {
+
+    const recherchePage =
+        document.getElementById("clients-search-input");
+
+    const rechercheHeader =
+        document.querySelector(".header .search-input");
+
+    const boutonRechercheHeader =
+        document.querySelector(".header .search-btn");
+
+    const filtreType =
+        document.getElementById("client-type-filter");
+
+    const filtreStatut =
+        document.getElementById("client-status-filter");
+
+    const filtreCommune =
+        document.getElementById("client-commune-filter");
+
+    const boutonEffacer =
+        document.getElementById("reset-client-filters");
+
+    const boutonActualiser =
+        document.getElementById("refresh-clients-btn");
+
+    const synchroniserRecherche = function (valeur, source) {
+
+        rechercheClients = String(valeur ?? "");
+
+        if (source !== recherchePage && recherchePage) {
+            recherchePage.value = rechercheClients;
+        }
+
+        if (source !== rechercheHeader && rechercheHeader) {
+            rechercheHeader.value = rechercheClients;
+        }
+
+        appliquerRechercheEtFiltresClients();
+    };
+
+    recherchePage?.addEventListener("input", function () {
+        synchroniserRecherche(recherchePage.value, recherchePage);
+    });
+
+    rechercheHeader?.addEventListener("input", function () {
+        synchroniserRecherche(rechercheHeader.value, rechercheHeader);
+    });
+
+    boutonRechercheHeader?.addEventListener("click", function (event) {
+        event.preventDefault();
+        synchroniserRecherche(rechercheHeader?.value || "", rechercheHeader);
+    });
+
+    rechercheHeader?.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            synchroniserRecherche(rechercheHeader.value, rechercheHeader);
+        }
+    });
+
+    filtreType?.addEventListener("change", function () {
+        filtresClients.typeClient = filtreType.value;
+        appliquerRechercheEtFiltresClients();
+    });
+
+    filtreStatut?.addEventListener("change", function () {
+        filtresClients.statut = filtreStatut.value;
+        appliquerRechercheEtFiltresClients();
+    });
+
+    filtreCommune?.addEventListener("change", function () {
+        filtresClients.commune = filtreCommune.value;
+        appliquerRechercheEtFiltresClients();
+    });
+
+    boutonEffacer?.addEventListener("click", function () {
+
+        rechercheClients = "";
+        filtresClients = {
+            typeClient: "",
+            statut: "",
+            commune: ""
+        };
+
+        if (recherchePage) recherchePage.value = "";
+        if (rechercheHeader) rechercheHeader.value = "";
+        if (filtreType) filtreType.value = "";
+        if (filtreStatut) filtreStatut.value = "";
+        if (filtreCommune) filtreCommune.value = "";
+
+        appliquerRechercheEtFiltresClients();
+    });
+
+    boutonActualiser?.addEventListener("click", async function () {
+
+        if (boutonActualiser.disabled) return;
+
+        boutonActualiser.disabled = true;
+        boutonActualiser.classList.add("is-loading");
+
+        try {
+            await chargerClients();
+            showToast("Liste des clients actualisée.", "success");
+        } finally {
+            boutonActualiser.disabled = false;
+            boutonActualiser.classList.remove("is-loading");
+        }
+    });
+}
+
+
+function appliquerRechercheEtFiltresClients() {
+
+    const terme = normaliserValeurRecherche(rechercheClients);
+
+    const clientsFiltres = clientsCharges.filter(function (client) {
+
+        const correspondRecherche = !terme || [
+            client.idClient,
+            client.nom,
+            client.prenom,
+            client.telephone,
+            client.email,
+            client.commune,
+            client.quartier,
+            client.typeClient,
+            client.statut
+        ].some(function (valeur) {
+            return normaliserValeurRecherche(valeur).includes(terme);
+        });
+
+        const correspondType =
+            !filtresClients.typeClient ||
+            normaliserValeurRecherche(client.typeClient) ===
+            normaliserValeurRecherche(filtresClients.typeClient);
+
+        const correspondStatut =
+            !filtresClients.statut ||
+            normaliserValeurRecherche(client.statut) ===
+            normaliserValeurRecherche(filtresClients.statut);
+
+        const correspondCommune =
+            !filtresClients.commune ||
+            normaliserValeurRecherche(client.commune) ===
+            normaliserValeurRecherche(filtresClients.commune);
+
+        return correspondRecherche &&
+            correspondType &&
+            correspondStatut &&
+            correspondCommune;
+    });
+
+    clientsAffiches = clientsFiltres.slice();
+    afficherClients(clientsAffiches);
+    mettreAJourCompteurClients(clientsFiltres.length);
+    mettreAJourEtatBoutonEffacer();
+}
+
+
+function normaliserValeurRecherche(valeur) {
+
+    return String(valeur ?? "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9@.+-]+/g, " ")
+        .replace(/\s+/g, " ");
+}
+
+
+function mettreAJourCompteurClients(nombre) {
+
+    const compteur =
+        document.getElementById("filtered-client-count");
+
+    if (compteur) {
+        compteur.textContent = String(nombre);
+    }
+}
+
+
+function mettreAJourEtatBoutonEffacer() {
+
+    const bouton =
+        document.getElementById("reset-client-filters");
+
+    if (!bouton) return;
+
+    const filtreActif = Boolean(
+        rechercheClients.trim() ||
+        filtresClients.typeClient ||
+        filtresClients.statut ||
+        filtresClients.commune
+    );
+
+    bouton.disabled = !filtreActif;
+    bouton.setAttribute(
+        "aria-disabled",
+        filtreActif ? "false" : "true"
+    );
+}
+
+
+// ========================================
+// FENÊTRE VOIR CLIENT
+// ========================================
+
+function ouvrirModalVoirClient() {
+
+    const modal =
+        document.getElementById("view-client-modal");
+
+    if (!modal) {
+
+        console.error(
+            'La fenêtre avec id="view-client-modal" est introuvable.'
+        );
+
+        return;
+    }
+
+    modal.classList.add("active");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+}
+
+
+function fermerModalVoirClient() {
+
+    const modal =
+        document.getElementById("view-client-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove("active");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+}
+
+
+
+// ========================================
+// INFORMATIONS DU CLIENT DANS LA FENÊTRE
+// ========================================
+
+function afficherDetailsClient(client) {
+
+    const nomComplet = [
+        client.nom,
+        client.prenom
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+    definirTexteClient(
+        "view-client-id",
+        client.idClient
+    );
+
+    definirTexteClient(
+        "view-client-name",
+        nomComplet
+    );
+
+    definirTexteClient(
+        "view-client-phone",
+        formaterTelephone(client.telephone)
+    );
+
+    definirTexteClient(
+        "view-client-email",
+        client.email
+    );
+
+    definirTexteClient(
+        "view-client-type",
+        mettreMajuscule(client.typeClient)
+    );
+
+    definirTexteClient(
+        "view-client-status",
+        mettreMajuscule(client.statut)
+    );
+
+    definirTexteClient(
+        "view-client-commune",
+        mettreMajuscule(client.commune)
+    );
+
+    definirTexteClient(
+        "view-client-neighborhood",
+        client.quartier
+    );
+
+    definirTexteClient(
+        "view-client-date",
+        formaterDateClient(
+            client.dateInscription
+        )
+    );
+
+    definirTexteClient(
+        "view-client-orders",
+        client.nombreCommandes ?? 0
+    );
+
+    definirTexteClient(
+        "view-client-purchases",
+        formaterMontantClient(
+            client.montantTotalAchats
+        )
+    );
+
+    definirTexteClient(
+        "view-client-comment",
+        client.commentaire
+    );
+}
+
+
+function definirTexteClient(idElement, valeur) {
+
+    const element =
+        document.getElementById(idElement);
+
+    if (!element) {
+
+        console.warn(
+            `Élément introuvable : ${idElement}`
+        );
+
+        return;
+    }
+
+    const texte =
+        String(valeur ?? "")
+            .trim();
+
+    element.textContent =
+        texte || "—";
+}
+
+
+// ========================================
+// AFFICHAGE DES CLIENTS
+// ========================================
+
+function afficherClients(clients) {
+
+    const tbody =
+        document.getElementById("clients-table-body");
+
+    const emptyState =
+        document.getElementById("clients-empty-state");
+
+
+    if (!tbody) {
+
+        console.error(
+            'Le tableau doit contenir un tbody avec id="clients-table-body".'
+        );
+
+        return;
+    }
+
+
+    tbody.innerHTML = "";
+
+
+    if (clients.length === 0) {
+
+        if (emptyState) {
+            emptyState.hidden = false;
+        }
+
+        return;
+    }
+
+
+    if (emptyState) {
+        emptyState.hidden = true;
+    }
+
+
+    clients.forEach(function (client) {
+
+        const ligne =
+            document.createElement("tr");
+
+
+        const nomComplet = [
+
+            client.nom,
+            client.prenom
+
+        ]
+            .filter(Boolean)
+            .join(" ");
+
+
+        const contact = `
+            <div>
+                ${echapperHTML(
+                    formaterTelephone(client.telephone)
+                )}
+            </div>
+
+            <div>
+                ${echapperHTML(client.email)}
+            </div>
+        `;
+
+
+        ligne.innerHTML = `
+            <td>
+                <input
+                    type="checkbox"
+                    class="client-checkbox"
+                    value="${echapperHTML(client.idClient)}"
+                    aria-label="Sélectionner ${echapperHTML(nomComplet)}"
+                >
+            </td>
+
+            <td>
+                <div>
+                    ${echapperHTML(nomComplet)}
+                </div>
+
+                <small>
+                    ${echapperHTML(client.idClient)}
+                </small>
+            </td>
+
+            <td>
+                ${contact}
+            </td>
+
+            <td>
+                ${echapperHTML(
+                    mettreMajuscule(client.commune)
+                )}
+            </td>
+
+            <td>
+                ${echapperHTML(
+                    mettreMajuscule(client.typeClient)
+                )}
+            </td>
+
+            <td>
+                ${formaterDateClient(
+                    client.dateInscription
+                )}
+            </td>
+
+            <td>
+                ${echapperHTML(
+                    client.nombreCommandes ?? 0
+                )}
+            </td>
+
+            <td>
+                ${formaterMontantClient(
+                    client.montantTotalAchats
+                )}
+            </td>
+
+            <td>
+                ${echapperHTML(client.quartier)}
+            </td>
+
+            <td>
+                <span
+                    class="
+                        status-badge
+                        status-${obtenirClasseStatut(client.statut)}
+                    "
+                >
+                    ${echapperHTML(
+                        mettreMajuscule(client.statut)
+                    )}
+                </span>
+            </td>
+
+            <td class="table-actions">
+
+                <button
+                    type="button"
+                    class="table-action-btn view-btn"
+                    data-client-id="${echapperHTML(client.idClient)}"
+                    title="Voir"
+                    aria-label="Voir le client"
+                >
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+
+                <button
+                    type="button"
+                    class="table-action-btn edit-btn"
+                    data-client-id="${echapperHTML(client.idClient)}"
+                    title="Modifier"
+                    aria-label="Modifier le client"
+                >
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+
+                <button
+                    type="button"
+                    class="table-action-btn delete-btn"
+                    data-client-id="${echapperHTML(client.idClient)}"
+                    title="Supprimer"
+                    aria-label="Supprimer le client"
+                >
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+
+            </td>
+        `;
+
+
+        tbody.appendChild(ligne);
+    });
+}
+
+
+// ========================================
+// FORMATAGE DE LA DATE
+// ========================================
+
+function formaterDateClient(date) {
+
+    if (!date) {
+        return "";
+    }
+
+
+    const dateClient =
+        new Date(date);
+
+
+    if (Number.isNaN(dateClient.getTime())) {
+
+        return echapperHTML(date);
+    }
+
+
+    return dateClient.toLocaleDateString(
+        "fr-FR"
+    );
+}
+
+
+// ========================================
+// FORMATAGE DU MONTANT
+// ========================================
+
+function formaterMontantClient(montant) {
+
+    const valeur =
+        Number(montant || 0);
+
+
+    return valeur.toLocaleString("fr-FR")
+        + " FCFA";
+}
+
+
+// ========================================
+// CLASSE CSS DU STATUT
+// ========================================
+
+function obtenirClasseStatut(statut) {
+
+    const valeur =
+        String(statut ?? "")
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            );
+
+
+    const classes = {
+
+        actif: "actif",
+        inactif: "inactif",
+        prospect: "prospect",
+        bloque: "bloque"
+    };
+
+
+    return classes[valeur] || "inconnu";
+}
+
+
+// ========================================
+// PREMIÈRE LETTRE EN MAJUSCULE
+// ========================================
+
+function mettreMajuscule(valeur) {
+
+    const texte =
+        String(valeur ?? "")
+            .trim();
+
+
+    if (!texte) {
+        return "";
+    }
+
+
+    return texte
+        .charAt(0)
+        .toUpperCase()
+        + texte
+            .slice(1)
+            .toLowerCase();
+}
+
+
+// ========================================
+// FORMATAGE DU TÉLÉPHONE
+// ========================================
+
+function formaterTelephone(telephone) {
+
+    let numero =
+        String(telephone ?? "")
+            .replace(/\s+/g, "");
+
+
+    if (!numero) {
+        return "";
+    }
+
+
+    // Cas : +225XXXXXXXXXX
+    if (numero.startsWith("+225")) {
+
+        const reste =
+            numero.substring(4);
+
+
+        if (reste.length === 10) {
+
+            return "+225 "
+                + reste
+                    .match(/.{1,2}/g)
+                    .join(" ");
+        }
+
+
+        return numero;
+    }
+
+
+    // Cas : numéro ivoirien sur 8 ou 10 chiffres
+    if (
+        numero.length === 8 ||
+        numero.length === 10
+    ) {
+
+        return numero
+            .match(/.{1,2}/g)
+            .join(" ");
+    }
+
+
+    return numero;
+}
+
+
+// ========================================
+// PROTECTION HTML
+// ========================================
+
+function echapperHTML(valeur) {
+
+    return String(valeur ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+// ========================================
+// ÉTAPE 4 — TRI, PAGINATION, SÉLECTION ET COLONNES
+// ========================================
+let pageClientsCourante = 1;
+let clientsParPage = 10;
+let triClients = { cle: "", direction: "asc" };
+const idsClientsSelectionnes = new Set();
+let clientsPageCourante = [];
+
+const colonnesClients = [
+    { id: "client", label: "Client", index: 1, visible: true },
+    { id: "contact", label: "Contact", index: 2, visible: true },
+    { id: "commune", label: "Commune", index: 3, visible: true },
+    { id: "type", label: "Type", index: 4, visible: true },
+    { id: "date", label: "Date d’inscription", index: 5, visible: true },
+    { id: "commandes", label: "Commandes", index: 6, visible: true },
+    { id: "achats", label: "Total achats", index: 7, visible: true },
+    { id: "quartier", label: "Quartier", index: 8, visible: true },
+    { id: "statut", label: "Statut", index: 9, visible: true },
+    { id: "actions", label: "Actions", index: 10, visible: true }
+];
+
+function initialiserFonctionsAvanceesClients() {
+    const selectParPage = document.getElementById("clients-per-page");
+    clientsParPage = Number(selectParPage?.value) || 10;
+    selectParPage?.addEventListener("change", function () {
+        clientsParPage = Number(selectParPage.value) || 10;
+        pageClientsCourante = 1;
+        afficherClients(clientsAffiches);
+    });
+
+    document.getElementById("previous-page-btn")?.addEventListener("click", function () {
+        if (pageClientsCourante > 1) { pageClientsCourante--; afficherClients(clientsAffiches); }
+    });
+    document.getElementById("next-page-btn")?.addEventListener("click", function () {
+        const totalPages = Math.max(1, Math.ceil(clientsAffiches.length / clientsParPage));
+        if (pageClientsCourante < totalPages) { pageClientsCourante++; afficherClients(clientsAffiches); }
+    });
+
+    document.querySelector(".clients-table thead")?.addEventListener("click", function (event) {
+        const entete = event.target.closest("th[data-sort-key]");
+        if (!entete) return;
+        const cle = entete.dataset.sortKey;
+        triClients.direction = triClients.cle === cle && triClients.direction === "asc" ? "desc" : "asc";
+        triClients.cle = cle;
+        pageClientsCourante = 1;
+        afficherClients(clientsAffiches);
+    });
+
+    const tbody = document.getElementById("clients-table-body");
+    tbody?.addEventListener("change", function (event) {
+        const checkbox = event.target.closest(".client-checkbox");
+        if (!checkbox) return;
+        const id = String(checkbox.value);
+        checkbox.checked ? idsClientsSelectionnes.add(id) : idsClientsSelectionnes.delete(id);
+        checkbox.closest("tr")?.classList.toggle("is-selected", checkbox.checked);
+        mettreAJourSelectionClients();
+    });
+
+    document.getElementById("select-all-clients")?.addEventListener("change", function (event) {
+        const cocher = event.target.checked;
+        clientsPageCourante.forEach(function (client) {
+            const id = String(client.idClient);
+            cocher ? idsClientsSelectionnes.add(id) : idsClientsSelectionnes.delete(id);
+        });
+        afficherClients(clientsAffiches);
+    });
+
+    document.getElementById("bulk-clear-selection")?.addEventListener("click", function () {
+        idsClientsSelectionnes.clear(); afficherClients(clientsAffiches);
+    });
+    document.getElementById("bulk-export-pdf")?.addEventListener("click", function () { exporterSelectionClients("pdf"); });
+    document.getElementById("bulk-export-xlsx")?.addEventListener("click", function () { exporterSelectionClients("xlsx"); });
+    document.getElementById("bulk-export-csv")?.addEventListener("click", function () { exporterSelectionClients("csv"); });
+    document.getElementById("bulk-delete-clients")?.addEventListener("click", ouvrirModalSuppressionMultiple);
+    document.getElementById("cancel-bulk-delete-client-btn")?.addEventListener("click", fermerModalSuppressionMultiple);
+    document.getElementById("close-bulk-delete-client-btn")?.addEventListener("click", fermerModalSuppressionMultiple);
+    document.getElementById("bulk-delete-client-modal")?.addEventListener("click", function (event) { if (event.target === event.currentTarget) fermerModalSuppressionMultiple(); });
+    document.getElementById("confirm-bulk-delete-client-btn")?.addEventListener("click", supprimerClientsSelectionnes);
+
+    initialiserMenuColonnesClients();
+}
+
+function comparerClients(a, b, cle) {
+    if (["nombreCommandes", "montantTotalAchats"].includes(cle)) {
+        return convertirMontantClient(a[cle]) - convertirMontantClient(b[cle]);
+    }
+    if (cle === "dateInscription") {
+        const da = convertirDateClient(a[cle])?.getTime?.() || 0;
+        const db = convertirDateClient(b[cle])?.getTime?.() || 0;
+        return da - db;
+    }
+    const va = normaliserValeurRecherche(cle === "nom" ? `${a.nom || ""} ${a.prenom || ""}` : a[cle]);
+    const vb = normaliserValeurRecherche(cle === "nom" ? `${b.nom || ""} ${b.prenom || ""}` : b[cle]);
+    return va.localeCompare(vb, "fr", { numeric: true });
+}
+
+const afficherClientsOriginal = afficherClients;
+afficherClients = function (clients) {
+    const liste = Array.isArray(clients) ? clients.slice() : [];
+    if (triClients.cle) {
+        liste.sort(function (a, b) {
+            const valeur = comparerClients(a, b, triClients.cle);
+            return triClients.direction === "asc" ? valeur : -valeur;
+        });
+    }
+    const totalPages = Math.max(1, Math.ceil(liste.length / clientsParPage));
+    pageClientsCourante = Math.min(Math.max(1, pageClientsCourante), totalPages);
+    const debut = (pageClientsCourante - 1) * clientsParPage;
+    clientsPageCourante = liste.slice(debut, debut + clientsParPage);
+    afficherClientsOriginal(clientsPageCourante);
+    restaurerSelectionDansTableau();
+    appliquerVisibiliteColonnes();
+    mettreAJourPagination(liste.length, totalPages);
+    mettreAJourIndicateursTri();
+    mettreAJourSelectionClients();
+};
+
+function mettreAJourPagination(total, totalPages) {
+    const zone = document.getElementById("clients-page-buttons");
+    if (zone) {
+        zone.innerHTML = "";
+        const pages = [];
+        for (let p = 1; p <= totalPages; p++) {
+            if (p === 1 || p === totalPages || Math.abs(p - pageClientsCourante) <= 1) pages.push(p);
+        }
+        let precedente = 0;
+        pages.forEach(function (p) {
+            if (precedente && p - precedente > 1) { const dots=document.createElement("span"); dots.textContent="…"; zone.appendChild(dots); }
+            const bouton=document.createElement("button"); bouton.type="button"; bouton.className="pagination-btn"+(p===pageClientsCourante?" active":""); bouton.textContent=String(p);
+            bouton.addEventListener("click", function(){ pageClientsCourante=p; afficherClients(clientsAffiches); }); zone.appendChild(bouton); precedente=p;
+        });
+    }
+    const debut = total ? (pageClientsCourante - 1) * clientsParPage + 1 : 0;
+    const fin = Math.min(pageClientsCourante * clientsParPage, total);
+    const resume = document.getElementById("clients-pagination-summary");
+    if (resume) resume.textContent = `${debut}–${fin} sur ${total}`;
+    const precedent=document.getElementById("previous-page-btn"), suivant=document.getElementById("next-page-btn");
+    if (precedent) precedent.disabled = pageClientsCourante <= 1;
+    if (suivant) suivant.disabled = pageClientsCourante >= totalPages;
+}
+
+function mettreAJourIndicateursTri() {
+    document.querySelectorAll("th[data-sort-key]").forEach(function(th){
+        const indicateur=th.querySelector(".sort-indicator");
+        if (indicateur) indicateur.textContent = th.dataset.sortKey === triClients.cle ? (triClients.direction === "asc" ? "▲" : "▼") : "↕";
+        th.setAttribute("aria-sort", th.dataset.sortKey === triClients.cle ? (triClients.direction === "asc" ? "ascending" : "descending") : "none");
+    });
+}
+
+function restaurerSelectionDansTableau() {
+    document.querySelectorAll(".client-checkbox").forEach(function(cb){
+        cb.checked = idsClientsSelectionnes.has(String(cb.value));
+        cb.closest("tr")?.classList.toggle("is-selected", cb.checked);
+    });
+}
+
+function mettreAJourSelectionClients() {
+    const selectionValide = new Set(clientsCharges.map(c => String(c.idClient)));
+    [...idsClientsSelectionnes].forEach(id => { if (!selectionValide.has(id)) idsClientsSelectionnes.delete(id); });
+    const nombre = idsClientsSelectionnes.size;
+    const barre=document.getElementById("bulk-clients-bar"), compteur=document.getElementById("selected-clients-count");
+    if (barre) barre.hidden = nombre === 0;
+    if (compteur) compteur.textContent = String(nombre);
+    const selectAll=document.getElementById("select-all-clients");
+    if (selectAll) {
+        const coches=clientsPageCourante.filter(c=>idsClientsSelectionnes.has(String(c.idClient))).length;
+        selectAll.checked = clientsPageCourante.length > 0 && coches === clientsPageCourante.length;
+        selectAll.indeterminate = coches > 0 && coches < clientsPageCourante.length;
+    }
+}
+
+function obtenirClientsSelectionnes() {
+    return clientsCharges.filter(c => idsClientsSelectionnes.has(String(c.idClient)));
+}
+
+function exporterSelectionClients(format) {
+    const selection = obtenirClientsSelectionnes();
+    if (!selection.length) return showToast("Sélectionnez au moins un client.", "error");
+    const sauvegarde = clientsAffiches;
+    clientsAffiches = selection;
+    try { if(format==="pdf") exporterClientsPDF(); if(format==="xlsx") exporterClientsExcel(); if(format==="csv") exporterClientsCSV(); }
+    finally { clientsAffiches = sauvegarde; }
+}
+
+function ouvrirModalSuppressionMultiple() {
+    const nombre=idsClientsSelectionnes.size; if(!nombre) return;
+    const modal=document.getElementById("bulk-delete-client-modal"), message=document.getElementById("bulk-delete-client-message");
+    if(message) message.textContent=`Vous allez supprimer définitivement ${nombre} client(s). Cette action est irréversible.`;
+    modal?.classList.add("active"); modal?.setAttribute("aria-hidden","false");
+}
+function fermerModalSuppressionMultiple() { const modal=document.getElementById("bulk-delete-client-modal"); modal?.classList.remove("active"); modal?.setAttribute("aria-hidden","true"); }
+
+async function supprimerClientsSelectionnes() {
+    const bouton=document.getElementById("confirm-bulk-delete-client-btn");
+    const ids=[...idsClientsSelectionnes]; if(!ids.length || bouton?.disabled) return;
+    if(bouton){ bouton.disabled=true; bouton.classList.add("is-loading"); }
+    let succes=0, echecs=0;
+    try {
+        for (const idClient of ids) {
+            try { const r=await apiPost("deleteClient",{idClient}); r?.success ? succes++ : echecs++; } catch(e){ echecs++; }
+        }
+        idsClientsSelectionnes.clear();
+        await chargerClients();
+        fermerModalSuppressionMultiple();
+        if(succes) showToast(`${succes} client(s) supprimé(s).`,"success");
+        if(echecs) showToast(`${echecs} suppression(s) ont échoué.`,"error");
+    } finally { if(bouton){ bouton.disabled=false; bouton.classList.remove("is-loading"); } }
+}
+
+function initialiserMenuColonnesClients() {
+    const menu=document.getElementById("columns-clients-menu"), bouton=document.getElementById("columns-clients-btn"), liste=document.getElementById("columns-clients-dropdown");
+    if(!menu||!bouton||!liste) return;
+    liste.innerHTML = colonnesClients.map(c=>`<label class="column-option"><input type="checkbox" data-column-toggle="${c.id}" checked> <span>${c.label}</span></label>`).join("");
+    bouton.addEventListener("click",function(e){ e.stopPropagation(); const ouvrir=liste.hidden; liste.hidden=!ouvrir; bouton.setAttribute("aria-expanded",String(ouvrir)); });
+    liste.addEventListener("change",function(e){ const cb=e.target.closest("[data-column-toggle]"); if(!cb)return; const c=colonnesClients.find(x=>x.id===cb.dataset.columnToggle); if(c)c.visible=cb.checked; appliquerVisibiliteColonnes(); });
+    document.addEventListener("click",function(e){ if(!menu.contains(e.target)){liste.hidden=true; bouton.setAttribute("aria-expanded","false");} });
+}
+
+function appliquerVisibiliteColonnes() {
+    colonnesClients.forEach(function(c){
+        document.querySelectorAll(`.clients-table tr`).forEach(function(tr){ const cell=tr.children[c.index]; if(cell) cell.hidden=!c.visible; });
+    });
+}
+
+// Réinitialiser la page lors d'une nouvelle recherche ou d'un nouveau filtre.
+const appliquerRechercheEtFiltresClientsOriginal = appliquerRechercheEtFiltresClients;
+appliquerRechercheEtFiltresClients = function () { pageClientsCourante = 1; appliquerRechercheEtFiltresClientsOriginal(); };
+
+// L'initialisation principale a déjà été enregistrée : ajouter nos fonctions après le chargement du DOM.
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialiserFonctionsAvanceesClients);
+else initialiserFonctionsAvanceesClients();
