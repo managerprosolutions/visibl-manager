@@ -1187,6 +1187,127 @@ function chargerProduits(data) {
 
 
 /* ===========================================================
+   AFFICHAGE DÉTAILLÉ DES PRODUITS
+=========================================================== */
+
+function afficherProduits(listeProduits) {
+
+    const tableBody = obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+        console.error("Le corps du tableau des produits est introuvable.");
+        return;
+    }
+
+    const liste = Array.isArray(listeProduits)
+        ? listeProduits
+        : [];
+
+    if (liste.length === 0) {
+        afficherMessageTableauVide();
+        return;
+    }
+
+    tableBody.innerHTML = liste.map(produit => {
+
+        const idProduit = echapperHTML(produit["ID Produit"] || "");
+        const imageURL = String(produit["Image URL"] || "").trim();
+
+        const celluleImage = imageURL
+            ? `
+                <a href="${echapperHTML(imageURL)}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="product-image-link">
+                    <img src="${echapperHTML(imageURL)}"
+                         alt="Image de ${echapperHTML(produit["Désignation"] || "produit")}"
+                         class="product-table-image"
+                         loading="lazy"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                    <span style="display:none;">Voir l'image</span>
+                </a>
+              `
+            : '<span class="table-empty-value">—</span>';
+
+        const statut = String(produit["Statut"] || "").trim();
+        const classeStatut = statut.toLowerCase() === "actif"
+            ? "status-active"
+            : "status-inactive";
+
+        return `
+            <tr data-product-id="${idProduit}">
+                <td>${idProduit || "—"}</td>
+                <td>${echapperHTML(produit["Référence Produit"] || "—")}</td>
+                <td>${echapperHTML(produit["Désignation"] || "—")}</td>
+                <td>${echapperHTML(produit["Description"] || "—")}</td>
+                <td>${formatMoney(produit["Prix d'Achat"])}</td>
+                <td>${formatNumber(produit["Taux TVA (%)"])} %</td>
+                <td>${formatMoney(produit["Montant TVA"])}</td>
+                <td>${formatMoney(produit["Frais de Transport"])}</td>
+                <td>${formatMoney(produit["Frais de Douane"])}</td>
+                <td>${formatMoney(produit["Autres Frais"])}</td>
+                <td>${formatMoney(produit["Prix de Revient"])}</td>
+                <td>${formatMoney(produit["Prix de Vente"])}</td>
+                <td>${formatMoney(produit["Prix Minimum de Vente"])}</td>
+                <td>${formatMoney(produit["Marge (FCFA)"])}</td>
+                <td>${formatNumber(produit["Taux de Marge (%)"])} %</td>
+                <td>${formatNumber(produit["Stock Initial"])}</td>
+                <td>${formatNumber(produit["Seuil d'Alerte"])}</td>
+                <td>${echapperHTML(produit["ID Fournisseur Principal"] || "—")}</td>
+                <td>${formatNumber(produit["Garantie (mois)"])} mois</td>
+                <td>${celluleImage}</td>
+                <td>${formaterDateProduit(produit["Date d'Ajout"])}</td>
+                <td>${formaterDateProduit(produit["Date de Modification"])}</td>
+                <td>
+                    <span class="product-status ${classeStatut}">
+                        ${echapperHTML(statut || "—")}
+                    </span>
+                </td>
+                <td>${echapperHTML(produit["Commentaire"] || "—")}</td>
+                <td class="product-actions-cell">
+                    <button type="button"
+                            class="action-btn edit-product-btn"
+                            data-product-id="${idProduit}"
+                            title="Modifier le produit">
+                        Modifier
+                    </button>
+                    <button type="button"
+                            class="action-btn delete-product-btn"
+                            data-product-id="${idProduit}"
+                            title="Supprimer le produit">
+                        Supprimer
+                    </button>
+                </td>
+            </tr>
+        `;
+
+    }).join("");
+}
+
+
+function formaterDateProduit(valeur) {
+
+    if (!valeur) {
+        return "—";
+    }
+
+    const date = new Date(valeur);
+
+    if (Number.isNaN(date.getTime())) {
+        return echapperHTML(valeur);
+    }
+
+    return date.toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+
+/* ===========================================================
    ÉTAT DE CHARGEMENT DU TABLEAU
 =========================================================== */
 
