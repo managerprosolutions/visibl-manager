@@ -5,62 +5,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Clients</title>
+    <title>Produits</title>
 
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/clients.css">
+    <link rel="stylesheet" href="../css/produits.css?v=2.0">
 
-    <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
->
-
-<style>
-    .export-clients-menu { position: relative; display: inline-flex; }
-    .export-clients-trigger { display: inline-flex; align-items: center; gap: .45rem; }
-    .export-arrow { transition: transform .2s ease; }
-    .export-clients-menu.is-open .export-arrow { transform: rotate(180deg); }
-    .export-clients-dropdown {
-        position: absolute; top: calc(100% + 10px); left: 0; z-index: 1000;
-        width: 270px; padding: 8px; border: 1px solid rgba(15, 23, 42, .12);
-        border-radius: 14px; background: #fff; box-shadow: 0 18px 45px rgba(15, 23, 42, .16);
-    }
-    .export-clients-dropdown[hidden] { display: none; }
-    .export-option {
-        width: 100%; display: grid; grid-template-columns: 30px 1fr; gap: 10px;
-        align-items: center; padding: 11px 12px; border: 0; border-radius: 10px;
-        background: transparent; color: inherit; text-align: left; cursor: pointer;
-    }
-    .export-option:hover, .export-option:focus-visible { background: #f3f6fb; outline: none; }
-    .export-option span:last-child { display: flex; flex-direction: column; gap: 2px; }
-    .export-option small { color: #64748b; font-size: .75rem; }
-    @media (max-width: 640px) {
-        .export-clients-dropdown { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; }
-    }
-
-
-    /* ===== Étape 4 : tri, pagination, sélection et colonnes ===== */
-    .bulk-clients-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 14px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; }
-    .bulk-clients-bar[hidden] { display:none; }
-    .bulk-clients-actions { display:flex; flex-wrap:wrap; gap:8px; }
-    .bulk-clients-count { font-weight:700; }
-    .columns-clients-menu { position:relative; display:inline-flex; }
-    .columns-clients-dropdown { position:absolute; top:calc(100% + 10px); right:0; z-index:1000; min-width:245px; padding:10px; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:#fff; box-shadow:0 18px 45px rgba(15,23,42,.16); }
-    .columns-clients-dropdown[hidden] { display:none; }
-    .column-option { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:8px; cursor:pointer; }
-    .column-option:hover { background:#f3f6fb; }
-    .clients-table th[data-sort-key] { cursor:pointer; user-select:none; white-space:nowrap; }
-    .sort-indicator { display:inline-block; min-width:14px; margin-left:5px; color:#64748b; font-size:.75rem; }
-    .clients-table tr.is-selected { background:#eff6ff; }
-    .pagination-controls { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
-    .pagination-summary { margin:0 8px; color:#64748b; font-size:.88rem; }
-    .pagination-btn[hidden] { display:none; }
-    .btn-danger-soft { border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; }
-    .btn-danger-soft:hover { background:#ffe4e6; }
-    @media (max-width:760px) { .bulk-clients-bar { align-items:flex-start; flex-direction:column; } .columns-clients-dropdown { position:fixed; left:16px; right:16px; top:auto; bottom:16px; min-width:0; } }
-
-</style>
-
+    <!-- Styles KPI intégrés : ils fonctionnent même si produits.css n'est pas chargé -->
+    <style>
+        #products-kpi-grid {
+            display:grid !important;
+            grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+            gap:18px !important;
+            margin:0 0 24px !important;
+        }
+        #products-kpi-grid .kpi-card {
+            position:relative !important;
+            display:flex !important;
+            align-items:center !important;
+            gap:16px !important;
+            min-height:132px !important;
+            padding:22px !important;
+            overflow:hidden !important;
+            border:1px solid #e2e8f0 !important;
+            border-radius:20px !important;
+            background:#fff !important;
+            box-shadow:0 12px 30px rgba(15,23,42,.08) !important;
+            transition:transform .2s ease,box-shadow .2s ease !important;
+        }
+        #products-kpi-grid .kpi-card::before {
+            content:"";position:absolute;inset:0 auto 0 0;width:5px;
+            background:linear-gradient(180deg,#2563eb,#60a5fa);
+        }
+        #products-kpi-grid .kpi-card:nth-child(2)::before{background:linear-gradient(180deg,#059669,#34d399)}
+        #products-kpi-grid .kpi-card:nth-child(3)::before{background:linear-gradient(180deg,#7c3aed,#a78bfa)}
+        #products-kpi-grid .kpi-card:nth-child(4)::before{background:linear-gradient(180deg,#ea580c,#fb923c)}
+        #products-kpi-grid .kpi-card:hover{transform:translateY(-4px)!important;box-shadow:0 18px 38px rgba(15,23,42,.13)!important}
+        #products-kpi-grid .kpi-icon {
+            display:grid !important;place-items:center !important;flex:0 0 56px !important;
+            width:56px !important;height:56px !important;border-radius:17px !important;
+            background:#eff6ff !important;font-size:27px !important;
+        }
+        #products-kpi-grid .kpi-card:nth-child(2) .kpi-icon{background:#ecfdf5!important}
+        #products-kpi-grid .kpi-card:nth-child(3) .kpi-icon{background:#f5f3ff!important}
+        #products-kpi-grid .kpi-card:nth-child(4) .kpi-icon{background:#fff7ed!important}
+        #products-kpi-grid .kpi-content{min-width:0!important;display:flex!important;flex-direction:column!important;gap:5px!important}
+        #products-kpi-grid .kpi-content h3{margin:0!important;color:#64748b!important;font-size:13px!important;font-weight:800!important;text-transform:uppercase!important;letter-spacing:.45px!important}
+        #products-kpi-grid .kpi-value{display:block!important;margin:0!important;color:#0f172a!important;font-size:30px!important;font-weight:900!important;line-height:1.1!important;letter-spacing:-1px!important}
+        #products-kpi-grid .kpi-content small{display:block!important;color:#94a3b8!important;font-size:12px!important;font-weight:600!important}
+        @media(max-width:1100px){#products-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+        @media(max-width:640px){#products-kpi-grid{grid-template-columns:1fr!important;gap:12px!important}#products-kpi-grid .kpi-card{min-height:112px!important;padding:18px!important}}
+        @media print{#products-kpi-grid{display:none!important}}
+    </style>
 </head>
 
 <body>
@@ -75,7 +70,7 @@
         </button>
 
         <a href="dashboard.html" class="logo">
-            <img src="../logo-vizibl.png" alt="Logo">
+            <img src="../logo-vizibl.png" alt="Logo VISIBL">
         </a>
 
         <nav>
@@ -87,6 +82,7 @@
                     </a>
                 </li>
 
+                <!-- ===== Menu Commercial ===== -->
                 <li class="menu-category">
 
                     <a href="#" class="nav-link category-title">
@@ -130,6 +126,7 @@
 
                 </li>
 
+                <!-- ===== Menu Stock et approvisionnement ===== -->
                 <li class="menu-category">
 
                     <a href="#" class="nav-link category-title">
@@ -167,6 +164,7 @@
 
                 </li>
 
+                <!-- ===== Menu Finance ===== -->
                 <li class="menu-category">
 
                     <a href="#" class="nav-link category-title">
@@ -211,7 +209,7 @@
                 </li>
 
                 <li>
-                    <a href="paramètres.html" class="nav-link">
+                    <a href="parametres.html" class="nav-link">
                         ⚙️ Paramètres
                     </a>
                 </li>
@@ -234,10 +232,10 @@
                 </button>
 
                 <a href="dashboard.html" class="logo">
-                    <img src="../logo-vizibl.png" alt="Logo">
+                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
                 </a>
 
-                <h2>Clients</h2>
+                <h2>Produits</h2>
 
             </div>
 
@@ -245,18 +243,18 @@
 
                 <div class="search-box">
 
-                    <!-- Icône visible sur mobile -->
+                    <!-- Icône de recherche visible sur mobile -->
                     <button class="icon-btn" id="mobile-search-btn">
                         🔍
                     </button>
 
-                    <!-- Barre de recherche -->
+                    <!-- Barre de recherche du header -->
                     <div class="search-container">
 
                         <input
                             type="text"
                             class="search-input"
-                            placeholder="Rechercher un client..."
+                            placeholder="Rechercher un produit..."
                         >
 
                         <button class="search-btn">
@@ -269,59 +267,10 @@
 
                 <div class="header-icons">
 
-                    <div class="notification-menu">
-
-    <button
-        id="notification-button"
-        class="icon-btn notifications"
-        type="button"
-        aria-label="Afficher les notifications"
-        aria-expanded="false">
-
-        🔔
-        <span class="notification-badge">3</span>
-
-    </button>
-
-    <div
-        id="notification-panel"
-        class="notification-panel"
-        hidden>
-
-        <div class="notification-panel-header">
-            <h3>Notifications</h3>
-        </div>
-
-        <div class="notification-item">
-            <span class="notification-item-icon">📦</span>
-            <div>
-                <strong>Nouvelle commande</strong>
-                <p>Une nouvelle commande a été enregistrée.</p>
-                <small>Il y a quelques minutes</small>
-            </div>
-        </div>
-
-        <div class="notification-item">
-            <span class="notification-item-icon">⚠️</span>
-            <div>
-                <strong>Stock faible</strong>
-                <p>Un produit approche du seuil de rupture.</p>
-                <small>Aujourd’hui</small>
-            </div>
-        </div>
-
-        <div class="notification-item">
-            <span class="notification-item-icon">💳</span>
-            <div>
-                <strong>Paiement reçu</strong>
-                <p>Un nouveau paiement a été enregistré.</p>
-                <small>Aujourd’hui</small>
-            </div>
-        </div>
-
-    </div>
-
-</div>
+                    <button class="icon-btn notifications">
+                        🔔
+                        <span class="notification-badge">3</span>
+                    </button>
 
                     <div class="profile-menu">
 
@@ -331,15 +280,19 @@
 
                         <div class="dropdown-menu">
 
-                            <a href="moncompte.html">
-                                Mon compte
+                            <a href="#">
+                                Mon profil
+                            </a>
+
+                            <a href="#">
+                                Paramètres
                             </a>
 
                             <hr>
 
-                            <a href="#" class="logout" id="logout-button">
-        Déconnexion
-    </a>
+                            <a href="#" class="logout">
+                                Déconnexion
+                            </a>
 
                         </div>
 
@@ -354,928 +307,239 @@
         <!-- ===== Contenu de la page ===== -->
         <section class="content">
 
-    <!-- ===== Présentation du module ===== -->
-    <div class="welcome-section">
+            <!-- ===== Présentation ===== -->
+            <div class="welcome-section">
 
-        <div>
-            <h2>Gestion des clients</h2>
+                <h2>Produits</h2>
 
-            <p>
-                Enregistrez, consultez et gérez l’ensemble des clients
-                de votre entreprise.
-            </p>
-        </div>
+                <p>
+                    Enregistrez, consultez et gérez les produits,
+                    leurs coûts, leurs prix, leur stock initial et leur rentabilité.
+                </p>
 
-        <button class="btn-primary" id="new-client-btn">
-            ➕ Nouveau client
-        </button>
-
-    </div>
-
-
-    <!-- ===== KPI Clients ===== -->
-    <div class="kpi-grid clients-kpi-grid">
-
-        <article class="kpi-card">
-
-            <div class="kpi-card-header">
-                <span class="kpi-icon">👥</span>
-                <span class="kpi-title">Total clients</span>
             </div>
 
-            <h3 class="kpi-value" id="total-clients-value">
-                0
-            </h3>
+            <!-- ===== Cartes KPI Produits ===== -->
+            <div class="kpi-grid" id="products-kpi-grid">
 
-            <p class="kpi-trend up" id="total-clients-description">
-                0 nouveau client ce mois
-            </p>
+                <!-- Total des produits -->
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📦</div>
 
-        </article>
+                    <div class="kpi-content">
+                        <h3>Total des produits</h3>
 
-        <article class="kpi-card">
+                        <p
+                            class="kpi-value"
+                            id="kpi-total-products"
+                            aria-live="polite"
+                        >
+                            --
+                        </p>
 
-            <div class="kpi-card-header">
-                <span class="kpi-icon">✅</span>
-                <span class="kpi-title">Clients actifs</span>
+                        <small id="kpi-products-month" aria-live="polite">
+                            Données en cours de chargement
+                        </small>
+                    </div>
+                </article>
+
+                <!-- Valeur du stock initial -->
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">💰</div>
+
+                    <div class="kpi-content">
+                        <h3>Valeur du stock initial</h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-stock-value"
+                            aria-live="polite"
+                        >
+                            --
+                        </p>
+
+                        <small>
+                            Prix de revient × stock initial
+                        </small>
+                    </div>
+                </article>
+
+                <!-- Marge moyenne -->
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📈</div>
+
+                    <div class="kpi-content">
+                        <h3>Marge moyenne</h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-average-margin"
+                            aria-live="polite"
+                        >
+                            --
+                        </p>
+
+                        <small
+                            id="kpi-average-margin-fcfa"
+                            aria-live="polite"
+                        >
+                            Données en cours de chargement
+                        </small>
+                    </div>
+                </article>
+
+                <!-- Produits actifs -->
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">✅</div>
+
+                    <div class="kpi-content">
+                        <h3>Produits actifs</h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-active-products"
+                            aria-live="polite"
+                        >
+                            --
+                        </p>
+
+                        <small id="kpi-active-percent" aria-live="polite">
+                            Données en cours de chargement
+                        </small>
+                    </div>
+                </article>
+
             </div>
 
-            <h3 class="kpi-value" id="active-clients-value">
-                0
-            </h3>
+            <!-- ===== Bouton nouveau produit ===== -->
+            <div class="sales-toolbar">
 
-            <p class="kpi-description" id="active-clients-description">
-                0 % des clients
-            </p>
-
-        </article>
-
-        <article class="kpi-card">
-
-            <div class="kpi-card-header">
-                <span class="kpi-icon">🆕</span>
-                <span class="kpi-title">Nouveaux ce mois</span>
-            </div>
-
-            <h3 class="kpi-value" id="new-clients-value">
-                0
-            </h3>
-
-            <p class="kpi-trend up" id="new-clients-description">
-                Inscrits durant le mois en cours
-            </p>
-
-        </article>
-
-        <article class="kpi-card">
-
-            <div class="kpi-card-header">
-                <span class="kpi-icon">💰</span>
-                <span class="kpi-title">Achats cumulés</span>
-            </div>
-
-            <h3 class="kpi-value" id="client-revenue-value">
-                0 FCFA
-            </h3>
-
-            <p class="kpi-trend up" id="client-revenue-description">
-                Moyenne : 0 FCFA / client
-            </p>
-
-        </article>
-
-    </div>
-
-
-    <!-- ===== Barre d’actions ===== -->
-    <div class="clients-toolbar">
-
-        <div class="toolbar-left">
-
-            <button class="btn-primary" id="new-client-toolbar-btn">
-                ➕ Nouveau client
-            </button>
-
-            <div class="export-clients-menu" id="export-clients-menu">
-                <button
-                    type="button"
-                    class="btn-secondary export-clients-trigger"
-                    id="export-clients-btn"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                >
-                    📤 Exporter <span class="export-arrow" aria-hidden="true">▾</span>
+                <button class="btn-primary" id="new-product-btn">
+                    ➕ Nouveau produit
                 </button>
 
-                <div class="export-clients-dropdown" id="export-clients-dropdown" hidden>
-                    <button type="button" class="export-option" data-export-format="pdf">
-                        <span>📄</span>
-                        <span><strong>PDF</strong><small>Document prêt à partager</small></span>
-                    </button>
-                    <button type="button" class="export-option" data-export-format="xlsx">
-                        <span>📊</span>
-                        <span><strong>Excel (.xlsx)</strong><small>Feuille de calcul modifiable</small></span>
-                    </button>
-                    <button type="button" class="export-option" data-export-format="csv">
-                        <span>📑</span>
-                        <span><strong>CSV</strong><small>Format universel UTF-8</small></span>
-                    </button>
+            </div>
+
+            <!-- ===== Recherche et filtres ===== -->
+            <div class="sales-filters">
+
+                <div class="sales-search">
+
+                    <input
+                        type="text"
+                        id="products-search-input"
+                        placeholder="Rechercher par référence, désignation ou fournisseur..."
+                    >
+
                 </div>
-            </div>
 
-            <button class="btn-secondary" id="print-clients-btn">
-                🖨️ Imprimer
-            </button>
+                <!-- Filtre fournisseur -->
+                <select id="product-supplier-filter">
 
-            <div class="columns-clients-menu" id="columns-clients-menu">
-                <button type="button" class="btn-secondary" id="columns-clients-btn" aria-haspopup="true" aria-expanded="false">
-                    ⚙️ Colonnes
-                </button>
-                <div class="columns-clients-dropdown" id="columns-clients-dropdown" hidden></div>
-            </div>
-
-            <button class="btn-secondary" id="refresh-clients-btn">
-                🔄 Actualiser
-            </button>
-
-        </div>
-
-        <div class="toolbar-right">
-
-            <span class="client-count">
-                <strong id="filtered-client-count">2</strong>
-                client(s) affiché(s)
-            </span>
-
-        </div>
-
-    </div>
-
-
-    <div class="bulk-clients-bar" id="bulk-clients-bar" hidden>
-        <span class="bulk-clients-count"><strong id="selected-clients-count">0</strong> client(s) sélectionné(s)</span>
-        <div class="bulk-clients-actions">
-            <button type="button" class="btn-secondary" id="bulk-export-pdf">📄 PDF</button>
-            <button type="button" class="btn-secondary" id="bulk-export-xlsx">📊 Excel</button>
-            <button type="button" class="btn-secondary" id="bulk-export-csv">📑 CSV</button>
-            <button type="button" class="btn-secondary btn-danger-soft" id="bulk-delete-clients">🗑️ Supprimer</button>
-            <button type="button" class="btn-secondary" id="bulk-clear-selection">✕ Désélectionner</button>
-        </div>
-    </div>
-
-    <!-- ===== Recherche et filtres ===== -->
-    <div class="clients-filters">
-
-        <div class="clients-search">
-
-            <span class="search-icon">🔍</span>
-
-            <input
-                type="text"
-                id="clients-search-input"
-                placeholder="Rechercher par nom, téléphone, email ou identifiant..."
-            >
-
-        </div>
-
-
-        <select id="client-type-filter">
-
-            <option value="">
-                Tous les types
-            </option>
-
-            <option value="particulier">
-                Particulier
-            </option>
-
-            <option value="entreprise">
-                Entreprise
-            </option>
-
-        </select>
-
-
-        <select id="client-status-filter">
-
-            <option value="">
-                Tous les statuts
-            </option>
-
-            <option value="actif">
-                Actif
-            </option>
-
-            <option value="prospect">
-                Prospect
-            </option>
-
-            <option value="inactif">
-                Inactif
-            </option>
-
-            <option value="bloque">
-                Bloqué
-            </option>
-
-        </select>
-
-
-        <select id="client-commune-filter">
-
-            <option value="">
-                Toutes les communes
-            </option>
-
-            <option value="abobo">
-                Abobo
-            </option>
-
-            <option value="adjame">
-                Adjamé
-            </option>
-
-            <option value="attecoube">
-                Attécoubé
-            </option>
-
-            <option value="cocody">
-                Cocody
-            </option>
-
-            <option value="koumassi">
-                Koumassi
-            </option>
-
-            <option value="marcory">
-                Marcory
-            </option>
-
-            <option value="plateau">
-                Plateau
-            </option>
-
-            <option value="port-bouet">
-                Port-Bouët
-            </option>
-
-            <option value="treichville">
-                Treichville
-            </option>
-
-            <option value="yopougon">
-                Yopougon
-            </option>
-
-            <option value="autre">
-                Autre
-            </option>
-
-        </select>
-
-
-        <button class="btn-filter-reset" id="reset-client-filters">
-            Effacer les filtres
-        </button>
-
-    </div>
-
-
-    <!-- ===== Tableau des clients ===== -->
-    <div class="clients-table-container">
-
-        <div class="table-responsive">
-
-            <table class="clients-table">
-
-                <thead>
-
-                    <tr>
-                        <th data-column="selection">
-                            <input
-                                type="checkbox"
-                                id="select-all-clients"
-                                aria-label="Sélectionner tous les clients"
-                            >
-                        </th>
-
-                        <th data-column="client" data-sort-key="nom">Client<span class="sort-indicator"></span></th>
-                        <th data-column="contact" data-sort-key="telephone">Contact<span class="sort-indicator"></span></th>
-                        <th data-column="commune" data-sort-key="commune">Commune<span class="sort-indicator"></span></th>
-                        <th data-column="type" data-sort-key="typeClient">Type<span class="sort-indicator"></span></th>
-                        <th data-column="date" data-sort-key="dateInscription">Date d’inscription<span class="sort-indicator"></span></th>
-                        <th data-column="commandes" data-sort-key="nombreCommandes">Commandes<span class="sort-indicator"></span></th>
-                        <th data-column="achats" data-sort-key="montantTotalAchats">Total achats<span class="sort-indicator"></span></th>
-                        <th data-column="quartier" data-sort-key="quartier">Quartier<span class="sort-indicator"></span></th>
-                        <th data-column="statut" data-sort-key="statut">Statut<span class="sort-indicator"></span></th>
-                        <th data-column="actions">Actions</th>
-                    </tr>
-
-                </thead>
-
-<tbody id="clients-table-body">
-
-    <tr class="empty-row">
-
-        <td colspan="11" class="empty-table">
-            Aucun client enregistré.
-        </td>
-
-    </tr>
-
-</tbody>
-
-</table>
-
-</div>
-
-<!-- ===== État vide ===== -->
-<div class="empty-state" id="clients-empty-state" hidden>
-
-            <div class="empty-state-icon">
-                👥
-            </div>
-
-            <h3>Aucun client trouvé</h3>
-
-            <p>
-                Aucun client ne correspond à votre recherche ou à vos filtres.
-            </p>
-
-            <button class="btn-primary" id="empty-new-client-btn">
-                Ajouter un client
-            </button>
-
-        </div>
-
-
-        <!-- ===== Pagination ===== -->
-        <div class="table-pagination">
-
-            <div class="pagination-info">
-
-                <span>Afficher</span>
-
-                <select id="clients-per-page">
-
-                    <option value="10">
-                        10
+                    <option value="">
+                        Tous les fournisseurs
                     </option>
 
-                    <option value="25">
-                        25
+                    <option value="fournisseur-1">
+                        Fournisseur 1
                     </option>
 
-                    <option value="50">
-                        50
+                    <option value="fournisseur-2">
+                        Fournisseur 2
                     </option>
 
-                    <option value="100">
-                        100
+                    <option value="fournisseur-3">
+                        Fournisseur 3
+                    </option>
+
+                    <option value="sans-fournisseur">
+                        Sans fournisseur
                     </option>
 
                 </select>
 
-                <span>éléments par page</span>
+                <!-- Filtre niveau du stock initial -->
+                <select id="product-stock-filter">
+                    <option value="">Tous les niveaux de stock initial</option>
+                    <option value="disponible">Stock disponible</option>
+                    <option value="faible">Sous le seuil d'alerte</option>
+                    <option value="rupture">Stock initial nul</option>
+                </select>
+
+                <!-- Filtre statut -->
+                <select id="product-status-filter">
+
+                    <option value="">
+                        Tous les statuts
+                    </option>
+
+                    <option value="actif">
+                        Actif
+                    </option>
+
+                    <option value="inactif">
+                        Inactif
+                    </option>
+
+                    <option value="archive">
+                        Archivé
+                    </option>
+
+                </select>
 
             </div>
 
+            <!-- ===== Tableau des produits ===== -->
+            <div class="sales-table-container">
 
-            <div class="pagination-controls" id="clients-pagination-controls">
-                <button type="button" class="pagination-btn" id="previous-page-btn" aria-label="Page précédente">‹</button>
-                <span id="clients-page-buttons" class="pagination-controls"></span>
-                <span class="pagination-summary" id="clients-pagination-summary"></span>
-                <button type="button" class="pagination-btn" id="next-page-btn" aria-label="Page suivante">›</button>
+                <table class="sales-table">
+
+                    <thead>
+                        <tr>
+                            <th>ID Produit</th>
+                            <th>Référence Produit</th>
+                            <th>Désignation</th>
+                            <th>Description</th>
+                            <th>Prix d'Achat</th>
+                            <th>Taux TVA (%)</th>
+                            <th>Montant TVA</th>
+                            <th>Frais de Transport</th>
+                            <th>Frais de Douane</th>
+                            <th>Autres Frais</th>
+                            <th>Prix de Revient</th>
+                            <th>Prix de Vente</th>
+                            <th>Prix Minimum de Vente</th>
+                            <th>Marge (FCFA)</th>
+                            <th>Taux de Marge (%)</th>
+                            <th>Stock Initial</th>
+                            <th>Seuil d'Alerte</th>
+                            <th>ID Fournisseur Principal</th>
+                            <th>Garantie (mois)</th>
+                            <th>Image URL</th>
+                            <th>Date d'Ajout</th>
+                            <th>Date de Modification</th>
+                            <th>Statut</th>
+                            <th>Commentaire</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="products-table-body">
+                        <!-- Les produits seront chargés dynamiquement depuis Google Sheets -->
+                    </tbody>
+
+                </table>
+
             </div>
 
-        </div>
-
-    </div>
-
-
-    <!-- ===== Fenêtre Nouveau client ===== -->
-    <div class="modal-overlay" id="client-modal" aria-hidden="true">
-
-        <div
-            class="modal client-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="client-modal-title"
-        >
-
-            <div class="modal-header">
-
-                <div>
-                    <h2 id="client-modal-title">Nouveau client</h2>
-                    <p>Renseignez les informations du client.</p>
-                </div>
-
-                <button
-                    type="button"
-                    class="modal-close"
-                    id="close-client-modal"
-                    aria-label="Fermer la fenêtre"
-                >
-                    ✕
-                </button>
-
-            </div>
-
-            <form id="client-form">
-
-                <div class="modal-body">
-
-                    <!-- ===== Informations générales ===== -->
-                    <section class="form-section">
-
-                        <div class="form-section-header">
-
-                            <span class="form-section-icon">👤</span>
-
-                            <div>
-                                <h3>Informations générales</h3>
-                                <p>Identité, catégorie et statut du client</p>
-                            </div>
-
-                        </div>
-
-                        <div class="form-grid">
-
-                            <div class="form-group">
-
-                                <label for="client-type">
-                                    Type de client
-                                    <span class="required">*</span>
-                                </label>
-
-                                <select id="client-type" name="typeClient" required>
-                                    <option value="">Sélectionner un type</option>
-                                    <option value="particulier">Particulier</option>
-                                    <option value="entreprise">Entreprise</option>
-                                </select>
-
-                            </div>
-
-                            <div class="form-group">
-
-                                <label for="client-status">
-                                    Statut
-                                    <span class="required">*</span>
-                                </label>
-
-                                <select id="client-status" name="statut" required>
-                                    <option value="actif">Actif</option>
-                                    <option value="prospect">Prospect</option>
-                                    <option value="inactif">Inactif</option>
-                                    <option value="bloque">Bloqué</option>
-                                </select>
-
-                            </div>
-
-                            <div class="form-group">
-
-                                <label for="client-lastname">
-                                    Nom
-                                    <span class="required">*</span>
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="client-lastname"
-                                    name="nom"
-                                    placeholder="Exemple : Traoré"
-                                    autocomplete="family-name"
-                                    required
-                                >
-
-                            </div>
-
-                            <div class="form-group">
-
-                                <label for="client-firstname">Prénom</label>
-
-                                <input
-                                    type="text"
-                                    id="client-firstname"
-                                    name="prenom"
-                                    placeholder="Exemple : Awa"
-                                    autocomplete="given-name"
-                                >
-
-                            </div>
-
-                        </div>
-
-                    </section>
-
-                    <!-- ===== Coordonnées ===== -->
-                    <section class="form-section">
-
-                        <div class="form-section-header">
-
-                            <span class="form-section-icon">📞</span>
-
-                            <div>
-                                <h3>Coordonnées</h3>
-                                <p>Téléphone et adresse email</p>
-                            </div>
-
-                        </div>
-
-                        <div class="form-grid">
-
-                            <div class="form-group">
-
-                                <label for="client-phone">
-                                    Téléphone
-                                    <span class="required">*</span>
-                                </label>
-
-                                <input
-                                    type="tel"
-                                    id="client-phone"
-                                    name="telephone"
-                                    placeholder="07 00 00 00 00"
-                                    autocomplete="tel"
-                                    required
-                                >
-
-                            </div>
-
-                            <div class="form-group">
-
-                                <label for="client-email">Email</label>
-
-                                <input
-                                    type="email"
-                                    id="client-email"
-                                    name="email"
-                                    placeholder="client@email.com"
-                                    autocomplete="email"
-                                >
-
-                            </div>
-
-                        </div>
-
-                    </section>
-
-                    <!-- ===== Adresse ===== -->
-                    <section class="form-section">
-
-                        <div class="form-section-header">
-
-                            <span class="form-section-icon">📍</span>
-
-                            <div>
-                                <h3>Adresse</h3>
-                                <p>Commune, quartier et adresse détaillée</p>
-                            </div>
-
-                        </div>
-
-                        <div class="form-grid">
-
-                            <div class="form-group">
-
-                                <label for="client-commune">Commune</label>
-
-                                <select id="client-commune" name="commune">
-                                    <option value="">Sélectionner une commune</option>
-                                    <option value="abobo">Abobo</option>
-                                    <option value="adjame">Adjamé</option>
-                                    <option value="attecoube">Attécoubé</option>
-                                    <option value="cocody">Cocody</option>
-                                    <option value="koumassi">Koumassi</option>
-                                    <option value="marcory">Marcory</option>
-                                    <option value="plateau">Plateau</option>
-                                    <option value="port-bouet">Port-Bouët</option>
-                                    <option value="treichville">Treichville</option>
-                                    <option value="yopougon">Yopougon</option>
-                                    <option value="autre">Autre</option>
-                                </select>
-
-                            </div>
-
-                            <div class="form-group">
-
-                                <label for="client-neighborhood">Quartier</label>
-
-                                <input
-                                    type="text"
-                                    id="client-neighborhood"
-                                    name="quartier"
-                                    placeholder="Exemple : Riviera Anono"
-                                    autocomplete="address-level3"
-                                >
-
-                            </div>
-
-                        </div>
-
-                    </section>
-
-                    <!-- ===== Commentaire ===== -->
-                    <section class="form-section">
-
-                        <div class="form-section-header">
-
-                            <span class="form-section-icon">📝</span>
-
-                            <div>
-                                <h3>Commentaire</h3>
-                                <p>Informations complémentaires sur le client</p>
-                            </div>
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label for="client-comment">Commentaire</label>
-
-                            <textarea
-                                id="client-comment"
-                                name="commentaire"
-                                rows="4"
-                                placeholder="Ajoutez une information utile concernant ce client..."
-                            ></textarea>
-
-                        </div>
-
-
-                    </section>
-
-                    <!--
-                        Champs générés automatiquement par le système :
-                        ID Client
-                        Date d’inscription
-                        Nombre de commandes
-                        Montant total achats
-                    -->
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button
-                        type="button"
-                        class="btn-secondary"
-                        id="cancel-client-btn"
-                    >
-                        Annuler
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="btn-primary"
-                        id="save-client-btn"
-                    >
-                        Enregistrer le client
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-    <!-- ===== Fenêtre Voir client ===== -->
-    <div class="modal-overlay" id="view-client-modal" aria-hidden="true">
-        <div class="modal view-client-modal" role="dialog" aria-modal="true" aria-labelledby="view-client-modal-title">
-
-            <div class="view-client-hero">
-                <button type="button" class="modal-close view-client-close" id="close-view-client-modal" aria-label="Fermer la fenêtre">✕</button>
-
-                <div class="view-client-profile">
-                    <div class="view-client-avatar" id="view-client-avatar" aria-hidden="true">CL</div>
-
-                    <div class="view-client-profile-main">
-                        <div class="view-client-title-row">
-                            <div>
-                                <p class="view-client-eyebrow">Fiche client</p>
-                                <h2 id="view-client-modal-title">
-                                    <span id="view-client-name">—</span>
-                                </h2>
-                            </div>
-
-                            <span class="view-client-status status-inconnu" id="view-client-status">—</span>
-                        </div>
-
-                        <div class="view-client-meta">
-                            <span><i class="fa-solid fa-fingerprint"></i><strong id="view-client-id">—</strong></span>
-                            <span><i class="fa-solid fa-user-tag"></i><strong id="view-client-type">—</strong></span>
-                            <span><i class="fa-regular fa-calendar"></i>Inscrit le <strong id="view-client-date">—</strong></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-body view-client-body">
-
-                <section class="view-client-stats">
-                    <article class="view-client-stat-card">
-                        <div class="view-client-stat-icon"><i class="fa-solid fa-bag-shopping"></i></div>
-                        <div>
-                            <span>Commandes</span>
-                            <strong id="view-client-orders">0</strong>
-                            <small>Nombre total enregistré</small>
-                        </div>
-                    </article>
-
-                    <article class="view-client-stat-card featured">
-                        <div class="view-client-stat-icon"><i class="fa-solid fa-coins"></i></div>
-                        <div>
-                            <span>Total des achats</span>
-                            <strong id="view-client-purchases">0 FCFA</strong>
-                            <small>Chiffre d’affaires généré</small>
-                        </div>
-                    </article>
-                </section>
-
-                <div class="view-client-content-grid">
-
-                    <section class="view-client-card">
-                        <div class="view-client-card-header">
-                            <div class="view-client-card-icon"><i class="fa-solid fa-address-book"></i></div>
-                            <div>
-                                <h3>Coordonnées</h3>
-                                <p>Informations de contact du client</p>
-                            </div>
-                        </div>
-
-                        <div class="view-client-info-list">
-                            <div class="view-client-info-item">
-                                <span class="view-client-info-icon"><i class="fa-solid fa-phone"></i></span>
-                                <div><span>Téléphone</span><strong id="view-client-phone">—</strong></div>
-                            </div>
-
-                            <div class="view-client-info-item">
-                                <span class="view-client-info-icon"><i class="fa-solid fa-envelope"></i></span>
-                                <div><span>Email</span><strong id="view-client-email">—</strong></div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="view-client-card">
-                        <div class="view-client-card-header">
-                            <div class="view-client-card-icon"><i class="fa-solid fa-location-dot"></i></div>
-                            <div>
-                                <h3>Adresse</h3>
-                                <p>Localisation principale du client</p>
-                            </div>
-                        </div>
-
-                        <div class="view-client-info-list">
-                            <div class="view-client-info-item">
-                                <span class="view-client-info-icon"><i class="fa-solid fa-city"></i></span>
-                                <div><span>Commune</span><strong id="view-client-commune">—</strong></div>
-                            </div>
-
-                            <div class="view-client-info-item">
-                                <span class="view-client-info-icon"><i class="fa-solid fa-map-pin"></i></span>
-                                <div><span>Quartier</span><strong id="view-client-neighborhood">—</strong></div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <section class="view-client-note">
-                    <div class="view-client-note-header">
-                        <span><i class="fa-solid fa-note-sticky"></i></span>
-                        <div>
-                            <h3>Commentaire</h3>
-                            <p>Notes et informations complémentaires</p>
-                        </div>
-                    </div>
-                    <p id="view-client-comment">—</p>
-                </section>
-            </div>
-
-            <div class="modal-footer view-client-footer">
-                <span class="view-client-footer-hint">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Les informations affichées proviennent de la fiche client.
-                </span>
-
-                <button type="button" class="btn-primary" id="close-view-client-footer">
-                    <i class="fa-solid fa-check"></i>
-                    Fermer
-                </button>
-            </div>
-
-        </div>
-    </div>
-
-<!-- ===========================
-     MODAL SUPPRESSION CLIENT
-=========================== -->
-
-
-    <div class="modal-overlay" id="bulk-delete-client-modal" aria-hidden="true">
-        <div class="modal delete-client-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-delete-client-title">
-            <div class="modal-header">
-                <div><h2 id="bulk-delete-client-title">Supprimer les clients sélectionnés</h2><p id="bulk-delete-client-message">Cette action est irréversible.</p></div>
-                <button type="button" class="modal-close" id="close-bulk-delete-client-btn" aria-label="Fermer">✕</button>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" id="cancel-bulk-delete-client-btn">Annuler</button>
-                <button type="button" class="btn-danger" id="confirm-bulk-delete-client-btn">Supprimer</button>
-            </div>
-        </div>
-    </div>
-
-<div
-    class="modal-overlay"
-    id="delete-client-modal"
-    aria-hidden="true"
->
-
-    <div
-        class="modal delete-client-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="delete-client-title"
-    >
-
-        <div class="delete-client-top">
-
-            <div class="delete-client-circle">
-                <i class="fa-solid fa-trash-can"></i>
-            </div>
-
-            <h2 id="delete-client-title">
-                Supprimer ce client ?
-            </h2>
-
-            <p>
-
-                Vous êtes sur le point de supprimer définitivement
-
-                <strong id="delete-client-name">
-                    Nom du client
-                </strong>
-
-            </p>
-
-        </div>
-
-        <div class="delete-warning">
-
-            <i class="fa-solid fa-circle-exclamation"></i>
-
-            <span>
-
-                Cette opération est irréversible.
-                Toutes les informations du client seront supprimées.
-
-            </span>
-
-        </div>
-
-        <div class="modal-footer delete-footer">
-
-            <button
-                type="button"
-                class="btn-secondary"
-                id="cancel-delete-client-btn"
-            >
-                Annuler
-            </button>
-
-            <button
-                type="button"
-                class="btn-danger"
-                id="confirm-delete-client-btn"
-            >
-                <i class="fa-solid fa-trash"></i>
-
-                Supprimer définitivement
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-            
-    </section>
+        </section>
 
     </main>
 
 </div>
 
-<!-- Conteneur des notifications -->
-<div id="toast-container"></div>
-
-<script src="../js/api.js"></script>
-<script src="../js/auth.js"></script>
 <script src="../js/app.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="../js/modules/produits.js"></script>
+<script src="../js/produits.js"></script>
 
 </body>
 
