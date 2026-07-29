@@ -272,6 +272,98 @@
 
             </div>
 
+            <!-- ===== Cartes KPI Produits ===== -->
+            <div class="kpi-grid" id="products-kpi-grid">
+
+                <!-- Total des produits -->
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📦</div>
+
+                    <div class="kpi-content">
+                        <h3>Total des produits</h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-total-products"
+                            aria-live="polite"
+                        >
+                            --
+                        </p>
+
+                        <small id="kpi-products-month" aria-live="polite">
+                            Données en cours de chargement
+                        </small>
+                    </div>
+                </article>
+
+                <!-- Valeur du stock initial -->
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">💰</div>
+
+                    <div class="kpi-content">
+                        <h3>Valeur du stock initial</h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-stock-value"
+                            aria-live="polite"
+                        >
+                            --
+                        </p>
+
+                        <small>
+                            Prix de revient × stock initial
+                        </small>
+                    </div>
+                </article>
+
+                <!-- Marge moyenne -->
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📈</div>
+
+                    <div class="kpi-content">
+                        <h3>Marge moyenne</h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-average-margin"
+                            aria-live="polite"
+                        >
+                            --
+                        </p>
+
+                        <small
+                            id="kpi-average-margin-fcfa"
+                            aria-live="polite"
+                        >
+                            Données en cours de chargement
+                        </small>
+                    </div>
+                </article>
+
+                <!-- Produits actifs -->
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">✅</div>
+
+                    <div class="kpi-content">
+                        <h3>Produits actifs</h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-active-products"
+                            aria-live="polite"
+                        >
+                            --
+                        </p>
+
+                        <small id="kpi-active-percent" aria-live="polite">
+                            Données en cours de chargement
+                        </small>
+                    </div>
+                </article>
+
+            </div>
+
             <!-- ===== Bouton nouveau produit ===== -->
             <div class="sales-toolbar">
 
