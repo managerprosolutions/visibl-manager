@@ -854,7 +854,555 @@
 
 </div>
 
+<!-- =========================================================
+     MODALE : NOUVEAU PRODUIT
+========================================================== -->
 
+<div
+    class="modal-overlay"
+    id="product-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-container product-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-modal-title"
+    >
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="product-modal-title">
+                    Nouveau produit
+                </h2>
+
+                <p>
+                    Enregistrez un nouveau produit dans le catalogue.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-product-modal"
+                aria-label="Fermer le formulaire"
+            >
+                ✖
+            </button>
+
+        </div>
+
+
+        <form id="product-form">
+
+            <div class="modal-body">
+
+                <!-- Message du formulaire -->
+
+                <div
+                    id="product-form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+
+                <!-- =========================================
+                     INFORMATIONS GÉNÉRALES
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Informations générales
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-reference">
+                                Référence produit
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="product-reference"
+                                name="referenceProduit"
+                                placeholder="Exemple : CAM-001"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-name">
+                                Désignation
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="product-name"
+                                name="designation"
+                                placeholder="Nom du produit"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-description">
+                                Description
+                            </label>
+
+                            <textarea
+                                id="product-description"
+                                name="description"
+                                rows="3"
+                                placeholder="Description du produit"
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     COÛTS ET PRIX
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Coûts et prix
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-purchase-price">
+                                Prix d’achat
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-purchase-price"
+                                name="prixAchat"
+                                min="0"
+                                step="1"
+                                value="0"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-vat-rate">
+                                Taux TVA (%)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-vat-rate"
+                                name="tauxTVA"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value="18"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-vat-amount">
+                                Montant TVA
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-vat-amount"
+                                name="montantTVA"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-transport-cost">
+                                Frais de transport
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-transport-cost"
+                                name="fraisTransport"
+                                min="0"
+                                step="1"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-customs-cost">
+                                Frais de douane
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-customs-cost"
+                                name="fraisDouane"
+                                min="0"
+                                step="1"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-other-costs">
+                                Autres frais
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-other-costs"
+                                name="autresFrais"
+                                min="0"
+                                step="1"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-cost-price">
+                                Prix de revient
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-cost-price"
+                                name="prixRevient"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-sale-price">
+                                Prix de vente
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-sale-price"
+                                name="prixVente"
+                                min="0"
+                                step="1"
+                                value="0"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-minimum-price">
+                                Prix minimum de vente
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-minimum-price"
+                                name="prixMinimumVente"
+                                min="0"
+                                step="1"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-margin-amount">
+                                Marge (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-margin-amount"
+                                name="margeFCFA"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-margin-rate">
+                                Taux de marge (%)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-margin-rate"
+                                name="tauxMarge"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     STOCK
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Stock
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-initial-stock">
+                                Stock initial
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-initial-stock"
+                                name="stockInitial"
+                                min="0"
+                                step="1"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-alert-threshold">
+                                Seuil d’alerte
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-alert-threshold"
+                                name="seuilAlerte"
+                                min="0"
+                                step="1"
+                                value="0"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     FOURNISSEUR ET GARANTIE
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Fournisseur et garantie
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-main-supplier">
+                                ID fournisseur principal
+                            </label>
+
+                            <input
+                                type="text"
+                                id="product-main-supplier"
+                                name="idFournisseurPrincipal"
+                                placeholder="Exemple : FOUR001"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-warranty">
+                                Garantie (mois)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-warranty"
+                                name="garantieMois"
+                                min="0"
+                                step="1"
+                                value="0"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-image-url">
+                                Image URL
+                            </label>
+
+                            <input
+                                type="url"
+                                id="product-image-url"
+                                name="imageURL"
+                                placeholder="https://exemple.com/image.jpg"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     STATUT ET COMMENTAIRE
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Statut et commentaire
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-status">
+                                Statut
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="product-status"
+                                name="statut"
+                                required
+                            >
+
+                                <option value="Actif" selected>
+                                    Actif
+                                </option>
+
+                                <option value="Inactif">
+                                    Inactif
+                                </option>
+
+                                <option value="Archivé">
+                                    Archivé
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-comment">
+                                Commentaire
+                            </label>
+
+                            <textarea
+                                id="product-comment"
+                                name="commentaire"
+                                rows="3"
+                                placeholder="Informations complémentaires"
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =============================================
+                 BOUTONS DU FORMULAIRE
+            ============================================== -->
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-product-btn"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-product-btn"
+                >
+                    Enregistrer le produit
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+    
 <!-- =========================================================
      FICHIERS JAVASCRIPT
      L'ordre est important :
