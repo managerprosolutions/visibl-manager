@@ -873,9 +873,9 @@ async function enregistrerProduit(event) {
     }
 
     const produit = {
-
-        referenceProduit,
-        designation,
+    referenceProduit: referenceProduit,
+    reference: referenceProduit,
+    designation,
 
         description:
             obtenirValeurTexte("product-description"),
