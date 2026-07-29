@@ -12,12 +12,12 @@ const TVA = 18;
    Utilisez obligatoirement un Upload Preset non signé (Unsigned).
 */
 const CLOUDINARY_CONFIG = {
-    cloudName: "VOTRE_CLOUD_NAME",
-    uploadPreset: "VOTRE_UNSIGNED_UPLOAD_PRESET",
+    cloudName: "yqfbfg84",
+    uploadPreset: "visibl_upload",
     dossier: "visibl/produits"
 };
 
-const TAILLE_MAX_IMAGE = 5 * 1024 * 1024;
+const TAILLE_MAX_IMAGE = 20 * 1024 * 1024;
 const TYPES_IMAGE_AUTORISES = [
     "image/jpeg",
     "image/png",
