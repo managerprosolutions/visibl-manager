@@ -19,6 +19,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initProduits();
 
+    const refreshButton =
+        document.getElementById("refresh-products-btn");
+
+    if (refreshButton) {
+
+        refreshButton.addEventListener("click", () => {
+
+            chargerProduitsDepuisAPI();
+
+        });
+
+    }
+
 });
 
 
@@ -45,23 +58,8 @@ async function chargerProduitsDepuisAPI() {
 
         afficherEtatChargement();
 
-        const response = await fetch(
-            API_URL + "?action=getProduits",
-            {
-                method: "GET",
-                cache: "no-store"
-            }
-        );
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Erreur HTTP : " + response.status
-            );
-
-        }
-
-        const resultat = await response.json();
+        const resultat =
+            await apiGet("getProduits");
 
         if (!resultat.success) {
 
@@ -86,7 +84,9 @@ async function chargerProduitsDepuisAPI() {
             error
         );
 
-        afficherErreurChargement(error.message);
+        afficherErreurChargement(
+            error.message
+        );
 
     }
 
@@ -141,10 +141,13 @@ function chargerProduits(data) {
 
 function afficherEtatChargement() {
 
-    const tableBody = obtenirCorpsTableauProduits();
+    const tableBody =
+        obtenirCorpsTableauProduits();
 
     if (!tableBody) {
+
         return;
+
     }
 
     tableBody.innerHTML = `
@@ -164,10 +167,13 @@ function afficherEtatChargement() {
 
 function afficherMessageTableauVide() {
 
-    const tableBody = obtenirCorpsTableauProduits();
+    const tableBody =
+        obtenirCorpsTableauProduits();
 
     if (!tableBody) {
+
         return;
+
     }
 
     if (produits.length > 0) {
@@ -203,20 +209,23 @@ function afficherMessageTableauVide() {
 
 function afficherErreurChargement(message) {
 
-    const tableBody = obtenirCorpsTableauProduits();
+    const tableBody =
+        obtenirCorpsTableauProduits();
 
-    if (tableBody) {
+    if (!tableBody) {
 
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="25" class="table-message table-error">
-                    Impossible de charger les produits.
-                    ${echapperHTML(message)}
-                </td>
-            </tr>
-        `;
+        return;
 
     }
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="25" class="table-message table-error">
+                Impossible de charger les produits.
+                ${echapperHTML(message)}
+            </td>
+        </tr>
+    `;
 
 }
 
@@ -243,14 +252,17 @@ function obtenirCorpsTableauProduits() {
 
 function mettreAJourKPIs() {
 
-    const totalProduits = produits.length;
+    const totalProduits =
+        produits.length;
 
-    const produitsActifs = produits.filter(
-        produit =>
-            String(produit.Statut || "")
+    const produitsActifs =
+        produits.filter(produit => {
+
+            return String(produit.Statut || "")
                 .trim()
-                .toLowerCase() === "actif"
-    ).length;
+                .toLowerCase() === "actif";
+
+        }).length;
 
     let valeurStock = 0;
 
@@ -260,23 +272,28 @@ function mettreAJourKPIs() {
 
     let ajoutesCeMois = 0;
 
-    const maintenant = new Date();
+    const maintenant =
+        new Date();
 
     produits.forEach(produit => {
 
-        const prixRevient = convertirNombre(
-            produit["Prix de Revient"]
-        );
+        const prixRevient =
+            convertirNombre(
+                produit["Prix de Revient"]
+            );
 
-        const stockInitial = convertirNombre(
-            produit["Stock Initial"]
-        );
+        const stockInitial =
+            convertirNombre(
+                produit["Stock Initial"]
+            );
 
-        valeurStock += prixRevient * stockInitial;
+        valeurStock +=
+            prixRevient * stockInitial;
 
-        const marge = convertirNombre(
-            produit["Taux de Marge (%)"]
-        );
+        const marge =
+            convertirNombre(
+                produit["Taux de Marge (%)"]
+            );
 
         if (Number.isFinite(marge)) {
 
@@ -380,7 +397,8 @@ function definirTexteElement(id, valeur) {
 
     }
 
-    element.textContent = valeur;
+    element.textContent =
+        valeur;
 
 }
 
@@ -401,11 +419,12 @@ function convertirNombre(value) {
 
     }
 
-    const nombre = Number(
-        String(value)
-            .replace(/\s/g, "")
-            .replace(",", ".")
-    );
+    const nombre =
+        Number(
+            String(value)
+                .replace(/\s/g, "")
+                .replace(",", ".")
+        );
 
     return Number.isFinite(nombre)
         ? nombre
