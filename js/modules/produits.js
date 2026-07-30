@@ -1673,7 +1673,9 @@ function afficherProduits(listeProduits) {
     const tableBody = obtenirCorpsTableauProduits();
 
     if (!tableBody) {
-        console.error("Le corps du tableau des produits est introuvable.");
+        console.error(
+            "Le corps du tableau des produits est introuvable."
+        );
         return;
     }
 
@@ -1689,13 +1691,81 @@ function afficherProduits(listeProduits) {
     tableBody.innerHTML = liste.map(produit => {
 
         const idProduitBrut = String(
-            lireValeurProduit(produit, ["ID Produit", "idProduit"]) || ""
+            lireValeurProduit(
+                produit,
+                ["ID Produit", "idProduit"]
+            ) || ""
         ).trim();
 
         const idProduit = echapperHTML(idProduitBrut);
 
+        const reference = echapperHTML(
+            lireValeurProduit(
+                produit,
+                ["Référence Produit", "referenceProduit", "reference"]
+            ) || "—"
+        );
+
+        const designation = echapperHTML(
+            lireValeurProduit(
+                produit,
+                ["Désignation", "designation"]
+            ) || "—"
+        );
+
+        const description = echapperHTML(
+            lireValeurProduit(
+                produit,
+                ["Description", "description"]
+            ) || ""
+        );
+
+        const prixRevient = formaterMontantProduit(
+            lireValeurProduit(
+                produit,
+                ["Prix de Revient", "prixRevient"]
+            )
+        );
+
+        const prixVente = formaterMontantProduit(
+            lireValeurProduit(
+                produit,
+                ["Prix de Vente", "prixVente"]
+            )
+        );
+
+        const margeFCFA = formaterMontantProduit(
+            lireValeurProduit(
+                produit,
+                ["Marge (FCFA)", "margeFCFA"]
+            )
+        );
+
+        const tauxMarge = formaterPourcentageProduit(
+            lireValeurProduit(
+                produit,
+                ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"]
+            )
+        );
+
+        const fournisseur = echapperHTML(
+            lireValeurProduit(
+                produit,
+                [
+                    "Nom Fournisseur",
+                    "Fournisseur",
+                    "ID Fournisseur",
+                    "ID Fournisseur Principal",
+                    "idFournisseurPrincipal"
+                ]
+            ) || "—"
+        );
+
         const statut = String(
-            lireValeurProduit(produit, ["Statut", "statut"]) || ""
+            lireValeurProduit(
+                produit,
+                ["Statut", "statut"]
+            ) || ""
         ).trim();
 
         const statutNormalise = statut.toLowerCase();
@@ -1703,68 +1773,47 @@ function afficherProduits(listeProduits) {
         const classeStatut =
             statutNormalise === "actif"
                 ? "status-active"
-                : statutNormalise === "archivé" || statutNormalise === "archive"
+                : statutNormalise === "archivé" ||
+                  statutNormalise === "archive"
                     ? "status-archived"
                     : "status-inactive";
 
         return `
             <tr data-product-id="${idProduit}">
+
                 <td>
-                    ${echapperHTML(
-                        lireValeurProduit(
-                            produit,
-                            ["Référence Produit", "referenceProduit", "reference"]
-                        ) || "—"
-                    )}
+                    <strong>${reference}</strong>
                 </td>
 
                 <td>
-                    ${echapperHTML(
-                        lireValeurProduit(
-                            produit,
-                            ["Désignation", "designation"]
-                        ) || "—"
-                    )}
+                    <div class="product-table-name">
+                        <strong>${designation}</strong>
+
+                        ${
+                            description
+                                ? `<small>${description}</small>`
+                                : ""
+                        }
+                    </div>
                 </td>
 
                 <td>
-                    ${formatMoney(
-                        lireValeurProduit(
-                            produit,
-                            ["Prix d’Achat", "Prix d'Achat", "prixAchat"]
-                        )
-                    )}
+                    ${prixRevient}
                 </td>
 
                 <td>
-                    ${formatMoney(
-                        lireValeurProduit(
-                            produit,
-                            ["Prix de Vente", "prixVente"]
-                        )
-                    )}
+                    ${prixVente}
                 </td>
 
                 <td>
-                    ${formatNumber(
-                        lireValeurProduit(
-                            produit,
-                            ["Stock Initial", "stockInitial"]
-                        )
-                    )}
+                    <div class="product-table-margin">
+                        <strong>${margeFCFA}</strong>
+                        <small>${tauxMarge}</small>
+                    </div>
                 </td>
 
                 <td>
-                    ${echapperHTML(
-                        lireValeurProduit(
-                            produit,
-                            [
-                                "ID Fournisseur",
-                                "ID Fournisseur Principal",
-                                "idFournisseurPrincipal"
-                            ]
-                        ) || "—"
-                    )}
+                    ${fournisseur}
                 </td>
 
                 <td>
@@ -1774,13 +1823,31 @@ function afficherProduits(listeProduits) {
                 </td>
 
                 <td class="product-actions-cell">
+
                     <button
                         type="button"
                         class="action-btn view-product-btn"
                         data-product-id="${idProduit}"
                         title="Voir le produit"
+                        aria-label="Voir le produit"
                     >
-                        Voir
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12"
+                            ></path>
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="3"
+                            ></circle>
+                        </svg>
                     </button>
 
                     <button
@@ -1788,8 +1855,21 @@ function afficherProduits(listeProduits) {
                         class="action-btn edit-product-btn"
                         data-product-id="${idProduit}"
                         title="Modifier le produit"
+                        aria-label="Modifier le produit"
                     >
-                        Modifier
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="M12 20h9"></path>
+                            <path
+                                d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"
+                            ></path>
+                        </svg>
                     </button>
 
                     <button
@@ -1797,14 +1877,62 @@ function afficherProduits(listeProduits) {
                         class="action-btn delete-product-btn"
                         data-product-id="${idProduit}"
                         title="Supprimer le produit"
+                        aria-label="Supprimer le produit"
                     >
-                        Supprimer
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="M3 6h18"></path>
+                            <path d="M8 6V4h8v2"></path>
+                            <path d="M19 6l-1 14H6L5 6"></path>
+                            <path d="M10 11v6"></path>
+                            <path d="M14 11v6"></path>
+                        </svg>
                     </button>
+
                 </td>
+
             </tr>
         `;
 
     }).join("");
+}
+
+
+function formaterMontantProduit(valeur) {
+
+    const montant = convertirNombre(valeur);
+
+    if (!Number.isFinite(montant)) {
+        return "—";
+    }
+
+    return montant.toLocaleString("fr-FR", {
+        maximumFractionDigits: 0
+    }) + " FCFA";
+}
+
+
+function formaterPourcentageProduit(valeur) {
+
+    const taux = convertirNombre(valeur);
+
+    if (!Number.isFinite(taux)) {
+        return "—";
+    }
+
+    /*
+       Dans Google Sheets, 2,0562 représente 205,62 %.
+    */
+    return (taux * 100).toLocaleString("fr-FR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + " %";
 }
 
 function lireValeurProduit(produit, cles) {
