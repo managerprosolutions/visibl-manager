@@ -1,3 +1,1584 @@
+/* =========================================================
+   PRODUITS.CSS
+   Page : produits.html
+   Projet : VISIBL
+========================================================= */
+
+
+/* =========================================================
+   1. VARIABLES PROPRES À LA PAGE
+========================================================= */
+
+:root {
+    --products-primary: #2563eb;
+    --products-primary-dark: #1d4ed8;
+    --products-primary-light: #eff6ff;
+
+    --products-success: #16a34a;
+    --products-success-light: #dcfce7;
+
+    --products-warning: #d97706;
+    --products-warning-light: #fef3c7;
+
+    --products-danger: #dc2626;
+    --products-danger-light: #fee2e2;
+
+    --products-gray-50: #f8fafc;
+    --products-gray-100: #f1f5f9;
+    --products-gray-200: #e2e8f0;
+    --products-gray-300: #cbd5e1;
+    --products-gray-500: #64748b;
+    --products-gray-600: #475569;
+    --products-gray-700: #334155;
+    --products-gray-800: #1e293b;
+    --products-gray-900: #0f172a;
+
+    --products-white: #ffffff;
+
+    --products-radius-sm: 6px;
+    --products-radius-md: 10px;
+    --products-radius-lg: 14px;
+
+    --products-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --products-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.09);
+}
+
+
+/* =========================================================
+   2. CONTENU PRINCIPAL DE LA PAGE
+========================================================= */
+
+.content {
+    width: 100%;
+    padding: 24px;
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   3. SECTION DE PRÉSENTATION
+========================================================= */
+
+.welcome-section {
+    margin-bottom: 24px;
+}
+
+.welcome-section h2 {
+    margin: 0 0 8px;
+    color: var(--products-gray-900);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.welcome-section p {
+    max-width: 850px;
+    margin: 0;
+    color: var(--products-gray-500);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   4. CARTES KPI
+========================================================= */
+
+#products-kpi-grid,
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 130px;
+    padding: 20px;
+    overflow: hidden;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-200);
+    border-radius: var(--products-radius-lg);
+    box-shadow: var(--products-shadow-sm);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--products-gray-300);
+    box-shadow: var(--products-shadow-md);
+}
+
+.kpi-card::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    content: "";
+    background: var(--products-primary);
+}
+
+.kpi-card:nth-child(2)::before {
+    background: var(--products-warning);
+}
+
+.kpi-card:nth-child(3)::before {
+    background: var(--products-success);
+}
+
+.kpi-card:nth-child(4)::before {
+    background: #7c3aed;
+}
+
+.kpi-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    font-size: 26px;
+    background: var(--products-primary-light);
+    border-radius: 14px;
+}
+
+.kpi-card:nth-child(2) .kpi-icon {
+    background: var(--products-warning-light);
+}
+
+.kpi-card:nth-child(3) .kpi-icon {
+    background: var(--products-success-light);
+}
+
+.kpi-card:nth-child(4) .kpi-icon {
+    background: #f3e8ff;
+}
+
+.kpi-content {
+    min-width: 0;
+}
+
+.kpi-content h3 {
+    margin: 0 0 8px;
+    color: var(--products-gray-600);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.kpi-value {
+    margin: 0 0 5px;
+    color: var(--products-gray-900);
+    font-size: 25px;
+    font-weight: 750;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.kpi-content small {
+    display: block;
+    color: var(--products-gray-500);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   5. BARRE D'ACTIONS
+========================================================= */
+
+.sales-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 11px 18px;
+    color: var(--products-white);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--products-primary);
+    border: none;
+    border-radius: var(--products-radius-md);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: var(--products-primary-dark);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.25);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   6. RECHERCHE ET FILTRES
+========================================================= */
+
+.sales-filters {
+    display: grid;
+    grid-template-columns: minmax(280px, 2fr) repeat(3, minmax(170px, 1fr));
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 18px;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-200);
+    border-radius: var(--products-radius-lg);
+    box-shadow: var(--products-shadow-sm);
+}
+
+.sales-search {
+    width: 100%;
+}
+
+.sales-search input,
+.sales-filters select {
+    width: 100%;
+    height: 44px;
+    padding: 0 13px;
+    color: var(--products-gray-800);
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-300);
+    border-radius: var(--products-radius-md);
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.sales-search input::placeholder {
+    color: #94a3b8;
+}
+
+.sales-search input:hover,
+.sales-filters select:hover {
+    border-color: #94a3b8;
+}
+
+.sales-search input:focus,
+.sales-filters select:focus {
+    border-color: var(--products-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.sales-filters select {
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   7. CONTENEUR DU TABLEAU
+========================================================= */
+
+.sales-table-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-200);
+    border-radius: var(--products-radius-lg);
+    box-shadow: var(--products-shadow-sm);
+    scrollbar-width: thin;
+    scrollbar-color: var(--products-gray-300) transparent;
+}
+
+.sales-table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 10px;
+}
+
+.sales-table-container::-webkit-scrollbar-track {
+    background: var(--products-gray-100);
+    border-radius: 10px;
+}
+
+.sales-table-container::-webkit-scrollbar-thumb {
+    background: var(--products-gray-300);
+    border-radius: 10px;
+}
+
+.sales-table-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+
+/* =========================================================
+   8. TABLEAU DES PRODUITS
+========================================================= */
+
+.sales-table {
+    width: max-content;
+    min-width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.sales-table thead {
+    background: var(--products-gray-50);
+}
+
+.sales-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 14px 12px;
+    color: var(--products-gray-700);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--products-gray-50);
+    border-bottom: 1px solid var(--products-gray-200);
+}
+
+.sales-table td {
+    max-width: 220px;
+    padding: 13px 12px;
+    overflow: hidden;
+    color: var(--products-gray-600);
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    background: var(--products-white);
+    border-bottom: 1px solid var(--products-gray-100);
+}
+
+.sales-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.sales-table tbody tr {
+    transition: background 0.18s ease;
+}
+
+.sales-table tbody tr:hover td {
+    background: #f8fbff;
+}
+
+
+/* Colonnes importantes */
+
+.sales-table th:nth-child(1),
+.sales-table td:nth-child(1) {
+    min-width: 105px;
+}
+
+.sales-table th:nth-child(2),
+.sales-table td:nth-child(2) {
+    min-width: 145px;
+}
+
+.sales-table th:nth-child(3),
+.sales-table td:nth-child(3) {
+    min-width: 190px;
+    font-weight: 600;
+    color: var(--products-gray-800);
+}
+
+.sales-table th:nth-child(4),
+.sales-table td:nth-child(4) {
+    min-width: 220px;
+    max-width: 260px;
+}
+
+.sales-table th:nth-child(5),
+.sales-table td:nth-child(5),
+.sales-table th:nth-child(7),
+.sales-table td:nth-child(7),
+.sales-table th:nth-child(8),
+.sales-table td:nth-child(8),
+.sales-table th:nth-child(9),
+.sales-table td:nth-child(9),
+.sales-table th:nth-child(10),
+.sales-table td:nth-child(10),
+.sales-table th:nth-child(11),
+.sales-table td:nth-child(11),
+.sales-table th:nth-child(12),
+.sales-table td:nth-child(12),
+.sales-table th:nth-child(13),
+.sales-table td:nth-child(13),
+.sales-table th:nth-child(14),
+.sales-table td:nth-child(14) {
+    min-width: 135px;
+    text-align: right;
+}
+
+.sales-table th:nth-child(6),
+.sales-table td:nth-child(6),
+.sales-table th:nth-child(15),
+.sales-table td:nth-child(15),
+.sales-table th:nth-child(16),
+.sales-table td:nth-child(16),
+.sales-table th:nth-child(17),
+.sales-table td:nth-child(17),
+.sales-table th:nth-child(19),
+.sales-table td:nth-child(19) {
+    min-width: 120px;
+    text-align: center;
+}
+
+.sales-table th:nth-child(18),
+.sales-table td:nth-child(18) {
+    min-width: 170px;
+}
+
+.sales-table th:nth-child(20),
+.sales-table td:nth-child(20) {
+    min-width: 150px;
+}
+
+.sales-table th:nth-child(21),
+.sales-table td:nth-child(21),
+.sales-table th:nth-child(22),
+.sales-table td:nth-child(22) {
+    min-width: 145px;
+}
+
+.sales-table th:nth-child(23),
+.sales-table td:nth-child(23) {
+    min-width: 115px;
+    text-align: center;
+}
+
+.sales-table th:nth-child(24),
+.sales-table td:nth-child(24) {
+    min-width: 190px;
+    max-width: 240px;
+}
+
+.sales-table th:nth-child(25),
+.sales-table td:nth-child(25) {
+    min-width: 150px;
+    text-align: center;
+}
+
+
+/* =========================================================
+   9. IMAGES DES PRODUITS
+========================================================= */
+
+.product-image {
+    display: block;
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    background: var(--products-gray-100);
+    border: 1px solid var(--products-gray-200);
+    border-radius: 8px;
+}
+
+.product-image-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    color: var(--products-gray-500);
+    font-size: 18px;
+    background: var(--products-gray-100);
+    border: 1px solid var(--products-gray-200);
+    border-radius: 8px;
+}
+
+
+/* =========================================================
+   10. BADGES DE STATUT
+========================================================= */
+
+.status-badge,
+.product-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1;
+    border-radius: 999px;
+}
+
+.status-active,
+.status-actif {
+    color: #166534;
+    background: var(--products-success-light);
+}
+
+.status-inactive,
+.status-inactif {
+    color: #92400e;
+    background: var(--products-warning-light);
+}
+
+.status-archived,
+.status-archive {
+    color: var(--products-gray-600);
+    background: var(--products-gray-200);
+}
+
+
+/* =========================================================
+   11. BADGES DE STOCK
+========================================================= */
+
+.stock-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 65px;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 650;
+    border-radius: 999px;
+}
+
+.stock-available,
+.stock-disponible {
+    color: #166534;
+    background: var(--products-success-light);
+}
+
+.stock-low,
+.stock-faible {
+    color: #92400e;
+    background: var(--products-warning-light);
+}
+
+.stock-out,
+.stock-rupture {
+    color: #991b1b;
+    background: var(--products-danger-light);
+}
+
+
+/* =========================================================
+   12. VALEURS FINANCIÈRES
+========================================================= */
+
+.amount-value,
+.price-value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--products-gray-800);
+}
+
+.margin-positive {
+    font-weight: 650;
+    color: var(--products-success);
+}
+
+.margin-negative {
+    font-weight: 650;
+    color: var(--products-danger);
+}
+
+
+/* =========================================================
+   13. BOUTONS D'ACTIONS DU TABLEAU
+========================================================= */
+
+.action-buttons {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 14px;
+    cursor: pointer;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-200);
+    border-radius: 7px;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.view-btn {
+    color: var(--products-primary);
+}
+
+.view-btn:hover {
+    background: var(--products-primary-light);
+    border-color: #93c5fd;
+}
+
+.edit-btn {
+    color: var(--products-warning);
+}
+
+.edit-btn:hover {
+    background: var(--products-warning-light);
+    border-color: #fcd34d;
+}
+
+.delete-btn {
+    color: var(--products-danger);
+}
+
+.delete-btn:hover {
+    background: var(--products-danger-light);
+    border-color: #fca5a5;
+}
+
+
+/* =========================================================
+   14. MESSAGE DU TABLEAU VIDE
+========================================================= */
+
+.empty-table-message,
+.loading-row,
+.error-row {
+    padding: 35px 20px !important;
+    color: var(--products-gray-500) !important;
+    text-align: center !important;
+    background: var(--products-white) !important;
+}
+
+.error-row {
+    color: var(--products-danger) !important;
+}
+
+
+/* =========================================================
+   15. MODALE PRODUIT
+   Compatible avec une future modale générée par produits.js
+========================================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    visibility: hidden;
+    background: rgba(15, 23, 42, 0.55);
+    opacity: 0;
+    backdrop-filter: blur(3px);
+    transition:
+        opacity 0.2s ease,
+        visibility 0.2s ease;
+}
+
+.modal-overlay.active,
+.modal-overlay.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 950px;
+    max-height: 92vh;
+    overflow-y: auto;
+    background: var(--products-white);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    transform: translateY(15px);
+    transition: transform 0.2s ease;
+}
+
+.modal-overlay.active .modal-content,
+.modal-overlay.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    background: var(--products-white);
+    border-bottom: 1px solid var(--products-gray-200);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--products-gray-900);
+    font-size: 19px;
+}
+
+.modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    color: var(--products-gray-600);
+    font-size: 20px;
+    cursor: pointer;
+    background: var(--products-gray-100);
+    border: none;
+    border-radius: 50%;
+}
+
+.modal-close:hover {
+    color: var(--products-danger);
+    background: var(--products-danger-light);
+}
+
+.modal-body {
+    padding: 22px;
+}
+
+
+/* =========================================================
+   16. FORMULAIRE PRODUIT
+========================================================= */
+
+.product-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-section {
+    padding: 18px;
+    background: var(--products-gray-50);
+    border: 1px solid var(--products-gray-200);
+    border-radius: var(--products-radius-lg);
+}
+
+.form-section-title {
+    margin: 0 0 16px;
+    color: var(--products-gray-800);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    color: var(--products-gray-700);
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 11px 12px;
+    color: var(--products-gray-800);
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-300);
+    border-radius: 8px;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.form-group input,
+.form-group select {
+    min-height: 42px;
+}
+
+.form-group textarea {
+    min-height: 95px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--products-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-group input[readonly],
+.form-group input:disabled {
+    color: var(--products-gray-500);
+    cursor: not-allowed;
+    background: var(--products-gray-100);
+}
+
+.required {
+    color: var(--products-danger);
+}
+
+.form-error {
+    color: var(--products-danger);
+    font-size: 11px;
+}
+
+.modal-footer,
+.form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 5px;
+}
+
+.btn-secondary {
+    min-height: 42px;
+    padding: 10px 17px;
+    color: var(--products-gray-700);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-300);
+    border-radius: 8px;
+}
+
+.btn-secondary:hover {
+    background: var(--products-gray-100);
+}
+
+
+/* =========================================================
+   17. RESPONSIVE TABLETTE
+========================================================= */
+
+@media screen and (max-width: 1200px) {
+    #products-kpi-grid,
+    .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sales-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sales-search {
+        grid-column: 1 / -1;
+    }
+}
+
+
+/* =========================================================
+   18. RESPONSIVE MOBILE
+========================================================= */
+
+@media screen and (max-width: 768px) {
+    .content {
+        padding: 16px;
+    }
+
+    .welcome-section {
+        margin-bottom: 18px;
+    }
+
+    .welcome-section h2 {
+        font-size: 23px;
+    }
+
+    .welcome-section p {
+        font-size: 13px;
+    }
+
+    #products-kpi-grid,
+    .kpi-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .kpi-card {
+        min-height: 105px;
+        padding: 16px;
+    }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 23px;
+    }
+
+    .kpi-value {
+        font-size: 22px;
+    }
+
+    .sales-toolbar {
+        justify-content: stretch;
+    }
+
+    .btn-primary {
+        width: 100%;
+    }
+
+    .sales-filters {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 13px;
+    }
+
+    .sales-search {
+        grid-column: auto;
+    }
+
+    .sales-search input,
+    .sales-filters select {
+        height: 43px;
+    }
+
+    .sales-table-container {
+        border-radius: 10px;
+    }
+
+    .sales-table th,
+    .sales-table td {
+        padding: 11px 10px;
+    }
+
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-content {
+        max-width: none;
+        max-height: 95vh;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .modal-header {
+        padding: 16px;
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .form-section {
+        padding: 14px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.full-width {
+        grid-column: auto;
+    }
+
+    .modal-footer,
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .modal-footer button,
+    .form-actions button {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   19. TRÈS PETITS ÉCRANS
+========================================================= */
+
+@media screen and (max-width: 480px) {
+    .content {
+        padding: 12px;
+    }
+
+    .welcome-section h2 {
+        font-size: 21px;
+    }
+
+    .kpi-card {
+        gap: 12px;
+    }
+
+    .kpi-content h3 {
+        font-size: 12px;
+    }
+
+    .kpi-value {
+        font-size: 20px;
+    }
+
+    .sales-filters {
+        padding: 11px;
+    }
+}
+
+
+/* =========================================================
+   20. DESIGN FINAL DE LA MODALE PRODUIT
+   Adapté au HTML actuel de produits.html
+========================================================= */
+
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Fond de la modale */
+#product-modal.modal-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    visibility: hidden;
+    opacity: 0;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(15, 23, 42, 0.78),
+            rgba(30, 64, 175, 0.42)
+        );
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+}
+
+#product-modal.modal-overlay.active,
+#product-modal.modal-overlay.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Conteneur principal du formulaire */
+#product-modal .modal-container {
+    position: relative;
+    width: min(1050px, 100%);
+    max-height: 92vh;
+    overflow: hidden;
+    background: var(--products-white);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 22px;
+    box-shadow:
+        0 30px 80px rgba(15, 23, 42, 0.35),
+        0 8px 24px rgba(37, 99, 235, 0.12);
+    transform: translateY(24px) scale(0.985);
+    transition:
+        transform 0.28s ease,
+        opacity 0.28s ease;
+}
+
+#product-modal.active .modal-container,
+#product-modal.show .modal-container {
+    transform: translateY(0) scale(1);
+}
+
+/* En-tête */
+#product-modal .modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px 28px 20px;
+    color: var(--products-white);
+    background:
+        linear-gradient(
+            135deg,
+            var(--products-primary-dark),
+            var(--products-primary)
+        );
+    border-bottom: none;
+}
+
+#product-modal .modal-header::after {
+    position: absolute;
+    right: -40px;
+    bottom: -70px;
+    width: 180px;
+    height: 180px;
+    content: "";
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+#product-modal .modal-header h2 {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 7px;
+    color: var(--products-white);
+    font-size: 24px;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+}
+
+#product-modal .modal-header p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Bouton de fermeture */
+#product-modal .modal-close {
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    color: var(--products-white);
+    font-size: 17px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+#product-modal .modal-close:hover {
+    color: var(--products-white);
+    background: rgba(220, 38, 38, 0.9);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: rotate(5deg) scale(1.04);
+}
+
+/* Formulaire et zone défilante */
+#product-modal #product-form {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(92vh - 108px);
+    background: #f8fafc;
+}
+
+#product-modal .modal-body {
+    flex: 1;
+    padding: 26px 28px 30px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--products-gray-300) transparent;
+}
+
+#product-modal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#product-modal .modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#product-modal .modal-body::-webkit-scrollbar-thumb {
+    background: var(--products-gray-300);
+    border-radius: 999px;
+}
+
+/* Message du formulaire */
+#product-form-message {
+    display: none;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+    border: 1px solid transparent;
+    border-radius: 10px;
+}
+
+#product-form-message.info {
+    display: block;
+    color: #1e40af;
+    background: #dbeafe;
+    border-color: #bfdbfe;
+}
+
+#product-form-message.success {
+    display: block;
+    color: #166534;
+    background: var(--products-success-light);
+    border-color: #bbf7d0;
+}
+
+#product-form-message.error {
+    display: block;
+    color: #991b1b;
+    background: var(--products-danger-light);
+    border-color: #fecaca;
+}
+
+/* Sections du formulaire */
+#product-modal .form-section {
+    position: relative;
+    padding: 22px;
+    margin-bottom: 20px;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-200);
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.045);
+}
+
+#product-modal .form-section:last-child {
+    margin-bottom: 0;
+}
+
+#product-modal .form-section::before {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 4px;
+    height: 28px;
+    content: "";
+    background: var(--products-primary);
+    border-radius: 0 4px 4px 0;
+}
+
+#product-modal .form-section h3 {
+    margin: 0 0 18px;
+    padding-left: 2px;
+    color: var(--products-gray-900);
+    font-size: 16px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+}
+
+/* Grille */
+#product-modal .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+}
+
+#product-modal .form-group-full {
+    grid-column: 1 / -1;
+}
+
+/* Libellés */
+#product-modal .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+#product-modal .form-group label {
+    color: var(--products-gray-700);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+/* Champs */
+#product-modal .form-group input,
+#product-modal .form-group select,
+#product-modal .form-group textarea {
+    width: 100%;
+    color: var(--products-gray-800);
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--products-white);
+    border: 1px solid var(--products-gray-300);
+    border-radius: 10px;
+    outline: none;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease,
+        transform 0.15s ease;
+}
+
+#product-modal .form-group input,
+#product-modal .form-group select {
+    min-height: 46px;
+    padding: 0 13px;
+}
+
+#product-modal .form-group textarea {
+    min-height: 105px;
+    padding: 12px 13px;
+    line-height: 1.55;
+    resize: vertical;
+}
+
+#product-modal .form-group input::placeholder,
+#product-modal .form-group textarea::placeholder {
+    color: #94a3b8;
+}
+
+#product-modal .form-group input:hover,
+#product-modal .form-group select:hover,
+#product-modal .form-group textarea:hover {
+    border-color: #94a3b8;
+}
+
+#product-modal .form-group input:focus,
+#product-modal .form-group select:focus,
+#product-modal .form-group textarea:focus {
+    background: #ffffff;
+    border-color: var(--products-primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.11);
+}
+
+/* Champs calculés */
+#product-modal .form-group input[readonly] {
+    color: #1e3a8a;
+    font-weight: 700;
+    cursor: default;
+    background:
+        linear-gradient(
+            135deg,
+            #eff6ff,
+            #f8fafc
+        );
+    border-color: #bfdbfe;
+}
+
+/* État invalide natif */
+#product-modal .form-group input:invalid:not(:placeholder-shown),
+#product-modal .form-group select:invalid {
+    border-color: #fca5a5;
+}
+
+/* Astérisque obligatoire */
+#product-modal .required {
+    margin-left: 2px;
+    color: var(--products-danger);
+}
+
+/* Pied de formulaire */
+#product-modal .modal-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 18px 28px;
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid var(--products-gray-200);
+    box-shadow: 0 -8px 20px rgba(15, 23, 42, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Boutons spécifiques */
+#product-modal .modal-footer .btn-secondary,
+#product-modal .modal-footer .btn-primary {
+    min-width: 150px;
+    min-height: 46px;
+    border-radius: 10px;
+}
+
+#product-modal .modal-footer .btn-primary {
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.24);
+}
+
+#product-modal .modal-footer .btn-primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Animation douce */
+@keyframes productModalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+#product-modal.active .modal-container {
+    animation: productModalFadeIn 0.28s ease both;
+}
+
+/* =========================================================
+   21. RESPONSIVE DE LA MODALE
+========================================================= */
+
+@media screen and (max-width: 900px) {
+    #product-modal.modal-overlay {
+        padding: 14px;
+    }
+
+    #product-modal .modal-container {
+        max-height: 95vh;
+        border-radius: 18px;
+    }
+
+    #product-modal #product-form {
+        max-height: calc(95vh - 102px);
+    }
+
+    #product-modal .modal-header {
+        padding: 21px 20px 17px;
+    }
+
+    #product-modal .modal-body {
+        padding: 20px;
+    }
+
+    #product-modal .form-section {
+        padding: 18px;
+    }
+
+    #product-modal .modal-footer {
+        padding: 16px 20px;
+    }
+}
+
+@media screen and (max-width: 680px) {
+    #product-modal.modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    #product-modal .modal-container {
+        width: 100%;
+        max-height: 96vh;
+        border-radius: 22px 22px 0 0;
+        transform: translateY(30px);
+    }
+
+    #product-modal #product-form {
+        max-height: calc(96vh - 100px);
+    }
+
+    #product-modal .modal-header {
+        padding: 20px 17px 16px;
+    }
+
+    #product-modal .modal-header h2 {
+        font-size: 21px;
+    }
+
+    #product-modal .modal-header p {
+        font-size: 12px;
+    }
+
+    #product-modal .modal-close {
+        width: 38px;
+        height: 38px;
+    }
+
+    #product-modal .modal-body {
+        padding: 16px;
+    }
+
+    #product-modal .form-section {
+        padding: 16px 14px;
+        margin-bottom: 14px;
+        border-radius: 13px;
+    }
+
+    #product-modal .form-section h3 {
+        margin-bottom: 15px;
+        font-size: 15px;
+    }
+
+    #product-modal .form-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    #product-modal .form-group-full {
+        grid-column: auto;
+    }
+
+    #product-modal .modal-footer {
+        flex-direction: column-reverse;
+        gap: 9px;
+        padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+    }
+
+    #product-modal .modal-footer button {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media screen and (max-width: 420px) {
+    #product-modal .modal-header {
+        padding-right: 14px;
+        padding-left: 14px;
+    }
+
+    #product-modal .modal-body {
+        padding: 13px;
+    }
+
+    #product-modal .form-section {
+        padding: 14px 12px;
+    }
+
+    #product-modal .form-group input,
+    #product-modal .form-group select {
+        min-height: 44px;
+    }
+}
+
 /* ===========================================================
    PRODUITS - TABLEAU COMPACT ET MODALE DE CONSULTATION
 =========================================================== */
