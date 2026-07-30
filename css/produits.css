@@ -1710,3 +1710,98 @@ body.modal-open {
         align-items: stretch;
     }
 }
+
+/* =========================================================
+   22. ACTIONS PRODUITS — MODÈLE IDENTIQUE AU MODULE CLIENTS
+========================================================= */
+
+.table-actions,
+.product-actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.table-action-btn svg {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
+
+.table-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+.table-action-btn:active {
+    transform: scale(0.96);
+}
+
+.table-action-btn:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.2);
+    outline-offset: 2px;
+}
+
+.table-action-btn.view-btn {
+    color: #2563eb;
+    background: #dbeafe;
+}
+
+.table-action-btn.edit-btn {
+    color: #d97706;
+    background: #fef3c7;
+}
+
+.table-action-btn.delete-btn {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+/* Neutralise les anciennes règles spécifiques du module Produits. */
+.product-actions-cell .table-action-btn {
+    min-height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.view-product-btn,
+.edit-product-btn,
+.delete-product-btn {
+    color: inherit;
+}
+
+@media (max-width: 700px) {
+    .table-actions,
+    .product-actions-cell {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+}
