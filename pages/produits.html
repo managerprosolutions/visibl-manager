@@ -776,10 +776,10 @@
                         <tr>
 
                             <th>Référence</th>
-                            <th>Produit</th>
-                            <th>Prix de revient</th>
+                            <th>Désignation</th>
+                            <th>Prix d'achat</th>
                             <th>Prix de vente</th>
-                            <th>Marge</th>
+                            <th>Stock</th>
                             <th>Fournisseur</th>
                             <th>Statut</th>
                             <th>Actions</th>
@@ -1458,8 +1458,9 @@
         aria-modal="true"
         aria-labelledby="product-view-modal-title"
     >
-        <div class="modal-header">
+        <div class="modal-header product-view-header">
             <div>
+                <span class="product-view-eyebrow">Fiche produit</span>
                 <h2 id="product-view-modal-title">Détails du produit</h2>
                 <p>Consultez toutes les informations du produit sélectionné.</p>
             </div>
@@ -1476,7 +1477,7 @@
 
         <div class="modal-body product-view-body">
 
-            <div class="product-view-image-section">
+            <section class="product-view-hero">
                 <div class="product-view-image-wrapper">
                     <img
                         id="product-view-image"
@@ -1487,13 +1488,53 @@
                         id="product-view-image-placeholder"
                         class="product-view-image-placeholder"
                     >
-                        Aucune image disponible
+                        <span class="product-view-placeholder-icon" aria-hidden="true">📦</span>
+                        <span>Aucune image disponible</span>
                     </div>
                 </div>
-            </div>
 
-            <section class="form-section">
-                <h3>Informations générales</h3>
+                <div class="product-view-summary">
+                    <div class="product-view-title-row">
+                        <div>
+                            <span class="product-view-reference-label">Référence</span>
+                            <strong id="view-product-reference" class="product-view-reference">—</strong>
+                        </div>
+
+                        <span id="product-view-status-badge" class="product-view-status-badge">
+                            <span id="view-product-status">—</span>
+                        </span>
+                    </div>
+
+                    <h3 id="view-product-name" class="product-view-product-name">—</h3>
+                    <p id="view-product-description" class="product-view-description">—</p>
+
+                    <div class="product-view-highlight-grid">
+                        <article class="product-view-highlight">
+                            <span>Prix de vente</span>
+                            <strong id="view-product-sale-price">—</strong>
+                        </article>
+
+                        <article class="product-view-highlight">
+                            <span>Stock initial</span>
+                            <strong id="view-product-stock">—</strong>
+                        </article>
+
+                        <article class="product-view-highlight">
+                            <span>Marge</span>
+                            <strong id="view-product-margin-rate">—</strong>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="product-view-section">
+                <div class="product-view-section-heading">
+                    <span class="product-view-section-icon" aria-hidden="true">ℹ️</span>
+                    <div>
+                        <h3>Informations générales</h3>
+                        <p>Identification et caractéristiques principales.</p>
+                    </div>
+                </div>
 
                 <div class="product-details-grid">
                     <div class="product-detail-item">
@@ -1502,65 +1543,63 @@
                     </div>
 
                     <div class="product-detail-item">
-                        <span>Référence</span>
-                        <strong id="view-product-reference">—</strong>
+                        <span>Fournisseur principal</span>
+                        <strong id="view-product-supplier">—</strong>
                     </div>
 
                     <div class="product-detail-item">
-                        <span>Désignation</span>
-                        <strong id="view-product-name">—</strong>
+                        <span>Garantie</span>
+                        <strong id="view-product-warranty">—</strong>
                     </div>
 
-                    <div class="product-detail-item product-detail-full">
-                        <span>Description</span>
-                        <strong id="view-product-description">—</strong>
+                    <div class="product-detail-item">
+                        <span>Seuil d'alerte</span>
+                        <strong id="view-product-alert-threshold">—</strong>
                     </div>
                 </div>
             </section>
 
-            <section class="form-section">
-                <h3>Coûts et prix</h3>
+            <section class="product-view-section">
+                <div class="product-view-section-heading">
+                    <span class="product-view-section-icon" aria-hidden="true">💰</span>
+                    <div>
+                        <h3>Informations commerciales</h3>
+                        <p>Coûts, prix et rentabilité du produit.</p>
+                    </div>
+                </div>
 
-                <div class="product-details-grid">
+                <div class="product-details-grid product-details-grid-commercial">
                     <div class="product-detail-item"><span>Prix d'achat</span><strong id="view-product-purchase-price">—</strong></div>
                     <div class="product-detail-item"><span>TVA</span><strong id="view-product-vat-rate">—</strong></div>
                     <div class="product-detail-item"><span>Montant TVA</span><strong id="view-product-vat-amount">—</strong></div>
                     <div class="product-detail-item"><span>Frais de transport</span><strong id="view-product-transport-cost">—</strong></div>
                     <div class="product-detail-item"><span>Frais de douane</span><strong id="view-product-customs-cost">—</strong></div>
                     <div class="product-detail-item"><span>Autres frais</span><strong id="view-product-other-costs">—</strong></div>
-                    <div class="product-detail-item"><span>Prix de revient</span><strong id="view-product-cost-price">—</strong></div>
+                    <div class="product-detail-item product-detail-emphasis"><span>Prix de revient</span><strong id="view-product-cost-price">—</strong></div>
                     <div class="product-detail-item"><span>Prix minimum</span><strong id="view-product-minimum-price">—</strong></div>
-                    <div class="product-detail-item"><span>Prix de vente</span><strong id="view-product-sale-price">—</strong></div>
-                    <div class="product-detail-item"><span>Marge</span><strong id="view-product-margin-amount">—</strong></div>
-                    <div class="product-detail-item"><span>Taux de marge</span><strong id="view-product-margin-rate">—</strong></div>
+                    <div class="product-detail-item product-detail-success"><span>Marge en FCFA</span><strong id="view-product-margin-amount">—</strong></div>
                 </div>
             </section>
 
-            <section class="form-section">
-                <h3>Stock et fournisseur</h3>
-
-                <div class="product-details-grid">
-                    <div class="product-detail-item"><span>Stock initial</span><strong id="view-product-stock">—</strong></div>
-                    <div class="product-detail-item"><span>Seuil d'alerte</span><strong id="view-product-alert-threshold">—</strong></div>
-                    <div class="product-detail-item"><span>Fournisseur principal</span><strong id="view-product-supplier">—</strong></div>
-                    <div class="product-detail-item"><span>Garantie</span><strong id="view-product-warranty">—</strong></div>
+            <section class="product-view-section">
+                <div class="product-view-section-heading">
+                    <span class="product-view-section-icon" aria-hidden="true">🕒</span>
+                    <div>
+                        <h3>Suivi et historique</h3>
+                        <p>Dates d'enregistrement et informations complémentaires.</p>
+                    </div>
                 </div>
-            </section>
-
-            <section class="form-section">
-                <h3>Informations complémentaires</h3>
 
                 <div class="product-details-grid">
                     <div class="product-detail-item"><span>Date d'ajout</span><strong id="view-product-created-at">—</strong></div>
                     <div class="product-detail-item"><span>Dernière modification</span><strong id="view-product-updated-at">—</strong></div>
-                    <div class="product-detail-item"><span>Statut</span><strong id="view-product-status">—</strong></div>
                     <div class="product-detail-item product-detail-full"><span>Commentaire</span><strong id="view-product-comment">—</strong></div>
                 </div>
             </section>
 
         </div>
 
-        <div class="modal-footer">
+        <div class="modal-footer product-view-footer">
             <button
                 type="button"
                 class="btn-secondary"
