@@ -1664,6 +1664,30 @@ function chargerProduits(data) {
 
 
 /* ===========================================================
+   LECTURE ROBUSTE DES PROPRIÉTÉS PRODUIT
+   Accepte les noms Google Sheets et les noms camelCase.
+=========================================================== */
+
+function lireValeurProduit(produit, ...cles) {
+
+    for (const cle of cles) {
+
+        if (
+            produit &&
+            Object.prototype.hasOwnProperty.call(produit, cle) &&
+            produit[cle] !== undefined &&
+            produit[cle] !== null &&
+            produit[cle] !== ""
+        ) {
+            return produit[cle];
+        }
+    }
+
+    return "";
+}
+
+
+/* ===========================================================
    AFFICHAGE DÉTAILLÉ DES PRODUITS
 =========================================================== */
 
@@ -1687,8 +1711,8 @@ function afficherProduits(listeProduits) {
 
     tableBody.innerHTML = liste.map(produit => {
 
-        const idProduit = echapperHTML(produit["ID Produit"] || "");
-        const imageURL = String(produit["Image URL"] || "").trim();
+        const idProduit = echapperHTML(lireValeurProduit(produit, "ID Produit", "idProduit"));
+        const imageURL = String(lireValeurProduit(produit, "Image URL", "imageURL") || "").trim();
 
         let celluleImage;
 
@@ -1711,7 +1735,7 @@ function afficherProduits(listeProduits) {
                    rel="noopener noreferrer"
                    class="product-image-link">
                     <img src="${echapperHTML(imageURL)}"
-                         alt="Image de ${echapperHTML(produit["Désignation"] || "produit")}"
+                         alt="Image de ${echapperHTML(lireValeurProduit(produit, "Désignation", "designation") || "produit")}"
                          class="product-table-image"
                          loading="lazy"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
@@ -1722,7 +1746,7 @@ function afficherProduits(listeProduits) {
             celluleImage = '<span class="table-empty-value">—</span>';
         }
 
-        const statut = String(produit["Statut"] || "").trim();
+        const statut = String(lireValeurProduit(produit, "Statut", "statut") || "").trim();
         const classeStatut = statut.toLowerCase() === "actif"
             ? "status-active"
             : "status-inactive";
@@ -1730,33 +1754,33 @@ function afficherProduits(listeProduits) {
         return `
             <tr data-product-id="${idProduit}">
                 <td>${idProduit || "—"}</td>
-                <td>${echapperHTML(produit["Référence Produit"] || "—")}</td>
-                <td>${echapperHTML(produit["Désignation"] || "—")}</td>
-                <td>${echapperHTML(produit["Description"] || "—")}</td>
-                <td>${formatMoney(produit["Prix d'Achat"])}</td>
-                <td>${formatNumber(produit["Taux TVA (%)"])} %</td>
-                <td>${formatMoney(produit["Montant TVA"])}</td>
-                <td>${formatMoney(produit["Frais de Transport"])}</td>
-                <td>${formatMoney(produit["Frais de Douane"])}</td>
-                <td>${formatMoney(produit["Autres Frais"])}</td>
-                <td>${formatMoney(produit["Prix de Revient"])}</td>
-                <td>${formatMoney(produit["Prix de Vente"])}</td>
-                <td>${formatMoney(produit["Prix Minimum de Vente"])}</td>
-                <td>${formatMoney(produit["Marge (FCFA)"])}</td>
-                <td>${formatNumber(produit["Taux de Marge (%)"])} %</td>
-                <td>${formatNumber(produit["Stock Initial"])}</td>
-                <td>${formatNumber(produit["Seuil d'Alerte"])}</td>
-                <td>${echapperHTML(produit["ID Fournisseur Principal"] || "—")}</td>
-                <td>${formatNumber(produit["Garantie (mois)"])} mois</td>
+                <td>${echapperHTML(lireValeurProduit(produit, "Référence Produit", "referenceProduit", "reference") || "—")}</td>
+                <td>${echapperHTML(lireValeurProduit(produit, "Désignation", "designation") || "—")}</td>
+                <td>${echapperHTML(lireValeurProduit(produit, "Description", "description") || "—")}</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Prix d'Achat", "prixAchat"))}</td>
+                <td>${formatNumber(lireValeurProduit(produit, "Taux TVA (%)", "tauxTVA"))} %</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Montant TVA", "montantTVA"))}</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Frais de Transport", "fraisTransport"))}</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Frais de Douane", "fraisDouane"))}</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Autres Frais", "autresFrais"))}</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Prix de Revient", "prixRevient"))}</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Prix de Vente", "prixVente"))}</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Prix Minimum de Vente", "prixMinimumVente"))}</td>
+                <td>${formatMoney(lireValeurProduit(produit, "Marge (FCFA)", "margeFCFA"))}</td>
+                <td>${formatNumber(lireValeurProduit(produit, "Taux de Marge (%)", "tauxMarge"))} %</td>
+                <td>${formatNumber(lireValeurProduit(produit, "Stock Initial", "stockInitial"))}</td>
+                <td>${formatNumber(lireValeurProduit(produit, "Seuil d'Alerte", "seuilAlerte"))}</td>
+                <td>${echapperHTML(lireValeurProduit(produit, "ID Fournisseur Principal", "idFournisseurPrincipal") || "—")}</td>
+                <td>${formatNumber(lireValeurProduit(produit, "Garantie (mois)", "garantieMois"))} mois</td>
                 <td>${celluleImage}</td>
-                <td>${formaterDateProduit(produit["Date d'Ajout"])}</td>
-                <td>${formaterDateProduit(produit["Date de Modification"])}</td>
+                <td>${formaterDateProduit(lireValeurProduit(produit, "Date d'Ajout", "dateAjout"))}</td>
+                <td>${formaterDateProduit(lireValeurProduit(produit, "Date de Modification", "dateModification"))}</td>
                 <td>
                     <span class="product-status ${classeStatut}">
                         ${echapperHTML(statut || "—")}
                     </span>
                 </td>
-                <td>${echapperHTML(produit["Commentaire"] || "—")}</td>
+                <td>${echapperHTML(lireValeurProduit(produit, "Commentaire", "commentaire") || "—")}</td>
                 <td class="product-actions-cell">
                     <button type="button"
                             class="action-btn edit-product-btn"
@@ -1923,7 +1947,7 @@ function mettreAJourKPIs() {
     const produitsActifs =
         produits.filter(produit => {
 
-            return String(produit.Statut || "")
+            return String(lireValeurProduit(produit, "Statut", "statut") || "")
                 .trim()
                 .toLowerCase() === "actif";
 
@@ -1944,12 +1968,12 @@ function mettreAJourKPIs() {
 
         const prixRevient =
             convertirNombre(
-                produit["Prix de Revient"]
+                lireValeurProduit(produit, "Prix de Revient", "prixRevient")
             );
 
         const stockInitial =
             convertirNombre(
-                produit["Stock Initial"]
+                lireValeurProduit(produit, "Stock Initial", "stockInitial")
             );
 
         valeurStock +=
@@ -1957,7 +1981,7 @@ function mettreAJourKPIs() {
 
         const marge =
             convertirNombre(
-                produit["Taux de Marge (%)"]
+                lireValeurProduit(produit, "Taux de Marge (%)", "tauxMarge")
             );
 
         if (Number.isFinite(marge)) {
