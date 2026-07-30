@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserCalculsProduit();
     initialiserFormulaireProduit();
     initialiserUploadImageProduit();
+    initialiserConsultationProduit();
 
     const refreshButton =
         document.getElementById("refresh-products-btn");
@@ -1687,87 +1688,116 @@ function afficherProduits(listeProduits) {
 
     tableBody.innerHTML = liste.map(produit => {
 
-        const idProduit = echapperHTML(produit["ID Produit"] || "");
-        const imageURL = String(lireValeurProduit(produit, ["Image (Url)", "Image URL", "imageURL"]) || "").trim();
+        const idProduitBrut = String(
+            lireValeurProduit(produit, ["ID Produit", "idProduit"]) || ""
+        ).trim();
 
-        let celluleImage;
+        const idProduit = echapperHTML(idProduitBrut);
 
-        if (produit._imageSyncPending) {
-            celluleImage = `
-                <span class="product-image-sync-status" role="status">
-                    Image en cours d’envoi…
-                </span>
-            `;
-        } else if (produit._imageSyncError) {
-            celluleImage = `
-                <span class="product-image-sync-error">
-                    Échec de l’image
-                </span>
-            `;
-        } else if (imageURL) {
-            celluleImage = `
-                <a href="${echapperHTML(imageURL)}"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="product-image-link">
-                    <img src="${echapperHTML(imageURL)}"
-                         alt="Image de ${echapperHTML(lireValeurProduit(produit, ["Désignation", "designation"]) || "produit")}"
-                         class="product-table-image"
-                         loading="lazy"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-                    <span style="display:none;">Voir l'image</span>
-                </a>
-            `;
-        } else {
-            celluleImage = '<span class="table-empty-value">—</span>';
-        }
+        const statut = String(
+            lireValeurProduit(produit, ["Statut", "statut"]) || ""
+        ).trim();
 
-        const statut = String(lireValeurProduit(produit, ["Statut", "statut"]) || "").trim();
-        const classeStatut = statut.toLowerCase() === "actif"
-            ? "status-active"
-            : "status-inactive";
+        const statutNormalise = statut.toLowerCase();
+
+        const classeStatut =
+            statutNormalise === "actif"
+                ? "status-active"
+                : statutNormalise === "archivé" || statutNormalise === "archive"
+                    ? "status-archived"
+                    : "status-inactive";
 
         return `
             <tr data-product-id="${idProduit}">
-                <td>${idProduit || "—"}</td>
-                <td>${echapperHTML(lireValeurProduit(produit, ["Référence Produit", "referenceProduit", "reference"]) || "—")}</td>
-                <td>${echapperHTML(lireValeurProduit(produit, ["Désignation", "designation"]) || "—")}</td>
-                <td>${echapperHTML(lireValeurProduit(produit, ["Description", "description"]) || "—")}</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Prix d’Achat", "Prix d'Achat", "prixAchat"]))}</td>
-                <td>${formatNumber(lireValeurProduit(produit, ["TVA", "Taux TVA (%)", "tauxTVA"]))} %</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Montant TVA", "montantTVA"]))}</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Frais de Transport", "fraisTransport"]))}</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Frais de Douane", "fraisDouane"]))}</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Autres Frais", "autresFrais"]))}</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Prix de Revient", "prixRevient"]))}</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Prix de Vente", "prixVente"]))}</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Prix Minimum de Vente", "prixMinimumVente"]))}</td>
-                <td>${formatMoney(lireValeurProduit(produit, ["Marge (FCFA)", "margeFCFA"]))}</td>
-                <td>${formatNumber(lireValeurProduit(produit, ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"]))} %</td>
-                <td>${formatNumber(lireValeurProduit(produit, ["Stock Initial", "stockInitial"]))}</td>
-                <td>${formatNumber(lireValeurProduit(produit, ["Seuil d'Alerte", "seuilAlerte"]))}</td>
-                <td>${echapperHTML(lireValeurProduit(produit, ["ID Fournisseur", "ID Fournisseur Principal", "idFournisseurPrincipal"]) || "—")}</td>
-                <td>${formatNumber(lireValeurProduit(produit, ["Garantie", "Garantie (mois)", "garantieMois"]))} mois</td>
-                <td>${celluleImage}</td>
-                <td>${formaterDateProduit(lireValeurProduit(produit, ["Date d'ajout", "Date d'Ajout", "dateAjout"]))}</td>
-                <td>${formaterDateProduit(lireValeurProduit(produit, ["Date de modification", "Date de Modification", "dateModification"]))}</td>
+                <td>
+                    ${echapperHTML(
+                        lireValeurProduit(
+                            produit,
+                            ["Référence Produit", "referenceProduit", "reference"]
+                        ) || "—"
+                    )}
+                </td>
+
+                <td>
+                    ${echapperHTML(
+                        lireValeurProduit(
+                            produit,
+                            ["Désignation", "designation"]
+                        ) || "—"
+                    )}
+                </td>
+
+                <td>
+                    ${formatMoney(
+                        lireValeurProduit(
+                            produit,
+                            ["Prix d’Achat", "Prix d'Achat", "prixAchat"]
+                        )
+                    )}
+                </td>
+
+                <td>
+                    ${formatMoney(
+                        lireValeurProduit(
+                            produit,
+                            ["Prix de Vente", "prixVente"]
+                        )
+                    )}
+                </td>
+
+                <td>
+                    ${formatNumber(
+                        lireValeurProduit(
+                            produit,
+                            ["Stock Initial", "stockInitial"]
+                        )
+                    )}
+                </td>
+
+                <td>
+                    ${echapperHTML(
+                        lireValeurProduit(
+                            produit,
+                            [
+                                "ID Fournisseur",
+                                "ID Fournisseur Principal",
+                                "idFournisseurPrincipal"
+                            ]
+                        ) || "—"
+                    )}
+                </td>
+
                 <td>
                     <span class="product-status ${classeStatut}">
                         ${echapperHTML(statut || "—")}
                     </span>
                 </td>
-                <td>${echapperHTML(lireValeurProduit(produit, ["Commentaire", "commentaire"]) || "—")}</td>
+
                 <td class="product-actions-cell">
-                    <button type="button"
-                            class="action-btn edit-product-btn"
-                            data-product-id="${idProduit}"
-                            title="Modifier le produit">
+                    <button
+                        type="button"
+                        class="action-btn view-product-btn"
+                        data-product-id="${idProduit}"
+                        title="Voir le produit"
+                    >
+                        Voir
+                    </button>
+
+                    <button
+                        type="button"
+                        class="action-btn edit-product-btn"
+                        data-product-id="${idProduit}"
+                        title="Modifier le produit"
+                    >
                         Modifier
                     </button>
-                    <button type="button"
-                            class="action-btn delete-product-btn"
-                            data-product-id="${idProduit}"
-                            title="Supprimer le produit">
+
+                    <button
+                        type="button"
+                        class="action-btn delete-product-btn"
+                        data-product-id="${idProduit}"
+                        title="Supprimer le produit"
+                    >
                         Supprimer
                     </button>
                 </td>
@@ -1776,8 +1806,6 @@ function afficherProduits(listeProduits) {
 
     }).join("");
 }
-
-
 
 function lireValeurProduit(produit, cles) {
 
@@ -1823,6 +1851,334 @@ function formaterDateProduit(valeur) {
 }
 
 
+
+/* ===========================================================
+   CONSULTATION D'UN PRODUIT
+=========================================================== */
+
+function initialiserConsultationProduit() {
+
+    const tableBody = obtenirCorpsTableauProduits();
+    const modal = document.getElementById("product-view-modal");
+    const boutonFermer = document.getElementById("close-product-view-modal");
+    const boutonFermerFooter =
+        document.getElementById("close-product-view-modal-footer");
+
+    if (tableBody) {
+
+        tableBody.addEventListener("click", event => {
+
+            const boutonVoir = event.target.closest(".view-product-btn");
+
+            if (!boutonVoir) {
+                return;
+            }
+
+            const idProduit = String(
+                boutonVoir.dataset.productId || ""
+            ).trim();
+
+            ouvrirConsultationProduit(idProduit);
+        });
+    }
+
+    [boutonFermer, boutonFermerFooter].forEach(bouton => {
+
+        if (bouton) {
+            bouton.addEventListener("click", fermerConsultationProduit);
+        }
+    });
+
+    if (modal) {
+
+        modal.addEventListener("click", event => {
+
+            if (event.target === modal) {
+                fermerConsultationProduit();
+            }
+        });
+    }
+
+    document.addEventListener("keydown", event => {
+
+        if (
+            event.key === "Escape" &&
+            modal?.classList.contains("active")
+        ) {
+            fermerConsultationProduit();
+        }
+    });
+}
+
+
+function ouvrirConsultationProduit(idProduit) {
+
+    const produit = produits.find(element => {
+
+        const id = String(
+            lireValeurProduit(element, ["ID Produit", "idProduit"]) || ""
+        ).trim();
+
+        return id === idProduit;
+    });
+
+    if (!produit) {
+        console.error("Produit introuvable :", idProduit);
+        return;
+    }
+
+    definirTexteElement(
+        "view-product-id",
+        lireValeurProduit(produit, ["ID Produit", "idProduit"]) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-reference",
+        lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        ) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-name",
+        lireValeurProduit(produit, ["Désignation", "designation"]) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-description",
+        lireValeurProduit(produit, ["Description", "description"]) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-purchase-price",
+        formatMoney(
+            lireValeurProduit(
+                produit,
+                ["Prix d’Achat", "Prix d'Achat", "prixAchat"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-vat-rate",
+        formatNumber(
+            lireValeurProduit(produit, ["TVA", "Taux TVA (%)", "tauxTVA"])
+        ) + " %"
+    );
+
+    definirTexteElement(
+        "view-product-vat-amount",
+        formatMoney(
+            lireValeurProduit(produit, ["Montant TVA", "montantTVA"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-transport-cost",
+        formatMoney(
+            lireValeurProduit(
+                produit,
+                ["Frais de Transport", "fraisTransport"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-customs-cost",
+        formatMoney(
+            lireValeurProduit(
+                produit,
+                ["Frais de Douane", "fraisDouane"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-other-costs",
+        formatMoney(
+            lireValeurProduit(produit, ["Autres Frais", "autresFrais"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-cost-price",
+        formatMoney(
+            lireValeurProduit(produit, ["Prix de Revient", "prixRevient"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-minimum-price",
+        formatMoney(
+            lireValeurProduit(
+                produit,
+                ["Prix Minimum de Vente", "prixMinimumVente"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-sale-price",
+        formatMoney(
+            lireValeurProduit(produit, ["Prix de Vente", "prixVente"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-margin-amount",
+        formatMoney(
+            lireValeurProduit(produit, ["Marge (FCFA)", "margeFCFA"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-margin-rate",
+        formatNumber(
+            lireValeurProduit(
+                produit,
+                ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"]
+            )
+        ) + " %"
+    );
+
+    definirTexteElement(
+        "view-product-stock",
+        formatNumber(
+            lireValeurProduit(produit, ["Stock Initial", "stockInitial"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-alert-threshold",
+        formatNumber(
+            lireValeurProduit(
+                produit,
+                ["Seuil d'Alerte", "Seuil d’alerte", "seuilAlerte"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-supplier",
+        lireValeurProduit(
+            produit,
+            [
+                "ID Fournisseur",
+                "ID Fournisseur Principal",
+                "idFournisseurPrincipal"
+            ]
+        ) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-warranty",
+        formatNumber(
+            lireValeurProduit(
+                produit,
+                ["Garantie", "Garantie (mois)", "garantieMois"]
+            )
+        ) + " mois"
+    );
+
+    definirTexteElement(
+        "view-product-created-at",
+        formaterDateProduit(
+            lireValeurProduit(
+                produit,
+                ["Date d'ajout", "Date d'Ajout", "dateAjout"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-updated-at",
+        formaterDateProduit(
+            lireValeurProduit(
+                produit,
+                ["Date de modification", "Date de Modification", "dateModification"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-status",
+        lireValeurProduit(produit, ["Statut", "statut"]) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-comment",
+        lireValeurProduit(produit, ["Commentaire", "commentaire"]) || "—"
+    );
+
+    afficherImageConsultationProduit(
+        lireValeurProduit(
+            produit,
+            ["Image (Url)", "Image URL", "imageURL"]
+        )
+    );
+
+    const modal = document.getElementById("product-view-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+}
+
+
+function fermerConsultationProduit() {
+
+    const modal = document.getElementById("product-view-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+}
+
+
+function afficherImageConsultationProduit(urlImage) {
+
+    const image = document.getElementById("product-view-image");
+    const placeholder =
+        document.getElementById("product-view-image-placeholder");
+
+    if (!image || !placeholder) {
+        return;
+    }
+
+    const url = String(urlImage || "").trim();
+
+    image.onerror = null;
+    image.removeAttribute("src");
+    image.hidden = true;
+    placeholder.hidden = false;
+
+    if (!url) {
+        return;
+    }
+
+    image.onload = () => {
+        image.hidden = false;
+        placeholder.hidden = true;
+    };
+
+    image.onerror = () => {
+        image.hidden = true;
+        placeholder.hidden = false;
+    };
+
+    image.src = url;
+}
+
+
 /* ===========================================================
    ÉTAT DE CHARGEMENT DU TABLEAU
 =========================================================== */
@@ -1840,7 +2196,7 @@ function afficherEtatChargement() {
 
     tableBody.innerHTML = `
         <tr>
-            <td colspan="25" class="table-message">
+            <td colspan="8" class="table-message">
                 Chargement des produits...
             </td>
         </tr>
@@ -1868,7 +2224,7 @@ function afficherMessageTableauVide() {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="25" class="table-message">
+                <td colspan="8" class="table-message">
                     ${produits.length} produit(s) récupéré(s).
                     L'affichage détaillé du tableau sera ajouté
                     à l'étape suivante.
@@ -1882,7 +2238,7 @@ function afficherMessageTableauVide() {
 
     tableBody.innerHTML = `
         <tr>
-            <td colspan="25" class="table-message">
+            <td colspan="8" class="table-message">
                 Aucun produit enregistré.
             </td>
         </tr>
@@ -1908,7 +2264,7 @@ function afficherErreurChargement(message) {
 
     tableBody.innerHTML = `
         <tr>
-            <td colspan="25" class="table-message table-error">
+            <td colspan="8" class="table-message table-error">
                 Impossible de charger les produits.
                 ${echapperHTML(message)}
             </td>
