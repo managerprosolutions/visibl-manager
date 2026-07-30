@@ -2222,6 +2222,10 @@ function ouvrirConsultationProduit(idProduit) {
         lireValeurProduit(produit, ["Statut", "statut"]) || "—"
     );
 
+    mettreAJourBadgeStatutProduit(
+        lireValeurProduit(produit, ["Statut", "statut"]) || "—"
+    );
+
     definirTexteElement(
         "view-product-comment",
         lireValeurProduit(produit, ["Commentaire", "commentaire"]) || "—"
@@ -2245,6 +2249,45 @@ function ouvrirConsultationProduit(idProduit) {
     document.body.classList.add("modal-open");
 }
 
+
+
+function mettreAJourBadgeStatutProduit(statut) {
+
+    const badge = document.getElementById("product-view-status-badge");
+
+    if (!badge) {
+        return;
+    }
+
+    const valeur = String(statut || "").trim().toLowerCase();
+
+    badge.classList.remove("is-active", "is-inactive", "is-warning");
+
+    if (
+        valeur.includes("actif") &&
+        !valeur.includes("inactif")
+    ) {
+        badge.classList.add("is-active");
+        return;
+    }
+
+    if (
+        valeur.includes("inactif") ||
+        valeur.includes("désactiv") ||
+        valeur.includes("desactiv")
+    ) {
+        badge.classList.add("is-inactive");
+        return;
+    }
+
+    if (
+        valeur.includes("rupture") ||
+        valeur.includes("alerte") ||
+        valeur.includes("attente")
+    ) {
+        badge.classList.add("is-warning");
+    }
+}
 
 function fermerConsultationProduit() {
 
