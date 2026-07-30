@@ -775,56 +775,14 @@
 
                         <tr>
 
-                            <th>ID Produit</th>
-
-                            <th>Référence Produit</th>
-
+                            <th>Référence</th>
                             <th>Désignation</th>
-
-                            <th>Description</th>
-
-                            <th>Prix d'Achat</th>
-
-                            <th>Taux TVA (%)</th>
-
-                            <th>Montant TVA</th>
-
-                            <th>Frais de Transport</th>
-
-                            <th>Frais de Douane</th>
-
-                            <th>Autres Frais</th>
-
-                            <th>Prix de Revient</th>
-
-                            <th>Prix de Vente</th>
-
-                            <th>Prix Minimum de Vente</th>
-
-                            <th>Marge (FCFA)</th>
-
-                            <th>Taux de Marge (%)</th>
-
-                            <th>Stock Initial</th>
-
-                            <th>Seuil d'Alerte</th>
-
-                            <th>ID Fournisseur Principal</th>
-
-                            <th>Garantie (mois)</th>
-
-                            <th>Image URL</th>
-
-                            <th>Date d'Ajout</th>
-
-                            <th>Date de Modification</th>
-
+                            <th>Prix d'achat</th>
+                            <th>Prix de vente</th>
+                            <th>Stock</th>
+                            <th>Fournisseur</th>
                             <th>Statut</th>
-
-                            <th>Commentaire</th>
-
                             <th>Actions</th>
-
                         </tr>
 
                     </thead>
@@ -834,7 +792,7 @@
                         <tr>
 
                             <td
-                                colspan="25"
+                                colspan="8"
                                 class="table-message"
                             >
                                 Chargement des produits...
@@ -1484,6 +1442,136 @@
 
 </div>
     
+
+<!-- =========================================================
+     MODALE : VOIR LE PRODUIT
+========================================================== -->
+
+<div
+    class="modal-overlay"
+    id="product-view-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal-container product-view-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-view-modal-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 id="product-view-modal-title">Détails du produit</h2>
+                <p>Consultez toutes les informations du produit sélectionné.</p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-product-view-modal"
+                aria-label="Fermer les détails du produit"
+            >
+                ✖
+            </button>
+        </div>
+
+        <div class="modal-body product-view-body">
+
+            <div class="product-view-image-section">
+                <div class="product-view-image-wrapper">
+                    <img
+                        id="product-view-image"
+                        alt="Image du produit"
+                        hidden
+                    >
+                    <div
+                        id="product-view-image-placeholder"
+                        class="product-view-image-placeholder"
+                    >
+                        Aucune image disponible
+                    </div>
+                </div>
+            </div>
+
+            <section class="form-section">
+                <h3>Informations générales</h3>
+
+                <div class="product-details-grid">
+                    <div class="product-detail-item">
+                        <span>ID produit</span>
+                        <strong id="view-product-id">—</strong>
+                    </div>
+
+                    <div class="product-detail-item">
+                        <span>Référence</span>
+                        <strong id="view-product-reference">—</strong>
+                    </div>
+
+                    <div class="product-detail-item">
+                        <span>Désignation</span>
+                        <strong id="view-product-name">—</strong>
+                    </div>
+
+                    <div class="product-detail-item product-detail-full">
+                        <span>Description</span>
+                        <strong id="view-product-description">—</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Coûts et prix</h3>
+
+                <div class="product-details-grid">
+                    <div class="product-detail-item"><span>Prix d'achat</span><strong id="view-product-purchase-price">—</strong></div>
+                    <div class="product-detail-item"><span>TVA</span><strong id="view-product-vat-rate">—</strong></div>
+                    <div class="product-detail-item"><span>Montant TVA</span><strong id="view-product-vat-amount">—</strong></div>
+                    <div class="product-detail-item"><span>Frais de transport</span><strong id="view-product-transport-cost">—</strong></div>
+                    <div class="product-detail-item"><span>Frais de douane</span><strong id="view-product-customs-cost">—</strong></div>
+                    <div class="product-detail-item"><span>Autres frais</span><strong id="view-product-other-costs">—</strong></div>
+                    <div class="product-detail-item"><span>Prix de revient</span><strong id="view-product-cost-price">—</strong></div>
+                    <div class="product-detail-item"><span>Prix minimum</span><strong id="view-product-minimum-price">—</strong></div>
+                    <div class="product-detail-item"><span>Prix de vente</span><strong id="view-product-sale-price">—</strong></div>
+                    <div class="product-detail-item"><span>Marge</span><strong id="view-product-margin-amount">—</strong></div>
+                    <div class="product-detail-item"><span>Taux de marge</span><strong id="view-product-margin-rate">—</strong></div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Stock et fournisseur</h3>
+
+                <div class="product-details-grid">
+                    <div class="product-detail-item"><span>Stock initial</span><strong id="view-product-stock">—</strong></div>
+                    <div class="product-detail-item"><span>Seuil d'alerte</span><strong id="view-product-alert-threshold">—</strong></div>
+                    <div class="product-detail-item"><span>Fournisseur principal</span><strong id="view-product-supplier">—</strong></div>
+                    <div class="product-detail-item"><span>Garantie</span><strong id="view-product-warranty">—</strong></div>
+                </div>
+            </section>
+
+            <section class="form-section">
+                <h3>Informations complémentaires</h3>
+
+                <div class="product-details-grid">
+                    <div class="product-detail-item"><span>Date d'ajout</span><strong id="view-product-created-at">—</strong></div>
+                    <div class="product-detail-item"><span>Dernière modification</span><strong id="view-product-updated-at">—</strong></div>
+                    <div class="product-detail-item"><span>Statut</span><strong id="view-product-status">—</strong></div>
+                    <div class="product-detail-item product-detail-full"><span>Commentaire</span><strong id="view-product-comment">—</strong></div>
+                </div>
+            </section>
+
+        </div>
+
+        <div class="modal-footer">
+            <button
+                type="button"
+                class="btn-secondary"
+                id="close-product-view-modal-footer"
+            >
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- =========================================================
      FICHIERS JAVASCRIPT
      L'ordre est important :
