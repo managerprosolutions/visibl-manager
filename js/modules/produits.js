@@ -1822,11 +1822,12 @@ function afficherProduits(listeProduits) {
                     </span>
                 </td>
 
-                <td class="product-actions-cell">
+                <td>
+                    <div class="table-actions product-actions-cell">
 
                     <button
                         type="button"
-                        class="action-btn view-product-btn"
+                        class="table-action-btn view-btn view-product-btn"
                         data-product-id="${idProduit}"
                         title="Voir le produit"
                         aria-label="Voir le produit"
@@ -1852,7 +1853,7 @@ function afficherProduits(listeProduits) {
 
                     <button
                         type="button"
-                        class="action-btn edit-product-btn"
+                        class="table-action-btn edit-btn edit-product-btn"
                         data-product-id="${idProduit}"
                         title="Modifier le produit"
                         aria-label="Modifier le produit"
@@ -1874,7 +1875,7 @@ function afficherProduits(listeProduits) {
 
                     <button
                         type="button"
-                        class="action-btn delete-product-btn"
+                        class="table-action-btn delete-btn delete-product-btn"
                         data-product-id="${idProduit}"
                         title="Supprimer le produit"
                         aria-label="Supprimer le produit"
@@ -1895,6 +1896,7 @@ function afficherProduits(listeProduits) {
                         </svg>
                     </button>
 
+                    </div>
                 </td>
 
             </tr>
