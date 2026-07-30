@@ -1928,7 +1928,10 @@ function formaterPourcentageProduit(valeur) {
         return "—";
     }
 
-    return taux.toLocaleString("fr-FR", {
+    /*
+       Dans Google Sheets, 2,0562 représente 205,62 %.
+    */
+    return (taux * 100).toLocaleString("fr-FR", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }) + " %";
@@ -1986,7 +1989,6 @@ function formaterDateProduit(valeur) {
 function initialiserConsultationProduit() {
 
     const tableBody = obtenirCorpsTableauProduits();
-    const modal = document.getElementById("product-view-modal");
     const boutonFermer = document.getElementById("close-product-view-modal");
     const boutonFermerFooter =
         document.getElementById("close-product-view-modal-footer");
@@ -2009,30 +2011,17 @@ function initialiserConsultationProduit() {
         });
     }
 
+    /*
+       La fenêtre de consultation ne se ferme volontairement que :
+       - avec la croix en haut à droite ;
+       - avec le bouton Fermer en bas.
+
+       Un clic sur le fond de la modale ou la touche Échap ne la ferment pas.
+    */
     [boutonFermer, boutonFermerFooter].forEach(bouton => {
 
         if (bouton) {
             bouton.addEventListener("click", fermerConsultationProduit);
-        }
-    });
-
-    if (modal) {
-
-        modal.addEventListener("click", event => {
-
-            if (event.target === modal) {
-                fermerConsultationProduit();
-            }
-        });
-    }
-
-    document.addEventListener("keydown", event => {
-
-        if (
-            event.key === "Escape" &&
-            modal?.classList.contains("active")
-        ) {
-            fermerConsultationProduit();
         }
     });
 }
