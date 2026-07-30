@@ -35,12 +35,15 @@ const EXTENSIONS_IMAGE_AUTORISEES = [
     "heif"
 ];
 
-const TAILLE_CIBLE_COMPRESSION = 2 * 1024 * 1024;
-const DIMENSION_MAX_IMAGE = 1800;
-const QUALITE_JPEG_MOBILE = 0.82;
+const TAILLE_CIBLE_COMPRESSION = 800 * 1024;
+const DIMENSION_MAX_IMAGE = 1280;
+const QUALITE_JPEG_MOBILE = 0.72;
 
 let produits = [];
 let imageProduitSelectionnee = null;
+let promesseUploadImageProduit = null;
+let urlImageProduitTeleversee = "";
+let versionImageProduit = 0;
 
 
 /* ===========================================================
@@ -456,7 +459,89 @@ function traiterImageProduit(fichier) {
     }
 
     afficherApercuImageProduit(fichier);
-    masquerMessageFormulaireProduit();
+
+    /*
+       L'image commence à être optimisée et envoyée dès sa sélection.
+       Pendant que l'utilisateur termine le formulaire, le téléversement
+       avance déjà en arrière-plan. Au clic sur Enregistrer, le code
+       réutilise le résultat au lieu de recommencer l'envoi.
+    */
+    lancerUploadImageProduitEnArrierePlan(fichier);
+
+}
+
+
+async function lancerUploadImageProduitEnArrierePlan(fichier) {
+
+    const versionCourante = ++versionImageProduit;
+
+    urlImageProduitTeleversee = "";
+
+    const champURL =
+        document.getElementById("product-image-url");
+
+    if (champURL) {
+        champURL.value = "";
+    }
+
+    afficherMessageFormulaireProduit(
+        "Optimisation et envoi de l’image en arrière-plan...",
+        "info"
+    );
+
+    promesseUploadImageProduit = (async () => {
+
+        try {
+
+            const url =
+                await envoyerImageVersCloudinary(fichier);
+
+            if (versionCourante !== versionImageProduit) {
+                /*
+                   La modale a pu être fermée ou réutilisée entre-temps.
+                   L'URL reste néanmoins exploitable par la synchronisation
+                   détachée du produit déjà créé.
+                */
+                return { success: true, url, obsolete: true };
+            }
+
+            urlImageProduitTeleversee = url;
+
+            if (champURL) {
+                champURL.value = url;
+            }
+
+            afficherMessageFormulaireProduit(
+                "Image prête. Vous pouvez enregistrer le produit.",
+                "success"
+            );
+
+            return { success: true, url };
+
+        } catch (error) {
+
+            if (versionCourante !== versionImageProduit) {
+                return { success: false, obsolete: true };
+            }
+
+            console.error(
+                "Erreur d’envoi anticipé de l’image :",
+                error
+            );
+
+            afficherMessageFormulaireProduit(
+                error.message ||
+                "Impossible d’envoyer l’image. Réessayez avec une autre photo.",
+                "error"
+            );
+
+            return { success: false, error };
+
+        }
+
+    })();
+
+    return promesseUploadImageProduit;
 
 }
 
@@ -543,6 +628,9 @@ function afficherApercuImageProduit(fichier) {
 function reinitialiserImageProduit() {
 
     imageProduitSelectionnee = null;
+    versionImageProduit++;
+    promesseUploadImageProduit = null;
+    urlImageProduitTeleversee = "";
 
     const champFichier =
         document.getElementById("product-image-file");
@@ -1099,9 +1187,7 @@ async function enregistrerProduit(event) {
         document.getElementById("save-product-btn");
 
     if (!formulaire) {
-
         return;
-
     }
 
     const referenceChamp =
@@ -1128,84 +1214,39 @@ async function enregistrerProduit(event) {
         );
 
         return;
-
     }
 
     if (!formulaire.checkValidity()) {
-
         formulaire.reportValidity();
-
         return;
-
     }
 
     calculerValeursProduit();
 
-    let imageURL =
+    /*
+       On capture l'état de l'image avant de fermer/réinitialiser la modale.
+       - Si l'URL Cloudinary est déjà prête, elle est enregistrée directement.
+       - Sinon, le produit est créé sans image et la promesse continue en fond.
+    */
+    const imageURLDejaPrete =
+        urlImageProduitTeleversee ||
         obtenirValeurTexte("product-image-url");
 
-    if (imageProduitSelectionnee) {
+    const imageAEnvoyer = imageProduitSelectionnee;
 
-        try {
-
-            if (boutonEnregistrer) {
-
-                boutonEnregistrer.disabled = true;
-                boutonEnregistrer.textContent =
-                    "Envoi de l’image...";
-
-            }
-
-            afficherMessageFormulaireProduit(
-                "Préparation et envoi de l’image vers Cloudinary...",
-                "info"
-            );
-
-            imageURL =
-                await envoyerImageVersCloudinary(
-                    imageProduitSelectionnee
-                );
-
-            const champImageURL =
-                document.getElementById("product-image-url");
-
-            if (champImageURL) {
-
-                champImageURL.value = imageURL;
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Erreur d’envoi de l’image :",
-                error
-            );
-
-            afficherMessageFormulaireProduit(
-                error.message ||
-                "Impossible d’envoyer l’image. Réessayez avec une autre photo.",
-                "error"
-            );
-
-            if (boutonEnregistrer) {
-
-                boutonEnregistrer.disabled = false;
-                boutonEnregistrer.textContent =
-                    "Enregistrer le produit";
-
-            }
-
-            return;
-
-        }
-
+    if (imageAEnvoyer && !imageURLDejaPrete && !promesseUploadImageProduit) {
+        lancerUploadImageProduitEnArrierePlan(imageAEnvoyer);
     }
 
+    const promesseImageAPoursuivre =
+        imageAEnvoyer && !imageURLDejaPrete
+            ? promesseUploadImageProduit
+            : null;
+
     const produit = {
-    referenceProduit: referenceProduit,
-    reference: referenceProduit,
-    designation,
+        referenceProduit: referenceProduit,
+        reference: referenceProduit,
+        designation,
 
         description:
             obtenirValeurTexte("product-description"),
@@ -1255,24 +1296,21 @@ async function enregistrerProduit(event) {
         garantieMois:
             obtenirValeurNombre("product-warranty"),
 
-        imageURL,
+        /* Ne bloque jamais la création pour attendre l'image. */
+        imageURL: imageURLDejaPrete || "",
 
         statut:
             obtenirValeurTexte("product-status") || "Actif",
 
         commentaire:
             obtenirValeurTexte("product-comment")
-
     };
 
     try {
 
         if (boutonEnregistrer) {
-
             boutonEnregistrer.disabled = true;
-            boutonEnregistrer.textContent =
-                "Enregistrement...";
-
+            boutonEnregistrer.textContent = "Enregistrement...";
         }
 
         afficherMessageFormulaireProduit(
@@ -1287,32 +1325,50 @@ async function enregistrerProduit(event) {
             );
 
         if (!resultat || !resultat.success) {
-
             throw new Error(
                 resultat?.message ||
                 "Impossible d'enregistrer le produit."
             );
-
         }
 
-        afficherMessageFormulaireProduit(
-            resultat.message ||
-            "Produit enregistré avec succès.",
-            "success"
-        );
+        const produitCree = resultat.data || {};
+
+        if (promesseImageAPoursuivre) {
+            produitCree._imageSyncPending = true;
+        }
+
+        /*
+           Affichage immédiat : aucune nouvelle lecture complète de Sheets
+           n'est nécessaire avant de fermer la fenêtre.
+        */
+        produits = [
+            produitCree,
+            ...produits.filter(produitExistant =>
+                String(produitExistant["ID Produit"] || "") !==
+                String(produitCree["ID Produit"] || "")
+            )
+        ];
+
+        mettreAJourKPIs();
+        afficherProduits(produits);
+
+        fermerModaleProduit();
 
         formulaire.reset();
         remettreValeursParDefautProduit();
         reinitialiserImageProduit();
-
-        await chargerProduitsDepuisAPI();
         genererReferenceProduit();
 
-        setTimeout(() => {
-
-            fermerModaleProduit();
-
-        }, 800);
+        /*
+           La synchronisation Cloudinary → Google Sheets continue après
+           la fermeture. On ne met volontairement pas "await" ici.
+        */
+        if (promesseImageAPoursuivre) {
+            synchroniserImageProduitEnArrierePlan(
+                produitCree,
+                promesseImageAPoursuivre
+            );
+        }
 
     } catch (error) {
 
@@ -1330,15 +1386,106 @@ async function enregistrerProduit(event) {
     } finally {
 
         if (boutonEnregistrer) {
-
             boutonEnregistrer.disabled = false;
             boutonEnregistrer.textContent =
                 "Enregistrer le produit";
-
         }
+    }
+}
 
+
+async function synchroniserImageProduitEnArrierePlan(
+    produitCree,
+    promesseUpload
+) {
+
+    const idProduit = String(
+        produitCree?.["ID Produit"] ||
+        produitCree?.idProduit ||
+        ""
+    ).trim();
+
+    if (!idProduit || !promesseUpload) {
+        return;
     }
 
+    try {
+
+        const resultatUpload = await promesseUpload;
+
+        if (!resultatUpload?.success || !resultatUpload.url) {
+            throw resultatUpload?.error || new Error(
+                "L'image n'a pas pu être envoyée vers Cloudinary."
+            );
+        }
+
+        const resultatMiseAJour = await apiPost(
+            "updateProduitImage",
+            {
+                idProduit,
+                imageURL: resultatUpload.url
+            }
+        );
+
+        if (!resultatMiseAJour || !resultatMiseAJour.success) {
+            throw new Error(
+                resultatMiseAJour?.message ||
+                "L'image n'a pas pu être rattachée au produit."
+            );
+        }
+
+        const produitMisAJour =
+            resultatMiseAJour.data || {};
+
+        produits = produits.map(produit => {
+
+            if (
+                String(produit["ID Produit"] || "") !== idProduit
+            ) {
+                return produit;
+            }
+
+            return {
+                ...produit,
+                ...produitMisAJour,
+                "Image URL":
+                    produitMisAJour["Image URL"] ||
+                    resultatUpload.url,
+                _imageSyncPending: false,
+                _imageSyncError: false
+            };
+        });
+
+        afficherProduits(produits);
+
+        console.log(
+            "Image du produit synchronisée : " + idProduit
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Erreur de synchronisation de l'image du produit :",
+            error
+        );
+
+        produits = produits.map(produit => {
+
+            if (
+                String(produit["ID Produit"] || "") !== idProduit
+            ) {
+                return produit;
+            }
+
+            return {
+                ...produit,
+                _imageSyncPending: false,
+                _imageSyncError: true
+            };
+        });
+
+        afficherProduits(produits);
+    }
 }
 
 
@@ -1543,8 +1690,22 @@ function afficherProduits(listeProduits) {
         const idProduit = echapperHTML(produit["ID Produit"] || "");
         const imageURL = String(produit["Image URL"] || "").trim();
 
-        const celluleImage = imageURL
-            ? `
+        let celluleImage;
+
+        if (produit._imageSyncPending) {
+            celluleImage = `
+                <span class="product-image-sync-status" role="status">
+                    Image en cours d’envoi…
+                </span>
+            `;
+        } else if (produit._imageSyncError) {
+            celluleImage = `
+                <span class="product-image-sync-error">
+                    Échec de l’image
+                </span>
+            `;
+        } else if (imageURL) {
+            celluleImage = `
                 <a href="${echapperHTML(imageURL)}"
                    target="_blank"
                    rel="noopener noreferrer"
@@ -1556,8 +1717,10 @@ function afficherProduits(listeProduits) {
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
                     <span style="display:none;">Voir l'image</span>
                 </a>
-              `
-            : '<span class="table-empty-value">—</span>';
+            `;
+        } else {
+            celluleImage = '<span class="table-empty-value">—</span>';
+        }
 
         const statut = String(produit["Statut"] || "").trim();
         const classeStatut = statut.toLowerCase() === "actif"
