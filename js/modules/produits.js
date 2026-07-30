@@ -1589,6 +1589,13 @@ async function chargerProduitsDepuisAPI() {
         const resultat =
             await apiGet("getProduits");
 
+       console.log("RÉSULTAT COMPLET GET PRODUITS :", resultat);
+console.log("PREMIER PRODUIT :", resultat?.data?.[0]);
+console.log(
+    "COLONNES DU PREMIER PRODUIT :",
+    Object.keys(resultat?.data?.[0] || {})
+);
+
         if (!resultat.success) {
 
             throw new Error(
