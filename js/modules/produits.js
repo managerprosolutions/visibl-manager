@@ -21,8 +21,23 @@ const TAILLE_MAX_IMAGE = 20 * 1024 * 1024;
 const TYPES_IMAGE_AUTORISES = [
     "image/jpeg",
     "image/png",
-    "image/webp"
+    "image/webp",
+    "image/heic",
+    "image/heif"
 ];
+
+const EXTENSIONS_IMAGE_AUTORISEES = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+    "heic",
+    "heif"
+];
+
+const TAILLE_CIBLE_COMPRESSION = 2 * 1024 * 1024;
+const DIMENSION_MAX_IMAGE = 1800;
+const QUALITE_JPEG_MOBILE = 0.82;
 
 let produits = [];
 let imageProduitSelectionnee = null;
@@ -385,10 +400,10 @@ function initialiserUploadImageProduit() {
 
 function traiterImageProduit(fichier) {
 
-    if (!TYPES_IMAGE_AUTORISES.includes(fichier.type)) {
+    if (!fichier || !estImageProduitAutorisee(fichier)) {
 
         afficherMessageFormulaireProduit(
-            "Format d’image non autorisé. Utilisez JPG, PNG ou WEBP.",
+            "Format d’image non autorisé. Utilisez JPG, PNG, WEBP, HEIC ou HEIF.",
             "error"
         );
 
@@ -399,7 +414,7 @@ function traiterImageProduit(fichier) {
     if (fichier.size > TAILLE_MAX_IMAGE) {
 
         afficherMessageFormulaireProduit(
-            "L’image dépasse la taille maximale de 5 Mo.",
+            "L’image dépasse la taille maximale de 20 Mo.",
             "error"
         );
 
@@ -409,23 +424,61 @@ function traiterImageProduit(fichier) {
 
     imageProduitSelectionnee = fichier;
 
+    /*
+       Sur certains navigateurs mobiles, DataTransfer n'existe pas.
+       Le fichier est déjà conservé dans imageProduitSelectionnee :
+       il n'est donc pas nécessaire de forcer à nouveau champFichier.files.
+    */
     const champFichier =
         document.getElementById("product-image-file");
 
     if (
         champFichier &&
-        (!champFichier.files ||
-         champFichier.files[0] !== fichier)
+        (!champFichier.files || champFichier.files[0] !== fichier) &&
+        typeof DataTransfer !== "undefined"
     ) {
 
-        const transfert = new DataTransfer();
-        transfert.items.add(fichier);
-        champFichier.files = transfert.files;
+        try {
+
+            const transfert = new DataTransfer();
+            transfert.items.add(fichier);
+            champFichier.files = transfert.files;
+
+        } catch (error) {
+
+            console.warn(
+                "Impossible de réaffecter le fichier sur ce navigateur mobile.",
+                error
+            );
+
+        }
 
     }
 
     afficherApercuImageProduit(fichier);
     masquerMessageFormulaireProduit();
+
+}
+
+
+function estImageProduitAutorisee(fichier) {
+
+    const type = String(fichier?.type || "")
+        .trim()
+        .toLowerCase();
+
+    if (TYPES_IMAGE_AUTORISES.includes(type)) {
+
+        return true;
+
+    }
+
+    const nom = String(fichier?.name || "");
+    const extension = nom.includes(".")
+        ? nom.split(".").pop().toLowerCase()
+        : "";
+
+    return EXTENSIONS_IMAGE_AUTORISEES.includes(extension);
 
 }
 
@@ -586,9 +639,12 @@ async function envoyerImageVersCloudinary(fichier) {
 
     }
 
+    const fichierAEnvoyer =
+        await preparerImageProduitPourUpload(fichier);
+
     const donnees = new FormData();
 
-    donnees.append("file", fichier);
+    donnees.append("file", fichierAEnvoyer);
     donnees.append(
         "upload_preset",
         CLOUDINARY_CONFIG.uploadPreset
@@ -608,23 +664,262 @@ async function envoyerImageVersCloudinary(fichier) {
             CLOUDINARY_CONFIG.cloudName
         )}/image/upload`;
 
-    const reponse = await fetch(url, {
-        method: "POST",
-        body: donnees
-    });
+    const controleur =
+        typeof AbortController !== "undefined"
+            ? new AbortController()
+            : null;
 
-    const resultat = await reponse.json();
+    const delaiMaximum = setTimeout(() => {
 
-    if (!reponse.ok || !resultat.secure_url) {
+        if (controleur) {
+            controleur.abort();
+        }
 
-        throw new Error(
-            resultat?.error?.message ||
-            "Échec de l’envoi de l’image vers Cloudinary."
-        );
+    }, 90000);
+
+    try {
+
+        const reponse = await fetch(url, {
+            method: "POST",
+            body: donnees,
+            signal: controleur?.signal
+        });
+
+        const resultat = await reponse.json();
+
+        if (!reponse.ok || !resultat.secure_url) {
+
+            throw new Error(
+                resultat?.error?.message ||
+                "Échec de l’envoi de l’image vers Cloudinary."
+            );
+
+        }
+
+        return resultat.secure_url;
+
+    } catch (error) {
+
+        if (error?.name === "AbortError") {
+
+            throw new Error(
+                "L’envoi de l’image a pris trop de temps. Vérifiez votre connexion puis réessayez."
+            );
+
+        }
+
+        throw error;
+
+    } finally {
+
+        clearTimeout(delaiMaximum);
 
     }
 
-    return resultat.secure_url;
+}
+
+
+async function preparerImageProduitPourUpload(fichier) {
+
+    const type = String(fichier?.type || "").toLowerCase();
+    const nom = String(fichier?.name || "").toLowerCase();
+
+    const estHEIC =
+        type === "image/heic" ||
+        type === "image/heif" ||
+        nom.endsWith(".heic") ||
+        nom.endsWith(".heif");
+
+    /*
+       Les navigateurs ne savent pas tous décoder HEIC/HEIF dans un canvas.
+       Cloudinary peut recevoir le fichier original et effectuer le traitement.
+    */
+    if (estHEIC) {
+
+        return fichier;
+
+    }
+
+    const typeCompressible = [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ].includes(type);
+
+    if (!typeCompressible) {
+
+        return fichier;
+
+    }
+
+    try {
+
+        const dimensions =
+            await lireDimensionsImageProduit(fichier);
+
+        const doitCompresser =
+            fichier.size > TAILLE_CIBLE_COMPRESSION ||
+            dimensions.largeur > DIMENSION_MAX_IMAGE ||
+            dimensions.hauteur > DIMENSION_MAX_IMAGE;
+
+        if (!doitCompresser) {
+
+            return fichier;
+
+        }
+
+        return await compresserImageProduitEnJPEG(
+            fichier,
+            dimensions
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Compression mobile impossible, envoi du fichier original.",
+            error
+        );
+
+        return fichier;
+
+    }
+
+}
+
+
+function lireDimensionsImageProduit(fichier) {
+
+    return new Promise((resolve, reject) => {
+
+        const urlLocale = URL.createObjectURL(fichier);
+        const image = new Image();
+
+        image.onload = () => {
+
+            const largeur =
+                image.naturalWidth || image.width;
+
+            const hauteur =
+                image.naturalHeight || image.height;
+
+            URL.revokeObjectURL(urlLocale);
+
+            resolve({
+                largeur,
+                hauteur,
+                image
+            });
+
+        };
+
+        image.onerror = () => {
+
+            URL.revokeObjectURL(urlLocale);
+            reject(new Error("Impossible de lire l’image sélectionnée."));
+
+        };
+
+        image.src = urlLocale;
+
+    });
+
+}
+
+
+function compresserImageProduitEnJPEG(fichier, dimensions) {
+
+    return new Promise((resolve, reject) => {
+
+        const urlLocale = URL.createObjectURL(fichier);
+        const image = new Image();
+
+        image.onload = () => {
+
+            try {
+
+                const ratio = Math.min(
+                    1,
+                    DIMENSION_MAX_IMAGE / image.naturalWidth,
+                    DIMENSION_MAX_IMAGE / image.naturalHeight
+                );
+
+                const largeur = Math.max(
+                    1,
+                    Math.round(image.naturalWidth * ratio)
+                );
+
+                const hauteur = Math.max(
+                    1,
+                    Math.round(image.naturalHeight * ratio)
+                );
+
+                const canvas = document.createElement("canvas");
+                canvas.width = largeur;
+                canvas.height = hauteur;
+
+                const contexte = canvas.getContext("2d");
+
+                if (!contexte) {
+                    throw new Error("Canvas indisponible sur ce navigateur.");
+                }
+
+                contexte.drawImage(
+                    image,
+                    0,
+                    0,
+                    largeur,
+                    hauteur
+                );
+
+                canvas.toBlob(blob => {
+
+                    URL.revokeObjectURL(urlLocale);
+
+                    if (!blob) {
+
+                        reject(
+                            new Error("La compression de l’image a échoué.")
+                        );
+                        return;
+
+                    }
+
+                    const nomSansExtension =
+                        String(fichier.name || "produit")
+                            .replace(/\.[^.]+$/, "");
+
+                    resolve(
+                        new File(
+                            [blob],
+                            nomSansExtension + ".jpg",
+                            {
+                                type: "image/jpeg",
+                                lastModified: Date.now()
+                            }
+                        )
+                    );
+
+                }, "image/jpeg", QUALITE_JPEG_MOBILE);
+
+            } catch (error) {
+
+                URL.revokeObjectURL(urlLocale);
+                reject(error);
+
+            }
+
+        };
+
+        image.onerror = () => {
+
+            URL.revokeObjectURL(urlLocale);
+            reject(new Error("Impossible de compresser cette image."));
+
+        };
+
+        image.src = urlLocale;
+
+    });
 
 }
 
@@ -851,22 +1146,57 @@ async function enregistrerProduit(event) {
 
     if (imageProduitSelectionnee) {
 
-        afficherMessageFormulaireProduit(
-            "Envoi de l’image vers Cloudinary...",
-            "info"
-        );
+        try {
 
-        imageURL =
-            await envoyerImageVersCloudinary(
-                imageProduitSelectionnee
+            if (boutonEnregistrer) {
+
+                boutonEnregistrer.disabled = true;
+                boutonEnregistrer.textContent =
+                    "Envoi de l’image...";
+
+            }
+
+            afficherMessageFormulaireProduit(
+                "Préparation et envoi de l’image vers Cloudinary...",
+                "info"
             );
 
-        const champImageURL =
-            document.getElementById("product-image-url");
+            imageURL =
+                await envoyerImageVersCloudinary(
+                    imageProduitSelectionnee
+                );
 
-        if (champImageURL) {
+            const champImageURL =
+                document.getElementById("product-image-url");
 
-            champImageURL.value = imageURL;
+            if (champImageURL) {
+
+                champImageURL.value = imageURL;
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Erreur d’envoi de l’image :",
+                error
+            );
+
+            afficherMessageFormulaireProduit(
+                error.message ||
+                "Impossible d’envoyer l’image. Réessayez avec une autre photo.",
+                "error"
+            );
+
+            if (boutonEnregistrer) {
+
+                boutonEnregistrer.disabled = false;
+                boutonEnregistrer.textContent =
+                    "Enregistrer le produit";
+
+            }
+
+            return;
 
         }
 
