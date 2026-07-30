@@ -1928,10 +1928,7 @@ function formaterPourcentageProduit(valeur) {
         return "—";
     }
 
-    /*
-       Dans Google Sheets, 2,0562 représente 205,62 %.
-    */
-    return (taux * 100).toLocaleString("fr-FR", {
+    return taux.toLocaleString("fr-FR", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }) + " %";
