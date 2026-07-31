@@ -3259,6 +3259,20 @@ function ouvrirConfirmationSuppressionProduit(idProduit) {
         ) || "Produit sans désignation"
     );
 
+    afficherImageSuppressionProduit(
+        lireValeurProduit(
+            produit,
+            [
+                "Image (Url)",
+                "Image URL",
+                "Image",
+                "imageURL",
+                "imageUrl",
+                "urlImage"
+            ]
+        )
+    );
+
     afficherMessageSuppressionProduit("", "info");
 
     const boutonConfirmer =
@@ -3279,6 +3293,48 @@ function ouvrirConfirmationSuppressionProduit(idProduit) {
 }
 
 
+function afficherImageSuppressionProduit(urlImage) {
+
+    const image =
+        document.getElementById("delete-product-image");
+    const placeholder =
+        document.getElementById(
+            "delete-product-image-placeholder"
+        );
+
+    if (!image || !placeholder) {
+        return;
+    }
+
+    const url = String(urlImage || "").trim();
+
+    image.onload = null;
+    image.onerror = null;
+    image.removeAttribute("src");
+    image.hidden = true;
+    placeholder.hidden = false;
+
+    if (!url) {
+        return;
+    }
+
+    placeholder.hidden = true;
+
+    image.onload = () => {
+        image.hidden = false;
+        placeholder.hidden = true;
+    };
+
+    image.onerror = () => {
+        image.hidden = true;
+        image.removeAttribute("src");
+        placeholder.hidden = false;
+    };
+
+    image.src = url;
+}
+
+
 function fermerConfirmationSuppressionProduit() {
 
     const modal =
@@ -3292,6 +3348,7 @@ function fermerConfirmationSuppressionProduit() {
     idProduitASupprimer = "";
     document.body.classList.remove("modal-open");
     afficherMessageSuppressionProduit("", "info");
+    afficherImageSuppressionProduit("");
 }
 
 
@@ -3318,11 +3375,6 @@ async function confirmerSuppressionProduit() {
         if (boutonAnnuler) {
             boutonAnnuler.disabled = true;
         }
-
-        afficherMessageSuppressionProduit(
-            "Suppression du produit en cours...",
-            "info"
-        );
 
         const resultat = await apiPost(
             "deleteProduit",
