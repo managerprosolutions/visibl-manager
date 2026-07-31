@@ -2125,6 +2125,13 @@ function ouvrirConsultationProduit(idProduit) {
     );
 
     definirTexteElement(
+        "view-product-summary-cost-price",
+        formatMoney(
+            lireValeurProduit(produit, ["Prix de Revient", "prixRevient"])
+        )
+    );
+
+    definirTexteElement(
         "view-product-minimum-price",
         formatMoney(
             lireValeurProduit(
@@ -2156,6 +2163,25 @@ function ouvrirConsultationProduit(idProduit) {
                 ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"]
             )
         ) + " %"
+    );
+
+    definirTexteElement(
+        "view-product-summary-margin-amount",
+        formatMoney(
+            lireValeurProduit(produit, ["Marge (FCFA)", "margeFCFA"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-summary-margin-rate",
+        "(" +
+        formatNumber(
+            lireValeurProduit(
+                produit,
+                ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"]
+            )
+        ) +
+        " %)"
     );
 
     definirTexteElement(
