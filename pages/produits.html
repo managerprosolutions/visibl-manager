@@ -367,10 +367,14 @@
                         <input
                             type="text"
                             class="search-input"
-                            placeholder="Rechercher un client..."
+                            id="header-products-search-input"
+                            placeholder="Rechercher un produit..."
                         >
 
-                        <button class="search-btn">
+                        <button class="search-btn"
+                            id="header-products-search-btn"
+                            type="button"
+                            aria-label="Rechercher">
                             🔍
                         </button>
 
@@ -434,13 +438,21 @@
 
 </div>
 
-                    <div class="profile-menu">
+                    <div class="profile-menu" id="product-profile-menu">
 
-                        <button class="icon-btn">
+                        <button
+                            class="icon-btn"
+                            id="profile-menu-button"
+                            type="button"
+                            aria-label="Afficher le menu du profil"
+                            aria-expanded="false">
                             👤
                         </button>
 
-                        <div class="dropdown-menu">
+                        <div
+                            class="dropdown-menu"
+                            id="profile-dropdown"
+                            hidden>
 
                             <a href="moncompte.html">
                                 Mon compte
