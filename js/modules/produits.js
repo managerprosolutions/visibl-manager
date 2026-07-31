@@ -2324,6 +2324,9 @@ function afficherImageConsultationProduit(urlImage) {
         return;
     }
 
+    /* Masquer immédiatement le placeholder lorsqu’une image est disponible. */
+    placeholder.hidden = true;
+
     image.onload = () => {
         image.hidden = false;
         placeholder.hidden = true;
