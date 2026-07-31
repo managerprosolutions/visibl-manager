@@ -3934,14 +3934,31 @@ function initialiserDeconnexionProduits() {
 
         event.preventDefault();
 
-        if (typeof logoutUser === "function") {
-            logoutUser();
-            return;
+        fermerMenusHeaderProduits();
+
+        try {
+            if (typeof logoutUser === "function") {
+                logoutUser();
+            } else {
+                sessionStorage.clear();
+
+                [
+                    "user",
+                    "utilisateur",
+                    "currentUser",
+                    "authUser",
+                    "isAuthenticated",
+                    "token",
+                    "authToken"
+                ].forEach(cle => localStorage.removeItem(cle));
+            }
+        } catch (error) {
+            console.warn("Erreur pendant la déconnexion :", error);
         }
 
-        console.error(
-            "La fonction logoutUser() est introuvable dans app.js."
-        );
+        window.setTimeout(() => {
+            window.location.replace("connexion.html");
+        }, 50);
     });
 }
 
