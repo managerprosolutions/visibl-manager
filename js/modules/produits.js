@@ -64,6 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserModificationProduit();
     initialiserSuppressionProduit();
     initialiserFiltresProduits();
+    initialiserHeaderProduits();
 
     const refreshButton =
         document.getElementById("refresh-products-btn");
@@ -3740,5 +3741,207 @@ function afficherAucunResultatFiltreProduit() {
             </td>
         </tr>
     `;
+}
+
+/* ===========================================================
+   HEADER PRODUITS
+   Recherche synchronisée, notifications, profil et déconnexion.
+=========================================================== */
+
+function initialiserHeaderProduits() {
+
+    initialiserRechercheHeaderProduits();
+    initialiserNotificationsProduits();
+    initialiserMenuProfilProduits();
+    initialiserDeconnexionProduits();
+}
+
+
+function initialiserRechercheHeaderProduits() {
+
+    const rechercheHeader =
+        document.getElementById("header-products-search-input");
+
+    const boutonRecherche =
+        document.getElementById("header-products-search-btn");
+
+    const rechercheModule =
+        document.getElementById("products-search-input");
+
+    const synchroniserRecherche = valeur => {
+
+        const texte = String(valeur || "");
+
+        if (rechercheHeader && rechercheHeader.value !== texte) {
+            rechercheHeader.value = texte;
+        }
+
+        if (rechercheModule && rechercheModule.value !== texte) {
+            rechercheModule.value = texte;
+        }
+
+        appliquerFiltresProduits();
+    };
+
+    rechercheHeader?.addEventListener("input", () => {
+        synchroniserRecherche(rechercheHeader.value);
+    });
+
+    boutonRecherche?.addEventListener("click", event => {
+        event.preventDefault();
+        synchroniserRecherche(rechercheHeader?.value || "");
+    });
+
+    rechercheHeader?.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            synchroniserRecherche(rechercheHeader.value);
+        }
+    });
+
+    rechercheModule?.addEventListener("input", () => {
+        if (
+            rechercheHeader &&
+            rechercheHeader.value !== rechercheModule.value
+        ) {
+            rechercheHeader.value = rechercheModule.value;
+        }
+    });
+}
+
+
+function initialiserNotificationsProduits() {
+
+    const bouton =
+        document.getElementById("notification-button");
+
+    const panneau =
+        document.getElementById("notification-panel");
+
+    if (!bouton || !panneau) {
+        return;
+    }
+
+    bouton.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        const ouvrir = panneau.hidden;
+
+        fermerMenusHeaderProduits();
+
+        panneau.hidden = !ouvrir;
+        bouton.setAttribute(
+            "aria-expanded",
+            ouvrir ? "true" : "false"
+        );
+    });
+
+    panneau.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+}
+
+
+function initialiserMenuProfilProduits() {
+
+    const bouton =
+        document.getElementById("profile-menu-button");
+
+    const menu =
+        document.getElementById("profile-dropdown");
+
+    if (!bouton || !menu) {
+        return;
+    }
+
+    bouton.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        const ouvrir = menu.hidden;
+
+        fermerMenusHeaderProduits();
+
+        menu.hidden = !ouvrir;
+        bouton.setAttribute(
+            "aria-expanded",
+            ouvrir ? "true" : "false"
+        );
+    });
+
+    menu.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+
+    document.addEventListener(
+        "click",
+        fermerMenusHeaderProduits
+    );
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            fermerMenusHeaderProduits();
+        }
+    });
+}
+
+
+function fermerMenusHeaderProduits() {
+
+    const panneau =
+        document.getElementById("notification-panel");
+
+    const boutonNotification =
+        document.getElementById("notification-button");
+
+    const menuProfil =
+        document.getElementById("profile-dropdown");
+
+    const boutonProfil =
+        document.getElementById("profile-menu-button");
+
+    if (panneau) {
+        panneau.hidden = true;
+    }
+
+    if (menuProfil) {
+        menuProfil.hidden = true;
+    }
+
+    boutonNotification?.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+
+    boutonProfil?.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+}
+
+
+function initialiserDeconnexionProduits() {
+
+    const bouton =
+        document.getElementById("logout-button");
+
+    if (!bouton) {
+        return;
+    }
+
+    bouton.addEventListener("click", event => {
+
+        event.preventDefault();
+
+        if (typeof logoutUser === "function") {
+            logoutUser();
+            return;
+        }
+
+        console.error(
+            "La fonction logoutUser() est introuvable dans app.js."
+        );
+    });
 }
 
