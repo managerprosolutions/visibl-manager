@@ -44,6 +44,7 @@ let imageProduitSelectionnee = null;
 let promesseUploadImageProduit = null;
 let urlImageProduitTeleversee = "";
 let versionImageProduit = 0;
+let idProduitEnModification = "";
 
 
 /* ===========================================================
@@ -60,6 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserFormulaireProduit();
     initialiserUploadImageProduit();
     initialiserConsultationProduit();
+    initialiserModificationProduit();
 
     const refreshButton =
         document.getElementById("refresh-products-btn");
@@ -185,6 +187,9 @@ function ouvrirModaleProduit() {
 
     }
 
+    idProduitEnModification = "";
+    configurerModaleProduit("creation");
+
     if (formulaire) {
 
         formulaire.reset();
@@ -214,6 +219,37 @@ function ouvrirModaleProduit() {
 
     }
 
+}
+
+
+function configurerModaleProduit(mode = "creation") {
+
+    const titre = document.getElementById("product-modal-title");
+    const description = document.querySelector(
+        "#product-modal .modal-header p"
+    );
+    const boutonEnregistrer =
+        document.getElementById("save-product-btn");
+
+    const modification = mode === "modification";
+
+    if (titre) {
+        titre.textContent = modification
+            ? "Modifier le produit"
+            : "Nouveau produit";
+    }
+
+    if (description) {
+        description.textContent = modification
+            ? "Modifiez les informations du produit sélectionné."
+            : "Enregistrez un nouveau produit dans le catalogue.";
+    }
+
+    if (boutonEnregistrer) {
+        boutonEnregistrer.textContent = modification
+            ? "Enregistrer la modification"
+            : "Enregistrer le produit";
+    }
 }
 
 
@@ -1245,6 +1281,8 @@ async function enregistrerProduit(event) {
             : null;
 
     const produit = {
+        idProduit: idProduitEnModification || "",
+        "ID Produit": idProduitEnModification || "",
         referenceProduit: referenceProduit,
         reference: referenceProduit,
         designation,
@@ -1314,14 +1352,20 @@ async function enregistrerProduit(event) {
             boutonEnregistrer.textContent = "Enregistrement...";
         }
 
+        const estModification = Boolean(idProduitEnModification);
+
         afficherMessageFormulaireProduit(
-            "Enregistrement du produit...",
+            estModification
+                ? "Enregistrement des modifications..."
+                : "Enregistrement du produit...",
             "info"
         );
 
         const resultat =
             await apiPost(
-                "createProduit",
+                estModification
+                    ? "updateProduit"
+                    : "createProduit",
                 produit
             );
 
@@ -1342,19 +1386,35 @@ async function enregistrerProduit(event) {
            Affichage immédiat : aucune nouvelle lecture complète de Sheets
            n'est nécessaire avant de fermer la fenêtre.
         */
-        produits = [
-            produitCree,
-            ...produits.filter(produitExistant =>
-                String(produitExistant["ID Produit"] || "") !==
-                String(produitCree["ID Produit"] || "")
+        produits = estModification
+            ? produits.map(produitExistant =>
+                String(
+                    produitExistant["ID Produit"] ||
+                    produitExistant.idProduit ||
+                    ""
+                ) === String(
+                    produitCree["ID Produit"] ||
+                    produitCree.idProduit ||
+                    idProduitEnModification
+                )
+                    ? produitCree
+                    : produitExistant
             )
-        ];
+            : [
+                produitCree,
+                ...produits.filter(produitExistant =>
+                    String(produitExistant["ID Produit"] || "") !==
+                    String(produitCree["ID Produit"] || "")
+                )
+            ];
 
         mettreAJourKPIs();
         afficherProduits(produits);
 
         fermerModaleProduit();
 
+        idProduitEnModification = "";
+        configurerModaleProduit("creation");
         formulaire.reset();
         remettreValeursParDefautProduit();
         reinitialiserImageProduit();
@@ -1389,7 +1449,9 @@ async function enregistrerProduit(event) {
         if (boutonEnregistrer) {
             boutonEnregistrer.disabled = false;
             boutonEnregistrer.textContent =
-                "Enregistrer le produit";
+                idProduitEnModification
+                    ? "Enregistrer la modification"
+                    : "Enregistrer le produit";
         }
     }
 }
@@ -1981,6 +2043,225 @@ function formaterDateProduit(valeur) {
     });
 }
 
+
+
+/* ===========================================================
+   MODIFICATION D'UN PRODUIT
+=========================================================== */
+
+function initialiserModificationProduit() {
+
+    const tableBody = obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.addEventListener("click", event => {
+
+        const boutonModifier =
+            event.target.closest(".edit-product-btn");
+
+        if (!boutonModifier) {
+            return;
+        }
+
+        const idProduit = String(
+            boutonModifier.dataset.productId || ""
+        ).trim();
+
+        ouvrirModificationProduit(idProduit);
+    });
+}
+
+
+function ouvrirModificationProduit(idProduit) {
+
+    const produit = produits.find(element => {
+
+        const id = String(
+            lireValeurProduit(
+                element,
+                ["ID Produit", "idProduit"]
+            ) || ""
+        ).trim();
+
+        return id === String(idProduit).trim();
+    });
+
+    if (!produit) {
+        console.error("Produit introuvable :", idProduit);
+        return;
+    }
+
+    const modale = document.getElementById("product-modal");
+    const formulaire = document.getElementById("product-form");
+
+    if (!modale || !formulaire) {
+        return;
+    }
+
+    idProduitEnModification = String(idProduit).trim();
+    configurerModaleProduit("modification");
+    formulaire.reset();
+    reinitialiserImageProduit();
+    masquerMessageFormulaireProduit();
+
+    definirValeurChamp(
+        "product-reference",
+        lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        )
+    );
+    definirValeurChamp(
+        "product-name",
+        lireValeurProduit(produit, ["Désignation", "designation"])
+    );
+    definirValeurChamp(
+        "product-description",
+        lireValeurProduit(produit, ["Description", "description"])
+    );
+    definirValeurChamp(
+        "product-purchase-price",
+        lireValeurProduit(produit, ["Prix d'Achat", "prixAchat"])
+    );
+    definirValeurChamp("product-vat-rate", 18);
+    definirValeurChamp(
+        "product-transport-cost",
+        lireValeurProduit(
+            produit,
+            ["Frais de Transport", "fraisTransport"]
+        )
+    );
+    definirValeurChamp(
+        "product-customs-cost",
+        lireValeurProduit(
+            produit,
+            ["Frais de Douane", "fraisDouane"]
+        )
+    );
+    definirValeurChamp(
+        "product-other-costs",
+        lireValeurProduit(produit, ["Autres Frais", "autresFrais"])
+    );
+    definirValeurChamp(
+        "product-sale-price",
+        lireValeurProduit(produit, ["Prix de Vente", "prixVente"])
+    );
+    definirValeurChamp(
+        "product-minimum-price",
+        lireValeurProduit(
+            produit,
+            ["Prix Minimum de Vente", "prixMinimumVente"]
+        )
+    );
+    definirValeurChamp(
+        "product-initial-stock",
+        lireValeurProduit(produit, ["Stock Initial", "stockInitial"])
+    );
+    definirValeurChamp(
+        "product-alert-threshold",
+        lireValeurProduit(produit, ["Seuil d'Alerte", "seuilAlerte"])
+    );
+    definirValeurChamp(
+        "product-warranty",
+        lireValeurProduit(produit, ["Garantie (Mois)", "garantieMois"])
+    );
+    definirValeurChamp(
+        "product-status",
+        lireValeurProduit(produit, ["Statut", "statut"]) || "Actif"
+    );
+    definirValeurChamp(
+        "product-comment",
+        lireValeurProduit(produit, ["Commentaire", "commentaire"])
+    );
+
+    selectionnerFournisseurProduit(
+        lireValeurProduit(
+            produit,
+            ["ID Fournisseur Principal", "idFournisseurPrincipal"]
+        )
+    );
+
+    afficherImageExistanteFormulaireProduit(
+        lireValeurProduit(produit, ["Image URL", "imageURL"])
+    );
+
+    calculerValeursProduit();
+
+    modale.classList.add("active");
+    modale.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+
+    const designation = document.getElementById("product-name");
+    if (designation) {
+        setTimeout(() => designation.focus(), 100);
+    }
+}
+
+
+function selectionnerFournisseurProduit(valeur) {
+
+    const select = document.getElementById("product-main-supplier");
+    const idFournisseur = String(valeur || "").trim();
+
+    if (!select) {
+        return;
+    }
+
+    if (
+        idFournisseur &&
+        !Array.from(select.options).some(
+            option => option.value === idFournisseur
+        )
+    ) {
+        const option = document.createElement("option");
+        option.value = idFournisseur;
+        option.textContent = idFournisseur;
+        option.dataset.temporary = "true";
+        select.appendChild(option);
+    }
+
+    select.value = idFournisseur;
+}
+
+
+function afficherImageExistanteFormulaireProduit(url) {
+
+    const imageURL = String(url || "").trim();
+    const champURL = document.getElementById("product-image-url");
+    const placeholder = document.getElementById("product-image-placeholder");
+    const wrapper = document.getElementById("product-image-preview-wrapper");
+    const image = document.getElementById("product-image-preview");
+    const nom = document.getElementById("product-image-name");
+    const taille = document.getElementById("product-image-size");
+
+    urlImageProduitTeleversee = imageURL;
+
+    if (champURL) {
+        champURL.value = imageURL;
+    }
+
+    if (!imageURL || !wrapper || !image) {
+        return;
+    }
+
+    image.src = imageURL;
+    wrapper.hidden = false;
+
+    if (placeholder) {
+        placeholder.hidden = true;
+    }
+
+    if (nom) {
+        nom.textContent = "Image actuelle du produit";
+    }
+
+    if (taille) {
+        taille.textContent = "Conservée si aucune nouvelle image n'est choisie";
+    }
+}
 
 
 /* ===========================================================
@@ -2827,4 +3108,41 @@ document.addEventListener("input", event => {
         event.target.value = "18";
     }
 });
+
+/* ===========================================================
+   ANNULATION DU FORMULAIRE PRODUIT
+   Le même bouton ferme le formulaire en création comme en
+   modification, sans enregistrer les changements.
+=========================================================== */
+
+function initialiserAnnulationFormulaireProduit() {
+    const boutonAnnuler = document.getElementById("cancel-product-btn");
+
+    if (!boutonAnnuler || boutonAnnuler.dataset.initialise === "true") {
+        return;
+    }
+
+    boutonAnnuler.dataset.initialise = "true";
+
+    boutonAnnuler.addEventListener("click", () => {
+        fermerModaleProduit();
+        idProduitEnModification = "";
+        configurerModaleProduit("creation");
+
+        const formulaire = document.getElementById("product-form");
+
+        if (formulaire) {
+            formulaire.reset();
+        }
+
+        remettreValeursParDefautProduit();
+        reinitialiserImageProduit();
+        masquerMessageFormulaireProduit();
+    });
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initialiserAnnulationFormulaireProduit
+);
 
