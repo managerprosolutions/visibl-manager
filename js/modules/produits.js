@@ -3455,4 +3455,3 @@ function afficherMessageSuppressionProduit(
     zone.className =
         `delete-product-message delete-product-message-${type}`;
 }
-
