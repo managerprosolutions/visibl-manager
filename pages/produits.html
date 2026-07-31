@@ -663,25 +663,117 @@
                  BARRE D'ACTIONS
             ============================================== -->
 
-            <div class="sales-toolbar">
+            <div class="sales-toolbar products-advanced-toolbar">
 
-                <button
-                    type="button"
-                    class="btn-primary"
-                    id="new-product-btn"
-                >
-                    ➕ Nouveau produit
-                </button>
+                <div class="products-toolbar-left">
 
-                <button
-                    type="button"
-                    class="btn-secondary"
-                    id="refresh-products-btn"
-                    title="Actualiser les produits"
-                >
-                    🔄 Actualiser
-                </button>
+                    <button
+                        type="button"
+                        class="btn-primary"
+                        id="new-product-btn"
+                    >
+                        ➕ Nouveau produit
+                    </button>
 
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="refresh-products-btn"
+                        title="Actualiser les produits"
+                    >
+                        🔄 Actualiser
+                    </button>
+
+                    <div class="products-export-menu" id="products-export-menu">
+
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            id="export-products-btn"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
+                            📤 Exporter <span aria-hidden="true">▾</span>
+                        </button>
+
+                        <div
+                            class="products-export-dropdown"
+                            id="products-export-dropdown"
+                            hidden
+                        >
+                            <button type="button" data-export-format="xlsx">
+                                <span>📊</span>
+                                <span>
+                                    <strong>Excel (.xlsx)</strong>
+                                    <small>Feuille de calcul modifiable</small>
+                                </span>
+                            </button>
+
+                            <button type="button" data-export-format="pdf">
+                                <span>📄</span>
+                                <span>
+                                    <strong>PDF</strong>
+                                    <small>Document prêt à partager</small>
+                                </span>
+                            </button>
+
+                            <button type="button" data-export-format="csv">
+                                <span>📑</span>
+                                <span>
+                                    <strong>CSV</strong>
+                                    <small>Format universel UTF-8</small>
+                                </span>
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="print-products-btn"
+                    >
+                        🖨️ Imprimer
+                    </button>
+
+                </div>
+
+                <div class="products-toolbar-right">
+                    <span class="products-visible-count">
+                        <strong id="filtered-product-count">0</strong>
+                        produit(s) affiché(s)
+                    </span>
+                </div>
+
+            </div>
+
+            <div
+                class="products-bulk-bar"
+                id="products-bulk-bar"
+                hidden
+            >
+                <span>
+                    <strong id="selected-products-count">0</strong>
+                    produit(s) sélectionné(s)
+                </span>
+
+                <div class="products-bulk-actions">
+                    <button
+                        type="button"
+                        class="btn-danger-soft"
+                        id="bulk-delete-products-btn"
+                    >
+                        🗑️ Supprimer la sélection
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="clear-products-selection-btn"
+                    >
+                        ✕ Désélectionner
+                    </button>
+                </div>
             </div>
 
 
@@ -733,40 +825,72 @@
 
             <div class="sales-table-container">
 
-                <table class="sales-table">
+                <table class="sales-table products-advanced-table">
 
                     <thead>
-
                         <tr>
-
+                            <th class="selection-column">
+                                <input
+                                    type="checkbox"
+                                    id="select-all-products"
+                                    aria-label="Sélectionner tous les produits de la page"
+                                >
+                            </th>
                             <th>Référence</th>
                             <th>Désignation</th>
-                            <th>Prix d'achat</th>
+                            <th>Prix de revient</th>
                             <th>Prix de vente</th>
-                            <th>Stock</th>
+                            <th>Marge</th>
                             <th>Fournisseur</th>
                             <th>Statut</th>
                             <th>Actions</th>
                         </tr>
-
                     </thead>
 
                     <tbody id="products-table-body">
-
                         <tr>
-
                             <td
-                                colspan="8"
+                                colspan="9"
                                 class="table-message"
                             >
                                 Chargement des produits...
                             </td>
-
                         </tr>
-
                     </tbody>
 
                 </table>
+
+                <div class="products-pagination">
+
+                    <div class="products-pagination-size">
+                        <label for="products-page-size">
+                            Afficher
+                        </label>
+
+                        <select id="products-page-size">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+
+                        <span>produits par page</span>
+                    </div>
+
+                    <div
+                        class="products-pagination-summary"
+                        id="products-pagination-summary"
+                    >
+                        0 produit
+                    </div>
+
+                    <div
+                        class="products-pagination-controls"
+                        id="products-pagination-controls"
+                        aria-label="Pagination des produits"
+                    ></div>
+
+                </div>
 
             </div>
 
@@ -1691,6 +1815,61 @@
     </div>
 </div>
 
+
+<!-- =========================================================
+     CONFIRMATION DE SUPPRESSION EN MASSE
+========================================================== -->
+<div
+    class="modal-overlay"
+    id="bulk-delete-products-modal"
+    hidden
+>
+    <div
+        class="bulk-delete-products-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bulk-delete-products-title"
+    >
+        <div class="bulk-delete-products-icon" aria-hidden="true">
+            🗑️
+        </div>
+
+        <h2 id="bulk-delete-products-title">
+            Supprimer les produits sélectionnés ?
+        </h2>
+
+        <p>
+            Cette action supprimera définitivement
+            <strong id="bulk-delete-products-total">0</strong>
+            produit(s) de la base de données.
+        </p>
+
+        <div
+            class="bulk-delete-products-message"
+            id="bulk-delete-products-message"
+            hidden
+        ></div>
+
+        <div class="bulk-delete-products-actions">
+            <button
+                type="button"
+                class="btn-secondary"
+                id="cancel-bulk-delete-products-btn"
+            >
+                Annuler
+            </button>
+
+            <button
+                type="button"
+                class="btn-danger"
+                id="confirm-bulk-delete-products-btn"
+            >
+                Supprimer définitivement
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- =========================================================
      FICHIERS JAVASCRIPT
      L'ordre est important :
@@ -1705,6 +1884,9 @@
 <script src="../js/api.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="../js/modules/produits.js"></script>
 
 </body>
