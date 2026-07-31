@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserUploadImageProduit();
     initialiserConsultationProduit();
     initialiserModificationProduit();
+    initialiserSuppressionProduit();
 
     const refreshButton =
         document.getElementById("refresh-products-btn");
@@ -3153,4 +3154,251 @@ document.addEventListener(
     "DOMContentLoaded",
     initialiserAnnulationFormulaireProduit
 );
+
+/* ===========================================================
+   SUPPRESSION D'UN PRODUIT
+=========================================================== */
+
+let idProduitASupprimer = "";
+
+
+function initialiserSuppressionProduit() {
+
+    const tableBody = obtenirCorpsTableauProduits();
+    const boutonAnnuler =
+        document.getElementById("cancel-delete-product-btn");
+    const boutonConfirmer =
+        document.getElementById("confirm-delete-product-btn");
+
+    if (tableBody && tableBody.dataset.deleteInitialise !== "true") {
+
+        tableBody.dataset.deleteInitialise = "true";
+
+        tableBody.addEventListener("click", event => {
+
+            const boutonSupprimer =
+                event.target.closest(".delete-product-btn");
+
+            if (!boutonSupprimer) {
+                return;
+            }
+
+            const idProduit = String(
+                boutonSupprimer.dataset.productId || ""
+            ).trim();
+
+            ouvrirConfirmationSuppressionProduit(idProduit);
+        });
+    }
+
+    if (
+        boutonAnnuler &&
+        boutonAnnuler.dataset.initialise !== "true"
+    ) {
+        boutonAnnuler.dataset.initialise = "true";
+        boutonAnnuler.addEventListener(
+            "click",
+            fermerConfirmationSuppressionProduit
+        );
+    }
+
+    if (
+        boutonConfirmer &&
+        boutonConfirmer.dataset.initialise !== "true"
+    ) {
+        boutonConfirmer.dataset.initialise = "true";
+        boutonConfirmer.addEventListener(
+            "click",
+            confirmerSuppressionProduit
+        );
+    }
+}
+
+
+function ouvrirConfirmationSuppressionProduit(idProduit) {
+
+    const produit = produits.find(element => {
+
+        const id = String(
+            lireValeurProduit(
+                element,
+                ["ID Produit", "idProduit"]
+            ) || ""
+        ).trim();
+
+        return id === String(idProduit).trim();
+    });
+
+    if (!produit) {
+        console.error("Produit introuvable :", idProduit);
+        return;
+    }
+
+    const modal =
+        document.getElementById("delete-product-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    idProduitASupprimer = String(idProduit).trim();
+
+    definirTexteElement(
+        "delete-product-reference",
+        lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        ) || "Sans référence"
+    );
+
+    definirTexteElement(
+        "delete-product-name",
+        lireValeurProduit(
+            produit,
+            ["Désignation", "designation"]
+        ) || "Produit sans désignation"
+    );
+
+    afficherMessageSuppressionProduit("", "info");
+
+    const boutonConfirmer =
+        document.getElementById("confirm-delete-product-btn");
+
+    if (boutonConfirmer) {
+        boutonConfirmer.disabled = false;
+        boutonConfirmer.textContent = "Supprimer le produit";
+    }
+
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+
+    requestAnimationFrame(() => {
+        boutonConfirmer?.focus();
+    });
+}
+
+
+function fermerConfirmationSuppressionProduit() {
+
+    const modal =
+        document.getElementById("delete-product-modal");
+
+    if (modal) {
+        modal.hidden = true;
+    }
+
+    idProduitASupprimer = "";
+    document.body.classList.remove("modal-open");
+    afficherMessageSuppressionProduit("", "info");
+}
+
+
+async function confirmerSuppressionProduit() {
+
+    if (!idProduitASupprimer) {
+        return;
+    }
+
+    const boutonConfirmer =
+        document.getElementById("confirm-delete-product-btn");
+    const boutonAnnuler =
+        document.getElementById("cancel-delete-product-btn");
+
+    const idProduit = idProduitASupprimer;
+
+    try {
+
+        if (boutonConfirmer) {
+            boutonConfirmer.disabled = true;
+            boutonConfirmer.textContent = "Suppression...";
+        }
+
+        if (boutonAnnuler) {
+            boutonAnnuler.disabled = true;
+        }
+
+        afficherMessageSuppressionProduit(
+            "Suppression du produit en cours...",
+            "info"
+        );
+
+        const resultat = await apiPost(
+            "deleteProduit",
+            { idProduit }
+        );
+
+        if (!resultat || !resultat.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de supprimer le produit."
+            );
+        }
+
+        produits = produits.filter(produit => {
+
+            const id = String(
+                lireValeurProduit(
+                    produit,
+                    ["ID Produit", "idProduit"]
+                ) || ""
+            ).trim();
+
+            return id !== idProduit;
+        });
+
+        mettreAJourKPIs();
+        afficherProduits(produits);
+        fermerConfirmationSuppressionProduit();
+
+    } catch (error) {
+
+        console.error(
+            "Erreur de suppression du produit :",
+            error
+        );
+
+        afficherMessageSuppressionProduit(
+            error.message ||
+            "Une erreur est survenue pendant la suppression.",
+            "error"
+        );
+
+    } finally {
+
+        if (boutonConfirmer) {
+            boutonConfirmer.disabled = false;
+            boutonConfirmer.textContent = "Supprimer le produit";
+        }
+
+        if (boutonAnnuler) {
+            boutonAnnuler.disabled = false;
+        }
+    }
+}
+
+
+function afficherMessageSuppressionProduit(
+    message,
+    type = "info"
+) {
+
+    const zone =
+        document.getElementById("delete-product-message");
+
+    if (!zone) {
+        return;
+    }
+
+    if (!message) {
+        zone.hidden = true;
+        zone.textContent = "";
+        zone.className = "delete-product-message";
+        return;
+    }
+
+    zone.hidden = false;
+    zone.textContent = message;
+    zone.className =
+        `delete-product-message delete-product-message-${type}`;
+}
 
