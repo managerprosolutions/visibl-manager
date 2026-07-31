@@ -3270,9 +3270,10 @@ function ouvrirConfirmationSuppressionProduit(idProduit) {
     }
 
     modal.hidden = false;
-    document.body.classList.add("modal-open");
 
     requestAnimationFrame(() => {
+        modal.classList.add("active");
+        document.body.classList.add("modal-open");
         boutonConfirmer?.focus();
     });
 }
@@ -3284,6 +3285,7 @@ function fermerConfirmationSuppressionProduit() {
         document.getElementById("delete-product-modal");
 
     if (modal) {
+        modal.classList.remove("active", "show");
         modal.hidden = true;
     }
 
