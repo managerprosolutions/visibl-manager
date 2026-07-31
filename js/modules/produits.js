@@ -3962,3 +3962,60 @@ function initialiserDeconnexionProduits() {
     });
 }
 
+/* ===========================================================
+   NOTIFICATIONS DU HEADER
+=========================================================== */
+
+function initialiserNotificationsProduits() {
+    const boutonNotification =
+        document.getElementById("notification-button");
+
+    const panneauNotification =
+        document.getElementById("notification-panel");
+
+    if (!boutonNotification || !panneauNotification) {
+        return;
+    }
+
+    boutonNotification.addEventListener("click", function (event) {
+        event.stopPropagation();
+
+        const estFerme = panneauNotification.hidden;
+
+        panneauNotification.hidden = !estFerme;
+
+        boutonNotification.setAttribute(
+            "aria-expanded",
+            estFerme ? "true" : "false"
+        );
+    });
+
+    panneauNotification.addEventListener("click", function (event) {
+        event.stopPropagation();
+    });
+
+    document.addEventListener("click", function () {
+        panneauNotification.hidden = true;
+
+        boutonNotification.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            panneauNotification.hidden = true;
+
+            boutonNotification.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    });
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initialiserNotificationsProduits
+);
