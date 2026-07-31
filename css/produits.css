@@ -2213,3 +2213,59 @@ body.modal-open {
         min-height: 210px;
     }
 }
+
+/* =========================================================
+   RÉSUMÉ FINANCIER DE LA FICHE PRODUIT
+========================================================= */
+
+#product-view-modal .product-view-margin-value {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#product-view-modal .product-view-margin-value small {
+    color: inherit;
+    font-size: 0.88em;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   FORMULAIRE PRODUIT — CHAMPS NUMÉRIQUES SANS FLÈCHES
+========================================================= */
+
+#product-form input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+#product-form input[type="number"]::-webkit-outer-spin-button,
+#product-form input[type="number"]::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+#product-form .form-help {
+    display: block;
+    margin-top: 6px;
+    color: #7a8492;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+/* =========================================================
+   CHAMP TVA VERROUILLÉ
+========================================================= */
+
+#product-vat-rate[readonly] {
+    cursor: not-allowed;
+    background-color: #f5f7fa;
+    color: #4b5563;
+    font-weight: 700;
+}
+
+#product-vat-rate[readonly]:focus {
+    box-shadow: none;
+}
