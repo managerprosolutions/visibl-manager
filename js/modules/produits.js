@@ -46,6 +46,14 @@ let urlImageProduitTeleversee = "";
 let versionImageProduit = 0;
 let idProduitEnModification = "";
 
+/* État des outils avancés du tableau. */
+let produitsFiltresCourants = [];
+let produitsSelectionnes = new Set();
+let pageProduitsCourante = 1;
+let produitsParPage = 10;
+let animationProduitSuivante = null;
+
+
 
 /* ===========================================================
    INITIALISATION
@@ -65,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserSuppressionProduit();
     initialiserFiltresProduits();
     initialiserHeaderProduits();
+    initialiserOutilsAvancesProduits();
 
     const refreshButton =
         document.getElementById("refresh-products-btn");
@@ -1411,6 +1420,16 @@ async function enregistrerProduit(event) {
                 )
             ];
 
+        animationProduitSuivante = {
+            id: String(
+                produitCree["ID Produit"] ||
+                produitCree.idProduit ||
+                idProduitEnModification ||
+                ""
+            ),
+            type: estModification ? "updated" : "added"
+        };
+
         mettreAJourKPIs();
         appliquerFiltresProduits();
 
@@ -1745,16 +1764,40 @@ function afficherProduits(listeProduits) {
         return;
     }
 
-    const liste = Array.isArray(listeProduits)
-        ? listeProduits
-        : [];
+    produitsFiltresCourants =
+        Array.isArray(listeProduits) ? [...listeProduits] : [];
 
-    if (liste.length === 0) {
-        afficherMessageTableauVide();
+    const total = produitsFiltresCourants.length;
+    const totalPages = Math.max(
+        1,
+        Math.ceil(total / produitsParPage)
+    );
+
+    if (pageProduitsCourante > totalPages) {
+        pageProduitsCourante = totalPages;
+    }
+
+    const debut =
+        (pageProduitsCourante - 1) * produitsParPage;
+    const fin = debut + produitsParPage;
+    const page = produitsFiltresCourants.slice(debut, fin);
+
+    mettreAJourCompteurProduits(total);
+    afficherPaginationProduits(total, totalPages);
+
+    if (page.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="table-message">
+                    Aucun produit ne correspond à votre recherche.
+                </td>
+            </tr>
+        `;
+        synchroniserSelectionProduits();
         return;
     }
 
-    tableBody.innerHTML = liste.map(produit => {
+    tableBody.innerHTML = page.map(produit => {
 
         const idProduitBrut = String(
             lireValeurProduit(
@@ -1764,6 +1807,7 @@ function afficherProduits(listeProduits) {
         ).trim();
 
         const idProduit = echapperHTML(idProduitBrut);
+        const selectionne = produitsSelectionnes.has(idProduitBrut);
 
         const reference = echapperHTML(
             lireValeurProduit(
@@ -1834,42 +1878,42 @@ function afficherProduits(listeProduits) {
             ) || ""
         ).trim();
 
-        const statutNormalise = statut.toLowerCase();
+        const statutNormalise =
+            normaliserStatutFiltreProduit(statut);
 
         const classeStatut =
             statutNormalise === "actif"
                 ? "status-active"
-                : statutNormalise === "archivé" ||
-                  statutNormalise === "archive"
+                : statutNormalise === "archive"
                     ? "status-archived"
                     : "status-inactive";
 
         return `
-            <tr data-product-id="${idProduit}">
-
-                <td>
-                    <strong>${reference}</strong>
+            <tr
+                data-product-id="${idProduit}"
+                class="${selectionne ? "product-row-selected" : ""}"
+            >
+                <td class="selection-column">
+                    <input
+                        type="checkbox"
+                        class="product-row-checkbox"
+                        data-product-id="${idProduit}"
+                        ${selectionne ? "checked" : ""}
+                        aria-label="Sélectionner ${designation}"
+                    >
                 </td>
+
+                <td><strong>${reference}</strong></td>
 
                 <td>
                     <div class="product-table-name">
                         <strong>${designation}</strong>
-
-                        ${
-                            description
-                                ? `<small>${description}</small>`
-                                : ""
-                        }
+                        ${description ? `<small>${description}</small>` : ""}
                     </div>
                 </td>
 
-                <td>
-                    ${prixRevient}
-                </td>
-
-                <td>
-                    ${prixVente}
-                </td>
+                <td>${prixRevient}</td>
+                <td>${prixVente}</td>
 
                 <td>
                     <div class="product-table-margin">
@@ -1878,9 +1922,7 @@ function afficherProduits(listeProduits) {
                     </div>
                 </td>
 
-                <td>
-                    ${fournisseur}
-                </td>
+                <td>${fournisseur}</td>
 
                 <td>
                     <span class="product-status ${classeStatut}">
@@ -1890,87 +1932,59 @@ function afficherProduits(listeProduits) {
 
                 <td>
                     <div class="table-actions product-actions-cell">
-
-                    <button
-                        type="button"
-                        class="table-action-btn view-btn view-product-btn"
-                        data-product-id="${idProduit}"
-                        title="Voir le produit"
-                        aria-label="Voir le produit"
-                    >
-                        <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
+                        <button
+                            type="button"
+                            class="table-action-btn view-btn view-product-btn"
+                            data-product-id="${idProduit}"
+                            title="Voir le produit"
+                            aria-label="Voir le produit"
                         >
-                            <path
-                                d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12"
-                            ></path>
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="3"
-                            ></circle>
-                        </svg>
-                    </button>
+                            <svg width="18" height="18" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
 
-                    <button
-                        type="button"
-                        class="table-action-btn edit-btn edit-product-btn"
-                        data-product-id="${idProduit}"
-                        title="Modifier le produit"
-                        aria-label="Modifier le produit"
-                    >
-                        <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
+                        <button
+                            type="button"
+                            class="table-action-btn edit-btn edit-product-btn"
+                            data-product-id="${idProduit}"
+                            title="Modifier le produit"
+                            aria-label="Modifier le produit"
                         >
-                            <path d="M12 20h9"></path>
-                            <path
-                                d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"
-                            ></path>
-                        </svg>
-                    </button>
+                            <svg width="18" height="18" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                            </svg>
+                        </button>
 
-                    <button
-                        type="button"
-                        class="table-action-btn delete-btn delete-product-btn"
-                        data-product-id="${idProduit}"
-                        title="Supprimer le produit"
-                        aria-label="Supprimer le produit"
-                    >
-                        <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
+                        <button
+                            type="button"
+                            class="table-action-btn delete-btn delete-product-btn"
+                            data-product-id="${idProduit}"
+                            title="Supprimer le produit"
+                            aria-label="Supprimer le produit"
                         >
-                            <path d="M3 6h18"></path>
-                            <path d="M8 6V4h8v2"></path>
-                            <path d="M19 6l-1 14H6L5 6"></path>
-                            <path d="M10 11v6"></path>
-                            <path d="M14 11v6"></path>
-                        </svg>
-                    </button>
-
+                            <svg width="18" height="18" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18"></path>
+                                <path d="M8 6V4h8v2"></path>
+                                <path d="M19 6l-1 14H6L5 6"></path>
+                                <path d="M10 11v6"></path>
+                                <path d="M14 11v6"></path>
+                            </svg>
+                        </button>
                     </div>
                 </td>
-
             </tr>
         `;
-
     }).join("");
-}
 
+    synchroniserSelectionProduits();
+    appliquerAnimationProduit();
+}
 
 function formaterMontantProduit(valeur) {
 
@@ -2677,7 +2691,7 @@ function afficherEtatChargement() {
 
     tableBody.innerHTML = `
         <tr>
-            <td colspan="8" class="table-message">
+            <td colspan="9" class="table-message">
                 Chargement des produits...
             </td>
         </tr>
@@ -2705,7 +2719,7 @@ function afficherMessageTableauVide() {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="table-message">
+                <td colspan="9" class="table-message">
                     ${produits.length} produit(s) récupéré(s).
                     L'affichage détaillé du tableau sera ajouté
                     à l'étape suivante.
@@ -2719,7 +2733,7 @@ function afficherMessageTableauVide() {
 
     tableBody.innerHTML = `
         <tr>
-            <td colspan="8" class="table-message">
+            <td colspan="9" class="table-message">
                 Aucun produit enregistré.
             </td>
         </tr>
@@ -2745,7 +2759,7 @@ function afficherErreurChargement(message) {
 
     tableBody.innerHTML = `
         <tr>
-            <td colspan="8" class="table-message table-error">
+            <td colspan="9" class="table-message table-error">
                 Impossible de charger les produits.
                 ${echapperHTML(message)}
             </td>
@@ -3622,7 +3636,11 @@ function initialiserFiltresProduits() {
 }
 
 
-function appliquerFiltresProduits() {
+function appliquerFiltresProduits(event) {
+
+    if (event) {
+        pageProduitsCourante = 1;
+    }
 
     const recherche = normaliserTexteFiltreProduit(
         document.getElementById("products-search-input")?.value
@@ -3636,11 +3654,7 @@ function appliquerFiltresProduits() {
 
         const reference = lireValeurProduit(
             produit,
-            [
-                "Référence Produit",
-                "referenceProduit",
-                "reference"
-            ]
+            ["Référence Produit", "referenceProduit", "reference"]
         );
 
         const designation = lireValeurProduit(
@@ -3665,44 +3679,21 @@ function appliquerFiltresProduits() {
         );
 
         const texteRecherche = normaliserTexteFiltreProduit(
-            [
-                reference,
-                designation,
-                description,
-                fournisseur
-            ].join(" ")
+            [reference, designation, description, fournisseur].join(" ")
         );
 
         const statutProduit = normaliserStatutFiltreProduit(
-            lireValeurProduit(
-                produit,
-                ["Statut", "statut"]
-            )
+            lireValeurProduit(produit, ["Statut", "statut"])
         );
 
-        const correspondRecherche =
-            !recherche ||
-            texteRecherche.includes(recherche);
-
-        const correspondStatut =
-            !statutRecherche ||
-            statutProduit === statutRecherche;
-
-        return correspondRecherche && correspondStatut;
+        return (
+            (!recherche || texteRecherche.includes(recherche)) &&
+            (!statutRecherche || statutProduit === statutRecherche)
+        );
     });
-
-    if (
-        listeFiltree.length === 0 &&
-        produits.length > 0 &&
-        (recherche || statutRecherche)
-    ) {
-        afficherAucunResultatFiltreProduit();
-        return;
-    }
 
     afficherProduits(listeFiltree);
 }
-
 
 function normaliserTexteFiltreProduit(valeur) {
 
@@ -3736,7 +3727,7 @@ function afficherAucunResultatFiltreProduit() {
 
     tableBody.innerHTML = `
         <tr>
-            <td colspan="8" class="table-message">
+            <td colspan="9" class="table-message">
                 Aucun produit ne correspond à votre recherche.
             </td>
         </tr>
@@ -4019,3 +4010,947 @@ document.addEventListener(
     "DOMContentLoaded",
     initialiserNotificationsProduits
 );
+
+/* ===========================================================
+   OUTILS AVANCÉS : PAGINATION, SÉLECTION, EXPORT ET IMPRESSION
+=========================================================== */
+
+function initialiserOutilsAvancesProduits() {
+
+    const taillePage =
+        document.getElementById("products-page-size");
+
+    taillePage?.addEventListener("change", () => {
+        produitsParPage = Number(taillePage.value) || 10;
+        pageProduitsCourante = 1;
+        appliquerFiltresProduits();
+    });
+
+    const tableBody = obtenirCorpsTableauProduits();
+
+    tableBody?.addEventListener("change", event => {
+
+        const caseProduit =
+            event.target.closest(".product-row-checkbox");
+
+        if (!caseProduit) {
+            return;
+        }
+
+        const id = String(
+            caseProduit.dataset.productId || ""
+        ).trim();
+
+        if (caseProduit.checked) {
+            produitsSelectionnes.add(id);
+        } else {
+            produitsSelectionnes.delete(id);
+        }
+
+        synchroniserSelectionProduits();
+    });
+
+    document
+        .getElementById("select-all-products")
+        ?.addEventListener("change", event => {
+
+            document
+                .querySelectorAll(".product-row-checkbox")
+                .forEach(caseProduit => {
+
+                    const id = String(
+                        caseProduit.dataset.productId || ""
+                    ).trim();
+
+                    caseProduit.checked = event.target.checked;
+
+                    if (event.target.checked) {
+                        produitsSelectionnes.add(id);
+                    } else {
+                        produitsSelectionnes.delete(id);
+                    }
+                });
+
+            synchroniserSelectionProduits();
+        });
+
+    document
+        .getElementById("clear-products-selection-btn")
+        ?.addEventListener("click", () => {
+            produitsSelectionnes.clear();
+            synchroniserSelectionProduits();
+        });
+
+    document
+        .getElementById("bulk-delete-products-btn")
+        ?.addEventListener(
+            "click",
+            ouvrirSuppressionEnMasseProduits
+        );
+
+    document
+        .getElementById("cancel-bulk-delete-products-btn")
+        ?.addEventListener(
+            "click",
+            fermerSuppressionEnMasseProduits
+        );
+
+    document
+        .getElementById("confirm-bulk-delete-products-btn")
+        ?.addEventListener(
+            "click",
+            confirmerSuppressionEnMasseProduits
+        );
+
+    initialiserExportsProduits();
+    initialiserImpressionProduits();
+}
+
+
+function mettreAJourCompteurProduits(total) {
+
+    const compteur =
+        document.getElementById("filtered-product-count");
+
+    if (compteur) {
+        compteur.textContent =
+            Number(total || 0).toLocaleString("fr-FR");
+    }
+}
+
+
+function afficherPaginationProduits(total, totalPages) {
+
+    const resume =
+        document.getElementById("products-pagination-summary");
+
+    const controles =
+        document.getElementById("products-pagination-controls");
+
+    if (!resume || !controles) {
+        return;
+    }
+
+    if (total === 0) {
+        resume.textContent = "0 produit";
+        controles.innerHTML = "";
+        return;
+    }
+
+    const debut =
+        (pageProduitsCourante - 1) * produitsParPage + 1;
+    const fin = Math.min(
+        pageProduitsCourante * produitsParPage,
+        total
+    );
+
+    resume.textContent =
+        `${debut.toLocaleString("fr-FR")}–${fin.toLocaleString("fr-FR")} ` +
+        `sur ${total.toLocaleString("fr-FR")}`;
+
+    const boutons = [];
+
+    boutons.push(`
+        <button
+            type="button"
+            class="products-page-btn"
+            data-page="${pageProduitsCourante - 1}"
+            ${pageProduitsCourante === 1 ? "disabled" : ""}
+        >
+            ← Précédent
+        </button>
+    `);
+
+    const pages = construireListePagesProduits(
+        pageProduitsCourante,
+        totalPages
+    );
+
+    pages.forEach(page => {
+
+        if (page === "...") {
+            boutons.push(
+                `<span class="products-page-ellipsis">…</span>`
+            );
+            return;
+        }
+
+        boutons.push(`
+            <button
+                type="button"
+                class="products-page-btn ${
+                    page === pageProduitsCourante ? "active" : ""
+                }"
+                data-page="${page}"
+                aria-current="${
+                    page === pageProduitsCourante ? "page" : "false"
+                }"
+            >
+                ${page}
+            </button>
+        `);
+    });
+
+    boutons.push(`
+        <button
+            type="button"
+            class="products-page-btn"
+            data-page="${pageProduitsCourante + 1}"
+            ${pageProduitsCourante === totalPages ? "disabled" : ""}
+        >
+            Suivant →
+        </button>
+    `);
+
+    controles.innerHTML = boutons.join("");
+
+    controles
+        .querySelectorAll("[data-page]")
+        .forEach(bouton => {
+
+            bouton.addEventListener("click", () => {
+
+                const page = Number(bouton.dataset.page);
+
+                if (
+                    Number.isInteger(page) &&
+                    page >= 1 &&
+                    page <= totalPages
+                ) {
+                    pageProduitsCourante = page;
+                    afficherProduits(produitsFiltresCourants);
+
+                    document
+                        .querySelector(".sales-table-container")
+                        ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                }
+            });
+        });
+}
+
+
+function construireListePagesProduits(pageActuelle, totalPages) {
+
+    if (totalPages <= 7) {
+        return Array.from(
+            { length: totalPages },
+            (_, index) => index + 1
+        );
+    }
+
+    const pages = [1];
+
+    if (pageActuelle > 4) {
+        pages.push("...");
+    }
+
+    const debut = Math.max(2, pageActuelle - 1);
+    const fin = Math.min(totalPages - 1, pageActuelle + 1);
+
+    for (let page = debut; page <= fin; page++) {
+        pages.push(page);
+    }
+
+    if (pageActuelle < totalPages - 3) {
+        pages.push("...");
+    }
+
+    pages.push(totalPages);
+
+    return pages;
+}
+
+
+function synchroniserSelectionProduits() {
+
+    document
+        .querySelectorAll(".product-row-checkbox")
+        .forEach(caseProduit => {
+
+            const id = String(
+                caseProduit.dataset.productId || ""
+            ).trim();
+
+            const selectionne =
+                produitsSelectionnes.has(id);
+
+            caseProduit.checked = selectionne;
+
+            caseProduit
+                .closest("tr")
+                ?.classList.toggle(
+                    "product-row-selected",
+                    selectionne
+                );
+        });
+
+    const casesPage = [
+        ...document.querySelectorAll(
+            ".product-row-checkbox"
+        )
+    ];
+
+    const toutSelectionne =
+        casesPage.length > 0 &&
+        casesPage.every(caseProduit => caseProduit.checked);
+
+    const partiellementSelectionne =
+        casesPage.some(caseProduit => caseProduit.checked) &&
+        !toutSelectionne;
+
+    const tout =
+        document.getElementById("select-all-products");
+
+    if (tout) {
+        tout.checked = toutSelectionne;
+        tout.indeterminate = partiellementSelectionne;
+    }
+
+    const nombre = produitsSelectionnes.size;
+
+    const barre =
+        document.getElementById("products-bulk-bar");
+
+    const compteur =
+        document.getElementById("selected-products-count");
+
+    if (compteur) {
+        compteur.textContent =
+            nombre.toLocaleString("fr-FR");
+    }
+
+    if (barre) {
+        barre.hidden = nombre === 0;
+    }
+}
+
+
+function ouvrirSuppressionEnMasseProduits() {
+
+    if (produitsSelectionnes.size === 0) {
+        return;
+    }
+
+    const modal =
+        document.getElementById(
+            "bulk-delete-products-modal"
+        );
+
+    const total =
+        document.getElementById(
+            "bulk-delete-products-total"
+        );
+
+    if (total) {
+        total.textContent =
+            produitsSelectionnes.size.toLocaleString("fr-FR");
+    }
+
+    if (modal) {
+        modal.hidden = false;
+
+        requestAnimationFrame(() => {
+            modal.classList.add("active");
+            document.body.classList.add("modal-open");
+        });
+    }
+}
+
+
+function fermerSuppressionEnMasseProduits() {
+
+    const modal =
+        document.getElementById(
+            "bulk-delete-products-modal"
+        );
+
+    const bouton =
+        document.getElementById(
+            "confirm-bulk-delete-products-btn"
+        );
+
+    if (bouton?.disabled) {
+        return;
+    }
+
+    if (modal) {
+        modal.classList.remove("active");
+        modal.hidden = true;
+    }
+
+    document.body.classList.remove("modal-open");
+    afficherMessageSuppressionEnMasse("");
+}
+
+
+async function confirmerSuppressionEnMasseProduits() {
+
+    const ids = [...produitsSelectionnes];
+
+    if (ids.length === 0) {
+        return;
+    }
+
+    const bouton =
+        document.getElementById(
+            "confirm-bulk-delete-products-btn"
+        );
+
+    const boutonAnnuler =
+        document.getElementById(
+            "cancel-bulk-delete-products-btn"
+        );
+
+    const supprimes = [];
+    const erreurs = [];
+
+    try {
+
+        if (bouton) {
+            bouton.disabled = true;
+            bouton.textContent = "Suppression...";
+        }
+
+        if (boutonAnnuler) {
+            boutonAnnuler.disabled = true;
+        }
+
+        for (const idProduit of ids) {
+
+            try {
+
+                const resultat = await apiPost(
+                    "deleteProduit",
+                    { idProduit }
+                );
+
+                if (!resultat?.success) {
+                    throw new Error(
+                        resultat?.message ||
+                        "Suppression refusée."
+                    );
+                }
+
+                supprimes.push(idProduit);
+
+            } catch (error) {
+
+                erreurs.push({
+                    idProduit,
+                    message:
+                        error?.message ||
+                        "Erreur inconnue"
+                });
+            }
+        }
+
+        if (supprimes.length > 0) {
+
+            produits = produits.filter(produit => {
+
+                const id = String(
+                    lireValeurProduit(
+                        produit,
+                        ["ID Produit", "idProduit"]
+                    ) || ""
+                ).trim();
+
+                return !supprimes.includes(id);
+            });
+
+            supprimes.forEach(id =>
+                produitsSelectionnes.delete(id)
+            );
+
+            mettreAJourKPIs();
+            appliquerFiltresProduits();
+        }
+
+        if (erreurs.length > 0) {
+
+            afficherMessageSuppressionEnMasse(
+                `${supprimes.length} produit(s) supprimé(s), ` +
+                `${erreurs.length} échec(s).`
+            );
+
+            return;
+        }
+
+        fermerSuppressionEnMasseProduits();
+
+    } finally {
+
+        if (bouton) {
+            bouton.disabled = false;
+            bouton.textContent =
+                "Supprimer définitivement";
+        }
+
+        if (boutonAnnuler) {
+            boutonAnnuler.disabled = false;
+        }
+    }
+}
+
+
+function afficherMessageSuppressionEnMasse(message) {
+
+    const zone =
+        document.getElementById(
+            "bulk-delete-products-message"
+        );
+
+    if (!zone) {
+        return;
+    }
+
+    zone.hidden = !message;
+    zone.textContent = message || "";
+}
+
+
+function obtenirProduitsPourSortie() {
+
+    if (produitsSelectionnes.size > 0) {
+
+        return produits.filter(produit => {
+
+            const id = String(
+                lireValeurProduit(
+                    produit,
+                    ["ID Produit", "idProduit"]
+                ) || ""
+            ).trim();
+
+            return produitsSelectionnes.has(id);
+        });
+    }
+
+    return [...produitsFiltresCourants];
+}
+
+
+function transformerProduitsPourSortie(liste) {
+
+    return liste.map(produit => ({
+        "Référence": lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        ) || "",
+        "Désignation": lireValeurProduit(
+            produit,
+            ["Désignation", "designation"]
+        ) || "",
+        "Prix de revient": convertirNombre(
+            lireValeurProduit(
+                produit,
+                ["Prix de Revient", "prixRevient"]
+            )
+        ),
+        "Prix de vente": convertirNombre(
+            lireValeurProduit(
+                produit,
+                ["Prix de Vente", "prixVente"]
+            )
+        ),
+        "Marge FCFA": convertirNombre(
+            lireValeurProduit(
+                produit,
+                ["Marge (FCFA)", "margeFCFA"]
+            )
+        ),
+        "Taux de marge": formaterPourcentageProduit(
+            lireValeurProduit(
+                produit,
+                ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"]
+            )
+        ),
+        "Fournisseur": lireValeurProduit(
+            produit,
+            [
+                "Nom Fournisseur",
+                "Fournisseur",
+                "ID Fournisseur",
+                "ID Fournisseur Principal",
+                "idFournisseurPrincipal"
+            ]
+        ) || "",
+        "Statut": lireValeurProduit(
+            produit,
+            ["Statut", "statut"]
+        ) || ""
+    }));
+}
+
+
+function initialiserExportsProduits() {
+
+    const bouton =
+        document.getElementById("export-products-btn");
+
+    const menu =
+        document.getElementById(
+            "products-export-dropdown"
+        );
+
+    bouton?.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        if (!menu) {
+            return;
+        }
+
+        menu.hidden = !menu.hidden;
+
+        bouton.setAttribute(
+            "aria-expanded",
+            menu.hidden ? "false" : "true"
+        );
+    });
+
+    menu?.addEventListener("click", event => {
+
+        const option =
+            event.target.closest("[data-export-format]");
+
+        if (!option) {
+            return;
+        }
+
+        const format =
+            option.dataset.exportFormat;
+
+        menu.hidden = true;
+        bouton?.setAttribute("aria-expanded", "false");
+
+        exporterProduits(format);
+    });
+
+    document.addEventListener("click", event => {
+
+        if (
+            !event.target.closest("#products-export-menu") &&
+            menu
+        ) {
+            menu.hidden = true;
+            bouton?.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    });
+}
+
+
+function exporterProduits(format) {
+
+    const liste =
+        obtenirProduitsPourSortie();
+
+    if (liste.length === 0) {
+        return;
+    }
+
+    const donnees =
+        transformerProduitsPourSortie(liste);
+
+    if (format === "xlsx") {
+        exporterProduitsExcel(donnees);
+        return;
+    }
+
+    if (format === "pdf") {
+        exporterProduitsPDF(donnees);
+        return;
+    }
+
+    if (format === "csv") {
+        exporterProduitsCSV(donnees);
+    }
+}
+
+
+function exporterProduitsExcel(donnees) {
+
+    if (typeof XLSX === "undefined") {
+        alert("La bibliothèque Excel n'est pas disponible.");
+        return;
+    }
+
+    const feuille = XLSX.utils.json_to_sheet(donnees);
+
+    feuille["!cols"] = [
+        { wch: 16 },
+        { wch: 28 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 22 },
+        { wch: 12 }
+    ];
+
+    const classeur = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        classeur,
+        feuille,
+        "Produits"
+    );
+
+    XLSX.writeFile(
+        classeur,
+        `produits_${dateFichierProduits()}.xlsx`
+    );
+}
+
+
+function exporterProduitsCSV(donnees) {
+
+    const colonnes = Object.keys(donnees[0]);
+
+    const echapperCSV = valeur => {
+        const texte = String(valeur ?? "");
+        return `"${texte.replace(/"/g, '""')}"`;
+    };
+
+    const contenu = [
+        colonnes.map(echapperCSV).join(";"),
+        ...donnees.map(ligne =>
+            colonnes
+                .map(colonne => echapperCSV(ligne[colonne]))
+                .join(";")
+        )
+    ].join("\n");
+
+    telechargerFichierProduits(
+        "\uFEFF" + contenu,
+        `produits_${dateFichierProduits()}.csv`,
+        "text/csv;charset=utf-8"
+    );
+}
+
+
+function exporterProduitsPDF(donnees) {
+
+    const jsPDF =
+        window.jspdf?.jsPDF;
+
+    if (!jsPDF) {
+        alert("La bibliothèque PDF n'est pas disponible.");
+        return;
+    }
+
+    const documentPDF =
+        new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4"
+        });
+
+    documentPDF.setFontSize(17);
+    documentPDF.text(
+        "VISIBL — Liste des produits",
+        14,
+        16
+    );
+
+    documentPDF.setFontSize(9);
+    documentPDF.text(
+        `Généré le ${new Date().toLocaleString("fr-FR")}`,
+        14,
+        22
+    );
+
+    const colonnes = Object.keys(donnees[0]);
+
+    documentPDF.autoTable({
+        startY: 28,
+        head: [colonnes],
+        body: donnees.map(ligne =>
+            colonnes.map(colonne => ligne[colonne])
+        ),
+        styles: {
+            fontSize: 7,
+            cellPadding: 2
+        },
+        headStyles: {
+            fillColor: [37, 99, 235]
+        }
+    });
+
+    documentPDF.save(
+        `produits_${dateFichierProduits()}.pdf`
+    );
+}
+
+
+function initialiserImpressionProduits() {
+
+    document
+        .getElementById("print-products-btn")
+        ?.addEventListener(
+            "click",
+            imprimerProduits
+        );
+}
+
+
+function imprimerProduits() {
+
+    const liste =
+        obtenirProduitsPourSortie();
+
+    if (liste.length === 0) {
+        return;
+    }
+
+    const donnees =
+        transformerProduitsPourSortie(liste);
+
+    const colonnes = Object.keys(donnees[0]);
+
+    const fenetre =
+        window.open(
+            "",
+            "_blank",
+            "width=1200,height=800"
+        );
+
+    if (!fenetre) {
+        alert(
+            "Autorisez les fenêtres contextuelles pour imprimer."
+        );
+        return;
+    }
+
+    const lignes = donnees.map(ligne => `
+        <tr>
+            ${colonnes.map(colonne =>
+                `<td>${echapperHTML(ligne[colonne])}</td>`
+            ).join("")}
+        </tr>
+    `).join("");
+
+    fenetre.document.write(`
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <title>Liste des produits</title>
+            <style>
+                @page { size: landscape; margin: 12mm; }
+                body {
+                    font-family: Arial, sans-serif;
+                    color: #0f172a;
+                }
+                h1 { margin: 0 0 6px; font-size: 22px; }
+                p { margin: 0 0 18px; color: #64748b; }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    padding: 7px;
+                    font-size: 9px;
+                    text-align: left;
+                    border: 1px solid #dbe2ea;
+                }
+                th {
+                    background: #e5e7eb;
+                }
+                tbody tr:nth-child(even) {
+                    background: #f8fafc;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>VISIBL — Liste des produits</h1>
+            <p>
+                ${donnees.length} produit(s) —
+                ${new Date().toLocaleString("fr-FR")}
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        ${colonnes.map(colonne =>
+                            `<th>${echapperHTML(colonne)}</th>`
+                        ).join("")}
+                    </tr>
+                </thead>
+                <tbody>${lignes}</tbody>
+            </table>
+            <script>
+                window.onload = () => {
+                    window.print();
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+
+    fenetre.document.close();
+}
+
+
+function telechargerFichierProduits(
+    contenu,
+    nom,
+    type
+) {
+
+    const blob = new Blob([contenu], { type });
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement("a");
+
+    lien.href = url;
+    lien.download = nom;
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+
+    URL.revokeObjectURL(url);
+}
+
+
+function dateFichierProduits() {
+
+    const date = new Date();
+
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+}
+
+
+function appliquerAnimationProduit() {
+
+    if (!animationProduitSuivante?.id) {
+        return;
+    }
+
+    const ligne = document.querySelector(
+        `tr[data-product-id="${CSS.escape(
+            animationProduitSuivante.id
+        )}"]`
+    );
+
+    if (!ligne) {
+        return;
+    }
+
+    ligne.classList.add(
+        animationProduitSuivante.type === "updated"
+            ? "product-row-updated"
+            : "product-row-added"
+    );
+
+    animationProduitSuivante = null;
+}
+
