@@ -2124,7 +2124,15 @@ function ouvrirModificationProduit(idProduit) {
     );
     definirValeurChamp(
         "product-purchase-price",
-        lireValeurProduit(produit, ["Prix d'Achat", "prixAchat"])
+        lireValeurProduit(
+            produit,
+            [
+                "Prix d’Achat",
+                "Prix d'Achat",
+                "Prix Achat",
+                "prixAchat"
+            ]
+        )
     );
     definirValeurChamp("product-vat-rate", 18);
     definirValeurChamp(
