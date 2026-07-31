@@ -335,71 +335,42 @@
     <main class="main-content">
 
 
-        <!-- =================================================
-             HEADER
-        ================================================== -->
-
+        <!-- ===== Header ===== -->
         <header class="header">
 
             <div class="header-left">
 
-                <button
-                    id="sidebar-toggle"
-                    class="sidebar-toggle"
-                    type="button"
-                    aria-label="Ouvrir le menu"
-                >
+                <button id="sidebar-toggle" class="sidebar-toggle">
                     ☰
                 </button>
 
-                <a
-                    href="dashboard.html"
-                    class="logo"
-                >
-
-                    <img
-                        src="../logo-vizibl.png"
-                        alt="Logo VISIBL"
-                    >
-
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
                 </a>
 
-                <h2>
-                    Produits
-                </h2>
+                <h2>Clients</h2>
 
             </div>
-
 
             <div class="header-right">
 
                 <div class="search-box">
 
-                    <button
-                        class="icon-btn"
-                        id="mobile-search-btn"
-                        type="button"
-                        aria-label="Ouvrir la recherche"
-                    >
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
                         🔍
                     </button>
 
+                    <!-- Barre de recherche -->
                     <div class="search-container">
 
                         <input
                             type="text"
                             class="search-input"
-                            id="header-products-search-input"
-                            placeholder="Rechercher un produit..."
-                            aria-label="Recherche générale"
+                            placeholder="Rechercher un client..."
                         >
 
-                        <button
-                            class="search-btn"
-                            id="header-products-search-btn"
-                            type="button"
-                            aria-label="Rechercher"
-                        >
+                        <button class="search-btn">
                             🔍
                         </button>
 
@@ -407,102 +378,80 @@
 
                 </div>
 
-
                 <div class="header-icons">
 
                     <div class="notification-menu">
 
-                        <button
-                            id="notification-button"
-                            class="icon-btn notifications"
-                            type="button"
-                            aria-label="Afficher les notifications"
-                            aria-expanded="false"
-                        >
-                            🔔
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
 
-                            <span class="notification-badge">
-                                3
-                            </span>
-                        </button>
+        🔔
+        <span class="notification-badge">3</span>
 
-                        <div
-                            id="notification-panel"
-                            class="notification-panel"
-                            hidden
-                        >
-                            <div class="notification-panel-header">
-                                <h3>Notifications</h3>
-                            </div>
+    </button>
 
-                            <div class="notification-item">
-                                <span class="notification-item-icon">📦</span>
+    <div
+        id="notification-panel"
+        class="notification-panel"
+        hidden>
 
-                                <div>
-                                    <strong>Catalogue produits</strong>
-                                    <p>Le module Produits est à jour.</p>
-                                    <small>À l’instant</small>
-                                </div>
-                            </div>
+        <div class="notification-panel-header">
+            <h3>Notifications</h3>
+        </div>
 
-                            <div class="notification-item">
-                                <span class="notification-item-icon">⚠️</span>
+        <div class="notification-item">
+            <span class="notification-item-icon">📦</span>
+            <div>
+                <strong>Nouvelle commande</strong>
+                <p>Une nouvelle commande a été enregistrée.</p>
+                <small>Il y a quelques minutes</small>
+            </div>
+        </div>
 
-                                <div>
-                                    <strong>Surveillance du stock</strong>
-                                    <p>Les alertes de stock seront reliées au futur module Stock.</p>
-                                    <small>Aujourd’hui</small>
-                                </div>
-                            </div>
+        <div class="notification-item">
+            <span class="notification-item-icon">⚠️</span>
+            <div>
+                <strong>Stock faible</strong>
+                <p>Un produit approche du seuil de rupture.</p>
+                <small>Aujourd’hui</small>
+            </div>
+        </div>
 
-                            <div class="notification-item">
-                                <span class="notification-item-icon">✅</span>
+        <div class="notification-item">
+            <span class="notification-item-icon">💳</span>
+            <div>
+                <strong>Paiement reçu</strong>
+                <p>Un nouveau paiement a été enregistré.</p>
+                <small>Aujourd’hui</small>
+            </div>
+        </div>
 
-                                <div>
-                                    <strong>Produits actifs</strong>
-                                    <p>Consultez le KPI pour suivre les produits actifs.</p>
-                                    <small>Aujourd’hui</small>
-                                </div>
-                            </div>
-                        </div>
+    </div>
 
-                    </div>
+</div>
 
+                    <div class="profile-menu">
 
-                    <div class="profile-menu" id="product-profile-menu">
-
-                        <button
-                            id="profile-menu-button"
-                            class="icon-btn"
-                            type="button"
-                            aria-label="Afficher le menu du profil"
-                            aria-expanded="false"
-                        >
+                        <button class="icon-btn">
                             👤
                         </button>
 
-                        <div
-                            id="profile-dropdown"
-                            class="dropdown-menu"
-                            hidden
-                        >
-                            <a href="moncompte.html">
-                                Mon profil
-                            </a>
+                        <div class="dropdown-menu">
 
-                            <a href="parametres.html">
-                                Paramètres
+                            <a href="moncompte.html">
+                                Mon compte
                             </a>
 
                             <hr>
 
-                            <a
-                                href="#"
-                                class="logout"
-                                id="logout-button"
-                            >
-                                Déconnexion
-                            </a>
+                            <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+
                         </div>
 
                     </div>
@@ -512,6 +461,7 @@
             </div>
 
         </header>
+
 
 
         <!-- =================================================
