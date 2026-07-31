@@ -2788,62 +2788,108 @@ function mettreAJourKPIs() {
         }).length;
 
     let valeurStock = 0;
-
     let sommeMarges = 0;
-
     let nbMarges = 0;
-
     let ajoutesCeMois = 0;
 
-    const maintenant =
-        new Date();
+    let sommeMargesMoisActuel = 0;
+    let nbMargesMoisActuel = 0;
+    let sommeMargesMoisPrecedent = 0;
+    let nbMargesMoisPrecedent = 0;
+
+    const maintenant = new Date();
+    const debutMoisActuel = new Date(
+        maintenant.getFullYear(),
+        maintenant.getMonth(),
+        1
+    );
+    const debutMoisSuivant = new Date(
+        maintenant.getFullYear(),
+        maintenant.getMonth() + 1,
+        1
+    );
+    const debutMoisPrecedent = new Date(
+        maintenant.getFullYear(),
+        maintenant.getMonth() - 1,
+        1
+    );
 
     produits.forEach(produit => {
 
         const prixRevient =
             convertirNombre(
-                lireValeurProduit(produit, ["Prix de Revient", "prixRevient"])
+                lireValeurProduit(
+                    produit,
+                    ["Prix de Revient", "prixRevient"]
+                )
             );
 
         const stockInitial =
             convertirNombre(
-                lireValeurProduit(produit, ["Stock Initial", "stockInitial"])
+                lireValeurProduit(
+                    produit,
+                    ["Stock Initial", "stockInitial"]
+                )
             );
 
-        valeurStock +=
-            prixRevient * stockInitial;
+        valeurStock += prixRevient * stockInitial;
 
         const marge =
             convertirNombre(
-                lireValeurProduit(produit, ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"])
+                lireValeurProduit(
+                    produit,
+                    [
+                        "Taux de Marge",
+                        "Taux de Marge (%)",
+                        "tauxMarge"
+                    ]
+                )
             );
 
         if (Number.isFinite(marge)) {
-
             sommeMarges += marge;
-
             nbMarges++;
-
         }
 
         const dateAjoutBrute =
-            lireValeurProduit(produit, ["Date d'ajout", "Date d'Ajout", "dateAjout"]);
+            lireValeurProduit(
+                produit,
+                [
+                    "Date d'ajout",
+                    "Date d’Ajout",
+                    "Date d'Ajout",
+                    "dateAjout"
+                ]
+            );
 
-        if (dateAjoutBrute) {
+        if (!dateAjoutBrute) {
+            return;
+        }
 
-            const dateAjout =
-                new Date(dateAjoutBrute);
+        const dateAjout = new Date(dateAjoutBrute);
 
-            if (
-                !Number.isNaN(dateAjout.getTime()) &&
-                dateAjout.getMonth() === maintenant.getMonth() &&
-                dateAjout.getFullYear() === maintenant.getFullYear()
-            ) {
+        if (Number.isNaN(dateAjout.getTime())) {
+            return;
+        }
 
-                ajoutesCeMois++;
+        if (
+            dateAjout >= debutMoisActuel &&
+            dateAjout < debutMoisSuivant
+        ) {
+            ajoutesCeMois++;
 
+            if (Number.isFinite(marge)) {
+                sommeMargesMoisActuel += marge;
+                nbMargesMoisActuel++;
             }
-
+        } else if (
+            dateAjout >= debutMoisPrecedent &&
+            dateAjout < debutMoisActuel
+        ) {
+            if (Number.isFinite(marge)) {
+                sommeMargesMoisPrecedent += marge;
+                nbMargesMoisPrecedent++;
+            }
         }
 
     });
@@ -2851,6 +2897,16 @@ function mettreAJourKPIs() {
     const margeMoyenne =
         nbMarges > 0
             ? sommeMarges / nbMarges
+            : 0;
+
+    const margeMoyenneMoisActuel =
+        nbMargesMoisActuel > 0
+            ? sommeMargesMoisActuel / nbMargesMoisActuel
+            : 0;
+
+    const margeMoyenneMoisPrecedent =
+        nbMargesMoisPrecedent > 0
+            ? sommeMargesMoisPrecedent / nbMargesMoisPrecedent
             : 0;
 
     definirTexteElement(
@@ -2873,9 +2929,11 @@ function mettreAJourKPIs() {
         formatNumber(margeMoyenne) + " %"
     );
 
-    definirTexteElement(
-        "kpi-average-margin-fcfa",
-        "Marge moyenne"
+    mettreAJourTendanceMargeMoyenne(
+        margeMoyenneMoisActuel,
+        margeMoyenneMoisPrecedent,
+        nbMargesMoisActuel,
+        nbMargesMoisPrecedent
     );
 
     definirTexteElement(
@@ -2900,6 +2958,74 @@ function mettreAJourKPIs() {
 
 }
 
+
+function mettreAJourTendanceMargeMoyenne(
+    margeActuelle,
+    margePrecedente,
+    nombreActuel,
+    nombrePrecedent
+) {
+
+    const element =
+        document.getElementById(
+            "kpi-average-margin-fcfa"
+        );
+
+    if (!element) {
+        return;
+    }
+
+    element.style.fontWeight = "600";
+
+    if (nombreActuel === 0) {
+        element.textContent =
+            "Aucun produit ajouté ce mois";
+        element.style.color = "#64748b";
+        return;
+    }
+
+    if (
+        nombrePrecedent === 0 ||
+        margePrecedente === 0
+    ) {
+        element.textContent =
+            "→ Aucune comparaison disponible";
+        element.style.color = "#64748b";
+        return;
+    }
+
+    const tendance =
+        ((margeActuelle - margePrecedente) /
+        Math.abs(margePrecedente)) * 100;
+
+    const valeurFormatee =
+        Math.abs(tendance).toLocaleString(
+            "fr-FR",
+            {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            }
+        );
+
+    if (tendance > 0.05) {
+        element.textContent =
+            `↑ ${valeurFormatee} % par rapport au mois dernier`;
+        element.style.color = "#16a34a";
+        return;
+    }
+
+    if (tendance < -0.05) {
+        element.textContent =
+            `↓ ${valeurFormatee} % par rapport au mois dernier`;
+        element.style.color = "#dc2626";
+        return;
+    }
+
+    element.textContent =
+        "→ Stable par rapport au mois dernier";
+    element.style.color = "#64748b";
+
+}
 
 /* ===========================================================
    MODIFIER LE TEXTE D'UN ÉLÉMENT
