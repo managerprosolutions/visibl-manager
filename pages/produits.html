@@ -389,12 +389,14 @@
                         <input
                             type="text"
                             class="search-input"
+                            id="header-products-search-input"
                             placeholder="Rechercher un produit..."
                             aria-label="Recherche générale"
                         >
 
                         <button
                             class="search-btn"
+                            id="header-products-search-btn"
                             type="button"
                             aria-label="Rechercher"
                         >
@@ -408,38 +410,87 @@
 
                 <div class="header-icons">
 
-                    <button
-                        class="icon-btn notifications"
-                        type="button"
-                        aria-label="Notifications"
-                    >
-
-                        🔔
-
-                        <span class="notification-badge">
-                            3
-                        </span>
-
-                    </button>
-
-
-                    <div class="profile-menu">
+                    <div class="notification-menu">
 
                         <button
+                            id="notification-button"
+                            class="icon-btn notifications"
+                            type="button"
+                            aria-label="Afficher les notifications"
+                            aria-expanded="false"
+                        >
+                            🔔
+
+                            <span class="notification-badge">
+                                3
+                            </span>
+                        </button>
+
+                        <div
+                            id="notification-panel"
+                            class="notification-panel"
+                            hidden
+                        >
+                            <div class="notification-panel-header">
+                                <h3>Notifications</h3>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">📦</span>
+
+                                <div>
+                                    <strong>Catalogue produits</strong>
+                                    <p>Le module Produits est à jour.</p>
+                                    <small>À l’instant</small>
+                                </div>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">⚠️</span>
+
+                                <div>
+                                    <strong>Surveillance du stock</strong>
+                                    <p>Les alertes de stock seront reliées au futur module Stock.</p>
+                                    <small>Aujourd’hui</small>
+                                </div>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">✅</span>
+
+                                <div>
+                                    <strong>Produits actifs</strong>
+                                    <p>Consultez le KPI pour suivre les produits actifs.</p>
+                                    <small>Aujourd’hui</small>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="profile-menu" id="product-profile-menu">
+
+                        <button
+                            id="profile-menu-button"
                             class="icon-btn"
                             type="button"
-                            aria-label="Menu du profil"
+                            aria-label="Afficher le menu du profil"
+                            aria-expanded="false"
                         >
                             👤
                         </button>
 
-                        <div class="dropdown-menu">
-
-                            <a href="#">
+                        <div
+                            id="profile-dropdown"
+                            class="dropdown-menu"
+                            hidden
+                        >
+                            <a href="moncompte.html">
                                 Mon profil
                             </a>
 
-                            <a href="#">
+                            <a href="parametres.html">
                                 Paramètres
                             </a>
 
@@ -448,10 +499,10 @@
                             <a
                                 href="#"
                                 class="logout"
+                                id="logout-button"
                             >
                                 Déconnexion
                             </a>
-
                         </div>
 
                     </div>
