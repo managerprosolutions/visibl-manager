@@ -676,72 +676,24 @@
                  RECHERCHE ET FILTRES
             ============================================== -->
 
-            <div class="sales-filters">
+            <div class="sales-filters products-simple-filters">
 
                 <div class="sales-search">
 
                     <input
-                        type="text"
+                        type="search"
                         id="products-search-input"
-                        placeholder="Rechercher par référence, désignation ou fournisseur..."
+                        placeholder="Rechercher par référence, désignation, description ou fournisseur..."
                         autocomplete="off"
                         aria-label="Rechercher un produit"
                     >
 
                 </div>
 
-
-                <!-- Filtre fournisseur -->
-
-                <select
-                    id="product-supplier-filter"
-                    aria-label="Filtrer par fournisseur"
-                >
-
-                    <option value="">
-                        Tous les fournisseurs
-                    </option>
-
-                    <option value="sans-fournisseur">
-                        Sans fournisseur
-                    </option>
-
-                </select>
-
-
-                <!-- Filtre niveau de stock -->
-
-                <select
-                    id="product-stock-filter"
-                    aria-label="Filtrer par niveau de stock"
-                >
-
-                    <option value="">
-                        Tous les niveaux de stock initial
-                    </option>
-
-                    <option value="disponible">
-                        Stock disponible
-                    </option>
-
-                    <option value="faible">
-                        Sous le seuil d'alerte
-                    </option>
-
-                    <option value="rupture">
-                        Stock initial nul
-                    </option>
-
-                </select>
-
-
-                <!-- Filtre statut -->
-
                 <select
                     id="product-status-filter"
-                    aria-label="Filtrer par statut"
+                    aria-label="Filtrer les produits par statut"
                 >
-
                     <option value="">
                         Tous les statuts
                     </option>
@@ -757,7 +709,6 @@
                     <option value="archive">
                         Archivé
                     </option>
-
                 </select>
 
             </div>
