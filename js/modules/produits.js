@@ -63,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserConsultationProduit();
     initialiserModificationProduit();
     initialiserSuppressionProduit();
+    initialiserFiltresProduits();
 
     const refreshButton =
         document.getElementById("refresh-products-btn");
@@ -1410,7 +1411,7 @@ async function enregistrerProduit(event) {
             ];
 
         mettreAJourKPIs();
-        afficherProduits(produits);
+        appliquerFiltresProduits();
 
         fermerModaleProduit();
 
@@ -1520,7 +1521,7 @@ async function synchroniserImageProduitEnArrierePlan(
             };
         });
 
-        afficherProduits(produits);
+        appliquerFiltresProduits();
 
         console.log(
             "Image du produit synchronisée : " + idProduit
@@ -1548,7 +1549,7 @@ async function synchroniserImageProduitEnArrierePlan(
             };
         });
 
-        afficherProduits(produits);
+        appliquerFiltresProduits();
     }
 }
 
@@ -1705,7 +1706,7 @@ function chargerProduits(data) {
 
     if (typeof afficherProduits === "function") {
 
-        afficherProduits(produits);
+        appliquerFiltresProduits();
 
     } else {
 
@@ -3527,7 +3528,7 @@ async function confirmerSuppressionProduit() {
         });
 
         mettreAJourKPIs();
-        afficherProduits(produits);
+        appliquerFiltresProduits();
         fermerConfirmationSuppressionProduit();
 
     } catch (error) {
@@ -3581,3 +3582,163 @@ function afficherMessageSuppressionProduit(
     zone.className =
         `delete-product-message delete-product-message-${type}`;
 }
+
+/* ===========================================================
+   RECHERCHE ET FILTRE PAR STATUT
+=========================================================== */
+
+function initialiserFiltresProduits() {
+
+    const recherche =
+        document.getElementById("products-search-input");
+
+    const filtreStatut =
+        document.getElementById("product-status-filter");
+
+    if (
+        recherche &&
+        recherche.dataset.initialise !== "true"
+    ) {
+        recherche.dataset.initialise = "true";
+
+        recherche.addEventListener(
+            "input",
+            appliquerFiltresProduits
+        );
+    }
+
+    if (
+        filtreStatut &&
+        filtreStatut.dataset.initialise !== "true"
+    ) {
+        filtreStatut.dataset.initialise = "true";
+
+        filtreStatut.addEventListener(
+            "change",
+            appliquerFiltresProduits
+        );
+    }
+}
+
+
+function appliquerFiltresProduits() {
+
+    const recherche = normaliserTexteFiltreProduit(
+        document.getElementById("products-search-input")?.value
+    );
+
+    const statutRecherche = normaliserStatutFiltreProduit(
+        document.getElementById("product-status-filter")?.value
+    );
+
+    const listeFiltree = produits.filter(produit => {
+
+        const reference = lireValeurProduit(
+            produit,
+            [
+                "Référence Produit",
+                "referenceProduit",
+                "reference"
+            ]
+        );
+
+        const designation = lireValeurProduit(
+            produit,
+            ["Désignation", "designation"]
+        );
+
+        const description = lireValeurProduit(
+            produit,
+            ["Description", "description"]
+        );
+
+        const fournisseur = lireValeurProduit(
+            produit,
+            [
+                "Nom Fournisseur",
+                "Fournisseur",
+                "ID Fournisseur",
+                "ID Fournisseur Principal",
+                "idFournisseurPrincipal"
+            ]
+        );
+
+        const texteRecherche = normaliserTexteFiltreProduit(
+            [
+                reference,
+                designation,
+                description,
+                fournisseur
+            ].join(" ")
+        );
+
+        const statutProduit = normaliserStatutFiltreProduit(
+            lireValeurProduit(
+                produit,
+                ["Statut", "statut"]
+            )
+        );
+
+        const correspondRecherche =
+            !recherche ||
+            texteRecherche.includes(recherche);
+
+        const correspondStatut =
+            !statutRecherche ||
+            statutProduit === statutRecherche;
+
+        return correspondRecherche && correspondStatut;
+    });
+
+    if (
+        listeFiltree.length === 0 &&
+        produits.length > 0 &&
+        (recherche || statutRecherche)
+    ) {
+        afficherAucunResultatFiltreProduit();
+        return;
+    }
+
+    afficherProduits(listeFiltree);
+}
+
+
+function normaliserTexteFiltreProduit(valeur) {
+
+    return String(valeur || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+
+function normaliserStatutFiltreProduit(valeur) {
+
+    const statut = normaliserTexteFiltreProduit(valeur);
+
+    if (statut === "archive" || statut === "archivee") {
+        return "archive";
+    }
+
+    return statut;
+}
+
+
+function afficherAucunResultatFiltreProduit() {
+
+    const tableBody = obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="8" class="table-message">
+                Aucun produit ne correspond à votre recherche.
+            </td>
+        </tr>
+    `;
+}
+
