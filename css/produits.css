@@ -2499,3 +2499,28 @@ body.modal-open {
         height: 66px;
     }
 }
+
+/* =========================================================
+   FILTRES PRODUITS SIMPLIFIÉS
+   Recherche instantanée + filtre par statut uniquement.
+========================================================= */
+
+.sales-filters.products-simple-filters {
+    grid-template-columns: minmax(280px, 1fr) minmax(190px, 260px);
+    align-items: center;
+}
+
+.sales-filters.products-simple-filters .sales-search {
+    grid-column: auto;
+}
+
+@media screen and (max-width: 768px) {
+    .sales-filters.products-simple-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .sales-filters.products-simple-filters .sales-search {
+        grid-column: auto;
+    }
+}
+
