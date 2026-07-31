@@ -2524,3 +2524,135 @@ body.modal-open {
     }
 }
 
+/* =========================================================
+   HEADER PRODUITS — RECHERCHE, NOTIFICATIONS ET PROFIL
+========================================================= */
+
+.header-icons,
+.notification-menu,
+.profile-menu {
+    position: relative;
+}
+
+.notification-panel,
+#product-profile-menu .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    z-index: 1500;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+}
+
+.notification-panel[hidden],
+#product-profile-menu .dropdown-menu[hidden] {
+    display: none !important;
+}
+
+.notification-panel {
+    width: min(360px, calc(100vw - 32px));
+    overflow: hidden;
+}
+
+.notification-panel-header {
+    padding: 15px 17px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.notification-panel-header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.98rem;
+}
+
+.notification-item {
+    display: grid;
+    grid-template-columns: 38px 1fr;
+    gap: 11px;
+    padding: 14px 17px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.notification-item:last-child {
+    border-bottom: 0;
+}
+
+.notification-item:hover {
+    background: #f8fafc;
+}
+
+.notification-item-icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #eff6ff;
+}
+
+.notification-item strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #0f172a;
+    font-size: 0.86rem;
+}
+
+.notification-item p {
+    margin: 0 0 4px;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+.notification-item small {
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+
+#product-profile-menu .dropdown-menu {
+    width: 210px;
+    padding: 8px;
+}
+
+#product-profile-menu .dropdown-menu a {
+    display: block;
+    padding: 10px 12px;
+    color: #334155;
+    font-size: 0.84rem;
+    text-decoration: none;
+    border-radius: 9px;
+}
+
+#product-profile-menu .dropdown-menu a:hover {
+    background: #f1f5f9;
+}
+
+#product-profile-menu .dropdown-menu .logout {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+#product-profile-menu .dropdown-menu hr {
+    margin: 6px 0;
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+@media screen and (max-width: 640px) {
+    .notification-panel {
+        position: fixed;
+        top: 68px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+    }
+
+    #product-profile-menu .dropdown-menu {
+        position: fixed;
+        top: 68px;
+        right: 12px;
+    }
+}
+
