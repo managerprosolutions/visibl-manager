@@ -1548,20 +1548,21 @@ function masquerMessageFormulaireProduit() {
 
 function remettreValeursParDefautProduit() {
 
-    definirValeurChamp("product-purchase-price", 0);
-    definirValeurChamp("product-vat-rate", TVA);
+    definirValeurChamp("product-purchase-price", "");
+    definirValeurChamp("product-vat-rate", 18);
     definirValeurChamp("product-vat-amount", 0);
-    definirValeurChamp("product-transport-cost", 0);
-    definirValeurChamp("product-customs-cost", 0);
-    definirValeurChamp("product-other-costs", 0);
+    definirValeurChamp("product-transport-cost", "");
+    definirValeurChamp("product-customs-cost", "");
+    definirValeurChamp("product-other-costs", "");
     definirValeurChamp("product-cost-price", 0);
-    definirValeurChamp("product-sale-price", 0);
-    definirValeurChamp("product-minimum-price", 0);
+    definirValeurChamp("product-sale-price", "");
+    definirValeurChamp("product-minimum-price", "");
     definirValeurChamp("product-margin-amount", 0);
     definirValeurChamp("product-margin-rate", 0);
-    definirValeurChamp("product-initial-stock", 0);
-    definirValeurChamp("product-alert-threshold", 0);
-    definirValeurChamp("product-warranty", 0);
+    definirValeurChamp("product-initial-stock", "");
+    definirValeurChamp("product-alert-threshold", "");
+    definirValeurChamp("product-warranty", "");
+    definirValeurChamp("product-main-supplier", "");
 
     const statut =
         document.getElementById("product-status");
@@ -2715,3 +2716,115 @@ function echapperHTML(value) {
         .replaceAll("'", "&#039;");
 
 }
+
+/* ===========================================================
+   LISTE DÉROULANTE DES FOURNISSEURS
+   Cette fonction pourra recevoir les fournisseurs chargés
+   depuis le futur module Fournisseurs.
+=========================================================== */
+
+function remplirListeFournisseursProduits(listeFournisseurs = []) {
+
+    const select =
+        document.getElementById("product-main-supplier");
+
+    if (!select) {
+        return;
+    }
+
+    const valeurSelectionnee = select.value;
+
+    select.innerHTML = `
+        <option value="">
+            Sélectionner un fournisseur
+        </option>
+    `;
+
+    listeFournisseurs.forEach(fournisseur => {
+
+        const id =
+            fournisseur.idFournisseur ||
+            fournisseur.IDFournisseur ||
+            fournisseur.id ||
+            fournisseur.ID ||
+            "";
+
+        const nom =
+            fournisseur.nomFournisseur ||
+            fournisseur.raisonSociale ||
+            fournisseur.nom ||
+            fournisseur.designation ||
+            id;
+
+        if (!id) {
+            return;
+        }
+
+        const option = document.createElement("option");
+        option.value = String(id);
+        option.textContent =
+            nom && String(nom) !== String(id)
+                ? `${nom} — ${id}`
+                : String(id);
+
+        select.appendChild(option);
+
+    });
+
+    if (
+        valeurSelectionnee &&
+        Array.from(select.options).some(
+            option => option.value === valeurSelectionnee
+        )
+    ) {
+        select.value = valeurSelectionnee;
+    }
+
+}
+
+
+/*
+   Le futur module Fournisseurs pourra envoyer sa liste ainsi :
+
+   window.dispatchEvent(
+       new CustomEvent("fournisseurs:charges", {
+           detail: listeFournisseurs
+       })
+   );
+*/
+
+window.addEventListener(
+    "fournisseurs:charges",
+    event => {
+        remplirListeFournisseursProduits(
+            Array.isArray(event.detail)
+                ? event.detail
+                : []
+        );
+    }
+);
+
+/* ===========================================================
+   TVA FIXE À 18 %
+=========================================================== */
+
+function verrouillerTVAProduit() {
+    const champTVA = document.getElementById("product-vat-rate");
+
+    if (!champTVA) {
+        return;
+    }
+
+    champTVA.value = "18";
+    champTVA.readOnly = true;
+    champTVA.setAttribute("aria-readonly", "true");
+}
+
+document.addEventListener("DOMContentLoaded", verrouillerTVAProduit);
+
+document.addEventListener("input", event => {
+    if (event.target?.id === "product-vat-rate") {
+        event.target.value = "18";
+    }
+});
+
