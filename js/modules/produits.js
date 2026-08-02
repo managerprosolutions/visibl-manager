@@ -53,6 +53,9 @@ let pageProduitsCourante = 1;
 let produitsParPage = 10;
 let animationProduitSuivante = null;
 
+/* Fournisseurs disponibles dans le formulaire Produit. */
+let fournisseursProduits = [];
+
 
 
 /* ===========================================================
@@ -75,6 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserHeaderProduits();
     initialiserOutilsAvancesProduits();
 
+    chargerFournisseursPourProduits();
+
     const refreshButton =
         document.getElementById("refresh-products-btn");
 
@@ -83,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         refreshButton.addEventListener("click", () => {
 
             chargerProduitsDepuisAPI();
+            chargerFournisseursPourProduits();
 
         });
 
@@ -211,6 +217,9 @@ function ouvrirModaleProduit() {
     remettreValeursParDefautProduit();
     genererReferenceProduit();
     reinitialiserImageProduit();
+
+    /* Récupère les fournisseurs les plus récents sans bloquer l'ouverture. */
+    chargerFournisseursPourProduits();
     masquerMessageFormulaireProduit();
 
     modale.classList.add("active");
@@ -3151,11 +3160,94 @@ function echapperHTML(value) {
 
 /* ===========================================================
    LISTE DÉROULANTE DES FOURNISSEURS
-   Cette fonction pourra recevoir les fournisseurs chargés
-   depuis le futur module Fournisseurs.
 =========================================================== */
 
-function remplirListeFournisseursProduits(listeFournisseurs = []) {
+/**
+ * Charge les fournisseurs enregistrés dans Google Sheets et
+ * alimente le champ #product-main-supplier.
+ *
+ * Seuls les fournisseurs actifs sont proposés pour une nouvelle
+ * sélection. Lors de la modification d'un ancien produit, son
+ * fournisseur reste sélectionnable même s'il est devenu inactif.
+ */
+async function chargerFournisseursPourProduits(
+    idFournisseurAConserver = ""
+) {
+
+    const select =
+        document.getElementById("product-main-supplier");
+
+    if (!select) {
+        return [];
+    }
+
+    const valeurAvantChargement = String(
+        idFournisseurAConserver ||
+        select.value ||
+        ""
+    ).trim();
+
+    select.disabled = true;
+
+    select.innerHTML = `
+        <option value="">
+            Chargement des fournisseurs...
+        </option>
+    `;
+
+    try {
+
+        const resultat =
+            await apiGet("getFournisseurs");
+
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de récupérer les fournisseurs."
+            );
+        }
+
+        fournisseursProduits =
+            Array.isArray(resultat.data)
+                ? resultat.data
+                : [];
+
+        remplirListeFournisseursProduits(
+            fournisseursProduits,
+            valeurAvantChargement
+        );
+
+        return fournisseursProduits;
+
+    } catch (error) {
+
+        console.error(
+            "Erreur de chargement des fournisseurs du produit :",
+            error
+        );
+
+        select.innerHTML = `
+            <option value="">
+                Impossible de charger les fournisseurs
+            </option>
+        `;
+
+        return [];
+
+    } finally {
+
+        select.disabled = false;
+    }
+}
+
+
+/**
+ * Remplit la liste avec les fournisseurs actifs.
+ */
+function remplirListeFournisseursProduits(
+    listeFournisseurs = [],
+    valeurASelectionner = ""
+) {
 
     const select =
         document.getElementById("product-main-supplier");
@@ -3164,7 +3256,75 @@ function remplirListeFournisseursProduits(listeFournisseurs = []) {
         return;
     }
 
-    const valeurSelectionnee = select.value;
+    const valeurSelectionnee = String(
+        valeurASelectionner ||
+        select.value ||
+        ""
+    ).trim();
+
+    const fournisseursTries = [...listeFournisseurs]
+        .filter(fournisseur => {
+
+            const id = String(
+                lireValeurFournisseurProduit(
+                    fournisseur,
+                    [
+                        "ID Fournisseur",
+                        "idFournisseur"
+                    ]
+                ) || ""
+            ).trim();
+
+            const statut = String(
+                lireValeurFournisseurProduit(
+                    fournisseur,
+                    ["Statut", "statut"]
+                ) || ""
+            )
+                .trim()
+                .toLowerCase();
+
+            /*
+               Les fournisseurs actifs sont proposés normalement.
+               Le fournisseur déjà rattaché au produit reste visible
+               même s'il a ensuite été rendu inactif ou suspendu.
+            */
+            return (
+                id &&
+                (
+                    statut === "actif" ||
+                    id === valeurSelectionnee
+                )
+            );
+        })
+        .sort((a, b) => {
+
+            const nomA = String(
+                lireValeurFournisseurProduit(
+                    a,
+                    [
+                        "Nom Fournisseur",
+                        "nomFournisseur"
+                    ]
+                ) || ""
+            );
+
+            const nomB = String(
+                lireValeurFournisseurProduit(
+                    b,
+                    [
+                        "Nom Fournisseur",
+                        "nomFournisseur"
+                    ]
+                ) || ""
+            );
+
+            return nomA.localeCompare(
+                nomB,
+                "fr",
+                { sensitivity: "base" }
+            );
+        });
 
     select.innerHTML = `
         <option value="">
@@ -3172,69 +3332,185 @@ function remplirListeFournisseursProduits(listeFournisseurs = []) {
         </option>
     `;
 
-    listeFournisseurs.forEach(fournisseur => {
+    fournisseursTries.forEach(fournisseur => {
 
-        const id =
-            fournisseur.idFournisseur ||
-            fournisseur.IDFournisseur ||
-            fournisseur.id ||
-            fournisseur.ID ||
-            "";
+        const id = String(
+            lireValeurFournisseurProduit(
+                fournisseur,
+                [
+                    "ID Fournisseur",
+                    "idFournisseur"
+                ]
+            ) || ""
+        ).trim();
 
-        const nom =
-            fournisseur.nomFournisseur ||
-            fournisseur.raisonSociale ||
-            fournisseur.nom ||
-            fournisseur.designation ||
-            id;
+        const code = String(
+            lireValeurFournisseurProduit(
+                fournisseur,
+                [
+                    "Code Fournisseur",
+                    "codeFournisseur"
+                ]
+            ) || ""
+        ).trim();
 
-        if (!id) {
-            return;
+        const nom = String(
+            lireValeurFournisseurProduit(
+                fournisseur,
+                [
+                    "Nom Fournisseur",
+                    "nomFournisseur"
+                ]
+            ) || id
+        ).trim();
+
+        const statut = String(
+            lireValeurFournisseurProduit(
+                fournisseur,
+                ["Statut", "statut"]
+            ) || ""
+        ).trim();
+
+        const option =
+            document.createElement("option");
+
+        option.value = id;
+
+        option.textContent = code
+            ? `${nom} — ${code}`
+            : nom;
+
+        option.dataset.supplierCode = code;
+        option.dataset.supplierName = nom;
+        option.dataset.supplierStatus = statut;
+
+        if (
+            id === valeurSelectionnee &&
+            statut.toLowerCase() !== "actif"
+        ) {
+            option.textContent += ` (${statut || "Inactif"})`;
         }
 
-        const option = document.createElement("option");
-        option.value = String(id);
-        option.textContent =
-            nom && String(nom) !== String(id)
-                ? `${nom} — ${id}`
-                : String(id);
-
         select.appendChild(option);
-
     });
 
+    /*
+       Sécurité pour un ancien produit dont l'ID fournisseur
+       n'existerait plus dans Google Sheets.
+    */
     if (
         valeurSelectionnee &&
-        Array.from(select.options).some(
-            option => option.value === valeurSelectionnee
+        !Array.from(select.options).some(
+            option =>
+                option.value === valeurSelectionnee
         )
     ) {
-        select.value = valeurSelectionnee;
+
+        const optionTemporaire =
+            document.createElement("option");
+
+        optionTemporaire.value =
+            valeurSelectionnee;
+
+        optionTemporaire.textContent =
+            `${valeurSelectionnee} (fournisseur introuvable)`;
+
+        optionTemporaire.dataset.temporary =
+            "true";
+
+        select.appendChild(optionTemporaire);
     }
 
+    select.value = valeurSelectionnee;
 }
 
 
-/*
-   Le futur module Fournisseurs pourra envoyer sa liste ainsi :
+/**
+ * Lit une propriété Fournisseur en acceptant les clés Google
+ * Sheets et les clés JavaScript du frontend.
+ */
+function lireValeurFournisseurProduit(
+    fournisseur,
+    cles
+) {
 
-   window.dispatchEvent(
-       new CustomEvent("fournisseurs:charges", {
-           detail: listeFournisseurs
-       })
-   );
-*/
-
-window.addEventListener(
-    "fournisseurs:charges",
-    event => {
-        remplirListeFournisseursProduits(
-            Array.isArray(event.detail)
-                ? event.detail
-                : []
-        );
+    if (!fournisseur || !Array.isArray(cles)) {
+        return "";
     }
-);
+
+    for (const cle of cles) {
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                fournisseur,
+                cle
+            ) &&
+            fournisseur[cle] !== null &&
+            fournisseur[cle] !== undefined &&
+            fournisseur[cle] !== ""
+        ) {
+            return fournisseur[cle];
+        }
+    }
+
+    return "";
+}
+
+
+/**
+ * Sélectionne le fournisseur enregistré lors de l'ouverture
+ * du formulaire de modification.
+ */
+function selectionnerFournisseurProduit(valeur) {
+
+    const idFournisseur = String(
+        valeur || ""
+    ).trim();
+
+    const select =
+        document.getElementById(
+            "product-main-supplier"
+        );
+
+    if (!select) {
+        return;
+    }
+
+    const optionExiste =
+        Array.from(select.options).some(
+            option =>
+                option.value === idFournisseur
+        );
+
+    if (optionExiste || !idFournisseur) {
+        select.value = idFournisseur;
+        return;
+    }
+
+    /*
+       Si la liste n'est pas encore chargée, on conserve l'ID
+       immédiatement puis on recharge les fournisseurs.
+    */
+    const optionTemporaire =
+        document.createElement("option");
+
+    optionTemporaire.value =
+        idFournisseur;
+
+    optionTemporaire.textContent =
+        idFournisseur;
+
+    optionTemporaire.dataset.temporary =
+        "true";
+
+    select.appendChild(optionTemporaire);
+    select.value = idFournisseur;
+
+    chargerFournisseursPourProduits(
+        idFournisseur
+    );
+}
+
 
 /* ===========================================================
    TVA FIXE À 18 %
@@ -4953,4 +5229,3 @@ function appliquerAnimationProduit() {
 
     animationProduitSuivante = null;
 }
-
