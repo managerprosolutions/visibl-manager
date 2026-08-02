@@ -4173,6 +4173,23 @@ body.modal-open {
     }
 }
 
+
+/* =========================================================
+   FOURNISSEURS — FILTRES RAPIDES ET IDENTITÉ DU FOURNISSEUR
+========================================================= */
+
+.sales-filters.suppliers-simple-filters {
+    grid-template-columns:
+        minmax(300px, 2fr)
+        minmax(165px, 1fr)
+        minmax(185px, 1fr)
+        minmax(165px, 1fr);
+}
+
+.sales-filters.suppliers-simple-filters .sales-search {
+    grid-column: auto;
+}
+
 .supplier-table-name {
     display: flex;
     flex-direction: column;
@@ -4181,21 +4198,85 @@ body.modal-open {
 }
 
 .supplier-table-name strong {
+    overflow: hidden;
     color: #1f2937;
     font-size: 14px;
     font-weight: 700;
+    text-overflow: ellipsis;
 }
 
 .supplier-table-contact {
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    min-width: 0;
+    overflow: hidden;
     color: #64748b;
     font-size: 11px;
     font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .supplier-table-contact svg {
     flex: 0 0 auto;
     color: #2563eb;
+}
+
+/* Le tableau compte maintenant 9 colonnes. */
+.suppliers-advanced-table th:nth-child(3),
+.suppliers-advanced-table td:nth-child(3) {
+    min-width: 220px;
+    max-width: 280px;
+}
+
+.suppliers-advanced-table th:nth-child(4),
+.suppliers-advanced-table td:nth-child(4) {
+    min-width: 145px;
+}
+
+.suppliers-advanced-table th:nth-child(5),
+.suppliers-advanced-table td:nth-child(5),
+.suppliers-advanced-table th:nth-child(6),
+.suppliers-advanced-table td:nth-child(6) {
+    min-width: 130px;
+}
+
+.suppliers-advanced-table th:nth-child(7),
+.suppliers-advanced-table td:nth-child(7) {
+    min-width: 190px;
+    max-width: 240px;
+    text-align: left;
+}
+
+.suppliers-advanced-table th:nth-child(8),
+.suppliers-advanced-table td:nth-child(8) {
+    min-width: 120px;
+    text-align: center;
+}
+
+.suppliers-advanced-table th:nth-child(9),
+.suppliers-advanced-table td:nth-child(9) {
+    min-width: 150px;
+    text-align: center;
+}
+
+@media screen and (max-width: 1100px) {
+    .sales-filters.suppliers-simple-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sales-filters.suppliers-simple-filters .sales-search {
+        grid-column: 1 / -1;
+    }
+}
+
+@media screen and (max-width: 680px) {
+    .sales-filters.suppliers-simple-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .sales-filters.suppliers-simple-filters .sales-search {
+        grid-column: auto;
+    }
 }
