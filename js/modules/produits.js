@@ -1758,6 +1758,66 @@ function chargerProduits(data) {
 }
 
 
+
+/**
+ * Retourne le nom lisible du fournisseur à partir de son ID.
+ * L'ID reste enregistré dans Google Sheets.
+ */
+function obtenirNomFournisseurProduit(
+    idFournisseur,
+    nomDejaDisponible = ""
+) {
+
+    const nomDirect = String(
+        nomDejaDisponible || ""
+    ).trim();
+
+    if (nomDirect) {
+        return nomDirect;
+    }
+
+    const idRecherche = String(
+        idFournisseur || ""
+    ).trim();
+
+    if (!idRecherche) {
+        return "—";
+    }
+
+    const fournisseurTrouve =
+        fournisseursProduits.find(
+            fournisseur => {
+
+                const id = String(
+                    lireValeurFournisseurProduit(
+                        fournisseur,
+                        [
+                            "ID Fournisseur",
+                            "idFournisseur"
+                        ]
+                    ) || ""
+                ).trim();
+
+                return id === idRecherche;
+            }
+        );
+
+    if (!fournisseurTrouve) {
+        return idRecherche;
+    }
+
+    return String(
+        lireValeurFournisseurProduit(
+            fournisseurTrouve,
+            [
+                "Nom Fournisseur",
+                "nomFournisseur"
+            ]
+        ) || idRecherche
+    ).trim();
+}
+
+
 /* ===========================================================
    AFFICHAGE DÉTAILLÉ DES PRODUITS
 =========================================================== */
@@ -1868,16 +1928,23 @@ function afficherProduits(listeProduits) {
         );
 
         const fournisseur = echapperHTML(
-            lireValeurProduit(
-                produit,
-                [
-                    "Nom Fournisseur",
-                    "Fournisseur",
-                    "ID Fournisseur",
-                    "ID Fournisseur Principal",
-                    "idFournisseurPrincipal"
-                ]
-            ) || "—"
+            obtenirNomFournisseurProduit(
+                lireValeurProduit(
+                    produit,
+                    [
+                        "ID Fournisseur Principal",
+                        "idFournisseurPrincipal",
+                        "ID Fournisseur"
+                    ]
+                ),
+                lireValeurProduit(
+                    produit,
+                    [
+                        "Nom Fournisseur",
+                        "Fournisseur"
+                    ]
+                )
+            )
         );
 
         const statut = String(
@@ -3216,6 +3283,14 @@ async function chargerFournisseursPourProduits(
             fournisseursProduits,
             valeurAvantChargement
         );
+
+        if (
+            Array.isArray(produits) &&
+            produits.length &&
+            typeof appliquerFiltresProduits === "function"
+        ) {
+            appliquerFiltresProduits();
+        }
 
         return fournisseursProduits;
 
