@@ -485,7 +485,7 @@ function afficherFournisseurs(listeFournisseurs) {
         tableBody.innerHTML = `
             <tr>
                 <td
-                    colspan="10"
+                    colspan="9"
                     class="table-message"
                 >
                     Aucun fournisseur ne correspond à votre recherche.
@@ -568,16 +568,17 @@ function afficherFournisseurs(listeFournisseurs) {
                 ) || "—"
             );
 
-            const delai =
-                formaterDelaiLivraison(
-                    lireValeurFournisseur(
-                        fournisseur,
-                        [
-                            "Délai Moyen de Livraison",
-                            "delaiMoyenLivraison"
-                        ]
-                    )
-                );
+            const categorie = echapperHTML(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Catégorie de Produits",
+                        "Type de Produits",
+                        "categorieProduits",
+                        "typeProduits"
+                    ]
+                ) || "—"
+            );
 
             const statutBrut = String(
                 lireValeurFournisseur(
@@ -633,14 +634,30 @@ function afficherFournisseurs(listeFournisseurs) {
                     <td>
                         <div class="supplier-table-name">
                             <strong>${nom}</strong>
+
+                            <span class="supplier-table-contact">
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+
+                                ${contact}
+                            </span>
                         </div>
                     </td>
 
-                    <td>${contact}</td>
                     <td>${telephone}</td>
                     <td>${pays}</td>
                     <td>${ville}</td>
-                    <td>${delai}</td>
+                    <td>${categorie}</td>
 
                     <td>
                         <span
@@ -3629,7 +3646,7 @@ function afficherEtatChargementFournisseurs() {
         tableBody.innerHTML = `
             <tr>
                 <td
-                    colspan="10"
+                    colspan="9"
                     class="table-message"
                 >
                     Chargement des fournisseurs...
@@ -3651,7 +3668,7 @@ function afficherErreurChargementFournisseurs(
         tableBody.innerHTML = `
             <tr>
                 <td
-                    colspan="10"
+                    colspan="9"
                     class="table-message error-row"
                 >
                     ${echapperHTML(message)}
