@@ -608,13 +608,30 @@
                     <input
                         type="search"
                         id="suppliers-search-input"
-                        placeholder="Rechercher par code, nom, contact, téléphone, pays ou ville..."
+                        placeholder="Rechercher un fournisseur par nom, code, contact, téléphone, pays ou ville..."
                         autocomplete="off"
                         aria-label="Rechercher un fournisseur"
                     >
                 </div>
 
-                <select id="supplier-status-filter" aria-label="Filtrer les fournisseurs par statut">
+                <select
+                    id="supplier-country-filter"
+                    aria-label="Filtrer les fournisseurs par pays"
+                >
+                    <option value="">Tous les pays</option>
+                </select>
+
+                <select
+                    id="supplier-category-filter"
+                    aria-label="Filtrer les fournisseurs par catégorie"
+                >
+                    <option value="">Toutes les catégories</option>
+                </select>
+
+                <select
+                    id="supplier-status-filter"
+                    aria-label="Filtrer les fournisseurs par statut"
+                >
                     <option value="">Tous les statuts</option>
                     <option value="actif">Actif</option>
                     <option value="inactif">Inactif</option>
@@ -646,7 +663,7 @@
 
                     <tbody id="suppliers-table-body">
                         <tr>
-                            <td colspan="10" class="table-message">
+                            <td colspan="9" class="table-message">
                                 Chargement des fournisseurs...
                             </td>
                         </tr>
