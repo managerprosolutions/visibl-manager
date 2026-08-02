@@ -1,2118 +1,3826 @@
-let clientsCharges = [];
-let clientsAffiches = [];
-let clientEnModificationId = null;
-let clientASupprimer = null;
+/* ===========================================================
+   VISIBL ERP
+   Module : Fournisseurs
+   Fichier : fournisseurs.js
+=========================================================== */
 
-// État de consultation de la page Clients
-let rechercheClients = "";
-let filtresClients = {
-    typeClient: "",
-    statut: "",
-    commune: ""
-};
+let fournisseurs = [];
+let fournisseursFiltresCourants = [];
+let fournisseursSelectionnes = new Set();
 
-// ========================================
-// INITIALISATION
-// ========================================
+let pageFournisseursCourante = 1;
+let fournisseursParPage = 10;
 
-function initialiserDeconnexion() {
+let idFournisseurEnModification = "";
+let idFournisseurASupprimer = "";
 
-    const logoutButton =
-        document.getElementById("logout-button");
 
-    if (!logoutButton) {
-        return;
+/* ===========================================================
+   INITIALISATION
+=========================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    console.log("Module Fournisseurs chargé.");
+
+    initialiserModuleFournisseurs();
+    initialiserModaleFournisseur();
+    initialiserFormulaireFournisseur();
+    initialiserActionsTableauFournisseurs();
+    initialiserFiltresFournisseurs();
+    initialiserPaginationFournisseurs();
+    initialiserSelectionMultipleFournisseurs();
+    initialiserSuppressionEnMasseFournisseurs();
+    initialiserExportsFournisseurs();
+    initialiserImpressionFournisseurs();
+    initialiserHeaderFournisseurs();
+    initialiserNotificationsFournisseurs();
+
+    document
+        .getElementById("refresh-suppliers-btn")
+        ?.addEventListener(
+            "click",
+            chargerFournisseursDepuisAPI
+        );
+});
+
+
+function initialiserModuleFournisseurs() {
+
+    mettreAJourKPIsFournisseurs();
+    chargerFournisseursDepuisAPI();
+}
+
+
+/* ===========================================================
+   OUTILS GÉNÉRAUX
+=========================================================== */
+
+function lireValeurFournisseur(fournisseur, cles) {
+
+    if (!fournisseur || !Array.isArray(cles)) {
+        return "";
     }
 
-    logoutButton.addEventListener(
-        "click",
-        function (event) {
+    for (const cle of cles) {
 
-            event.preventDefault();
-            logoutUser();
+        if (
+            Object.prototype.hasOwnProperty.call(
+                fournisseur,
+                cle
+            ) &&
+            fournisseur[cle] !== null &&
+            fournisseur[cle] !== undefined &&
+            fournisseur[cle] !== ""
+        ) {
+            return fournisseur[cle];
         }
-    );
+    }
+
+    return "";
 }
 
 
-function initialiserClients() {
+function obtenirValeurTexte(id) {
 
-    requireAuth();
+    const champ = document.getElementById(id);
 
-    initialiserDeconnexion();
-
-    // ========================================
-    // FENÊTRE NOUVEAU CLIENT
-    // ========================================
-
-    const openModalBtn =
-        document.getElementById("new-client-btn");
-
-    const openToolbarBtn =
-        document.getElementById("new-client-toolbar-btn");
-
-    const closeModalBtn =
-        document.getElementById("close-client-modal");
-
-    const cancelModalBtn =
-        document.getElementById("cancel-client-btn");
-
-    const clientModal =
-        document.getElementById("client-modal");
-
-    const deleteModal =
-        document.getElementById("delete-client-modal");
-
-    const cancelDeleteBtn =
-        document.getElementById("cancel-delete-client-btn");
-
-    const confirmDeleteBtn =
-        document.getElementById("confirm-delete-client-btn");
-
-
-    function openModal() {
-
-        if (!clientModal) {
-            return;
-        }
-
-        clientModal.classList.add("active");
-        clientModal.setAttribute("aria-hidden", "false");
-    }
-
-
-    function closeModal() {
-
-    if (!clientModal) {
-        return;
-    }
-
-    clientModal.classList.remove("active");
-    clientModal.setAttribute("aria-hidden", "true");
+    return champ
+        ? String(champ.value || "").trim()
+        : "";
 }
 
 
-function remplirFormulaireClient(client) {
+function obtenirValeurNombre(id) {
 
-    document.getElementById("client-type").value =
-        client.typeClient || "";
+    const valeur = obtenirValeurTexte(id)
+        .replace(/\s/g, "")
+        .replace(",", ".");
 
-    document.getElementById("client-status").value =
-        client.statut || "actif";
+    const nombre = Number(valeur);
 
-    document.getElementById("client-lastname").value =
-        client.nom || "";
-
-    document.getElementById("client-firstname").value =
-        client.prenom || "";
-
-    document.getElementById("client-phone").value =
-        client.telephone || "";
-
-    document.getElementById("client-email").value =
-        client.email || "";
-
-    document.getElementById("client-commune").value =
-        client.commune || "";
-
-    document.getElementById("client-neighborhood").value =
-        client.quartier || "";
-
-    document.getElementById("client-comment").value =
-        client.commentaire || "";
-
-    document.getElementById("client-modal-title").textContent =
-        "Modifier le client";
-
-    document.getElementById("save-client-btn").textContent =
-        "Enregistrer les modifications";
-}
-
-
-function ouvrirNouveauClient() {
-
-    clientEnModificationId = null;
-
-    const clientForm = document.getElementById("client-form");
-    clientForm?.reset();
-
-    const modalTitle = document.getElementById("client-modal-title");
-    const saveButton = document.getElementById("save-client-btn");
-
-    if (modalTitle) {
-        modalTitle.textContent = "Nouveau client";
-    }
-
-    if (saveButton) {
-        saveButton.textContent = "Enregistrer le client";
-    }
-
-    openModal();
-}
-
-openModalBtn?.addEventListener(
-    "click",
-    ouvrirNouveauClient
-);
-
-openToolbarBtn?.addEventListener(
-    "click",
-    ouvrirNouveauClient
-);
-
-    closeModalBtn?.addEventListener(
-        "click",
-        closeModal
-    );
-
-    cancelModalBtn?.addEventListener(
-        "click",
-        closeModal
-    );
-
-    cancelDeleteBtn?.addEventListener(
-        "click",
-        fermerModalSuppression
-    );
-
-    deleteModal?.addEventListener(
-        "click",
-        function (event) {
-
-            if (event.target === deleteModal) {
-                fermerModalSuppression();
-            }
-        }
-    );
-
-    confirmDeleteBtn?.addEventListener(
-        "click",
-        async function () {
-
-            if (!clientASupprimer || confirmDeleteBtn.disabled) {
-                return;
-            }
-
-            const idClient = clientASupprimer.idClient;
-            let suppressionReussie = false;
-
-            confirmDeleteBtn.disabled = true;
-            confirmDeleteBtn.classList.add("is-loading");
-
-            try {
-
-                suppressionReussie =
-                    await supprimerClient(idClient);
-
-            } finally {
-
-                confirmDeleteBtn.disabled = false;
-                confirmDeleteBtn.classList.remove("is-loading");
-            }
-
-            if (suppressionReussie) {
-                fermerModalSuppression();
-            }
-        }
-    );
-
-
-    // ========================================
-    // FENÊTRE VOIR CLIENT
-    // ========================================
-
-    const closeViewBtn =
-        document.getElementById("close-view-client-modal");
-
-    const closeViewFooterBtn =
-        document.getElementById("close-view-client-footer");
-
-
-    closeViewBtn?.addEventListener(
-        "click",
-        fermerModalVoirClient
-    );
-
-    closeViewFooterBtn?.addEventListener(
-        "click",
-        fermerModalVoirClient
-    );
-
-// ========================================
-// CLIC SUR LES ACTIONS DU TABLEAU
-// ========================================
-
-const clientsTableBody =
-    document.getElementById("clients-table-body");
-
-clientsTableBody?.addEventListener(
-    "click",
-    function (event) {
-
-        const viewButton =
-            event.target.closest(".view-btn");
-
-        if (viewButton) {
-
-            const clientId =
-                viewButton.dataset.clientId;
-
-            const client =
-                clientsCharges.find(
-                    function (element) {
-
-                        return String(element.idClient) ===
-                            String(clientId);
-                    }
-                );
-
-            if (!client) {
-
-                showToast(
-                    "Impossible de retrouver les informations du client.",
-                    "error"
-                );
-
-                return;
-            }
-
-            afficherDetailsClient(client);
-            ouvrirModalVoirClient();
-
-            return;
-        }
-
-        // ========================================
-        // BOUTON MODIFIER
-        // ========================================
-
-        const editButton =
-            event.target.closest(".edit-btn");
-
-        if (editButton) {
-
-            const clientId =
-                editButton.dataset.clientId;
-
-            const client =
-                clientsCharges.find(
-                    function (element) {
-
-                        return String(element.idClient) ===
-                            String(clientId);
-                    }
-                );
-
-            if (!client) {
-
-                showToast(
-                    "Impossible de retrouver le client à modifier.",
-                    "error"
-                );
-
-                return;
-            }
-
-clientEnModificationId = client.idClient;
-            
-            remplirFormulaireClient(client);
-openModal();
-
-            return;
-        }
-
-   // ========================================
-// BOUTON SUPPRIMER
-// ========================================
-
-const deleteButton =
-    event.target.closest(".delete-btn");
-
-if (deleteButton) {
-
-    const clientId =
-        deleteButton.dataset.clientId;
-
-    const client =
-        clientsCharges.find(
-            function (element) {
-
-                return String(element.idClient) ===
-                    String(clientId);
-            }
-        );
-
-    if (!client) {
-
-        showToast(
-            "Impossible de retrouver le client à supprimer.",
-            "error"
-        );
-
-        return;
-    }
-
-    ouvrirModalSuppression(client);
-
-    return;
-} 
-
-    }
-);
-
-    // ========================================
-    // FERMETURE AVEC LA TOUCHE ÉCHAP
-    // ========================================
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (event.key === "Escape") {
-
-                closeModal();
-
-                fermerModalVoirClient();
-
-                fermerModalSuppression();
-            }
-        }
-    );
-
-
-    // ========================================
-    // RECHERCHE, FILTRES ET ACTUALISATION
-    // ========================================
-
-    initialiserRechercheEtFiltresClients();
-    initialiserExportsClients();
-    initialiserImpressionClients();
-
-    // ========================================
-    // FORMULAIRE CLIENT
-    // ========================================
-
-    const clientForm =
-        document.getElementById("client-form");
-
-    clientForm?.addEventListener(
-        "submit",
-        enregistrerClient
-    );
-
-
-    // Charger les clients au démarrage
-    chargerClients();
-}
-
-
-// ========================================
-// DÉMARRAGE DE LA PAGE
-// ========================================
-
-if (document.readyState === "loading") {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initialiserClients
-    );
-
-} else {
-
-    initialiserClients();
-}
-
-
-// ========================================
-// ENREGISTREMENT D'UN CLIENT
-// ========================================
-
-async function enregistrerClient(event) {
-
-    event.preventDefault();
-
-    const clientForm =
-        document.getElementById("client-form");
-
-    const data = {
-
-        nom: document
-            .getElementById("client-lastname")
-            .value
-            .trim(),
-
-        prenom: document
-            .getElementById("client-firstname")
-            .value
-            .trim(),
-
-        telephone: document
-            .getElementById("client-phone")
-            .value
-            .trim(),
-
-        email: document
-            .getElementById("client-email")
-            .value
-            .trim(),
-
-        commune: document
-            .getElementById("client-commune")
-            .value,
-
-        quartier: document
-            .getElementById("client-neighborhood")
-            .value
-            .trim(),
-
-        typeClient: document
-            .getElementById("client-type")
-            .value,
-
-        statut: document
-            .getElementById("client-status")
-            .value,
-
-        commentaire: document
-            .getElementById("client-comment")
-            .value
-            .trim()
-    };
-
-
-    try {
-
-        let resultat;
-
-if (clientEnModificationId) {
-
-    data.idClient =
-        clientEnModificationId;
-
-    resultat =
-        await apiPost(
-            "updateClient",
-            data
-        );
-
-} else {
-
-    resultat =
-        await apiPost(
-            "createClient",
-            data
-        );
-}
-
-
-        if (resultat.success) {
-
-            showToast(
-                resultat.message,
-                "success"
-            );
-
-            clientForm?.reset();
-
-            clientEnModificationId = null;
-
-document.getElementById("client-modal-title").textContent =
-    "Nouveau client";
-
-document.getElementById("save-client-btn").textContent =
-    "Enregistrer";
-
-            await chargerClients();
-
-            const clientModal =
-                document.getElementById("client-modal");
-
-            clientModal?.classList.remove("active");
-
-            clientModal?.setAttribute(
-                "aria-hidden",
-                "true"
-            );
-
-        } else {
-
-            showToast(
-                resultat.message,
-                "error"
-            );
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        showToast(
-            "Impossible de communiquer avec le serveur.",
-            "error"
-        );
-    }
-}
-
-
-
-
-// ========================================
-// FENÊTRE DE CONFIRMATION DE SUPPRESSION
-// ========================================
-
-function ouvrirModalSuppression(client) {
-
-    const modal =
-        document.getElementById("delete-client-modal");
-
-    const clientName =
-        document.getElementById("delete-client-name");
-
-    if (!modal || !clientName) {
-
-        console.error(
-            'La fenêtre de suppression est introuvable.'
-        );
-
-        showToast(
-            "Impossible d’ouvrir la confirmation de suppression.",
-            "error"
-        );
-
-        return;
-    }
-
-    clientASupprimer = client;
-
-    const nomComplet = [
-        client.nom,
-        client.prenom
-    ]
-        .filter(Boolean)
-        .join(" ")
-        .trim();
-
-    clientName.textContent =
-        nomComplet || client.idClient || "Ce client";
-
-    modal.classList.add("active");
-
-    modal.setAttribute(
-        "aria-hidden",
-        "false"
-    );
-
-    const confirmDeleteBtn =
-        document.getElementById("confirm-delete-client-btn");
-
-    window.setTimeout(
-        function () {
-            confirmDeleteBtn?.focus();
-        },
-        50
-    );
-}
-
-
-function fermerModalSuppression() {
-
-    const modal =
-        document.getElementById("delete-client-modal");
-
-    if (!modal) {
-        return;
-    }
-
-    const confirmDeleteBtn =
-        document.getElementById("confirm-delete-client-btn");
-
-    if (confirmDeleteBtn?.disabled) {
-        return;
-    }
-
-    modal.classList.remove("active");
-
-    modal.setAttribute(
-        "aria-hidden",
-        "true"
-    );
-
-    clientASupprimer = null;
-}
-
-
-// ========================================
-// SUPPRESSION D'UN CLIENT
-// ========================================
-
-async function supprimerClient(idClient) {
-
-    try {
-
-        const resultat =
-            await apiPost(
-                "deleteClient",
-                {
-                    idClient: idClient
-                }
-            );
-
-        if (resultat.success) {
-
-            showToast(
-                resultat.message,
-                "success"
-            );
-
-            await chargerClients();
-
-            return true;
-
-        } else {
-
-            showToast(
-                resultat.message ||
-                "Impossible de supprimer le client.",
-                "error"
-            );
-
-            return false;
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Erreur suppression client :",
-            error
-        );
-
-        showToast(
-            "Impossible de communiquer avec le serveur.",
-            "error"
-        );
-
-        return false;
-    }
-}
-
-// ========================================
-// CHARGEMENT DES CLIENTS
-// ========================================
-
-async function chargerClients() {
-
-    try {
-
-        const resultat =
-            await apiGet("getClients");
-
-
-        if (!resultat.success) {
-
-            showToast(
-                resultat.message ||
-                "Impossible de charger les clients.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        clientsCharges =
-            Array.isArray(resultat.clients)
-                ? resultat.clients
-                : [];
-
-        mettreAJourKPIsClients();
-        appliquerRechercheEtFiltresClients();
-
-    } catch (error) {
-
-        console.error(
-            "Erreur chargement clients :",
-            error
-        );
-
-        showToast(
-            "Impossible de charger la liste des clients.",
-            "error"
-        );
-    }
-}
-
-
-// ========================================
-// KPI DYNAMIQUES DES CLIENTS
-// ========================================
-
-function mettreAJourKPIsClients() {
-
-    const totalClients = clientsCharges.length;
-
-    const clientsActifs = clientsCharges.filter(function (client) {
-        return normaliserValeurRecherche(client.statut) === "actif";
-    }).length;
-
-    const pourcentageActifs = totalClients > 0
-        ? Math.round((clientsActifs / totalClients) * 100)
+    return Number.isFinite(nombre)
+        ? nombre
         : 0;
-
-    const maintenant = new Date();
-    const moisActuel = maintenant.getMonth();
-    const anneeActuelle = maintenant.getFullYear();
-
-    const nouveauxCeMois = clientsCharges.filter(function (client) {
-
-        const dateInscription = convertirDateClient(client.dateInscription);
-
-        return dateInscription &&
-            dateInscription.getMonth() === moisActuel &&
-            dateInscription.getFullYear() === anneeActuelle;
-    }).length;
-
-    const achatsCumules = clientsCharges.reduce(function (total, client) {
-        return total + convertirMontantClient(client.montantTotalAchats);
-    }, 0);
-
-    const moyenneAchats = totalClients > 0
-        ? achatsCumules / totalClients
-        : 0;
-
-    definirTexteKPI("total-clients-value",
-        totalClients.toLocaleString("fr-FR"));
-
-    definirTexteKPI(
-        "total-clients-description",
-        `${nouveauxCeMois.toLocaleString("fr-FR")} nouveau${nouveauxCeMois > 1 ? "x" : ""} client${nouveauxCeMois > 1 ? "s" : ""} ce mois`
-    );
-
-    definirTexteKPI("active-clients-value",
-        clientsActifs.toLocaleString("fr-FR"));
-
-    definirTexteKPI(
-        "active-clients-description",
-        `${pourcentageActifs.toLocaleString("fr-FR")} % des clients`
-    );
-
-    definirTexteKPI("new-clients-value",
-        nouveauxCeMois.toLocaleString("fr-FR"));
-
-    definirTexteKPI(
-        "new-clients-description",
-        "Inscrits durant le mois en cours"
-    );
-
-    definirTexteKPI(
-        "client-revenue-value",
-        formaterMontantClient(achatsCumules)
-    );
-
-    definirTexteKPI(
-        "client-revenue-description",
-        `Moyenne : ${formaterMontantClient(moyenneAchats)} / client`
-    );
 }
 
 
-function definirTexteKPI(idElement, texte) {
+function definirValeurChamp(id, valeur) {
 
-    const element = document.getElementById(idElement);
+    const champ = document.getElementById(id);
+
+    if (champ) {
+        champ.value = valeur ?? "";
+    }
+}
+
+
+function definirTexteElement(id, valeur) {
+
+    const element = document.getElementById(id);
 
     if (element) {
-        element.textContent = texte;
+        element.textContent =
+            valeur === null ||
+            valeur === undefined ||
+            valeur === ""
+                ? "—"
+                : String(valeur);
     }
 }
 
-
-function convertirMontantClient(montant) {
-
-    if (typeof montant === "number") {
-        return Number.isFinite(montant) ? montant : 0;
-    }
-
-    const valeurNettoyee = String(montant ?? "")
-        .replace(/\s/g, "")
-        .replace(/FCFA/gi, "")
-        .replace(/[^0-9,.-]/g, "")
-        .replace(/,/g, ".");
-
-    const valeur = Number(valeurNettoyee);
-
-    return Number.isFinite(valeur) ? valeur : 0;
-}
-
-
-function convertirDateClient(date) {
-
-    if (!date) {
-        return null;
-    }
-
-    const dateClient = date instanceof Date
-        ? new Date(date.getTime())
-        : new Date(date);
-
-    return Number.isNaN(dateClient.getTime())
-        ? null
-        : dateClient;
-}
-
-
-
-
-// ========================================
-// IMPRESSION DES CLIENTS
-// ========================================
-
-function initialiserImpressionClients() {
-    const boutonImprimer = document.getElementById("print-clients-btn");
-    if (!boutonImprimer) return;
-
-    boutonImprimer.addEventListener("click", function () {
-        imprimerClients();
-    });
-}
-
-function imprimerClients() {
-    if (!Array.isArray(clientsAffiches) || clientsAffiches.length === 0) {
-        showToast("Aucun client à imprimer.", "error");
-        return;
-    }
-
-    const fenetreImpression = window.open("", "_blank", "width=1200,height=800");
-    if (!fenetreImpression) {
-        showToast("Autorisez les fenêtres contextuelles pour lancer l’impression.", "error");
-        return;
-    }
-
-    const echapperHTML = function (valeur) {
-        return String(valeur ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    };
-
-    const lignes = clientsAffiches.map(function (client, index) {
-        const nomComplet = `${client.nom || ""} ${client.prenom || ""}`.trim();
-        return `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${echapperHTML(client.idClient || "")}</td>
-                <td>${echapperHTML(nomComplet)}</td>
-                <td>${echapperHTML(formaterTelephone(client.telephone))}</td>
-                <td>${echapperHTML(client.email || "")}</td>
-                <td>${echapperHTML(mettreMajuscule(client.commune))}</td>
-                <td>${echapperHTML(mettreMajuscule(client.typeClient))}</td>
-                <td>${echapperHTML(formaterDateClient(client.dateInscription))}</td>
-                <td>${echapperHTML(client.nombreCommandes || 0)}</td>
-                <td>${echapperHTML(formaterMontantClient(convertirMontantClient(client.montantTotalAchats)))}</td>
-                <td>${echapperHTML(mettreMajuscule(client.statut))}</td>
-            </tr>`;
-    }).join("");
-
-    const dateImpression = new Date().toLocaleString("fr-FR");
-
-    fenetreImpression.document.open();
-    fenetreImpression.document.write(`<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>VISIBL — Liste des clients</title>
-    <style>
-        @page { size: landscape; margin: 12mm; }
-        * { box-sizing: border-box; }
-        body { margin: 0; font-family: Arial, sans-serif; color: #111827; }
-        .print-header { margin-bottom: 16px; }
-        h1 { margin: 0 0 6px; font-size: 22px; }
-        .meta { color: #4b5563; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #d1d5db; padding: 6px; font-size: 9px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
-        th { background: #e5e7eb; font-weight: 700; }
-        tbody tr:nth-child(even) { background: #f9fafb; }
-        th:nth-child(1), td:nth-child(1) { width: 3%; text-align: center; }
-        th:nth-child(2), td:nth-child(2) { width: 8%; }
-        th:nth-child(3), td:nth-child(3) { width: 13%; }
-        th:nth-child(4), td:nth-child(4) { width: 10%; }
-        th:nth-child(5), td:nth-child(5) { width: 15%; }
-        th:nth-child(6), td:nth-child(6) { width: 9%; }
-        th:nth-child(7), td:nth-child(7) { width: 8%; }
-        th:nth-child(8), td:nth-child(8) { width: 10%; }
-        th:nth-child(9), td:nth-child(9) { width: 6%; text-align: center; }
-        th:nth-child(10), td:nth-child(10) { width: 10%; text-align: right; }
-        th:nth-child(11), td:nth-child(11) { width: 8%; }
-        thead { display: table-header-group; }
-        tr { break-inside: avoid; }
-        .no-print { margin-top: 12px; font-size: 11px; color: #6b7280; }
-        @media print { .no-print { display: none; } }
-    </style>
-</head>
-<body>
-    <div class="print-header">
-        <h1>VISIBL — Liste des clients</h1>
-        <div class="meta">Imprimé le ${echapperHTML(dateImpression)} • ${clientsAffiches.length} client(s)</div>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>N°</th><th>ID</th><th>Client</th><th>Téléphone</th><th>Email</th>
-                <th>Commune</th><th>Type</th><th>Inscription</th><th>Cmd.</th><th>Achats</th><th>Statut</th>
-            </tr>
-        </thead>
-        <tbody>${lignes}</tbody>
-    </table>
-    <p class="no-print">La fenêtre d’impression va s’ouvrir automatiquement.</p>
-</body>
-</html>`);
-    fenetreImpression.document.close();
-
-    fenetreImpression.onload = function () {
-        fenetreImpression.focus();
-        fenetreImpression.print();
-        fenetreImpression.onafterprint = function () {
-            fenetreImpression.close();
-        };
-    };
-}
-
-
-// ========================================
-// EXPORT DES CLIENTS (PDF, EXCEL ET CSV)
-// ========================================
-
-function initialiserExportsClients() {
-
-    const menu = document.getElementById("export-clients-menu");
-    const bouton = document.getElementById("export-clients-btn");
-    const liste = document.getElementById("export-clients-dropdown");
-
-    if (!menu || !bouton || !liste) return;
-
-    const fermerMenu = function () {
-        menu.classList.remove("is-open");
-        liste.hidden = true;
-        bouton.setAttribute("aria-expanded", "false");
-    };
-
-    const ouvrirMenu = function () {
-        menu.classList.add("is-open");
-        liste.hidden = false;
-        bouton.setAttribute("aria-expanded", "true");
-        liste.querySelector(".export-option")?.focus();
-    };
-
-    bouton.addEventListener("click", function (event) {
-        event.stopPropagation();
-        liste.hidden ? ouvrirMenu() : fermerMenu();
-    });
-
-    liste.addEventListener("click", async function (event) {
-        const option = event.target.closest("[data-export-format]");
-        if (!option) return;
-
-        const format = option.dataset.exportFormat;
-        fermerMenu();
-
-        if (clientsAffiches.length === 0) {
-            showToast("Aucun client à exporter.", "error");
-            return;
-        }
-
-        try {
-            if (format === "pdf") exporterClientsPDF();
-            if (format === "xlsx") exporterClientsExcel();
-            if (format === "csv") exporterClientsCSV();
-        } catch (error) {
-            console.error("Erreur export clients :", error);
-            showToast("Impossible de générer le fichier d’export.", "error");
-        }
-    });
-
-    document.addEventListener("click", function (event) {
-        if (!menu.contains(event.target)) fermerMenu();
-    });
-
-    document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape" && !liste.hidden) {
-            fermerMenu();
-            bouton.focus();
-        }
-    });
-}
-
-function obtenirDonneesExportClients() {
-    return clientsAffiches.map(function (client) {
-        return {
-            "Identifiant": client.idClient || "",
-            "Nom": client.nom || "",
-            "Prénom": client.prenom || "",
-            "Téléphone": formaterTelephone(client.telephone),
-            "Email": client.email || "",
-            "Commune": mettreMajuscule(client.commune),
-            "Quartier": client.quartier || "",
-            "Type": mettreMajuscule(client.typeClient),
-            "Date d’inscription": formaterDateClient(client.dateInscription),
-            "Commandes": Number(client.nombreCommandes || 0),
-            "Total achats (FCFA)": convertirMontantClient(client.montantTotalAchats),
-            "Statut": mettreMajuscule(client.statut)
-        };
-    });
-}
-
-function obtenirNomFichierExport(extension) {
-    const date = new Date();
-    const estampille = [
-        date.getFullYear(),
-        String(date.getMonth() + 1).padStart(2, "0"),
-        String(date.getDate()).padStart(2, "0")
-    ].join("-");
-    return `VISIBL_clients_${estampille}.${extension}`;
-}
-
-function exporterClientsCSV() {
-    const donnees = obtenirDonneesExportClients();
-    const colonnes = Object.keys(donnees[0]);
-    const separateur = ";";
-
-    const protegerCSV = function (valeur) {
-        const texte = String(valeur ?? "").replace(/"/g, '""');
-        return `"${texte}"`;
-    };
-
-    const lignes = [
-        colonnes.map(protegerCSV).join(separateur),
-        ...donnees.map(function (ligne) {
-            return colonnes.map(function (colonne) {
-                return protegerCSV(ligne[colonne]);
-            }).join(separateur);
-        })
-    ];
-
-    telechargerBlob(
-        new Blob(["\ufeff" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8;" }),
-        obtenirNomFichierExport("csv")
-    );
-
-    showToast(`${donnees.length} client(s) exporté(s) en CSV.`, "success");
-}
-
-function exporterClientsExcel() {
-    if (typeof XLSX === "undefined") {
-        throw new Error("La bibliothèque Excel n’est pas chargée.");
-    }
-
-    const donnees = obtenirDonneesExportClients();
-    const feuille = XLSX.utils.json_to_sheet(donnees);
-    feuille["!cols"] = [
-        { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
-        { wch: 28 }, { wch: 16 }, { wch: 22 }, { wch: 14 },
-        { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 14 }
-    ];
-    feuille["!autofilter"] = { ref: feuille["!ref"] };
-
-    const classeur = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(classeur, feuille, "Clients");
-    XLSX.writeFile(classeur, obtenirNomFichierExport("xlsx"));
-
-    showToast(`${donnees.length} client(s) exporté(s) vers Excel.`, "success");
-}
-
-function exporterClientsPDF() {
-    if (!window.jspdf?.jsPDF) {
-        throw new Error("La bibliothèque PDF n’est pas chargée.");
-    }
-
-    const donnees = obtenirDonneesExportClients();
-    const { jsPDF } = window.jspdf;
-    const documentPDF = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const dateExport = new Date().toLocaleString("fr-FR");
-
-    documentPDF.setFontSize(18);
-    documentPDF.text("VISIBL — Liste des clients", 14, 16);
-    documentPDF.setFontSize(9);
-    documentPDF.text(`Exporté le ${dateExport} • ${donnees.length} client(s)`, 14, 23);
-
-    documentPDF.autoTable({
-        startY: 29,
-        head: [["ID", "Client", "Téléphone", "Email", "Commune", "Type", "Inscription", "Cmd.", "Achats", "Statut"]],
-        body: donnees.map(function (client) {
-            return [
-                client["Identifiant"],
-                `${client["Nom"]} ${client["Prénom"]}`.trim(),
-                client["Téléphone"],
-                client["Email"],
-                client["Commune"],
-                client["Type"],
-                client["Date d’inscription"],
-                client["Commandes"],
-                formaterMontantClient(client["Total achats (FCFA)"]),
-                client["Statut"]
-            ];
-        }),
-        styles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" },
-        headStyles: { fillColor: [30, 64, 175] },
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-        margin: { left: 10, right: 10 },
-        didDrawPage: function () {
-            const numeroPage = documentPDF.internal.getNumberOfPages();
-            documentPDF.setFontSize(8);
-            documentPDF.text(
-                `VISIBL • Page ${numeroPage}`,
-                documentPDF.internal.pageSize.getWidth() - 10,
-                documentPDF.internal.pageSize.getHeight() - 6,
-                { align: "right" }
-            );
-        }
-    });
-
-    documentPDF.save(obtenirNomFichierExport("pdf"));
-    showToast(`${donnees.length} client(s) exporté(s) en PDF.`, "success");
-}
-
-function telechargerBlob(blob, nomFichier) {
-    const url = URL.createObjectURL(blob);
-    const lien = document.createElement("a");
-    lien.href = url;
-    lien.download = nomFichier;
-    document.body.appendChild(lien);
-    lien.click();
-    lien.remove();
-    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-}
-
-
-// ========================================
-// RECHERCHE ET FILTRES DES CLIENTS
-// ========================================
-
-function initialiserRechercheEtFiltresClients() {
-
-    const recherchePage =
-        document.getElementById("clients-search-input");
-
-    const rechercheHeader =
-        document.querySelector(".header .search-input");
-
-    const boutonRechercheHeader =
-        document.querySelector(".header .search-btn");
-
-    const filtreType =
-        document.getElementById("client-type-filter");
-
-    const filtreStatut =
-        document.getElementById("client-status-filter");
-
-    const filtreCommune =
-        document.getElementById("client-commune-filter");
-
-    const boutonEffacer =
-        document.getElementById("reset-client-filters");
-
-    const boutonActualiser =
-        document.getElementById("refresh-clients-btn");
-
-    const synchroniserRecherche = function (valeur, source) {
-
-        rechercheClients = String(valeur ?? "");
-
-        if (source !== recherchePage && recherchePage) {
-            recherchePage.value = rechercheClients;
-        }
-
-        if (source !== rechercheHeader && rechercheHeader) {
-            rechercheHeader.value = rechercheClients;
-        }
-
-        appliquerRechercheEtFiltresClients();
-    };
-
-    recherchePage?.addEventListener("input", function () {
-        synchroniserRecherche(recherchePage.value, recherchePage);
-    });
-
-    rechercheHeader?.addEventListener("input", function () {
-        synchroniserRecherche(rechercheHeader.value, rechercheHeader);
-    });
-
-    boutonRechercheHeader?.addEventListener("click", function (event) {
-        event.preventDefault();
-        synchroniserRecherche(rechercheHeader?.value || "", rechercheHeader);
-    });
-
-    rechercheHeader?.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            synchroniserRecherche(rechercheHeader.value, rechercheHeader);
-        }
-    });
-
-    filtreType?.addEventListener("change", function () {
-        filtresClients.typeClient = filtreType.value;
-        appliquerRechercheEtFiltresClients();
-    });
-
-    filtreStatut?.addEventListener("change", function () {
-        filtresClients.statut = filtreStatut.value;
-        appliquerRechercheEtFiltresClients();
-    });
-
-    filtreCommune?.addEventListener("change", function () {
-        filtresClients.commune = filtreCommune.value;
-        appliquerRechercheEtFiltresClients();
-    });
-
-    boutonEffacer?.addEventListener("click", function () {
-
-        rechercheClients = "";
-        filtresClients = {
-            typeClient: "",
-            statut: "",
-            commune: ""
-        };
-
-        if (recherchePage) recherchePage.value = "";
-        if (rechercheHeader) rechercheHeader.value = "";
-        if (filtreType) filtreType.value = "";
-        if (filtreStatut) filtreStatut.value = "";
-        if (filtreCommune) filtreCommune.value = "";
-
-        appliquerRechercheEtFiltresClients();
-    });
-
-    boutonActualiser?.addEventListener("click", async function () {
-
-        if (boutonActualiser.disabled) return;
-
-        boutonActualiser.disabled = true;
-        boutonActualiser.classList.add("is-loading");
-
-        try {
-            await chargerClients();
-            showToast("Liste des clients actualisée.", "success");
-        } finally {
-            boutonActualiser.disabled = false;
-            boutonActualiser.classList.remove("is-loading");
-        }
-    });
-}
-
-
-function appliquerRechercheEtFiltresClients() {
-
-    const terme = normaliserValeurRecherche(rechercheClients);
-
-    const clientsFiltres = clientsCharges.filter(function (client) {
-
-        const correspondRecherche = !terme || [
-            client.idClient,
-            client.nom,
-            client.prenom,
-            client.telephone,
-            client.email,
-            client.commune,
-            client.quartier,
-            client.typeClient,
-            client.statut
-        ].some(function (valeur) {
-            return normaliserValeurRecherche(valeur).includes(terme);
-        });
-
-        const correspondType =
-            !filtresClients.typeClient ||
-            normaliserValeurRecherche(client.typeClient) ===
-            normaliserValeurRecherche(filtresClients.typeClient);
-
-        const correspondStatut =
-            !filtresClients.statut ||
-            normaliserValeurRecherche(client.statut) ===
-            normaliserValeurRecherche(filtresClients.statut);
-
-        const correspondCommune =
-            !filtresClients.commune ||
-            normaliserValeurRecherche(client.commune) ===
-            normaliserValeurRecherche(filtresClients.commune);
-
-        return correspondRecherche &&
-            correspondType &&
-            correspondStatut &&
-            correspondCommune;
-    });
-
-    clientsAffiches = clientsFiltres.slice();
-    afficherClients(clientsAffiches);
-    mettreAJourCompteurClients(clientsFiltres.length);
-    mettreAJourEtatBoutonEffacer();
-}
-
-
-function normaliserValeurRecherche(valeur) {
-
-    return String(valeur ?? "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9@.+-]+/g, " ")
-        .replace(/\s+/g, " ");
-}
-
-
-function mettreAJourCompteurClients(nombre) {
-
-    const compteur =
-        document.getElementById("filtered-client-count");
-
-    if (compteur) {
-        compteur.textContent = String(nombre);
-    }
-}
-
-
-function mettreAJourEtatBoutonEffacer() {
-
-    const bouton =
-        document.getElementById("reset-client-filters");
-
-    if (!bouton) return;
-
-    const filtreActif = Boolean(
-        rechercheClients.trim() ||
-        filtresClients.typeClient ||
-        filtresClients.statut ||
-        filtresClients.commune
-    );
-
-    bouton.disabled = !filtreActif;
-    bouton.setAttribute(
-        "aria-disabled",
-        filtreActif ? "false" : "true"
-    );
-}
-
-
-// ========================================
-// FENÊTRE VOIR CLIENT
-// ========================================
-
-function ouvrirModalVoirClient() {
-
-    const modal =
-        document.getElementById("view-client-modal");
-
-    if (!modal) {
-
-        console.error(
-            'La fenêtre avec id="view-client-modal" est introuvable.'
-        );
-
-        return;
-    }
-
-    modal.classList.add("active");
-
-    modal.setAttribute(
-        "aria-hidden",
-        "false"
-    );
-}
-
-
-function fermerModalVoirClient() {
-
-    const modal =
-        document.getElementById("view-client-modal");
-
-    if (!modal) {
-        return;
-    }
-
-    modal.classList.remove("active");
-
-    modal.setAttribute(
-        "aria-hidden",
-        "true"
-    );
-}
-
-
-
-// ========================================
-// INFORMATIONS DU CLIENT DANS LA FENÊTRE
-// ========================================
-
-function afficherDetailsClient(client) {
-
-    const nomComplet = [
-        client.nom,
-        client.prenom
-    ]
-        .filter(Boolean)
-        .join(" ");
-
-    definirTexteClient(
-        "view-client-id",
-        client.idClient
-    );
-
-    definirTexteClient(
-        "view-client-name",
-        nomComplet
-    );
-
-    definirTexteClient(
-        "view-client-phone",
-        formaterTelephone(client.telephone)
-    );
-
-    definirTexteClient(
-        "view-client-email",
-        client.email
-    );
-
-    definirTexteClient(
-        "view-client-type",
-        mettreMajuscule(client.typeClient)
-    );
-
-    definirTexteClient(
-        "view-client-status",
-        mettreMajuscule(client.statut)
-    );
-
-    definirTexteClient(
-        "view-client-commune",
-        mettreMajuscule(client.commune)
-    );
-
-    definirTexteClient(
-        "view-client-neighborhood",
-        client.quartier
-    );
-
-    definirTexteClient(
-        "view-client-date",
-        formaterDateClient(
-            client.dateInscription
-        )
-    );
-
-    definirTexteClient(
-        "view-client-orders",
-        client.nombreCommandes ?? 0
-    );
-
-    definirTexteClient(
-        "view-client-purchases",
-        formaterMontantClient(
-            client.montantTotalAchats
-        )
-    );
-
-    definirTexteClient(
-        "view-client-comment",
-        client.commentaire
-    );
-}
-
-
-function definirTexteClient(idElement, valeur) {
-
-    const element =
-        document.getElementById(idElement);
-
-    if (!element) {
-
-        console.warn(
-            `Élément introuvable : ${idElement}`
-        );
-
-        return;
-    }
-
-    const texte =
-        String(valeur ?? "")
-            .trim();
-
-    element.textContent =
-        texte || "—";
-}
-
-
-// ========================================
-// AFFICHAGE DES CLIENTS
-// ========================================
-
-function afficherClients(clients) {
-
-    const tbody =
-        document.getElementById("clients-table-body");
-
-    const emptyState =
-        document.getElementById("clients-empty-state");
-
-
-    if (!tbody) {
-
-        console.error(
-            'Le tableau doit contenir un tbody avec id="clients-table-body".'
-        );
-
-        return;
-    }
-
-
-    tbody.innerHTML = "";
-
-
-    if (clients.length === 0) {
-
-        if (emptyState) {
-            emptyState.hidden = false;
-        }
-
-        return;
-    }
-
-
-    if (emptyState) {
-        emptyState.hidden = true;
-    }
-
-
-    clients.forEach(function (client) {
-
-        const ligne =
-            document.createElement("tr");
-
-
-        const nomComplet = [
-
-            client.nom,
-            client.prenom
-
-        ]
-            .filter(Boolean)
-            .join(" ");
-
-
-        const contact = `
-            <div>
-                ${echapperHTML(
-                    formaterTelephone(client.telephone)
-                )}
-            </div>
-
-            <div>
-                ${echapperHTML(client.email)}
-            </div>
-        `;
-
-
-        ligne.innerHTML = `
-            <td>
-                <input
-                    type="checkbox"
-                    class="client-checkbox"
-                    value="${echapperHTML(client.idClient)}"
-                    aria-label="Sélectionner ${echapperHTML(nomComplet)}"
-                >
-            </td>
-
-            <td>
-                <div>
-                    ${echapperHTML(nomComplet)}
-                </div>
-
-                <small>
-                    ${echapperHTML(client.idClient)}
-                </small>
-            </td>
-
-            <td>
-                ${contact}
-            </td>
-
-            <td>
-                ${echapperHTML(
-                    mettreMajuscule(client.commune)
-                )}
-            </td>
-
-            <td>
-                ${echapperHTML(
-                    mettreMajuscule(client.typeClient)
-                )}
-            </td>
-
-            <td>
-                ${formaterDateClient(
-                    client.dateInscription
-                )}
-            </td>
-
-            <td>
-                ${echapperHTML(
-                    client.nombreCommandes ?? 0
-                )}
-            </td>
-
-            <td>
-                ${formaterMontantClient(
-                    client.montantTotalAchats
-                )}
-            </td>
-
-            <td>
-                ${echapperHTML(client.quartier)}
-            </td>
-
-            <td>
-                <span
-                    class="
-                        status-badge
-                        status-${obtenirClasseStatut(client.statut)}
-                    "
-                >
-                    ${echapperHTML(
-                        mettreMajuscule(client.statut)
-                    )}
-                </span>
-            </td>
-
-            <td class="table-actions">
-
-                <button
-                    type="button"
-                    class="table-action-btn view-btn"
-                    data-client-id="${echapperHTML(client.idClient)}"
-                    title="Voir"
-                    aria-label="Voir le client"
-                >
-                    <i class="fa-solid fa-eye"></i>
-                </button>
-
-                <button
-                    type="button"
-                    class="table-action-btn edit-btn"
-                    data-client-id="${echapperHTML(client.idClient)}"
-                    title="Modifier"
-                    aria-label="Modifier le client"
-                >
-                    <i class="fa-solid fa-pen"></i>
-                </button>
-
-                <button
-                    type="button"
-                    class="table-action-btn delete-btn"
-                    data-client-id="${echapperHTML(client.idClient)}"
-                    title="Supprimer"
-                    aria-label="Supprimer le client"
-                >
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-
-            </td>
-        `;
-
-
-        tbody.appendChild(ligne);
-    });
-}
-
-
-// ========================================
-// FORMATAGE DE LA DATE
-// ========================================
-
-function formaterDateClient(date) {
-
-    if (!date) {
-        return "";
-    }
-
-
-    const dateClient =
-        new Date(date);
-
-
-    if (Number.isNaN(dateClient.getTime())) {
-
-        return echapperHTML(date);
-    }
-
-
-    return dateClient.toLocaleDateString(
-        "fr-FR"
-    );
-}
-
-
-// ========================================
-// FORMATAGE DU MONTANT
-// ========================================
-
-function formaterMontantClient(montant) {
-
-    const valeur =
-        Number(montant || 0);
-
-
-    return valeur.toLocaleString("fr-FR")
-        + " FCFA";
-}
-
-
-// ========================================
-// CLASSE CSS DU STATUT
-// ========================================
-
-function obtenirClasseStatut(statut) {
-
-    const valeur =
-        String(statut ?? "")
-            .trim()
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(
-                /[\u0300-\u036f]/g,
-                ""
-            );
-
-
-    const classes = {
-
-        actif: "actif",
-        inactif: "inactif",
-        prospect: "prospect",
-        bloque: "bloque"
-    };
-
-
-    return classes[valeur] || "inconnu";
-}
-
-
-// ========================================
-// PREMIÈRE LETTRE EN MAJUSCULE
-// ========================================
-
-function mettreMajuscule(valeur) {
-
-    const texte =
-        String(valeur ?? "")
-            .trim();
-
-
-    if (!texte) {
-        return "";
-    }
-
-
-    return texte
-        .charAt(0)
-        .toUpperCase()
-        + texte
-            .slice(1)
-            .toLowerCase();
-}
-
-
-// ========================================
-// FORMATAGE DU TÉLÉPHONE
-// ========================================
-
-function formaterTelephone(telephone) {
-
-    let numero =
-        String(telephone ?? "")
-            .replace(/\s+/g, "");
-
-
-    if (!numero) {
-        return "";
-    }
-
-
-    // Cas : +225XXXXXXXXXX
-    if (numero.startsWith("+225")) {
-
-        const reste =
-            numero.substring(4);
-
-
-        if (reste.length === 10) {
-
-            return "+225 "
-                + reste
-                    .match(/.{1,2}/g)
-                    .join(" ");
-        }
-
-
-        return numero;
-    }
-
-
-    // Cas : numéro ivoirien sur 8 ou 10 chiffres
-    if (
-        numero.length === 8 ||
-        numero.length === 10
-    ) {
-
-        return numero
-            .match(/.{1,2}/g)
-            .join(" ");
-    }
-
-
-    return numero;
-}
-
-
-// ========================================
-// PROTECTION HTML
-// ========================================
 
 function echapperHTML(valeur) {
 
-    return String(valeur ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-// ========================================
-// ÉTAPE 4 — TRI, PAGINATION, SÉLECTION ET COLONNES
-// ========================================
-let pageClientsCourante = 1;
-let clientsParPage = 10;
-let triClients = { cle: "", direction: "asc" };
-const idsClientsSelectionnes = new Set();
-let clientsPageCourante = [];
+    const element = document.createElement("div");
+    element.textContent = String(valeur ?? "");
 
-const colonnesClients = [
-    { id: "client", label: "Client", index: 1, visible: true },
-    { id: "contact", label: "Contact", index: 2, visible: true },
-    { id: "commune", label: "Commune", index: 3, visible: true },
-    { id: "type", label: "Type", index: 4, visible: true },
-    { id: "date", label: "Date d’inscription", index: 5, visible: true },
-    { id: "commandes", label: "Commandes", index: 6, visible: true },
-    { id: "achats", label: "Total achats", index: 7, visible: true },
-    { id: "quartier", label: "Quartier", index: 8, visible: true },
-    { id: "statut", label: "Statut", index: 9, visible: true },
-    { id: "actions", label: "Actions", index: 10, visible: true }
-];
-
-function initialiserFonctionsAvanceesClients() {
-    const selectParPage = document.getElementById("clients-per-page");
-    clientsParPage = Number(selectParPage?.value) || 10;
-    selectParPage?.addEventListener("change", function () {
-        clientsParPage = Number(selectParPage.value) || 10;
-        pageClientsCourante = 1;
-        afficherClients(clientsAffiches);
-    });
-
-    document.getElementById("previous-page-btn")?.addEventListener("click", function () {
-        if (pageClientsCourante > 1) { pageClientsCourante--; afficherClients(clientsAffiches); }
-    });
-    document.getElementById("next-page-btn")?.addEventListener("click", function () {
-        const totalPages = Math.max(1, Math.ceil(clientsAffiches.length / clientsParPage));
-        if (pageClientsCourante < totalPages) { pageClientsCourante++; afficherClients(clientsAffiches); }
-    });
-
-    document.querySelector(".clients-table thead")?.addEventListener("click", function (event) {
-        const entete = event.target.closest("th[data-sort-key]");
-        if (!entete) return;
-        const cle = entete.dataset.sortKey;
-        triClients.direction = triClients.cle === cle && triClients.direction === "asc" ? "desc" : "asc";
-        triClients.cle = cle;
-        pageClientsCourante = 1;
-        afficherClients(clientsAffiches);
-    });
-
-    const tbody = document.getElementById("clients-table-body");
-    tbody?.addEventListener("change", function (event) {
-        const checkbox = event.target.closest(".client-checkbox");
-        if (!checkbox) return;
-        const id = String(checkbox.value);
-        checkbox.checked ? idsClientsSelectionnes.add(id) : idsClientsSelectionnes.delete(id);
-        checkbox.closest("tr")?.classList.toggle("is-selected", checkbox.checked);
-        mettreAJourSelectionClients();
-    });
-
-    document.getElementById("select-all-clients")?.addEventListener("change", function (event) {
-        const cocher = event.target.checked;
-        clientsPageCourante.forEach(function (client) {
-            const id = String(client.idClient);
-            cocher ? idsClientsSelectionnes.add(id) : idsClientsSelectionnes.delete(id);
-        });
-        afficherClients(clientsAffiches);
-    });
-
-    document.getElementById("bulk-clear-selection")?.addEventListener("click", function () {
-        idsClientsSelectionnes.clear(); afficherClients(clientsAffiches);
-    });
-    document.getElementById("bulk-export-pdf")?.addEventListener("click", function () { exporterSelectionClients("pdf"); });
-    document.getElementById("bulk-export-xlsx")?.addEventListener("click", function () { exporterSelectionClients("xlsx"); });
-    document.getElementById("bulk-export-csv")?.addEventListener("click", function () { exporterSelectionClients("csv"); });
-    document.getElementById("bulk-delete-clients")?.addEventListener("click", ouvrirModalSuppressionMultiple);
-    document.getElementById("cancel-bulk-delete-client-btn")?.addEventListener("click", fermerModalSuppressionMultiple);
-    document.getElementById("close-bulk-delete-client-btn")?.addEventListener("click", fermerModalSuppressionMultiple);
-    document.getElementById("bulk-delete-client-modal")?.addEventListener("click", function (event) { if (event.target === event.currentTarget) fermerModalSuppressionMultiple(); });
-    document.getElementById("confirm-bulk-delete-client-btn")?.addEventListener("click", supprimerClientsSelectionnes);
-
-    initialiserMenuColonnesClients();
+    return element.innerHTML;
 }
 
-function comparerClients(a, b, cle) {
-    if (["nombreCommandes", "montantTotalAchats"].includes(cle)) {
-        return convertirMontantClient(a[cle]) - convertirMontantClient(b[cle]);
+
+function normaliserTexte(valeur) {
+
+    return String(valeur || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+
+function normaliserStatut(valeur) {
+
+    const statut = normaliserTexte(valeur);
+
+    if (statut === "suspendue") {
+        return "suspendu";
     }
-    if (cle === "dateInscription") {
-        const da = convertirDateClient(a[cle])?.getTime?.() || 0;
-        const db = convertirDateClient(b[cle])?.getTime?.() || 0;
-        return da - db;
+
+    if (statut === "archivee") {
+        return "archive";
     }
-    const va = normaliserValeurRecherche(cle === "nom" ? `${a.nom || ""} ${a.prenom || ""}` : a[cle]);
-    const vb = normaliserValeurRecherche(cle === "nom" ? `${b.nom || ""} ${b.prenom || ""}` : b[cle]);
-    return va.localeCompare(vb, "fr", { numeric: true });
+
+    return statut;
 }
 
-const afficherClientsOriginal = afficherClients;
-afficherClients = function (clients) {
-    const liste = Array.isArray(clients) ? clients.slice() : [];
-    if (triClients.cle) {
-        liste.sort(function (a, b) {
-            const valeur = comparerClients(a, b, triClients.cle);
-            return triClients.direction === "asc" ? valeur : -valeur;
-        });
-    }
-    const totalPages = Math.max(1, Math.ceil(liste.length / clientsParPage));
-    pageClientsCourante = Math.min(Math.max(1, pageClientsCourante), totalPages);
-    const debut = (pageClientsCourante - 1) * clientsParPage;
-    clientsPageCourante = liste.slice(debut, debut + clientsParPage);
-    afficherClientsOriginal(clientsPageCourante);
-    restaurerSelectionDansTableau();
-    appliquerVisibiliteColonnes();
-    mettreAJourPagination(liste.length, totalPages);
-    mettreAJourIndicateursTri();
-    mettreAJourSelectionClients();
-};
 
-function mettreAJourPagination(total, totalPages) {
-    const zone = document.getElementById("clients-page-buttons");
-    if (zone) {
-        zone.innerHTML = "";
-        const pages = [];
-        for (let p = 1; p <= totalPages; p++) {
-            if (p === 1 || p === totalPages || Math.abs(p - pageClientsCourante) <= 1) pages.push(p);
-        }
-        let precedente = 0;
-        pages.forEach(function (p) {
-            if (precedente && p - precedente > 1) { const dots=document.createElement("span"); dots.textContent="…"; zone.appendChild(dots); }
-            const bouton=document.createElement("button"); bouton.type="button"; bouton.className="pagination-btn"+(p===pageClientsCourante?" active":""); bouton.textContent=String(p);
-            bouton.addEventListener("click", function(){ pageClientsCourante=p; afficherClients(clientsAffiches); }); zone.appendChild(bouton); precedente=p;
-        });
-    }
-    const debut = total ? (pageClientsCourante - 1) * clientsParPage + 1 : 0;
-    const fin = Math.min(pageClientsCourante * clientsParPage, total);
-    const resume = document.getElementById("clients-pagination-summary");
-    if (resume) resume.textContent = `${debut}–${fin} sur ${total}`;
-    const precedent=document.getElementById("previous-page-btn"), suivant=document.getElementById("next-page-btn");
-    if (precedent) precedent.disabled = pageClientsCourante <= 1;
-    if (suivant) suivant.disabled = pageClientsCourante >= totalPages;
-}
+function formaterDateFournisseur(valeur) {
 
-function mettreAJourIndicateursTri() {
-    document.querySelectorAll("th[data-sort-key]").forEach(function(th){
-        const indicateur=th.querySelector(".sort-indicator");
-        if (indicateur) indicateur.textContent = th.dataset.sortKey === triClients.cle ? (triClients.direction === "asc" ? "▲" : "▼") : "↕";
-        th.setAttribute("aria-sort", th.dataset.sortKey === triClients.cle ? (triClients.direction === "asc" ? "ascending" : "descending") : "none");
+    if (!valeur) {
+        return "—";
+    }
+
+    const date = new Date(valeur);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(valeur);
+    }
+
+    return date.toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
     });
 }
 
-function restaurerSelectionDansTableau() {
-    document.querySelectorAll(".client-checkbox").forEach(function(cb){
-        cb.checked = idsClientsSelectionnes.has(String(cb.value));
-        cb.closest("tr")?.classList.toggle("is-selected", cb.checked);
+
+function formaterDelaiLivraison(valeur) {
+
+    const nombre = Number(
+        String(valeur ?? "")
+            .replace(/\s/g, "")
+            .replace(",", ".")
+    );
+
+    if (!Number.isFinite(nombre) || nombre <= 0) {
+        return "—";
+    }
+
+    return `${nombre.toLocaleString("fr-FR")} jour${nombre > 1 ? "s" : ""}`;
+}
+
+
+function obtenirCorpsTableauFournisseurs() {
+
+    return document.getElementById(
+        "suppliers-table-body"
+    );
+}
+
+
+function trouverFournisseurParId(idFournisseur) {
+
+    const recherche = String(
+        idFournisseur || ""
+    ).trim();
+
+    return fournisseurs.find(fournisseur => {
+
+        const id = String(
+            lireValeurFournisseur(
+                fournisseur,
+                ["ID Fournisseur", "idFournisseur"]
+            ) || ""
+        ).trim();
+
+        return id === recherche;
     });
 }
 
-function mettreAJourSelectionClients() {
-    const selectionValide = new Set(clientsCharges.map(c => String(c.idClient)));
-    [...idsClientsSelectionnes].forEach(id => { if (!selectionValide.has(id)) idsClientsSelectionnes.delete(id); });
-    const nombre = idsClientsSelectionnes.size;
-    const barre=document.getElementById("bulk-clients-bar"), compteur=document.getElementById("selected-clients-count");
-    if (barre) barre.hidden = nombre === 0;
-    if (compteur) compteur.textContent = String(nombre);
-    const selectAll=document.getElementById("select-all-clients");
-    if (selectAll) {
-        const coches=clientsPageCourante.filter(c=>idsClientsSelectionnes.has(String(c.idClient))).length;
-        selectAll.checked = clientsPageCourante.length > 0 && coches === clientsPageCourante.length;
-        selectAll.indeterminate = coches > 0 && coches < clientsPageCourante.length;
+
+function obtenirInitialesFournisseur(nom) {
+
+    const mots = String(nom || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (!mots.length) {
+        return "FR";
     }
+
+    return mots
+        .slice(0, 2)
+        .map(mot => mot.charAt(0).toUpperCase())
+        .join("");
 }
 
-function obtenirClientsSelectionnes() {
-    return clientsCharges.filter(c => idsClientsSelectionnes.has(String(c.idClient)));
-}
 
-function exporterSelectionClients(format) {
-    const selection = obtenirClientsSelectionnes();
-    if (!selection.length) return showToast("Sélectionnez au moins un client.", "error");
-    const sauvegarde = clientsAffiches;
-    clientsAffiches = selection;
-    try { if(format==="pdf") exporterClientsPDF(); if(format==="xlsx") exporterClientsExcel(); if(format==="csv") exporterClientsCSV(); }
-    finally { clientsAffiches = sauvegarde; }
-}
+/* ===========================================================
+   CHARGEMENT DEPUIS L'API
+=========================================================== */
 
-function ouvrirModalSuppressionMultiple() {
-    const nombre=idsClientsSelectionnes.size; if(!nombre) return;
-    const modal=document.getElementById("bulk-delete-client-modal"), message=document.getElementById("bulk-delete-client-message");
-    if(message) message.textContent=`Vous allez supprimer définitivement ${nombre} client(s). Cette action est irréversible.`;
-    modal?.classList.add("active"); modal?.setAttribute("aria-hidden","false");
-}
-function fermerModalSuppressionMultiple() { const modal=document.getElementById("bulk-delete-client-modal"); modal?.classList.remove("active"); modal?.setAttribute("aria-hidden","true"); }
+async function chargerFournisseursDepuisAPI() {
 
-async function supprimerClientsSelectionnes() {
-    const bouton=document.getElementById("confirm-bulk-delete-client-btn");
-    const ids=[...idsClientsSelectionnes]; if(!ids.length || bouton?.disabled) return;
-    if(bouton){ bouton.disabled=true; bouton.classList.add("is-loading"); }
-    let succes=0, echecs=0;
+    afficherEtatChargementFournisseurs();
+
     try {
-        for (const idClient of ids) {
-            try { const r=await apiPost("deleteClient",{idClient}); r?.success ? succes++ : echecs++; } catch(e){ echecs++; }
+
+        const resultat =
+            await apiGet("getFournisseurs");
+
+        if (!resultat?.success) {
+
+            throw new Error(
+                resultat?.message ||
+                "Impossible de récupérer les fournisseurs."
+            );
         }
-        idsClientsSelectionnes.clear();
-        await chargerClients();
-        fermerModalSuppressionMultiple();
-        if(succes) showToast(`${succes} client(s) supprimé(s).`,"success");
-        if(echecs) showToast(`${echecs} suppression(s) ont échoué.`,"error");
-    } finally { if(bouton){ bouton.disabled=false; bouton.classList.remove("is-loading"); } }
+
+        fournisseurs = Array.isArray(resultat.data)
+            ? resultat.data
+            : [];
+
+        nettoyerSelectionFournisseurs();
+        mettreAJourOptionsFiltresFournisseurs();
+        mettreAJourKPIsFournisseurs();
+        appliquerFiltresFournisseurs();
+
+        console.log(
+            `${fournisseurs.length} fournisseur(s) chargé(s) depuis Google Sheets.`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Erreur lors du chargement des fournisseurs :",
+            error
+        );
+
+        afficherErreurChargementFournisseurs(
+            error?.message ||
+            "Une erreur est survenue."
+        );
+    }
 }
 
-function initialiserMenuColonnesClients() {
-    const menu=document.getElementById("columns-clients-menu"), bouton=document.getElementById("columns-clients-btn"), liste=document.getElementById("columns-clients-dropdown");
-    if(!menu||!bouton||!liste) return;
-    liste.innerHTML = colonnesClients.map(c=>`<label class="column-option"><input type="checkbox" data-column-toggle="${c.id}" checked> <span>${c.label}</span></label>`).join("");
-    bouton.addEventListener("click",function(e){ e.stopPropagation(); const ouvrir=liste.hidden; liste.hidden=!ouvrir; bouton.setAttribute("aria-expanded",String(ouvrir)); });
-    liste.addEventListener("change",function(e){ const cb=e.target.closest("[data-column-toggle]"); if(!cb)return; const c=colonnesClients.find(x=>x.id===cb.dataset.columnToggle); if(c)c.visible=cb.checked; appliquerVisibiliteColonnes(); });
-    document.addEventListener("click",function(e){ if(!menu.contains(e.target)){liste.hidden=true; bouton.setAttribute("aria-expanded","false");} });
+
+/* ===========================================================
+   KPI
+=========================================================== */
+
+function mettreAJourKPIsFournisseurs() {
+
+    const total = fournisseurs.length;
+
+    const actifs = fournisseurs.filter(fournisseur =>
+        normaliserStatut(
+            lireValeurFournisseur(
+                fournisseur,
+                ["Statut", "statut"]
+            )
+        ) === "actif"
+    ).length;
+
+    const internationaux = fournisseurs.filter(
+        fournisseur => {
+
+            const pays = normaliserTexte(
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Pays", "pays"]
+                )
+            );
+
+            return (
+                pays &&
+                ![
+                    "cote d'ivoire",
+                    "cote divoire",
+                    "ci"
+                ].includes(pays)
+            );
+        }
+    ).length;
+
+    const delais = fournisseurs
+        .map(fournisseur =>
+            Number(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Délai Moyen de Livraison",
+                        "delaiMoyenLivraison"
+                    ]
+                )
+            )
+        )
+        .filter(nombre =>
+            Number.isFinite(nombre) &&
+            nombre > 0
+        );
+
+    const delaiMoyen = delais.length
+        ? delais.reduce(
+            (somme, valeur) => somme + valeur,
+            0
+        ) / delais.length
+        : 0;
+
+    const maintenant = new Date();
+
+    const ajoutsCeMois = fournisseurs.filter(
+        fournisseur => {
+
+            const date = new Date(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Date d’Ajout",
+                        "Date d'Ajout",
+                        "dateAjout"
+                    ]
+                )
+            );
+
+            return (
+                !Number.isNaN(date.getTime()) &&
+                date.getMonth() === maintenant.getMonth() &&
+                date.getFullYear() === maintenant.getFullYear()
+            );
+        }
+    ).length;
+
+    definirTexteElement(
+        "kpi-total-suppliers",
+        total.toLocaleString("fr-FR")
+    );
+
+    definirTexteElement(
+        "kpi-suppliers-month",
+        `+${ajoutsCeMois} ce mois`
+    );
+
+    definirTexteElement(
+        "kpi-international-suppliers",
+        internationaux.toLocaleString("fr-FR")
+    );
+
+    definirTexteElement(
+        "kpi-international-percent",
+        total
+            ? `${(
+                internationaux / total * 100
+            ).toFixed(1).replace(".", ",")} % du total`
+            : "0 % du total"
+    );
+
+    definirTexteElement(
+        "kpi-active-suppliers",
+        actifs.toLocaleString("fr-FR")
+    );
+
+    definirTexteElement(
+        "kpi-active-suppliers-percent",
+        total
+            ? `${(
+                actifs / total * 100
+            ).toFixed(1).replace(".", ",")} % du total`
+            : "0 % du total"
+    );
+
+    definirTexteElement(
+        "kpi-average-delivery-time",
+        delaiMoyen
+            ? `${delaiMoyen
+                .toFixed(1)
+                .replace(".", ",")} jours`
+            : "0 jour"
+    );
 }
 
-function appliquerVisibiliteColonnes() {
-    colonnesClients.forEach(function(c){
-        document.querySelectorAll(`.clients-table tr`).forEach(function(tr){ const cell=tr.children[c.index]; if(cell) cell.hidden=!c.visible; });
+
+/* ===========================================================
+   AFFICHAGE DU TABLEAU
+=========================================================== */
+
+function afficherFournisseurs(listeFournisseurs) {
+
+    const tableBody =
+        obtenirCorpsTableauFournisseurs();
+
+    if (!tableBody) {
+        return;
+    }
+
+    fournisseursFiltresCourants =
+        Array.isArray(listeFournisseurs)
+            ? [...listeFournisseurs]
+            : [];
+
+    const total =
+        fournisseursFiltresCourants.length;
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(
+            total / fournisseursParPage
+        )
+    );
+
+    if (pageFournisseursCourante > totalPages) {
+        pageFournisseursCourante = totalPages;
+    }
+
+    const debut =
+        (pageFournisseursCourante - 1) *
+        fournisseursParPage;
+
+    const page =
+        fournisseursFiltresCourants.slice(
+            debut,
+            debut + fournisseursParPage
+        );
+
+    mettreAJourCompteurFournisseurs(total);
+    afficherPaginationFournisseurs(
+        total,
+        totalPages
+    );
+
+    if (page.length === 0) {
+
+        tableBody.innerHTML = `
+            <tr>
+                <td
+                    colspan="9"
+                    class="table-message"
+                >
+                    Aucun fournisseur ne correspond à votre recherche.
+                </td>
+            </tr>
+        `;
+
+        synchroniserSelectionFournisseurs();
+        return;
+    }
+
+    tableBody.innerHTML = page.map(
+        fournisseur => {
+
+            const idBrut = String(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "ID Fournisseur",
+                        "idFournisseur"
+                    ]
+                ) || ""
+            ).trim();
+
+            const id = echapperHTML(idBrut);
+
+            const code = echapperHTML(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Code Fournisseur",
+                        "codeFournisseur"
+                    ]
+                ) ||
+                idBrut ||
+                "—"
+            );
+
+            const nom = echapperHTML(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Nom Fournisseur",
+                        "nomFournisseur"
+                    ]
+                ) || "—"
+            );
+
+            const contact = echapperHTML(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Nom du Contact",
+                        "nomContact"
+                    ]
+                ) || "—"
+            );
+
+            const telephone = echapperHTML(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Téléphone",
+                        "telephone"
+                    ]
+                ) || "—"
+            );
+
+            const pays = echapperHTML(
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Pays", "pays"]
+                ) || "—"
+            );
+
+            const ville = echapperHTML(
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Ville", "ville"]
+                ) || "—"
+            );
+
+            const categorie = echapperHTML(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Catégorie de Produits",
+                        "Type de Produits",
+                        "categorieProduits",
+                        "typeProduits"
+                    ]
+                ) || "—"
+            );
+
+            const statutBrut = String(
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Statut", "statut"]
+                ) || "Inactif"
+            ).trim();
+
+            const statut =
+                normaliserStatut(statutBrut);
+
+            const classeStatut =
+                statut === "actif"
+                    ? "status-active"
+                    : statut === "suspendu"
+                        ? "status-suspended"
+                        : statut === "archive"
+                            ? "status-archived"
+                            : "status-inactive";
+
+            const selectionne =
+                fournisseursSelectionnes.has(
+                    idBrut
+                );
+
+            return `
+                <tr
+                    data-supplier-id="${id}"
+                    class="${
+                        selectionne
+                            ? "supplier-row-selected"
+                            : ""
+                    }"
+                >
+                    <td class="selection-column">
+                        <input
+                            type="checkbox"
+                            class="supplier-row-checkbox"
+                            data-supplier-id="${id}"
+                            ${
+                                selectionne
+                                    ? "checked"
+                                    : ""
+                            }
+                            aria-label="Sélectionner ${nom}"
+                        >
+                    </td>
+
+                    <td>
+                        <strong>${code}</strong>
+                    </td>
+
+                    <td>
+                        <div class="supplier-table-name">
+                            <strong>${nom}</strong>
+
+                            <span class="supplier-table-contact">
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+
+                                ${contact}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td>${telephone}</td>
+                    <td>${pays}</td>
+                    <td>${ville}</td>
+                    <td>${categorie}</td>
+
+                    <td>
+                        <span
+                            class="supplier-status product-status ${classeStatut}"
+                        >
+                            ${echapperHTML(statutBrut)}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div
+                            class="table-actions supplier-actions-cell"
+                        >
+                            <button
+                                type="button"
+                                class="table-action-btn view-btn view-supplier-btn"
+                                data-supplier-id="${id}"
+                                title="Voir le fournisseur"
+                                aria-label="Voir le fournisseur"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+
+                            <button
+                                type="button"
+                                class="table-action-btn edit-btn edit-supplier-btn"
+                                data-supplier-id="${id}"
+                                title="Modifier le fournisseur"
+                                aria-label="Modifier le fournisseur"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M12 20h9"></path>
+                                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                                </svg>
+                            </button>
+
+                            <button
+                                type="button"
+                                class="table-action-btn delete-btn delete-supplier-btn"
+                                data-supplier-id="${id}"
+                                title="Supprimer le fournisseur"
+                                aria-label="Supprimer le fournisseur"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M3 6h18"></path>
+                                    <path d="M8 6V4h8v2"></path>
+                                    <path d="M19 6l-1 14H6L5 6"></path>
+                                    <path d="M10 11v6"></path>
+                                    <path d="M14 11v6"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    ).join("");
+
+    synchroniserSelectionFournisseurs();
+}
+
+
+/* ===========================================================
+   RECHERCHE ET FILTRE
+=========================================================== */
+
+function initialiserFiltresFournisseurs() {
+
+    document
+        .getElementById("suppliers-search-input")
+        ?.addEventListener(
+            "input",
+            appliquerFiltresFournisseurs
+        );
+
+    document
+        .getElementById("supplier-country-filter")
+        ?.addEventListener(
+            "change",
+            appliquerFiltresFournisseurs
+        );
+
+    document
+        .getElementById("supplier-category-filter")
+        ?.addEventListener(
+            "change",
+            appliquerFiltresFournisseurs
+        );
+
+    document
+        .getElementById("supplier-status-filter")
+        ?.addEventListener(
+            "change",
+            appliquerFiltresFournisseurs
+        );
+}
+
+
+function appliquerFiltresFournisseurs(event) {
+
+    if (event) {
+        pageFournisseursCourante = 1;
+    }
+
+    const recherche = normaliserTexte(
+        obtenirValeurTexte(
+            "suppliers-search-input"
+        )
+    );
+
+    const paysRecherche = normaliserTexte(
+        obtenirValeurTexte(
+            "supplier-country-filter"
+        )
+    );
+
+    const categorieRecherche = normaliserTexte(
+        obtenirValeurTexte(
+            "supplier-category-filter"
+        )
+    );
+
+    const statutRecherche =
+        normaliserStatut(
+            obtenirValeurTexte(
+                "supplier-status-filter"
+            )
+        );
+
+    const listeFiltree =
+        fournisseurs.filter(fournisseur => {
+
+            const texte = normaliserTexte([
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "ID Fournisseur",
+                        "Code Fournisseur",
+                        "idFournisseur",
+                        "codeFournisseur"
+                    ]
+                ),
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Nom Fournisseur",
+                        "nomFournisseur"
+                    ]
+                ),
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Nom du Contact",
+                        "nomContact"
+                    ]
+                ),
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Téléphone",
+                        "telephone"
+                    ]
+                ),
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "WhatsApp",
+                        "whatsapp"
+                    ]
+                ),
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Email", "email"]
+                ),
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Pays", "pays"]
+                ),
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Ville", "ville"]
+                ),
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Type de Produits",
+                        "Catégorie de Produits",
+                        "categorieProduits"
+                    ]
+                )
+            ].join(" "));
+
+            const pays = normaliserTexte(
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Pays", "pays"]
+                )
+            );
+
+            const categorie = normaliserTexte(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Catégorie de Produits",
+                        "Type de Produits",
+                        "categorieProduits",
+                        "typeProduits"
+                    ]
+                )
+            );
+
+            const statut =
+                normaliserStatut(
+                    lireValeurFournisseur(
+                        fournisseur,
+                        ["Statut", "statut"]
+                    )
+                );
+
+            return (
+                (
+                    !recherche ||
+                    texte.includes(recherche)
+                ) &&
+                (
+                    !paysRecherche ||
+                    pays === paysRecherche
+                ) &&
+                (
+                    !categorieRecherche ||
+                    categorie === categorieRecherche
+                ) &&
+                (
+                    !statutRecherche ||
+                    statut === statutRecherche
+                )
+            );
+        });
+
+    afficherFournisseurs(listeFiltree);
+}
+
+
+
+
+/* ===========================================================
+   OPTIONS DYNAMIQUES DES FILTRES RAPIDES
+=========================================================== */
+
+function mettreAJourOptionsFiltresFournisseurs() {
+
+    remplirFiltreFournisseurs(
+        "supplier-country-filter",
+        fournisseurs
+            .map(fournisseur =>
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Pays", "pays"]
+                )
+            ),
+        "Tous les pays"
+    );
+
+    remplirFiltreFournisseurs(
+        "supplier-category-filter",
+        fournisseurs
+            .map(fournisseur =>
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Catégorie de Produits",
+                        "Type de Produits",
+                        "categorieProduits",
+                        "typeProduits"
+                    ]
+                )
+            ),
+        "Toutes les catégories"
+    );
+}
+
+
+function remplirFiltreFournisseurs(
+    idSelect,
+    valeurs,
+    libelleToutes
+) {
+
+    const select =
+        document.getElementById(idSelect);
+
+    if (!select) {
+        return;
+    }
+
+    const valeurActuelle =
+        normaliserTexte(select.value);
+
+    const valeursUniques = new Map();
+
+    valeurs.forEach(valeur => {
+
+        const libelle =
+            String(valeur || "").trim();
+
+        const cle =
+            normaliserTexte(libelle);
+
+        if (cle && !valeursUniques.has(cle)) {
+            valeursUniques.set(cle, libelle);
+        }
     });
+
+    const options = [
+        `<option value="">${echapperHTML(libelleToutes)}</option>`,
+        ...[...valeursUniques.entries()]
+            .sort((a, b) =>
+                a[1].localeCompare(
+                    b[1],
+                    "fr",
+                    { sensitivity: "base" }
+                )
+            )
+            .map(([cle, libelle]) =>
+                `<option value="${echapperHTML(cle)}">${echapperHTML(libelle)}</option>`
+            )
+    ];
+
+    select.innerHTML = options.join("");
+
+    if (valeursUniques.has(valeurActuelle)) {
+        select.value = valeurActuelle;
+    }
 }
 
-// Réinitialiser la page lors d'une nouvelle recherche ou d'un nouveau filtre.
-const appliquerRechercheEtFiltresClientsOriginal = appliquerRechercheEtFiltresClients;
-appliquerRechercheEtFiltresClients = function () { pageClientsCourante = 1; appliquerRechercheEtFiltresClientsOriginal(); };
 
-// L'initialisation principale a déjà été enregistrée : ajouter nos fonctions après le chargement du DOM.
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialiserFonctionsAvanceesClients);
-else initialiserFonctionsAvanceesClients();
+/* ===========================================================
+   MODALE AJOUT / MODIFICATION
+=========================================================== */
+
+function initialiserModaleFournisseur() {
+
+    document
+        .getElementById("new-supplier-btn")
+        ?.addEventListener(
+            "click",
+            ouvrirModaleFournisseur
+        );
+
+    document
+        .getElementById("close-supplier-modal")
+        ?.addEventListener(
+            "click",
+            fermerModaleFournisseur
+        );
+
+    document
+        .getElementById("cancel-supplier-btn")
+        ?.addEventListener(
+            "click",
+            fermerModaleFournisseur
+        );
+}
+
+
+function ouvrirModaleFournisseur() {
+
+    const modale =
+        document.getElementById(
+            "supplier-modal"
+        );
+
+    const formulaire =
+        document.getElementById(
+            "supplier-form"
+        );
+
+    if (!modale || !formulaire) {
+        return;
+    }
+
+    idFournisseurEnModification = "";
+    configurerModaleFournisseur("creation");
+
+    formulaire.reset();
+    genererCodeFournisseur();
+    definirValeurChamp(
+        "supplier-status",
+        "Actif"
+    );
+    masquerMessageFormulaireFournisseur();
+
+    modale.classList.add("active");
+    modale.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+    document.body.classList.add(
+        "modal-open"
+    );
+
+    setTimeout(() => {
+        document
+            .getElementById("supplier-name")
+            ?.focus();
+    }, 100);
+}
+
+
+function fermerModaleFournisseur() {
+
+    const modale =
+        document.getElementById(
+            "supplier-modal"
+        );
+
+    if (!modale) {
+        return;
+    }
+
+    modale.classList.remove("active");
+    modale.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+    masquerMessageFormulaireFournisseur();
+}
+
+
+function configurerModaleFournisseur(
+    mode = "creation"
+) {
+
+    const modification =
+        mode === "modification";
+
+    const titre =
+        document.getElementById(
+            "supplier-modal-title"
+        );
+
+    const description =
+        document.querySelector(
+            "#supplier-modal .modal-header p"
+        );
+
+    const bouton =
+        document.getElementById(
+            "save-supplier-btn"
+        );
+
+    if (titre) {
+        titre.textContent = modification
+            ? "Modifier le fournisseur"
+            : "Nouveau fournisseur";
+    }
+
+    if (description) {
+        description.textContent =
+            modification
+                ? "Modifiez les informations du fournisseur sélectionné."
+                : "Enregistrez un nouveau fournisseur dans VISIBL.";
+    }
+
+    if (bouton) {
+        bouton.textContent =
+            modification
+                ? "Enregistrer les modifications"
+                : "Enregistrer le fournisseur";
+    }
+}
+
+
+function genererCodeFournisseur() {
+
+    const champ =
+        document.getElementById(
+            "supplier-code"
+        );
+
+    if (!champ) {
+        return "";
+    }
+
+    let plusGrandNumero = 0;
+
+    fournisseurs.forEach(fournisseur => {
+
+        const code = String(
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Code Fournisseur",
+                    "codeFournisseur"
+                ]
+            ) || ""
+        ).trim();
+
+        const correspondance =
+            code.match(/^FOU(\d+)$/i);
+
+        if (correspondance) {
+
+            plusGrandNumero = Math.max(
+                plusGrandNumero,
+                Number(correspondance[1]) || 0
+            );
+        }
+    });
+
+    const nouveauCode =
+        "FOU" +
+        String(
+            plusGrandNumero + 1
+        ).padStart(6, "0");
+
+    champ.value = nouveauCode;
+
+    return nouveauCode;
+}
+
+
+/* ===========================================================
+   FORMULAIRE
+=========================================================== */
+
+function initialiserFormulaireFournisseur() {
+
+    const formulaire =
+        document.getElementById(
+            "supplier-form"
+        );
+
+    formulaire?.addEventListener(
+        "submit",
+        enregistrerFournisseur
+    );
+}
+
+
+async function enregistrerFournisseur(event) {
+
+    event.preventDefault();
+
+    const formulaire =
+        document.getElementById(
+            "supplier-form"
+        );
+
+    const boutonEnregistrer =
+        document.getElementById(
+            "save-supplier-btn"
+        );
+
+    if (!formulaire) {
+        return;
+    }
+
+    if (!formulaire.checkValidity()) {
+        formulaire.reportValidity();
+        return;
+    }
+
+    const fournisseur = {
+
+        idFournisseur:
+            idFournisseurEnModification || "",
+
+        "ID Fournisseur":
+            idFournisseurEnModification || "",
+
+        codeFournisseur:
+            obtenirValeurTexte(
+                "supplier-code"
+            ),
+
+        nomFournisseur:
+            obtenirValeurTexte(
+                "supplier-name"
+            ),
+
+        nomContact:
+            obtenirValeurTexte(
+                "supplier-contact-name"
+            ),
+
+        fonctionContact:
+            obtenirValeurTexte(
+                "supplier-contact-function"
+            ),
+
+        telephone:
+            obtenirValeurTexte(
+                "supplier-phone"
+            ),
+
+        whatsapp:
+            obtenirValeurTexte(
+                "supplier-whatsapp"
+            ),
+
+        email:
+            obtenirValeurTexte(
+                "supplier-email"
+            ),
+
+        siteWeb:
+            obtenirValeurTexte(
+                "supplier-website"
+            ),
+
+        pays:
+            obtenirValeurTexte(
+                "supplier-country"
+            ),
+
+        ville:
+            obtenirValeurTexte(
+                "supplier-city"
+            ),
+
+        adresse:
+            obtenirValeurTexte(
+                "supplier-address"
+            ),
+
+        categorieProduits:
+            obtenirValeurTexte(
+                "supplier-product-category"
+            ),
+
+        devise:
+            obtenirValeurTexte(
+                "supplier-currency"
+            ),
+
+        conditionsPaiement:
+            obtenirValeurTexte(
+                "supplier-payment-terms"
+            ),
+
+        delaiMoyenLivraison:
+            obtenirValeurNombre(
+                "supplier-delivery-time"
+            ),
+
+        garantieFournisseur:
+            obtenirValeurTexte(
+                "supplier-warranty"
+            ),
+
+        statut:
+            obtenirValeurTexte(
+                "supplier-status"
+            ) || "Actif",
+
+        commentaire:
+            obtenirValeurTexte(
+                "supplier-comment"
+            )
+    };
+
+    if (
+        !fournisseur.codeFournisseur ||
+        !fournisseur.nomFournisseur ||
+        !fournisseur.telephone ||
+        !fournisseur.pays
+    ) {
+
+        afficherMessageFormulaireFournisseur(
+            "Le code, le nom, le téléphone et le pays sont obligatoires.",
+            "error"
+        );
+
+        return;
+    }
+
+    const estModification =
+        Boolean(
+            idFournisseurEnModification
+        );
+
+    try {
+
+        if (boutonEnregistrer) {
+            boutonEnregistrer.disabled = true;
+            boutonEnregistrer.textContent =
+                "Enregistrement...";
+        }
+
+        afficherMessageFormulaireFournisseur(
+            estModification
+                ? "Enregistrement des modifications..."
+                : "Enregistrement du fournisseur...",
+            "info"
+        );
+
+        const resultat =
+            await apiPost(
+                estModification
+                    ? "updateFournisseur"
+                    : "createFournisseur",
+                fournisseur
+            );
+
+        if (!resultat?.success) {
+
+            throw new Error(
+                resultat?.message ||
+                "Impossible d'enregistrer le fournisseur."
+            );
+        }
+
+        const fournisseurEnregistre =
+            resultat.data || fournisseur;
+
+        const idEnregistre = String(
+            lireValeurFournisseur(
+                fournisseurEnregistre,
+                [
+                    "ID Fournisseur",
+                    "idFournisseur"
+                ]
+            ) ||
+            idFournisseurEnModification ||
+            fournisseur.codeFournisseur
+        ).trim();
+
+        if (
+            !lireValeurFournisseur(
+                fournisseurEnregistre,
+                [
+                    "ID Fournisseur",
+                    "idFournisseur"
+                ]
+            )
+        ) {
+            fournisseurEnregistre[
+                "ID Fournisseur"
+            ] = idEnregistre;
+        }
+
+        fournisseurs = estModification
+            ? fournisseurs.map(
+                fournisseurExistant => {
+
+                    const id = String(
+                        lireValeurFournisseur(
+                            fournisseurExistant,
+                            [
+                                "ID Fournisseur",
+                                "idFournisseur"
+                            ]
+                        ) || ""
+                    ).trim();
+
+                    return id === idEnregistre
+                        ? fournisseurEnregistre
+                        : fournisseurExistant;
+                }
+            )
+            : [
+                fournisseurEnregistre,
+                ...fournisseurs.filter(
+                    fournisseurExistant => {
+
+                        const id = String(
+                            lireValeurFournisseur(
+                                fournisseurExistant,
+                                [
+                                    "ID Fournisseur",
+                                    "idFournisseur"
+                                ]
+                            ) || ""
+                        ).trim();
+
+                        return id !== idEnregistre;
+                    }
+                )
+            ];
+
+        mettreAJourKPIsFournisseurs();
+        appliquerFiltresFournisseurs();
+        fermerModaleFournisseur();
+
+        idFournisseurEnModification = "";
+        configurerModaleFournisseur(
+            "creation"
+        );
+        formulaire.reset();
+        genererCodeFournisseur();
+
+    } catch (error) {
+
+        console.error(
+            "Erreur d'enregistrement du fournisseur :",
+            error
+        );
+
+        afficherMessageFormulaireFournisseur(
+            error?.message ||
+            "Une erreur est survenue.",
+            "error"
+        );
+
+    } finally {
+
+        if (boutonEnregistrer) {
+            boutonEnregistrer.disabled = false;
+            boutonEnregistrer.textContent =
+                idFournisseurEnModification
+                    ? "Enregistrer les modifications"
+                    : "Enregistrer le fournisseur";
+        }
+    }
+}
+
+
+function afficherMessageFormulaireFournisseur(
+    message,
+    type = "info"
+) {
+
+    const zone =
+        document.getElementById(
+            "supplier-form-message"
+        );
+
+    if (!zone) {
+        return;
+    }
+
+    zone.textContent = message;
+    zone.className =
+        `form-message ${type}`;
+    zone.style.display = "block";
+}
+
+
+function masquerMessageFormulaireFournisseur() {
+
+    const zone =
+        document.getElementById(
+            "supplier-form-message"
+        );
+
+    if (!zone) {
+        return;
+    }
+
+    zone.textContent = "";
+    zone.className = "form-message";
+    zone.style.display = "none";
+}
+
+
+/* ===========================================================
+   ACTIONS DU TABLEAU
+=========================================================== */
+
+function initialiserActionsTableauFournisseurs() {
+
+    const tableBody =
+        obtenirCorpsTableauFournisseurs();
+
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.addEventListener(
+        "click",
+        event => {
+
+            const boutonVoir =
+                event.target.closest(
+                    ".view-supplier-btn"
+                );
+
+            const boutonModifier =
+                event.target.closest(
+                    ".edit-supplier-btn"
+                );
+
+            const boutonSupprimer =
+                event.target.closest(
+                    ".delete-supplier-btn"
+                );
+
+            if (boutonVoir) {
+
+                ouvrirConsultationFournisseur(
+                    boutonVoir.dataset.supplierId
+                );
+
+                return;
+            }
+
+            if (boutonModifier) {
+
+                ouvrirModificationFournisseur(
+                    boutonModifier.dataset.supplierId
+                );
+
+                return;
+            }
+
+            if (boutonSupprimer) {
+
+                ouvrirSuppressionFournisseur(
+                    boutonSupprimer.dataset.supplierId
+                );
+            }
+        }
+    );
+
+    document
+        .getElementById(
+            "close-supplier-view-modal"
+        )
+        ?.addEventListener(
+            "click",
+            fermerConsultationFournisseur
+        );
+
+    document
+        .getElementById(
+            "close-supplier-view-modal-footer"
+        )
+        ?.addEventListener(
+            "click",
+            fermerConsultationFournisseur
+        );
+
+    document
+        .getElementById(
+            "cancel-delete-supplier-btn"
+        )
+        ?.addEventListener(
+            "click",
+            fermerSuppressionFournisseur
+        );
+
+    document
+        .getElementById(
+            "confirm-delete-supplier-btn"
+        )
+        ?.addEventListener(
+            "click",
+            confirmerSuppressionFournisseur
+        );
+}
+
+
+/* ===========================================================
+   MODIFICATION
+=========================================================== */
+
+function ouvrirModificationFournisseur(
+    idFournisseur
+) {
+
+    const fournisseur =
+        trouverFournisseurParId(
+            idFournisseur
+        );
+
+    const modale =
+        document.getElementById(
+            "supplier-modal"
+        );
+
+    const formulaire =
+        document.getElementById(
+            "supplier-form"
+        );
+
+    if (
+        !fournisseur ||
+        !modale ||
+        !formulaire
+    ) {
+        return;
+    }
+
+    idFournisseurEnModification =
+        String(
+            idFournisseur || ""
+        ).trim();
+
+    formulaire.reset();
+    configurerModaleFournisseur(
+        "modification"
+    );
+    masquerMessageFormulaireFournisseur();
+
+    definirValeurChamp(
+        "supplier-code",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Code Fournisseur",
+                "codeFournisseur"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-name",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Nom Fournisseur",
+                "nomFournisseur"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-contact-name",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Nom du Contact",
+                "nomContact"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-contact-function",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Fonction du Contact",
+                "fonctionContact"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-phone",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Téléphone",
+                "telephone"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-whatsapp",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "WhatsApp",
+                "whatsapp"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-email",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Email", "email"]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-website",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Site Web",
+                "siteWeb"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-country",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Pays", "pays"]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-city",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Ville", "ville"]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-address",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Adresse", "adresse"]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-product-category",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Type de Produits",
+                "Catégorie de Produits",
+                "categorieProduits"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-currency",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Devise", "devise"]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-payment-terms",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Conditions de Paiement",
+                "conditionsPaiement"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-delivery-time",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Délai Moyen de Livraison",
+                "delaiMoyenLivraison"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-warranty",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Garantie Fournisseur",
+                "garantieFournisseur"
+            ]
+        )
+    );
+
+    definirValeurChamp(
+        "supplier-status",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Statut", "statut"]
+        ) || "Actif"
+    );
+
+    definirValeurChamp(
+        "supplier-comment",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Commentaire",
+                "commentaire"
+            ]
+        )
+    );
+
+    modale.classList.add("active");
+    modale.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+    document.body.classList.add(
+        "modal-open"
+    );
+}
+
+
+/* ===========================================================
+   CONSULTATION
+=========================================================== */
+
+function ouvrirConsultationFournisseur(
+    idFournisseur
+) {
+
+    const fournisseur =
+        trouverFournisseurParId(
+            idFournisseur
+        );
+
+    if (!fournisseur) {
+        return;
+    }
+
+    const nom = String(
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Nom Fournisseur",
+                "nomFournisseur"
+            ]
+        ) || ""
+    );
+
+    definirTexteElement(
+        "view-supplier-id",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "ID Fournisseur",
+                "idFournisseur"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-code",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Code Fournisseur",
+                "codeFournisseur"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-name",
+        nom
+    );
+
+    definirTexteElement(
+        "view-supplier-category",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Type de Produits",
+                "Catégorie de Produits",
+                "categorieProduits"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-contact",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Nom du Contact",
+                "nomContact"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-contact-function",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Fonction du Contact",
+                "fonctionContact"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-phone",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Téléphone",
+                "telephone"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-whatsapp",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "WhatsApp",
+                "whatsapp"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-email",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Email", "email"]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-website",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Site Web",
+                "siteWeb"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-country",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Pays", "pays"]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-city",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Ville", "ville"]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-address",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Adresse", "adresse"]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-product-category",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Type de Produits",
+                "Catégorie de Produits",
+                "categorieProduits"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-currency",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Devise", "devise"]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-payment-terms",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Conditions de Paiement",
+                "conditionsPaiement"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-delivery-time",
+        formaterDelaiLivraison(
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Délai Moyen de Livraison",
+                    "delaiMoyenLivraison"
+                ]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-warranty",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Garantie Fournisseur",
+                "garantieFournisseur"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-created-at",
+        formaterDateFournisseur(
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Date d’Ajout",
+                    "Date d'Ajout",
+                    "dateAjout"
+                ]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-updated-at",
+        formaterDateFournisseur(
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Date de Modification",
+                    "dateModification"
+                ]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-status",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Statut", "statut"]
+        )
+    );
+
+    definirTexteElement(
+        "view-supplier-comment",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Commentaire",
+                "commentaire"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "supplier-view-avatar",
+        obtenirInitialesFournisseur(nom)
+    );
+
+    const badge =
+        document.getElementById(
+            "supplier-view-status-badge"
+        );
+
+    if (badge) {
+
+        const statut =
+            normaliserStatut(
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Statut", "statut"]
+                )
+            );
+
+        badge.className =
+            "supplier-view-status-badge";
+
+        badge.classList.add(
+            statut === "actif"
+                ? "status-active"
+                : statut === "suspendu"
+                    ? "status-suspended"
+                    : "status-inactive"
+        );
+    }
+
+    const modale =
+        document.getElementById(
+            "supplier-view-modal"
+        );
+
+    if (modale) {
+        modale.classList.add("active");
+        modale.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+        document.body.classList.add(
+            "modal-open"
+        );
+    }
+}
+
+
+function fermerConsultationFournisseur() {
+
+    const modale =
+        document.getElementById(
+            "supplier-view-modal"
+        );
+
+    if (!modale) {
+        return;
+    }
+
+    modale.classList.remove("active");
+    modale.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+    document.body.classList.remove(
+        "modal-open"
+    );
+}
+
+
+/* ===========================================================
+   SUPPRESSION INDIVIDUELLE
+=========================================================== */
+
+function ouvrirSuppressionFournisseur(
+    idFournisseur
+) {
+
+    const fournisseur =
+        trouverFournisseurParId(
+            idFournisseur
+        );
+
+    if (!fournisseur) {
+        return;
+    }
+
+    idFournisseurASupprimer =
+        String(
+            idFournisseur || ""
+        ).trim();
+
+    const nom = String(
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Nom Fournisseur",
+                "nomFournisseur"
+            ]
+        ) || ""
+    );
+
+    definirTexteElement(
+        "delete-supplier-avatar",
+        obtenirInitialesFournisseur(nom)
+    );
+
+    definirTexteElement(
+        "delete-supplier-code",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Code Fournisseur",
+                "codeFournisseur"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "delete-supplier-name",
+        nom
+    );
+
+    definirTexteElement(
+        "delete-supplier-contact",
+        lireValeurFournisseur(
+            fournisseur,
+            [
+                "Nom du Contact",
+                "nomContact"
+            ]
+        )
+    );
+
+    definirTexteElement(
+        "delete-supplier-country",
+        lireValeurFournisseur(
+            fournisseur,
+            ["Pays", "pays"]
+        )
+    );
+
+    const modale =
+        document.getElementById(
+            "delete-supplier-modal"
+        );
+
+    if (modale) {
+        modale.hidden = false;
+
+        requestAnimationFrame(() => {
+            modale.classList.add("active");
+            document.body.classList.add(
+                "modal-open"
+            );
+        });
+    }
+}
+
+
+function fermerSuppressionFournisseur() {
+
+    const modale =
+        document.getElementById(
+            "delete-supplier-modal"
+        );
+
+    if (modale) {
+        modale.classList.remove("active");
+        modale.hidden = true;
+    }
+
+    idFournisseurASupprimer = "";
+    document.body.classList.remove(
+        "modal-open"
+    );
+}
+
+
+async function confirmerSuppressionFournisseur() {
+
+    if (!idFournisseurASupprimer) {
+        return;
+    }
+
+    const bouton =
+        document.getElementById(
+            "confirm-delete-supplier-btn"
+        );
+
+    const message =
+        document.getElementById(
+            "delete-supplier-message"
+        );
+
+    try {
+
+        if (bouton) {
+            bouton.disabled = true;
+        }
+
+        if (message) {
+            message.hidden = true;
+            message.textContent = "";
+        }
+
+        const resultat =
+            await apiPost(
+                "deleteFournisseur",
+                {
+                    idFournisseur:
+                        idFournisseurASupprimer
+                }
+            );
+
+        if (!resultat?.success) {
+
+            throw new Error(
+                resultat?.message ||
+                "Impossible de supprimer le fournisseur."
+            );
+        }
+
+        fournisseurs =
+            fournisseurs.filter(
+                fournisseur => {
+
+                    const id = String(
+                        lireValeurFournisseur(
+                            fournisseur,
+                            [
+                                "ID Fournisseur",
+                                "idFournisseur"
+                            ]
+                        ) || ""
+                    ).trim();
+
+                    return (
+                        id !==
+                        idFournisseurASupprimer
+                    );
+                }
+            );
+
+        fournisseursSelectionnes.delete(
+            idFournisseurASupprimer
+        );
+
+        fermerSuppressionFournisseur();
+        mettreAJourKPIsFournisseurs();
+        appliquerFiltresFournisseurs();
+
+    } catch (error) {
+
+        console.error(
+            "Erreur de suppression :",
+            error
+        );
+
+        if (message) {
+            message.hidden = false;
+            message.textContent =
+                error?.message ||
+                "Une erreur est survenue.";
+        }
+
+    } finally {
+
+        if (bouton) {
+            bouton.disabled = false;
+        }
+    }
+}
+
+
+/* ===========================================================
+   PAGINATION
+=========================================================== */
+
+function initialiserPaginationFournisseurs() {
+
+    document
+        .getElementById(
+            "suppliers-page-size"
+        )
+        ?.addEventListener(
+            "change",
+            event => {
+
+                fournisseursParPage =
+                    Number(
+                        event.target.value
+                    ) || 10;
+
+                pageFournisseursCourante = 1;
+
+                afficherFournisseurs(
+                    fournisseursFiltresCourants
+                );
+            }
+        );
+}
+
+
+function afficherPaginationFournisseurs(
+    total,
+    totalPages
+) {
+
+    const resume =
+        document.getElementById(
+            "suppliers-pagination-summary"
+        );
+
+    const controles =
+        document.getElementById(
+            "suppliers-pagination-controls"
+        );
+
+    if (!resume || !controles) {
+        return;
+    }
+
+    if (total === 0) {
+        resume.textContent =
+            "0 fournisseur";
+        controles.innerHTML = "";
+        return;
+    }
+
+    const debut =
+        (
+            pageFournisseursCourante - 1
+        ) * fournisseursParPage + 1;
+
+    const fin = Math.min(
+        pageFournisseursCourante *
+        fournisseursParPage,
+        total
+    );
+
+    resume.textContent =
+        `${debut}–${fin} sur ${total}`;
+
+    controles.innerHTML = `
+        <button
+            type="button"
+            class="suppliers-page-btn"
+            data-page="${
+                pageFournisseursCourante - 1
+            }"
+            ${
+                pageFournisseursCourante === 1
+                    ? "disabled"
+                    : ""
+            }
+        >
+            ← Précédent
+        </button>
+
+        <span class="suppliers-page-current">
+            Page ${pageFournisseursCourante}
+            sur ${totalPages}
+        </span>
+
+        <button
+            type="button"
+            class="suppliers-page-btn"
+            data-page="${
+                pageFournisseursCourante + 1
+            }"
+            ${
+                pageFournisseursCourante === totalPages
+                    ? "disabled"
+                    : ""
+            }
+        >
+            Suivant →
+        </button>
+    `;
+
+    controles
+        .querySelectorAll("[data-page]")
+        .forEach(bouton => {
+
+            bouton.addEventListener(
+                "click",
+                () => {
+
+                    const page = Number(
+                        bouton.dataset.page
+                    );
+
+                    if (
+                        page >= 1 &&
+                        page <= totalPages
+                    ) {
+                        pageFournisseursCourante =
+                            page;
+
+                        afficherFournisseurs(
+                            fournisseursFiltresCourants
+                        );
+                    }
+                }
+            );
+        });
+}
+
+
+/* ===========================================================
+   SÉLECTION MULTIPLE
+=========================================================== */
+
+function initialiserSelectionMultipleFournisseurs() {
+
+    const tableBody =
+        obtenirCorpsTableauFournisseurs();
+
+    tableBody?.addEventListener(
+        "change",
+        event => {
+
+            const caseFournisseur =
+                event.target.closest(
+                    ".supplier-row-checkbox"
+                );
+
+            if (!caseFournisseur) {
+                return;
+            }
+
+            const id = String(
+                caseFournisseur.dataset
+                    .supplierId || ""
+            ).trim();
+
+            if (caseFournisseur.checked) {
+                fournisseursSelectionnes.add(id);
+            } else {
+                fournisseursSelectionnes.delete(id);
+            }
+
+            synchroniserSelectionFournisseurs();
+        }
+    );
+
+    document
+        .getElementById(
+            "select-all-suppliers"
+        )
+        ?.addEventListener(
+            "change",
+            event => {
+
+                document
+                    .querySelectorAll(
+                        ".supplier-row-checkbox"
+                    )
+                    .forEach(
+                        caseFournisseur => {
+
+                            const id = String(
+                                caseFournisseur
+                                    .dataset
+                                    .supplierId ||
+                                ""
+                            ).trim();
+
+                            caseFournisseur.checked =
+                                event.target.checked;
+
+                            if (
+                                event.target.checked
+                            ) {
+                                fournisseursSelectionnes
+                                    .add(id);
+                            } else {
+                                fournisseursSelectionnes
+                                    .delete(id);
+                            }
+                        }
+                    );
+
+                synchroniserSelectionFournisseurs();
+            }
+        );
+
+    document
+        .getElementById(
+            "clear-suppliers-selection-btn"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                fournisseursSelectionnes.clear();
+                synchroniserSelectionFournisseurs();
+            }
+        );
+}
+
+
+function synchroniserSelectionFournisseurs() {
+
+    document
+        .querySelectorAll(
+            ".supplier-row-checkbox"
+        )
+        .forEach(caseFournisseur => {
+
+            const id = String(
+                caseFournisseur.dataset
+                    .supplierId || ""
+            ).trim();
+
+            const selectionne =
+                fournisseursSelectionnes.has(id);
+
+            caseFournisseur.checked =
+                selectionne;
+
+            caseFournisseur
+                .closest("tr")
+                ?.classList.toggle(
+                    "supplier-row-selected",
+                    selectionne
+                );
+        });
+
+    const cases = [
+        ...document.querySelectorAll(
+            ".supplier-row-checkbox"
+        )
+    ];
+
+    const toutes =
+        cases.length > 0 &&
+        cases.every(
+            caseFournisseur =>
+                caseFournisseur.checked
+        );
+
+    const certaines =
+        cases.some(
+            caseFournisseur =>
+                caseFournisseur.checked
+        ) &&
+        !toutes;
+
+    const caseTout =
+        document.getElementById(
+            "select-all-suppliers"
+        );
+
+    if (caseTout) {
+        caseTout.checked = toutes;
+        caseTout.indeterminate = certaines;
+    }
+
+    const nombre =
+        fournisseursSelectionnes.size;
+
+    definirTexteElement(
+        "selected-suppliers-count",
+        nombre.toLocaleString("fr-FR")
+    );
+
+    const barre =
+        document.getElementById(
+            "suppliers-bulk-bar"
+        );
+
+    if (barre) {
+        barre.hidden = nombre === 0;
+    }
+}
+
+
+function nettoyerSelectionFournisseurs() {
+
+    const idsValides = new Set(
+        fournisseurs.map(
+            fournisseur =>
+                String(
+                    lireValeurFournisseur(
+                        fournisseur,
+                        [
+                            "ID Fournisseur",
+                            "idFournisseur"
+                        ]
+                    ) || ""
+                ).trim()
+        )
+    );
+
+    fournisseursSelectionnes =
+        new Set(
+            [...fournisseursSelectionnes]
+                .filter(id =>
+                    idsValides.has(id)
+                )
+        );
+}
+
+
+function mettreAJourCompteurFournisseurs(
+    total
+) {
+
+    definirTexteElement(
+        "filtered-supplier-count",
+        Number(total || 0)
+            .toLocaleString("fr-FR")
+    );
+}
+
+
+/* ===========================================================
+   SUPPRESSION EN MASSE
+=========================================================== */
+
+function initialiserSuppressionEnMasseFournisseurs() {
+
+    document
+        .getElementById(
+            "bulk-delete-suppliers-btn"
+        )
+        ?.addEventListener(
+            "click",
+            ouvrirSuppressionEnMasseFournisseurs
+        );
+
+    document
+        .getElementById(
+            "cancel-bulk-delete-suppliers-btn"
+        )
+        ?.addEventListener(
+            "click",
+            fermerSuppressionEnMasseFournisseurs
+        );
+
+    document
+        .getElementById(
+            "confirm-bulk-delete-suppliers-btn"
+        )
+        ?.addEventListener(
+            "click",
+            confirmerSuppressionEnMasseFournisseurs
+        );
+}
+
+
+function ouvrirSuppressionEnMasseFournisseurs() {
+
+    if (
+        fournisseursSelectionnes.size === 0
+    ) {
+        return;
+    }
+
+    definirTexteElement(
+        "bulk-delete-suppliers-total",
+        fournisseursSelectionnes.size
+            .toLocaleString("fr-FR")
+    );
+
+    const modale =
+        document.getElementById(
+            "bulk-delete-suppliers-modal"
+        );
+
+    if (modale) {
+        modale.hidden = false;
+
+        requestAnimationFrame(() => {
+            modale.classList.add("active");
+            document.body.classList.add(
+                "modal-open"
+            );
+        });
+    }
+}
+
+
+function fermerSuppressionEnMasseFournisseurs() {
+
+    const modale =
+        document.getElementById(
+            "bulk-delete-suppliers-modal"
+        );
+
+    if (modale) {
+        modale.classList.remove("active");
+        modale.hidden = true;
+    }
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+    const message =
+        document.getElementById(
+            "bulk-delete-suppliers-message"
+        );
+
+    if (message) {
+        message.hidden = true;
+        message.textContent = "";
+    }
+}
+
+
+async function confirmerSuppressionEnMasseFournisseurs() {
+
+    const ids = [
+        ...fournisseursSelectionnes
+    ];
+
+    if (!ids.length) {
+        return;
+    }
+
+    const bouton =
+        document.getElementById(
+            "confirm-bulk-delete-suppliers-btn"
+        );
+
+    const annuler =
+        document.getElementById(
+            "cancel-bulk-delete-suppliers-btn"
+        );
+
+    const message =
+        document.getElementById(
+            "bulk-delete-suppliers-message"
+        );
+
+    const supprimes = [];
+    const erreurs = [];
+
+    try {
+
+        if (bouton) {
+            bouton.disabled = true;
+            bouton.textContent =
+                "Suppression...";
+        }
+
+        if (annuler) {
+            annuler.disabled = true;
+        }
+
+        for (
+            const idFournisseur of ids
+        ) {
+
+            try {
+
+                const resultat =
+                    await apiPost(
+                        "deleteFournisseur",
+                        { idFournisseur }
+                    );
+
+                if (!resultat?.success) {
+
+                    throw new Error(
+                        resultat?.message ||
+                        "Suppression refusée."
+                    );
+                }
+
+                supprimes.push(
+                    idFournisseur
+                );
+
+            } catch (error) {
+
+                erreurs.push({
+                    idFournisseur,
+                    message:
+                        error?.message ||
+                        "Erreur inconnue"
+                });
+            }
+        }
+
+        if (supprimes.length) {
+
+            fournisseurs =
+                fournisseurs.filter(
+                    fournisseur => {
+
+                        const id = String(
+                            lireValeurFournisseur(
+                                fournisseur,
+                                [
+                                    "ID Fournisseur",
+                                    "idFournisseur"
+                                ]
+                            ) || ""
+                        ).trim();
+
+                        return (
+                            !supprimes.includes(id)
+                        );
+                    }
+                );
+
+            supprimes.forEach(id =>
+                fournisseursSelectionnes
+                    .delete(id)
+            );
+
+            mettreAJourKPIsFournisseurs();
+            appliquerFiltresFournisseurs();
+        }
+
+        if (erreurs.length) {
+
+            if (message) {
+                message.hidden = false;
+                message.textContent =
+                    `${supprimes.length} fournisseur(s) supprimé(s), ` +
+                    `${erreurs.length} échec(s).`;
+            }
+
+            return;
+        }
+
+        fermerSuppressionEnMasseFournisseurs();
+
+    } finally {
+
+        if (bouton) {
+            bouton.disabled = false;
+            bouton.textContent =
+                "Supprimer définitivement";
+        }
+
+        if (annuler) {
+            annuler.disabled = false;
+        }
+    }
+}
+
+
+/* ===========================================================
+   EXPORTS
+=========================================================== */
+
+function obtenirFournisseursPourSortie() {
+
+    if (
+        fournisseursSelectionnes.size > 0
+    ) {
+
+        return fournisseurs.filter(
+            fournisseur => {
+
+                const id = String(
+                    lireValeurFournisseur(
+                        fournisseur,
+                        [
+                            "ID Fournisseur",
+                            "idFournisseur"
+                        ]
+                    ) || ""
+                ).trim();
+
+                return (
+                    fournisseursSelectionnes
+                        .has(id)
+                );
+            }
+        );
+    }
+
+    return [
+        ...fournisseursFiltresCourants
+    ];
+}
+
+
+function transformerFournisseursPourSortie(
+    liste
+) {
+
+    return liste.map(fournisseur => ({
+        "Code":
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Code Fournisseur",
+                    "codeFournisseur"
+                ]
+            ),
+        "Nom Fournisseur":
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Nom Fournisseur",
+                    "nomFournisseur"
+                ]
+            ),
+        "Nom du Contact":
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Nom du Contact",
+                    "nomContact"
+                ]
+            ),
+        "Téléphone":
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Téléphone",
+                    "telephone"
+                ]
+            ),
+        "WhatsApp":
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "WhatsApp",
+                    "whatsapp"
+                ]
+            ),
+        "Email":
+            lireValeurFournisseur(
+                fournisseur,
+                ["Email", "email"]
+            ),
+        "Pays":
+            lireValeurFournisseur(
+                fournisseur,
+                ["Pays", "pays"]
+            ),
+        "Ville":
+            lireValeurFournisseur(
+                fournisseur,
+                ["Ville", "ville"]
+            ),
+        "Catégorie de Produits":
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Type de Produits",
+                    "Catégorie de Produits",
+                    "categorieProduits"
+                ]
+            ),
+        "Délai Moyen de Livraison":
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Délai Moyen de Livraison",
+                    "delaiMoyenLivraison"
+                ]
+            ),
+        "Conditions de Paiement":
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Conditions de Paiement",
+                    "conditionsPaiement"
+                ]
+            ),
+        "Statut":
+            lireValeurFournisseur(
+                fournisseur,
+                ["Statut", "statut"]
+            )
+    }));
+}
+
+
+function initialiserExportsFournisseurs() {
+
+    const bouton =
+        document.getElementById(
+            "export-suppliers-btn"
+        );
+
+    const menu =
+        document.getElementById(
+            "suppliers-export-dropdown"
+        );
+
+    bouton?.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            if (!menu) {
+                return;
+            }
+
+            menu.hidden = !menu.hidden;
+
+            bouton.setAttribute(
+                "aria-expanded",
+                menu.hidden
+                    ? "false"
+                    : "true"
+            );
+        }
+    );
+
+    menu?.addEventListener(
+        "click",
+        event => {
+
+            const option =
+                event.target.closest(
+                    "[data-export-format]"
+                );
+
+            if (!option) {
+                return;
+            }
+
+            menu.hidden = true;
+            bouton?.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+            exporterFournisseurs(
+                option.dataset.exportFormat
+            );
+        }
+    );
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                menu &&
+                !event.target.closest(
+                    "#suppliers-export-menu"
+                )
+            ) {
+                menu.hidden = true;
+                bouton?.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+            }
+        }
+    );
+}
+
+
+function exporterFournisseurs(format) {
+
+    const liste =
+        obtenirFournisseursPourSortie();
+
+    if (!liste.length) {
+        return;
+    }
+
+    const donnees =
+        transformerFournisseursPourSortie(
+            liste
+        );
+
+    if (format === "xlsx") {
+        exporterFournisseursExcel(
+            donnees
+        );
+        return;
+    }
+
+    if (format === "pdf") {
+        exporterFournisseursPDF(
+            donnees
+        );
+        return;
+    }
+
+    if (format === "csv") {
+        exporterFournisseursCSV(
+            donnees
+        );
+    }
+}
+
+
+function exporterFournisseursExcel(
+    donnees
+) {
+
+    if (typeof XLSX === "undefined") {
+
+        alert(
+            "La bibliothèque Excel n'est pas disponible."
+        );
+
+        return;
+    }
+
+    const feuille =
+        XLSX.utils.json_to_sheet(
+            donnees
+        );
+
+    const classeur =
+        XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        classeur,
+        feuille,
+        "Fournisseurs"
+    );
+
+    XLSX.writeFile(
+        classeur,
+        `fournisseurs_${dateFichierFournisseurs()}.xlsx`
+    );
+}
+
+
+function exporterFournisseursCSV(
+    donnees
+) {
+
+    const colonnes =
+        Object.keys(donnees[0]);
+
+    const echapperCSV = valeur =>
+        `"${String(
+            valeur ?? ""
+        ).replace(/"/g, '""')}"`;
+
+    const contenu = [
+        colonnes
+            .map(echapperCSV)
+            .join(";"),
+        ...donnees.map(ligne =>
+            colonnes
+                .map(colonne =>
+                    echapperCSV(
+                        ligne[colonne]
+                    )
+                )
+                .join(";")
+        )
+    ].join("\n");
+
+    telechargerFichierFournisseurs(
+        "\uFEFF" + contenu,
+        `fournisseurs_${dateFichierFournisseurs()}.csv`,
+        "text/csv;charset=utf-8"
+    );
+}
+
+
+function exporterFournisseursPDF(
+    donnees
+) {
+
+    const jsPDF =
+        window.jspdf?.jsPDF;
+
+    if (!jsPDF) {
+
+        alert(
+            "La bibliothèque PDF n'est pas disponible."
+        );
+
+        return;
+    }
+
+    const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
+    });
+
+    pdf.setFontSize(17);
+
+    pdf.text(
+        "VISIBL — Liste des fournisseurs",
+        14,
+        16
+    );
+
+    const colonnes =
+        Object.keys(donnees[0]);
+
+    pdf.autoTable({
+        startY: 23,
+        head: [colonnes],
+        body: donnees.map(ligne =>
+            colonnes.map(
+                colonne =>
+                    ligne[colonne]
+            )
+        ),
+        styles: {
+            fontSize: 7,
+            cellPadding: 2
+        },
+        headStyles: {
+            fillColor: [37, 99, 235]
+        }
+    });
+
+    pdf.save(
+        `fournisseurs_${dateFichierFournisseurs()}.pdf`
+    );
+}
+
+
+function telechargerFichierFournisseurs(
+    contenu,
+    nom,
+    type
+) {
+
+    const blob =
+        new Blob(
+            [contenu],
+            { type }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const lien =
+        document.createElement("a");
+
+    lien.href = url;
+    lien.download = nom;
+
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+
+    URL.revokeObjectURL(url);
+}
+
+
+function dateFichierFournisseurs() {
+
+    const date = new Date();
+
+    return [
+        date.getFullYear(),
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0"),
+        String(
+            date.getDate()
+        ).padStart(2, "0")
+    ].join("-");
+}
+
+
+/* ===========================================================
+   IMPRESSION
+=========================================================== */
+
+function initialiserImpressionFournisseurs() {
+
+    document
+        .getElementById(
+            "print-suppliers-btn"
+        )
+        ?.addEventListener(
+            "click",
+            imprimerFournisseurs
+        );
+}
+
+
+function imprimerFournisseurs() {
+
+    const liste =
+        obtenirFournisseursPourSortie();
+
+    if (!liste.length) {
+        return;
+    }
+
+    const donnees =
+        transformerFournisseursPourSortie(
+            liste
+        );
+
+    const colonnes =
+        Object.keys(donnees[0]);
+
+    const fenetre =
+        window.open(
+            "",
+            "_blank",
+            "width=1200,height=800"
+        );
+
+    if (!fenetre) {
+
+        alert(
+            "Autorisez les fenêtres contextuelles pour imprimer."
+        );
+
+        return;
+    }
+
+    const lignes =
+        donnees.map(ligne => `
+            <tr>
+                ${colonnes
+                    .map(colonne =>
+                        `<td>${
+                            echapperHTML(
+                                ligne[colonne]
+                            )
+                        }</td>`
+                    )
+                    .join("")}
+            </tr>
+        `).join("");
+
+    fenetre.document.write(`
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <title>Liste des fournisseurs</title>
+            <style>
+                @page {
+                    size: landscape;
+                    margin: 12mm;
+                }
+
+                body {
+                    font-family: Arial, sans-serif;
+                    color: #0f172a;
+                }
+
+                h1 {
+                    margin: 0 0 6px;
+                    font-size: 22px;
+                }
+
+                p {
+                    margin: 0 0 18px;
+                    color: #64748b;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                th,
+                td {
+                    padding: 7px;
+                    font-size: 9px;
+                    text-align: left;
+                    border: 1px solid #dbe2ea;
+                }
+
+                th {
+                    background: #e5e7eb;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>
+                VISIBL — Liste des fournisseurs
+            </h1>
+
+            <p>
+                ${donnees.length} fournisseur(s)
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        ${colonnes
+                            .map(colonne =>
+                                `<th>${
+                                    echapperHTML(
+                                        colonne
+                                    )
+                                }</th>`
+                            )
+                            .join("")}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${lignes}
+                </tbody>
+            </table>
+
+            <script>
+                window.onload = () => {
+                    window.print();
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+
+    fenetre.document.close();
+}
+
+
+/* ===========================================================
+   HEADER
+=========================================================== */
+
+function initialiserHeaderFournisseurs() {
+
+    const rechercheHeader =
+        document.getElementById(
+            "header-suppliers-search-input"
+        );
+
+    const boutonRecherche =
+        document.getElementById(
+            "header-suppliers-search-btn"
+        );
+
+    const rechercheModule =
+        document.getElementById(
+            "suppliers-search-input"
+        );
+
+    const synchroniserRecherche = valeur => {
+
+        const texte =
+            String(valeur || "");
+
+        if (rechercheHeader) {
+            rechercheHeader.value = texte;
+        }
+
+        if (rechercheModule) {
+            rechercheModule.value = texte;
+        }
+
+        pageFournisseursCourante = 1;
+        appliquerFiltresFournisseurs();
+    };
+
+    rechercheHeader?.addEventListener(
+        "input",
+        () =>
+            synchroniserRecherche(
+                rechercheHeader.value
+            )
+    );
+
+    boutonRecherche?.addEventListener(
+        "click",
+        event => {
+
+            event.preventDefault();
+
+            synchroniserRecherche(
+                rechercheHeader?.value
+            );
+        }
+    );
+
+    rechercheHeader?.addEventListener(
+        "keydown",
+        event => {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
+                synchroniserRecherche(
+                    rechercheHeader.value
+                );
+            }
+        }
+    );
+
+    rechercheModule?.addEventListener(
+        "input",
+        () => {
+
+            if (rechercheHeader) {
+                rechercheHeader.value =
+                    rechercheModule.value;
+            }
+        }
+    );
+
+    const boutonProfil =
+        document.getElementById(
+            "profile-menu-button"
+        );
+
+    const menuProfil =
+        document.getElementById(
+            "profile-dropdown"
+        );
+
+    boutonProfil?.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            if (!menuProfil) {
+                return;
+            }
+
+            menuProfil.hidden =
+                !menuProfil.hidden;
+
+            boutonProfil.setAttribute(
+                "aria-expanded",
+                menuProfil.hidden
+                    ? "false"
+                    : "true"
+            );
+        }
+    );
+
+    menuProfil?.addEventListener(
+        "click",
+        event =>
+            event.stopPropagation()
+    );
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                menuProfil &&
+                !event.target.closest(
+                    "#supplier-profile-menu"
+                )
+            ) {
+                menuProfil.hidden = true;
+
+                boutonProfil?.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+            }
+        }
+    );
+
+    document
+        .getElementById("logout-button")
+        ?.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                if (
+                    typeof logoutUser ===
+                    "function"
+                ) {
+                    logoutUser();
+                    return;
+                }
+
+                sessionStorage.clear();
+                localStorage.clear();
+
+                window.location.href =
+                    "connexion.html";
+            }
+        );
+}
+
+
+/* ===========================================================
+   NOTIFICATIONS
+=========================================================== */
+
+function initialiserNotificationsFournisseurs() {
+
+    const bouton =
+        document.getElementById(
+            "notification-button"
+        );
+
+    const panneau =
+        document.getElementById(
+            "notification-panel"
+        );
+
+    if (!bouton || !panneau) {
+        return;
+    }
+
+    bouton.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            panneau.hidden =
+                !panneau.hidden;
+
+            bouton.setAttribute(
+                "aria-expanded",
+                panneau.hidden
+                    ? "false"
+                    : "true"
+            );
+        }
+    );
+
+    panneau.addEventListener(
+        "click",
+        event =>
+            event.stopPropagation()
+    );
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                !event.target.closest(
+                    ".notification-menu"
+                )
+            ) {
+                panneau.hidden = true;
+
+                bouton.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+            }
+        }
+    );
+}
+
+
+/* ===========================================================
+   ÉTATS DU TABLEAU
+=========================================================== */
+
+function afficherEtatChargementFournisseurs() {
+
+    const tableBody =
+        obtenirCorpsTableauFournisseurs();
+
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr>
+                <td
+                    colspan="9"
+                    class="table-message"
+                >
+                    Chargement des fournisseurs...
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+function afficherErreurChargementFournisseurs(
+    message
+) {
+
+    const tableBody =
+        obtenirCorpsTableauFournisseurs();
+
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr>
+                <td
+                    colspan="9"
+                    class="table-message error-row"
+                >
+                    ${echapperHTML(message)}
+                </td>
+            </tr>
+        `;
+    }
+}
