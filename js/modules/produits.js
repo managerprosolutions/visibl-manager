@@ -3376,9 +3376,7 @@ function remplirListeFournisseursProduits(
 
         option.value = id;
 
-        option.textContent = code
-            ? `${nom} — ${code}`
-            : nom;
+        option.textContent = nom;
 
         option.dataset.supplierCode = code;
         option.dataset.supplierName = nom;
