@@ -275,6 +275,7 @@ async function chargerFournisseursDepuisAPI() {
             : [];
 
         nettoyerSelectionFournisseurs();
+        mettreAJourOptionsFiltresFournisseurs();
         mettreAJourKPIsFournisseurs();
         appliquerFiltresFournisseurs();
 
@@ -758,6 +759,20 @@ function initialiserFiltresFournisseurs() {
         );
 
     document
+        .getElementById("supplier-country-filter")
+        ?.addEventListener(
+            "change",
+            appliquerFiltresFournisseurs
+        );
+
+    document
+        .getElementById("supplier-category-filter")
+        ?.addEventListener(
+            "change",
+            appliquerFiltresFournisseurs
+        );
+
+    document
         .getElementById("supplier-status-filter")
         ?.addEventListener(
             "change",
@@ -775,6 +790,18 @@ function appliquerFiltresFournisseurs(event) {
     const recherche = normaliserTexte(
         obtenirValeurTexte(
             "suppliers-search-input"
+        )
+    );
+
+    const paysRecherche = normaliserTexte(
+        obtenirValeurTexte(
+            "supplier-country-filter"
+        )
+    );
+
+    const categorieRecherche = normaliserTexte(
+        obtenirValeurTexte(
+            "supplier-category-filter"
         )
     );
 
@@ -848,6 +875,25 @@ function appliquerFiltresFournisseurs(event) {
                 )
             ].join(" "));
 
+            const pays = normaliserTexte(
+                lireValeurFournisseur(
+                    fournisseur,
+                    ["Pays", "pays"]
+                )
+            );
+
+            const categorie = normaliserTexte(
+                lireValeurFournisseur(
+                    fournisseur,
+                    [
+                        "Catégorie de Produits",
+                        "Type de Produits",
+                        "categorieProduits",
+                        "typeProduits"
+                    ]
+                )
+            );
+
             const statut =
                 normaliserStatut(
                     lireValeurFournisseur(
@@ -862,6 +908,14 @@ function appliquerFiltresFournisseurs(event) {
                     texte.includes(recherche)
                 ) &&
                 (
+                    !paysRecherche ||
+                    pays === paysRecherche
+                ) &&
+                (
+                    !categorieRecherche ||
+                    categorie === categorieRecherche
+                ) &&
+                (
                     !statutRecherche ||
                     statut === statutRecherche
                 )
@@ -871,6 +925,95 @@ function appliquerFiltresFournisseurs(event) {
     afficherFournisseurs(listeFiltree);
 }
 
+
+
+/* ===========================================================
+   OPTIONS DYNAMIQUES DES FILTRES RAPIDES
+=========================================================== */
+
+function mettreAJourOptionsFiltresFournisseurs() {
+
+    remplirFiltreFournisseurs(
+        "supplier-country-filter",
+        fournisseurs.map(fournisseur =>
+            lireValeurFournisseur(
+                fournisseur,
+                ["Pays", "pays"]
+            )
+        ),
+        "Tous les pays"
+    );
+
+    remplirFiltreFournisseurs(
+        "supplier-category-filter",
+        fournisseurs.map(fournisseur =>
+            lireValeurFournisseur(
+                fournisseur,
+                [
+                    "Catégorie de Produits",
+                    "Type de Produits",
+                    "categorieProduits",
+                    "typeProduits"
+                ]
+            )
+        ),
+        "Toutes les catégories"
+    );
+}
+
+
+function remplirFiltreFournisseurs(
+    idSelect,
+    valeurs,
+    libelleToutes
+) {
+
+    const select =
+        document.getElementById(idSelect);
+
+    if (!select) {
+        return;
+    }
+
+    const valeurActuelle =
+        normaliserTexte(select.value);
+
+    const valeursUniques = new Map();
+
+    valeurs.forEach(valeur => {
+
+        const libelle =
+            String(valeur || "").trim();
+
+        const cle =
+            normaliserTexte(libelle);
+
+        if (cle && !valeursUniques.has(cle)) {
+            valeursUniques.set(cle, libelle);
+        }
+    });
+
+    const options = [
+        `<option value="">${echapperHTML(libelleToutes)}</option>`,
+        ...[...valeursUniques.entries()]
+            .sort((a, b) =>
+                a[1].localeCompare(
+                    b[1],
+                    "fr",
+                    { sensitivity: "base" }
+                )
+            )
+            .map(([cle, libelle]) =>
+                `<option value="${echapperHTML(cle)}">${echapperHTML(libelle)}</option>`
+            )
+    ];
+
+    select.innerHTML = options.join("");
+
+    if (valeursUniques.has(valeurActuelle)) {
+        select.value = valeurActuelle;
+    }
+}
 
 /* ===========================================================
    MODALE AJOUT / MODIFICATION
