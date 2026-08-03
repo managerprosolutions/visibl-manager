@@ -87,7 +87,7 @@ async function chargerStockDepuisProduits() {
             );
         }
 
-        const resultat = await apiGet("getProduits");
+        const resultat = await apiGet("getStock");
 
         if (!resultat?.success) {
             throw new Error(
