@@ -74,7 +74,7 @@ async function chargerStockDepuisProduits() {
 
     tbody.innerHTML = `
         <tr>
-            <td colspan="7" class="table-message">
+            <td colspan="8" class="table-message">
                 Chargement des produits...
             </td>
         </tr>
@@ -126,7 +126,7 @@ async function chargerStockDepuisProduits() {
 
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="error-row">
+                <td colspan="8" class="error-row">
                     ${echapperHTMLStock(
                         error.message ||
                         "Impossible de charger le stock."
@@ -147,31 +147,54 @@ async function chargerStockDepuisProduits() {
 function normaliserProduitStock(produit) {
     const idProduit = lireValeurStock(
         produit,
-        ["ID Produit", "idProduit", "Identifiant", "identifiant"]
+        ["idProduit", "ID Produit", "Identifiant", "identifiant"]
     );
 
     const reference = lireValeurStock(
         produit,
         [
+            "reference",
             "Référence",
             "Reference",
             "Référence Produit",
-            "referenceProduit",
-            "Code Produit",
-            "codeProduit"
+            "referenceProduit"
         ]
     ) || idProduit;
 
     const designation = lireValeurStock(
         produit,
         [
+            "produit",
             "Désignation",
             "Designation",
             "designation",
             "Nom Produit",
-            "nomProduit"
+            "Nom du Produit",
+            "nomProduit",
+            "Produit",
+            "Nom",
+            "Libellé",
+            "Libelle"
         ]
     ) || idProduit;
+
+    const stockInitial = Math.trunc(
+        convertirNombreStock(
+            lireValeurStock(
+                produit,
+                ["stockInitial", "Stock initial", "Stock Initial"]
+            )
+        )
+    );
+
+    const stockDisponible = Math.trunc(
+        convertirNombreStock(
+            lireValeurStock(
+                produit,
+                ["stockDisponible", "Stock disponible", "Stock Disponible"]
+            )
+        )
+    );
 
     const seuilAlerte = Math.max(
         0,
@@ -180,35 +203,43 @@ function normaliserProduitStock(produit) {
                 lireValeurStock(
                     produit,
                     [
+                        "seuilAlerte",
                         "Seuil d'Alerte",
                         "Seuil d’Alerte",
-                        "Seuil Alerte",
-                        "seuilAlerte"
+                        "Seuil Alerte"
                     ]
                 )
             )
         )
     );
 
-    /*
-       Tant que StockService.gs et les mouvements ne sont pas encore
-       connectés, tous les produits sont affichés avec un stock calculé à 0.
-    */
-    const stockDisponible = 0;
-    const etat = calculerEtatStock(
-        stockDisponible,
-        seuilAlerte
-    );
+    const etat = String(
+        lireValeurStock(
+            produit,
+            ["etat", "État", "Etat"]
+        ) || calculerEtatStock(stockDisponible, seuilAlerte)
+    ).trim().toLowerCase();
+
+    const derniereOperation = lireValeurStock(
+        produit,
+        ["derniereOperation", "Dernière opération", "Derniere operation"]
+    ) || "Aucun mouvement";
+
+    const derniereMiseAJour = lireValeurStock(
+        produit,
+        ["derniereMiseAJour", "Dernière mise à jour", "Derniere mise a jour"]
+    ) || "—";
 
     return {
         idProduit: String(idProduit || "").trim(),
         reference: String(reference || "").trim(),
         produit: String(designation || "").trim(),
+        stockInitial,
         stockDisponible,
         seuilAlerte,
         etat,
-        derniereOperation: "Aucun mouvement",
-        derniereMiseAJour: "—"
+        derniereOperation: String(derniereOperation || "").trim(),
+        derniereMiseAJour: String(derniereMiseAJour || "—").trim()
     };
 }
 
@@ -311,7 +342,7 @@ function afficherTableauStock() {
     if (!produitsPage.length) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="empty-table-message">
+                <td colspan="8" class="empty-table-message">
                     Aucun produit trouvé.
                 </td>
             </tr>
@@ -331,6 +362,12 @@ function afficherTableauStock() {
 
                 <td title="${echapperHTMLStock(produit.produit)}">
                     ${echapperHTMLStock(produit.produit)}
+                </td>
+
+                <td>
+                    ${formaterQuantiteStock(
+                        produit.stockInitial
+                    )}
                 </td>
 
                 <td>
