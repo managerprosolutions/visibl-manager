@@ -633,14 +633,14 @@
                             <th>Stock avant</th>
                             <th>Stock après</th>
                             <th>Référence</th>
-                            <th>Module d'origine</th>
+                            <th>Module d’origine</th>
                             <th>Utilisateur</th>
                             <th>Commentaire</th>
                         </tr>
                     </thead>
                     <tbody id="stock-movements-table-body">
                         <tr>
-                            <td colspan="10" class="table-message">
+                            <td colspan="11" class="table-message">
                                 Chargement des mouvements de stock...
                             </td>
                         </tr>
@@ -670,6 +670,179 @@
 
     </main>
 
+</div>
+
+
+<!-- =========================================================
+     MODALE : AJUSTEMENT MANUEL DU STOCK
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="manual-adjustment-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal-container manual-adjustment-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manual-adjustment-modal-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 id="manual-adjustment-modal-title">
+                    Nouvel ajustement manuel
+                </h2>
+                <p>
+                    Corrigez exceptionnellement le stock d’un produit.
+                    Toutes les informations techniques seront générées automatiquement.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-manual-adjustment-modal"
+                aria-label="Fermer le formulaire"
+            >
+                ✖
+            </button>
+        </div>
+
+        <form id="manual-adjustment-form">
+            <div class="modal-body">
+                <div
+                    id="manual-adjustment-form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+                <section class="form-section">
+                    <h3>Informations de l’ajustement</h3>
+
+                    <div class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label for="manual-adjustment-product">
+                                Produit <span class="required">*</span>
+                            </label>
+                            <select
+                                id="manual-adjustment-product"
+                                name="idProduit"
+                                required
+                            >
+                                <option value="">Sélectionner un produit</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-adjustment-type">
+                                Type d’ajustement <span class="required">*</span>
+                            </label>
+                            <select
+                                id="manual-adjustment-type"
+                                name="typeMouvement"
+                                required
+                            >
+                                <option value="">Sélectionner un type</option>
+                                <option value="Ajustement positif">Ajustement positif</option>
+                                <option value="Ajustement négatif">Ajustement négatif</option>
+                                <option value="Perte">Perte</option>
+                                <option value="Casse">Casse</option>
+                                <option value="Vol">Vol</option>
+                                <option value="Don">Don</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-adjustment-quantity">
+                                Quantité <span class="required">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                id="manual-adjustment-quantity"
+                                name="quantite"
+                                min="1"
+                                step="1"
+                                placeholder="Exemple : 5"
+                                required
+                            >
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section stock-calculation-section">
+                    <h3>Calcul automatique du stock</h3>
+
+                    <div class="stock-calculation-grid">
+                        <article class="stock-calculation-card">
+                            <span>Stock disponible actuel</span>
+                            <strong id="manual-adjustment-stock-before">—</strong>
+                        </article>
+
+                        <div class="stock-calculation-arrow" aria-hidden="true">→</div>
+
+                        <article class="stock-calculation-card stock-calculation-result">
+                            <span>Nouveau stock</span>
+                            <strong id="manual-adjustment-stock-after">—</strong>
+                        </article>
+                    </div>
+
+                    <input
+                        type="hidden"
+                        id="manual-adjustment-stock-before-value"
+                        name="stockAvant"
+                    >
+                    <input
+                        type="hidden"
+                        id="manual-adjustment-stock-after-value"
+                        name="stockApres"
+                    >
+                </section>
+
+                <section class="form-section">
+                    <h3>Justification</h3>
+
+                    <div class="form-group form-group-full">
+                        <label for="manual-adjustment-comment">
+                            Motif de l’ajustement <span class="required">*</span>
+                        </label>
+                        <textarea
+                            id="manual-adjustment-comment"
+                            name="commentaire"
+                            rows="4"
+                            placeholder="Expliquez clairement la raison de cette correction..."
+                            required
+                        ></textarea>
+                        <small class="form-help">
+                            Cette justification sera conservée dans l’historique du stock.
+                        </small>
+                    </div>
+                </section>
+
+                <div class="automatic-fields-note">
+                    <strong>Générés automatiquement :</strong>
+                    ID mouvement, date, heure, référence, module d’origine, utilisateur, stock avant et stock après.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-manual-adjustment-btn"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-manual-adjustment-btn"
+                >
+                    Enregistrer l’ajustement
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div id="toast-container"></div>
