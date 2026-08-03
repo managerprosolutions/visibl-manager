@@ -85,8 +85,10 @@ function initialiserGestionClientsCommande() {
         ?.addEventListener("click", ouvrirModaleClientRapide);
 
     document
-        .getElementById("refresh-order-clients-btn")
-        ?.addEventListener("click", chargerClientsCommande);
+    .getElementById("refresh-order-clients-btn")
+    ?.addEventListener("click", () => {
+        chargerClientsCommande();
+    });
 
     document
         .getElementById("close-quick-client-modal")
