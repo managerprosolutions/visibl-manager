@@ -224,7 +224,10 @@ async function enregistrerClientRapide(event) {
            Recharge la liste depuis Google Sheets pour que le nouveau
            client fasse immédiatement partie des données officielles.
         */
-        await chargerClientsCommande(idClient, nomClient);
+        ajouterClientDansListeCommande(
+            idClient,
+            nomClient
+        );
 
         fermerModaleClientRapide();
 
@@ -232,6 +235,16 @@ async function enregistrerClientRapide(event) {
             `Client ${nomClient} enregistré et sélectionné.`,
             "success"
         );
+
+        chargerClientsCommande(
+            idClient,
+            nomClient
+        ).catch(error => {
+            console.warn(
+                "Actualisation différée des clients impossible :",
+                error
+            );
+        });
 
     } catch (error) {
         console.error(
@@ -295,6 +308,40 @@ function masquerMessageClientRapide() {
     zone.textContent = "";
     zone.className = "form-message";
     zone.style.display = "none";
+}
+
+
+function ajouterClientDansListeCommande(
+    idClient,
+    nomClient
+) {
+    const select =
+        document.getElementById("order-client");
+
+    const id =
+        String(idClient || "").trim();
+
+    const nom =
+        String(nomClient || id).trim();
+
+    if (!select || !id) {
+        return;
+    }
+
+    let option = Array
+        .from(select.options)
+        .find(element => element.value === id);
+
+    if (!option) {
+        option =
+            document.createElement("option");
+
+        option.value = id;
+        select.appendChild(option);
+    }
+
+    option.textContent = nom;
+    select.value = id;
 }
 
 
