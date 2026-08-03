@@ -433,13 +433,13 @@
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="select-all-orders" aria-label="Sélectionner toutes les commandes"></th>
-                                <th>N° commande</th>
+                                <th>N° Commande</th>
                                 <th>Client</th>
-                                <th>Date</th>
-                                <th>Produits</th>
-                                <th>Total TTC</th>
-                                <th>Paiement</th>
-                                <th>Livraison</th>
+                                <th>Date / Heure</th>
+                                <th>Total à payer</th>
+                                <th>Livreur</th>
+                                <th>Zone</th>
+                                <th>Paiement prévu</th>
                                 <th>Statut</th>
                                 <th>Actions</th>
                             </tr>
@@ -485,11 +485,45 @@
                                 <input type="hidden" id="order-user-id" name="idUtilisateur">
 
                                 <div class="form-grid">
-                                    <div class="form-group"><label for="order-number">Numéro de commande</label><input type="text" id="order-number" name="numeroCommande" readonly value="Génération automatique..."></div>
-                                    <div class="form-group"><label for="order-client">Client <span class="required">*</span></label><select id="order-client" name="idClient" required><option value="">Sélectionner un client</option></select></div>
-                                    <div class="form-group"><label for="order-date">Date de commande <span class="required">*</span></label><input type="date" id="order-date" name="dateCommande" required></div>
-                                    <div class="form-group"><label for="order-time">Heure de commande <span class="required">*</span></label><input type="time" id="order-time" name="heureCommande" required></div>
-                                    <div class="form-group"><label for="order-status">Statut</label><select id="order-status" name="statut"><option value="en-attente">En attente</option><option value="confirmee">Confirmée</option><option value="en-preparation">En préparation</option><option value="prete">Prête</option><option value="livree">Livrée</option><option value="terminee">Terminée</option><option value="annulee">Annulée</option></select></div>
+                                    <div class="form-group">
+                                        <label for="order-number">Numéro de commande</label>
+                                        <input type="text" id="order-number" name="numeroCommande" readonly value="Génération automatique...">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-client">Client <span class="required">*</span></label>
+                                        <div class="client-select-row">
+                                            <select id="order-client" name="idClient" required>
+                                                <option value="">Sélectionner un client</option>
+                                            </select>
+                                            <button type="button" class="btn-secondary compact-btn" id="open-new-client-modal-btn">➕ Nouveau client</button>
+                                            <button type="button" class="btn-secondary compact-btn" id="refresh-order-clients-btn" title="Actualiser la liste des clients">↻</button>
+                                        </div>
+                                        <small class="form-help">Créez un client sans quitter la commande. Il sera ensuite sélectionné automatiquement.</small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-date">Date de commande</label>
+                                        <input type="date" id="order-date" name="dateCommande" readonly>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-time">Heure de commande</label>
+                                        <input type="time" id="order-time" name="heureCommande" readonly>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-status">Statut</label>
+                                        <select id="order-status" name="statut">
+                                            <option value="en-attente">En attente</option>
+                                            <option value="confirmee">Confirmée</option>
+                                            <option value="en-preparation">En préparation</option>
+                                            <option value="prete">Prête</option>
+                                            <option value="livree">Livrée</option>
+                                            <option value="terminee">Terminée</option>
+                                            <option value="annulee">Annulée</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </section>
 
@@ -498,8 +532,8 @@
                                 <div class="form-grid">
                                     <div class="form-group form-group-full"><label for="order-product-select">Produit</label><select id="order-product-select"><option value="">Sélectionner un produit</option></select></div>
                                     <div class="form-group"><label for="order-product-quantity">Quantité</label><input type="number" id="order-product-quantity" min="1" value="1"></div>
-                                    <div class="form-group"><label for="order-product-price">Prix unitaire</label><input type="number" id="order-product-price" readonly></div>
-                                    <div class="form-group"><label for="order-product-discount">Remise</label><input type="number" id="order-product-discount" min="0" value="0"></div>
+                                    <div class="form-group"><label for="order-product-price">Prix unitaire</label><div class="money-input"><input type="number" id="order-product-price" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-product-discount">Remise</label><div class="money-input"><input type="number" id="order-product-discount" min="0" inputmode="numeric" placeholder="Montant"><span>FCFA</span></div></div>
                                     <div class="form-group"><label>&nbsp;</label><button type="button" class="btn-secondary" id="add-order-product-btn">➕ Ajouter le produit</button></div>
                                 </div>
                                 <div class="table-responsive">
@@ -525,10 +559,10 @@
                             <section class="form-section">
                                 <div class="form-section-header"><span class="form-section-icon">💰</span><div><h3>Récapitulatif financier</h3><p>Calcul automatique de la commande</p></div></div>
                                 <div class="form-grid">
-                                    <div class="form-group"><label for="order-total">Total commande</label><input type="number" id="order-total" name="totalCommande" readonly></div>
-                                    <div class="form-group"><label for="order-discount">Remise totale</label><input type="number" id="order-discount" name="remiseTotale" min="0" value="0"></div>
-                                    <div class="form-group"><label for="order-delivery-fees">Frais de livraison</label><input type="number" id="order-delivery-fees" name="fraisLivraison" min="0" value="0"></div>
-                                    <div class="form-group"><label for="order-total-payable">Total à payer</label><input type="number" id="order-total-payable" name="totalAPayer" readonly></div>
+                                    <div class="form-group"><label for="order-total">Total commande</label><div class="money-input"><input type="number" id="order-total" name="totalCommande" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-discount">Remise totale</label><div class="money-input"><input type="number" id="order-discount" name="remiseTotale" min="0" inputmode="numeric" placeholder="Montant"><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-delivery-fees">Frais de livraison</label><div class="money-input"><input type="number" id="order-delivery-fees" name="fraisLivraison" min="0" inputmode="numeric" placeholder="Montant"><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-total-payable">Total à payer</label><div class="money-input total-payable"><input type="number" id="order-total-payable" name="totalAPayer" readonly><span>FCFA</span></div></div>
                                 </div>
                             </section>
 
@@ -543,6 +577,258 @@
                         </div>
                     </form>
                 </div>
+            </div>
+
+
+
+            <!-- ===== Fenêtre Nouveau client depuis une commande ===== -->
+            <div class="modal-overlay" id="quick-client-modal" aria-hidden="true">
+
+                <div
+                    class="modal quick-client-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="quick-client-modal-title"
+                >
+
+                    <div class="modal-header">
+
+                        <div>
+                            <h2 id="quick-client-modal-title">Nouveau client</h2>
+                            <p>Enregistrez rapidement le client sans quitter la commande.</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="modal-close"
+                            id="close-quick-client-modal"
+                            aria-label="Fermer la fenêtre"
+                        >
+                            ✕
+                        </button>
+
+                    </div>
+
+                    <form id="quick-client-form">
+
+                        <div class="modal-body">
+
+                            <div
+                                id="quick-client-form-message"
+                                class="form-message"
+                                aria-live="polite"
+                            ></div>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">👤</span>
+
+                                    <div>
+                                        <h3>Informations générales</h3>
+                                        <p>Identité et statut du client</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-type">
+                                            Type de client
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="quick-client-type"
+                                            name="typeClient"
+                                            required
+                                        >
+                                            <option value="">Sélectionner un type</option>
+                                            <option value="particulier">Particulier</option>
+                                            <option value="entreprise">Entreprise</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-status">
+                                            Statut
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="quick-client-status"
+                                            name="statut"
+                                            required
+                                        >
+                                            <option value="actif">Actif</option>
+                                            <option value="prospect">Prospect</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-lastname">
+                                            Nom
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-lastname"
+                                            name="nom"
+                                            autocomplete="family-name"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-firstname">
+                                            Prénom
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-firstname"
+                                            name="prenom"
+                                            autocomplete="given-name"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">📞</span>
+
+                                    <div>
+                                        <h3>Coordonnées</h3>
+                                        <p>Téléphone et email</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-phone">
+                                            Téléphone
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <input
+                                            type="tel"
+                                            id="quick-client-phone"
+                                            name="telephone"
+                                            autocomplete="tel"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-email">Email</label>
+
+                                        <input
+                                            type="email"
+                                            id="quick-client-email"
+                                            name="email"
+                                            autocomplete="email"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">📍</span>
+
+                                    <div>
+                                        <h3>Adresse</h3>
+                                        <p>Commune et quartier</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-commune">Commune</label>
+
+                                        <select
+                                            id="quick-client-commune"
+                                            name="commune"
+                                        >
+                                            <option value="">Sélectionner une commune</option>
+                                            <option value="abobo">Abobo</option>
+                                            <option value="adjame">Adjamé</option>
+                                            <option value="attecoube">Attécoubé</option>
+                                            <option value="cocody">Cocody</option>
+                                            <option value="koumassi">Koumassi</option>
+                                            <option value="marcory">Marcory</option>
+                                            <option value="plateau">Plateau</option>
+                                            <option value="port-bouet">Port-Bouët</option>
+                                            <option value="treichville">Treichville</option>
+                                            <option value="yopougon">Yopougon</option>
+                                            <option value="autre">Autre</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-neighborhood">Quartier</label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-neighborhood"
+                                            name="quartier"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-group">
+                                    <label for="quick-client-comment">Commentaire</label>
+
+                                    <textarea
+                                        id="quick-client-comment"
+                                        name="commentaire"
+                                        rows="3"
+                                    ></textarea>
+                                </div>
+
+                            </section>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                id="cancel-quick-client-btn"
+                            >
+                                Annuler
+                            </button>
+
+                            <button
+                                type="submit"
+                                class="btn-primary"
+                                id="save-quick-client-btn"
+                            >
+                                Enregistrer le client
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
             </div>
 
         </section>
