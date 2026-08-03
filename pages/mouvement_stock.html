@@ -1,1 +1,685 @@
-azet
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Mouvements de stock</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/mouvement_stock.css"
+    >
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside
+        id="sidebar"
+        class="sidebar"
+    >
+
+        <button
+            id="sidebar-close"
+            class="sidebar-close"
+            type="button"
+            aria-label="Fermer le menu"
+        >
+            ✖
+        </button>
+
+        <a
+            href="dashboard.html"
+            class="logo"
+        >
+            <img
+                src="../logo-vizibl.png"
+                alt="Logo VISIBL"
+            >
+        </a>
+
+        <nav>
+
+            <ul>
+
+                <li>
+
+                    <a
+                        href="dashboard.html"
+                        class="nav-link"
+                    >
+                        📊 Tableau de bord
+                    </a>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU COMMERCIAL
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            🛒 Commercial
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="ventes.html"
+                                class="nav-link"
+                            >
+                                Ventes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="commandes.html"
+                                class="nav-link"
+                            >
+                                Commandes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="clients.html"
+                                class="nav-link"
+                            >
+                                Clients
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livraisons.html"
+                                class="nav-link"
+                            >
+                                Livraisons
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livreurs.html"
+                                class="nav-link"
+                            >
+                                Livreurs
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU STOCK ET APPROVISIONNEMENT
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            📦 Stock & Approvisionnement
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="produits.html"
+                                class="nav-link"
+                            >
+                                Produits
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="stock.html"
+                                class="nav-link"
+                            >
+                                Stock
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="approvisionnements.html"
+                                class="nav-link"
+                            >
+                                Approvisionnements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="fournisseurs.html"
+                                class="nav-link"
+                            >
+                                Fournisseurs
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="transitaires.html"
+                                class="nav-link"
+                            >
+                                Transitaires
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU FINANCE
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            💰 Finance
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="caisse.html"
+                                class="nav-link"
+                            >
+                                Caisse
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="paiements.html"
+                                class="nav-link"
+                            >
+                                Paiements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="factures.html"
+                                class="nav-link"
+                            >
+                                Factures
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="comptabilité.html"
+                                class="nav-link"
+                            >
+                                Comptabilité
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="rapports.html"
+                        class="nav-link"
+                    >
+                        📈 Rapports
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="parametres.html"
+                        class="nav-link"
+                    >
+                        ⚙️ Paramètres
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =====================================================
+         CONTENU PRINCIPAL
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
+                </a>
+
+                <h2>Mouvements de stock</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="header-stock-movements-search-input"
+                            placeholder="Rechercher un mouvement..."
+                        >
+
+                        <button class="search-btn"
+                            id="header-stock-movements-search-btn"
+                            type="button"
+                            aria-label="Rechercher">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
+
+        🔔
+        <span class="notification-badge">3</span>
+
+    </button>
+
+    <div
+        id="notification-panel"
+        class="notification-panel"
+        hidden>
+
+        <div class="notification-panel-header">
+            <h3>Notifications</h3>
+        </div>
+
+        <div class="notification-item">
+            <span class="notification-item-icon">📦</span>
+            <div>
+                <strong>Nouvelle commande</strong>
+                <p>Une nouvelle commande a été enregistrée.</p>
+                <small>Il y a quelques minutes</small>
+            </div>
+        </div>
+
+        <div class="notification-item">
+            <span class="notification-item-icon">⚠️</span>
+            <div>
+                <strong>Stock faible</strong>
+                <p>Un produit approche du seuil de rupture.</p>
+                <small>Aujourd’hui</small>
+            </div>
+        </div>
+
+        <div class="notification-item">
+            <span class="notification-item-icon">💳</span>
+            <div>
+                <strong>Paiement reçu</strong>
+                <p>Un nouveau paiement a été enregistré.</p>
+                <small>Aujourd’hui</small>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+                    <div class="profile-menu" id="stock-movement-profile-menu">
+
+                        <button
+                            class="icon-btn"
+                            id="profile-menu-button"
+                            type="button"
+                            aria-label="Afficher le menu du profil"
+                            aria-expanded="false">
+                            👤
+                        </button>
+
+                        <div
+                            class="dropdown-menu"
+                            id="profile-dropdown"
+                            hidden>
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             CONTENU DE LA PAGE
+        ================================================== -->
+
+        <section class="content">
+
+            <div class="welcome-section">
+                <h2>Mouvements de stock</h2>
+                <p>
+                    Consultez l’historique complet des entrées, sorties,
+                    ajustements et autres opérations affectant les stocks.
+                </p>
+            </div>
+
+            <div class="kpi-grid" id="stock-movements-kpi-grid">
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">🔄</div>
+                    <div class="kpi-content">
+                        <h3>Total des mouvements</h3>
+                        <p class="kpi-value" id="kpi-total-stock-movements">0</p>
+                        <small>Toutes les opérations enregistrées</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📥</div>
+                    <div class="kpi-content">
+                        <h3>Entrées</h3>
+                        <p class="kpi-value" id="kpi-stock-entries">0</p>
+                        <small>Quantités ajoutées au stock</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📤</div>
+                    <div class="kpi-content">
+                        <h3>Sorties</h3>
+                        <p class="kpi-value" id="kpi-stock-exits">0</p>
+                        <small>Quantités retirées du stock</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">🛠️</div>
+                    <div class="kpi-content">
+                        <h3>Ajustements</h3>
+                        <p class="kpi-value" id="kpi-stock-adjustments">0</p>
+                        <small>Corrections manuelles du stock</small>
+                    </div>
+                </article>
+
+            </div>
+
+            <div class="sales-toolbar stock-movements-toolbar">
+
+                <div class="stock-movements-toolbar-left">
+
+                    <a href="stock.html" class="btn-secondary">
+                        ← Retour au stock
+                    </a>
+
+                    <button type="button" class="btn-primary" id="new-stock-movement-btn">
+                        ➕ Nouveau mouvement
+                    </button>
+
+                    <button type="button" class="btn-secondary" id="refresh-stock-movements-btn">
+                        🔄 Actualiser
+                    </button>
+
+                    <div class="stock-movements-export-menu" id="stock-movements-export-menu">
+                        <button type="button" class="btn-secondary" id="export-stock-movements-btn" aria-haspopup="true" aria-expanded="false">
+                            📤 Exporter <span aria-hidden="true">▾</span>
+                        </button>
+
+                        <div class="stock-movements-export-dropdown" id="stock-movements-export-dropdown" hidden>
+                            <button type="button" data-export-format="xlsx">
+                                <span>📊</span>
+                                <span><strong>Excel (.xlsx)</strong><small>Feuille de calcul modifiable</small></span>
+                            </button>
+                            <button type="button" data-export-format="pdf">
+                                <span>📄</span>
+                                <span><strong>PDF</strong><small>Document prêt à partager</small></span>
+                            </button>
+                            <button type="button" data-export-format="csv">
+                                <span>📑</span>
+                                <span><strong>CSV</strong><small>Format universel UTF-8</small></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-secondary" id="print-stock-movements-btn">
+                        🖨️ Imprimer
+                    </button>
+
+                </div>
+
+                <div class="stock-movements-toolbar-right">
+                    <span class="stock-movements-visible-count">
+                        <strong id="filtered-stock-movements-count">0</strong>
+                        mouvement(s) affiché(s)
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="sales-filters stock-movements-filters">
+
+                <div class="sales-search">
+                    <input type="search" id="stock-movements-search-input" placeholder="Rechercher par produit, référence ou document..." autocomplete="off" aria-label="Rechercher un mouvement de stock">
+                </div>
+
+                <select id="stock-movement-type-filter" aria-label="Filtrer par type de mouvement">
+                    <option value="">Tous les types</option>
+                    <option value="stock initial">Stock initial</option>
+                    <option value="approvisionnement">Approvisionnement</option>
+                    <option value="vente">Vente</option>
+                    <option value="retour client">Retour client</option>
+                    <option value="retour fournisseur">Retour fournisseur</option>
+                    <option value="ajustement positif">Ajustement positif</option>
+                    <option value="ajustement négatif">Ajustement négatif</option>
+                    <option value="perte">Perte</option>
+                    <option value="casse">Casse</option>
+                </select>
+
+                <input type="date" id="stock-movement-date-from" aria-label="Date de début">
+                <input type="date" id="stock-movement-date-to" aria-label="Date de fin">
+
+                <button type="button" class="btn-filter-reset" id="reset-stock-movements-filters">
+                    Effacer les filtres
+                </button>
+
+            </div>
+
+            <div class="sales-table-container">
+
+                <table class="sales-table stock-movements-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Heure</th>
+                            <th>Produit</th>
+                            <th>Type de mouvement</th>
+                            <th>Quantité</th>
+                            <th>Stock avant</th>
+                            <th>Stock après</th>
+                            <th>Référence document</th>
+                            <th>Utilisateur</th>
+                            <th>Commentaire</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-movements-table-body">
+                        <tr>
+                            <td colspan="10" class="table-message">
+                                Chargement des mouvements de stock...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="stock-movements-pagination">
+                    <div class="stock-movements-pagination-size">
+                        <label for="stock-movements-page-size">Afficher</label>
+                        <select id="stock-movements-page-size">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>mouvements par page</span>
+                    </div>
+
+                    <div class="stock-movements-pagination-summary" id="stock-movements-pagination-summary">0 mouvement</div>
+
+                    <div class="stock-movements-pagination-controls" id="stock-movements-pagination-controls" aria-label="Pagination des mouvements de stock"></div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/modules/mouvement_stock.js"></script>
+
+</body>
+</html>
