@@ -308,25 +308,78 @@ async function chargerClientsCommande(idASelectionner = "", libelleSecours = "")
             throw new Error(resultat?.message || "Impossible de charger les clients.");
         }
 
-        const clients = Array.isArray(resultat.data) ? resultat.data : [];
+        /*
+           Accepte les différents formats possibles renvoyés par l'API :
+           - { success: true, data: [...] }
+           - { success: true, data: { clients: [...] } }
+           - { success: true, clients: [...] }
+        */
+        const clients = Array.isArray(resultat.data)
+            ? resultat.data
+            : Array.isArray(resultat.data?.clients)
+                ? resultat.data.clients
+                : Array.isArray(resultat.clients)
+                    ? resultat.clients
+                    : [];
 
         select.innerHTML = '<option value="">Sélectionner un client</option>';
 
         clients
             .filter(client => {
-                const statut = String(client["Statut"] || client.statut || "").toLowerCase();
-                return !statut || statut === "actif" || statut === "prospect";
+                const statut = String(
+                    lireValeurClientCommande(
+                        client,
+                        ["Statut", "statut"]
+                    ) || ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+                return (
+                    !statut ||
+                    statut === "actif" ||
+                    statut === "prospect"
+                );
             })
-            .sort((a, b) => obtenirNomClient(a).localeCompare(obtenirNomClient(b), "fr", { sensitivity: "base" }))
+            .sort((a, b) =>
+                obtenirNomClient(a).localeCompare(
+                    obtenirNomClient(b),
+                    "fr",
+                    { sensitivity: "base" }
+                )
+            )
             .forEach(client => {
-                const id = String(client["ID Client"] || client.idClient || "").trim();
-                if (!id) return;
+                const id = String(
+                    lireValeurClientCommande(
+                        client,
+                        [
+                            "ID Client",
+                            "idClient",
+                            "Identifiant",
+                            "identifiant"
+                        ]
+                    ) || ""
+                ).trim();
+
+                if (!id) {
+                    console.warn(
+                        "Client ignoré car aucun identifiant reconnu :",
+                        client
+                    );
+                    return;
+                }
 
                 const option = document.createElement("option");
                 option.value = id;
-                option.textContent = obtenirNomClient(client) || id;
+                option.textContent =
+                    obtenirNomClient(client) || id;
+
                 select.appendChild(option);
             });
+
+        console.log(
+            `${clients.length} client(s) reçus, ${select.options.length - 1} affiché(s) dans la liste.`
+        );
 
         if (
             valeurActuelle &&
@@ -351,10 +404,54 @@ async function chargerClientsCommande(idASelectionner = "", libelleSecours = "")
 
 
 function obtenirNomClient(client) {
-    return [
-        client["Nom"] ?? client.nom ?? "",
-        client["Prénom"] ?? client.prenom ?? ""
-    ].map(v => String(v).trim()).filter(Boolean).join(" ");
+    const nom = lireValeurClientCommande(
+        client,
+        ["Nom", "nom", "Nom Client", "nomClient"]
+    );
+
+    const prenom = lireValeurClientCommande(
+        client,
+        ["Prénom", "Prenom", "prenom", "Prénom Client"]
+    );
+
+    const raisonSociale = lireValeurClientCommande(
+        client,
+        [
+            "Raison Sociale",
+            "raisonSociale",
+            "Nom Entreprise",
+            "nomEntreprise"
+        ]
+    );
+
+    return (
+        [nom, prenom]
+            .map(valeur => String(valeur || "").trim())
+            .filter(Boolean)
+            .join(" ")
+        ||
+        String(raisonSociale || "").trim()
+    );
+}
+
+
+function lireValeurClientCommande(client, cles) {
+    if (!client || !Array.isArray(cles)) {
+        return "";
+    }
+
+    for (const cle of cles) {
+        if (
+            Object.prototype.hasOwnProperty.call(client, cle) &&
+            client[cle] !== null &&
+            client[cle] !== undefined &&
+            client[cle] !== ""
+        ) {
+            return client[cle];
+        }
+    }
+
+    return "";
 }
 
 
