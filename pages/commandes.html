@@ -433,13 +433,13 @@
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="select-all-orders" aria-label="Sélectionner toutes les commandes"></th>
-                                <th>N° Commande</th>
+                                <th>N° commande</th>
                                 <th>Client</th>
-                                <th>Date / Heure</th>
-                                <th>Total à payer</th>
-                                <th>Livreur</th>
-                                <th>Zone</th>
-                                <th>Paiement prévu</th>
+                                <th>Date</th>
+                                <th>Produits</th>
+                                <th>Total TTC</th>
+                                <th>Paiement</th>
+                                <th>Livraison</th>
                                 <th>Statut</th>
                                 <th>Actions</th>
                             </tr>
@@ -479,12 +479,17 @@
                             <div id="order-form-message" class="form-message" aria-live="polite"></div>
 
                             <section class="form-section">
-                                <div class="form-section-header"><span class="form-section-icon">🧾</span><div><h3>Informations générales</h3><p>Client, date et statut</p></div></div>
+                                <div class="form-section-header"><span class="form-section-icon">🧾</span><div><h3>Informations générales</h3><p>Client, date, heure et statut</p></div></div>
+
+                                <input type="hidden" id="order-id" name="idCommande">
+                                <input type="hidden" id="order-user-id" name="idUtilisateur">
+
                                 <div class="form-grid">
-                                    <div class="form-group"><label for="order-number">Numéro</label><input type="text" id="order-number" readonly value="Génération automatique..."></div>
-                                    <div class="form-group"><label for="order-date">Date <span class="required">*</span></label><input type="date" id="order-date" required></div>
-                                    <div class="form-group"><label for="order-client">Client <span class="required">*</span></label><select id="order-client" required><option value="">Sélectionner un client</option></select></div>
-                                    <div class="form-group"><label for="order-status">Statut</label><select id="order-status"><option value="en-attente">En attente</option><option value="confirmee">Confirmée</option><option value="en-preparation">En préparation</option><option value="livree">Livrée</option><option value="terminee">Terminée</option><option value="annulee">Annulée</option></select></div>
+                                    <div class="form-group"><label for="order-number">Numéro de commande</label><input type="text" id="order-number" name="numeroCommande" readonly value="Génération automatique..."></div>
+                                    <div class="form-group"><label for="order-client">Client <span class="required">*</span></label><select id="order-client" name="idClient" required><option value="">Sélectionner un client</option></select></div>
+                                    <div class="form-group"><label for="order-date">Date de commande <span class="required">*</span></label><input type="date" id="order-date" name="dateCommande" required></div>
+                                    <div class="form-group"><label for="order-time">Heure de commande <span class="required">*</span></label><input type="time" id="order-time" name="heureCommande" required></div>
+                                    <div class="form-group"><label for="order-status">Statut</label><select id="order-status" name="statut"><option value="en-attente">En attente</option><option value="confirmee">Confirmée</option><option value="en-preparation">En préparation</option><option value="prete">Prête</option><option value="livree">Livrée</option><option value="terminee">Terminée</option><option value="annulee">Annulée</option></select></div>
                                 </div>
                             </section>
 
@@ -506,27 +511,29 @@
                             </section>
 
                             <section class="form-section">
-                                <div class="form-section-header"><span class="form-section-icon">💳</span><div><h3>Paiement et livraison</h3><p>Mode et statut</p></div></div>
+                                <div class="form-section-header"><span class="form-section-icon">🚚</span><div><h3>Livraison et paiement prévu</h3><p>Livreur, destination et moyen de règlement</p></div></div>
                                 <div class="form-grid">
-                                    <div class="form-group"><label for="order-payment-method">Mode de paiement</label><select id="order-payment-method"><option value="">Sélectionner</option><option value="especes">Espèces</option><option value="mobile-money">Mobile Money</option><option value="virement">Virement</option><option value="carte">Carte</option><option value="credit">Crédit</option></select></div>
-                                    <div class="form-group"><label for="order-payment-status">Statut paiement</label><select id="order-payment-status"><option value="non-paye">Non payé</option><option value="partiel">Partiel</option><option value="paye">Payé</option></select></div>
-                                    <div class="form-group"><label for="order-delivery-mode">Mode de livraison</label><select id="order-delivery-mode"><option value="">Sélectionner</option><option value="retrait-boutique">Retrait boutique</option><option value="livraison">Livraison</option><option value="expedition">Expédition</option></select></div>
-                                    <div class="form-group"><label for="order-delivery-status">Statut livraison</label><select id="order-delivery-status"><option value="non-planifiee">Non planifiée</option><option value="a-livrer">À livrer</option><option value="en-cours">En cours</option><option value="livree">Livrée</option></select></div>
+                                    <div class="form-group"><label for="order-delivery-person">Livreur</label><select id="order-delivery-person" name="idLivreur"><option value="">Aucun livreur affecté</option></select></div>
+                                    <div class="form-group"><label for="order-delivery-zone">Zone de livraison</label><input type="text" id="order-delivery-zone" name="zoneLivraison" placeholder="Exemple : Cocody"></div>
+                                    <div class="form-group form-group-full"><label for="order-delivery-address">Adresse de livraison</label><textarea id="order-delivery-address" name="adresseLivraison" rows="3" placeholder="Adresse complète de livraison"></textarea></div>
+                                    <div class="form-group"><label for="order-delivery-contact">Contact de livraison</label><input type="tel" id="order-delivery-contact" name="contactLivraison" placeholder="07 00 00 00 00"></div>
+                                    <div class="form-group"><label for="order-delivery-date">Date de livraison prévue</label><input type="date" id="order-delivery-date" name="dateLivraisonPrevue"></div>
+                                    <div class="form-group"><label for="order-payment-method">Mode de paiement prévu</label><select id="order-payment-method" name="modePaiementPrevu"><option value="">Sélectionner</option><option value="especes">Espèces</option><option value="mobile-money">Mobile Money</option><option value="carte-bancaire">Carte bancaire</option><option value="virement">Virement</option><option value="cheque">Chèque</option><option value="credit">Crédit</option></select></div>
                                 </div>
                             </section>
 
                             <section class="form-section">
-                                <div class="form-section-header"><span class="form-section-icon">💰</span><div><h3>Totaux</h3><p>Calcul automatique</p></div></div>
+                                <div class="form-section-header"><span class="form-section-icon">💰</span><div><h3>Récapitulatif financier</h3><p>Calcul automatique de la commande</p></div></div>
                                 <div class="form-grid">
-                                    <div class="form-group"><label for="order-amount-ht">Montant HT</label><input type="number" id="order-amount-ht" readonly></div>
-                                    <div class="form-group"><label for="order-discount">Remise globale</label><input type="number" id="order-discount" min="0" value="0"></div>
-                                    <div class="form-group"><label for="order-vat-amount">TVA</label><input type="number" id="order-vat-amount" readonly></div>
-                                    <div class="form-group"><label for="order-amount-ttc">Montant TTC</label><input type="number" id="order-amount-ttc" readonly></div>
+                                    <div class="form-group"><label for="order-total">Total commande</label><input type="number" id="order-total" name="totalCommande" readonly></div>
+                                    <div class="form-group"><label for="order-discount">Remise totale</label><input type="number" id="order-discount" name="remiseTotale" min="0" value="0"></div>
+                                    <div class="form-group"><label for="order-delivery-fees">Frais de livraison</label><input type="number" id="order-delivery-fees" name="fraisLivraison" min="0" value="0"></div>
+                                    <div class="form-group"><label for="order-total-payable">Total à payer</label><input type="number" id="order-total-payable" name="totalAPayer" readonly></div>
                                 </div>
                             </section>
 
                             <section class="form-section">
-                                <div class="form-group"><label for="order-comment">Commentaire</label><textarea id="order-comment" rows="4" placeholder="Informations complémentaires..."></textarea></div>
+                                <div class="form-group"><label for="order-comment">Commentaire</label><textarea id="order-comment" name="commentaire" rows="4" placeholder="Informations complémentaires..."></textarea></div>
                             </section>
                         </div>
 
