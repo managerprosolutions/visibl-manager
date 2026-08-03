@@ -1,1 +1,716 @@
-azerg
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Stock</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/stock.css"
+    >
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside
+        id="sidebar"
+        class="sidebar"
+    >
+
+        <button
+            id="sidebar-close"
+            class="sidebar-close"
+            type="button"
+            aria-label="Fermer le menu"
+        >
+            ✖
+        </button>
+
+        <a
+            href="dashboard.html"
+            class="logo"
+        >
+            <img
+                src="../logo-vizibl.png"
+                alt="Logo VISIBL"
+            >
+        </a>
+
+        <nav>
+
+            <ul>
+
+                <li>
+
+                    <a
+                        href="dashboard.html"
+                        class="nav-link"
+                    >
+                        📊 Tableau de bord
+                    </a>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU COMMERCIAL
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            🛒 Commercial
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="ventes.html"
+                                class="nav-link"
+                            >
+                                Ventes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="commandes.html"
+                                class="nav-link"
+                            >
+                                Commandes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="clients.html"
+                                class="nav-link"
+                            >
+                                Clients
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livraisons.html"
+                                class="nav-link"
+                            >
+                                Livraisons
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livreurs.html"
+                                class="nav-link"
+                            >
+                                Livreurs
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU STOCK ET APPROVISIONNEMENT
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            📦 Stock & Approvisionnement
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="produits.html"
+                                class="nav-link"
+                            >
+                                Produits
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="stock.html"
+                                class="nav-link active"
+                                aria-current="page"
+                            >
+                                Stock
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="mouvements-stock.html"
+                                class="nav-link"
+                            >
+                                Mouvements de stock
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="approvisionnements.html"
+                                class="nav-link"
+                            >
+                                Approvisionnements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="fournisseurs.html"
+                                class="nav-link"
+                            >
+                                Fournisseurs
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="transitaires.html"
+                                class="nav-link"
+                            >
+                                Transitaires
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU FINANCE
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            💰 Finance
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="caisse.html"
+                                class="nav-link"
+                            >
+                                Caisse
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="paiements.html"
+                                class="nav-link"
+                            >
+                                Paiements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="factures.html"
+                                class="nav-link"
+                            >
+                                Factures
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="comptabilité.html"
+                                class="nav-link"
+                            >
+                                Comptabilité
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="rapports.html"
+                        class="nav-link"
+                    >
+                        📈 Rapports
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="parametres.html"
+                        class="nav-link"
+                    >
+                        ⚙️ Paramètres
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =====================================================
+         CONTENU PRINCIPAL
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
+                </a>
+
+                <h2>Stock</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="header-stock-search-input"
+                            placeholder="Rechercher un produit en stock..."
+                        >
+
+                        <button class="search-btn"
+                            id="header-stock-search-btn"
+                            type="button"
+                            aria-label="Rechercher">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
+
+        🔔
+        <span class="notification-badge">3</span>
+
+    </button>
+
+    <div
+        id="notification-panel"
+        class="notification-panel"
+        hidden>
+
+        <div class="notification-panel-header">
+            <h3>Notifications</h3>
+        </div>
+
+        <div class="notification-item">
+            <span class="notification-item-icon">📦</span>
+            <div>
+                <strong>Nouvelle commande</strong>
+                <p>Une nouvelle commande a été enregistrée.</p>
+                <small>Il y a quelques minutes</small>
+            </div>
+        </div>
+
+        <div class="notification-item">
+            <span class="notification-item-icon">⚠️</span>
+            <div>
+                <strong>Stock faible</strong>
+                <p>Un produit approche du seuil de rupture.</p>
+                <small>Aujourd’hui</small>
+            </div>
+        </div>
+
+        <div class="notification-item">
+            <span class="notification-item-icon">💳</span>
+            <div>
+                <strong>Paiement reçu</strong>
+                <p>Un nouveau paiement a été enregistré.</p>
+                <small>Aujourd’hui</small>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+                    <div class="profile-menu" id="stock-profile-menu">
+
+                        <button
+                            class="icon-btn"
+                            id="profile-menu-button"
+                            type="button"
+                            aria-label="Afficher le menu du profil"
+                            aria-expanded="false">
+                            👤
+                        </button>
+
+                        <div
+                            class="dropdown-menu"
+                            id="profile-dropdown"
+                            hidden>
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+
+        <!-- =================================================
+             CONTENU DE LA PAGE
+        ================================================== -->
+
+        <section class="content">
+
+            <div class="welcome-section">
+                <h2>État du stock</h2>
+                <p>
+                    Consultez en temps réel les quantités disponibles,
+                    les niveaux d’alerte et le dernier mouvement de chaque produit.
+                </p>
+            </div>
+
+            <div class="kpi-grid" id="stock-kpi-grid">
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📦</div>
+                    <div class="kpi-content">
+                        <h3>Total produits</h3>
+                        <p class="kpi-value" id="kpi-total-stock-products" aria-live="polite">0</p>
+                        <small>Produits suivis dans le stock</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">✅</div>
+                    <div class="kpi-content">
+                        <h3>Produits disponibles</h3>
+                        <p class="kpi-value" id="kpi-available-stock-products" aria-live="polite">0</p>
+                        <small id="kpi-available-stock-percent" aria-live="polite">0 % du total</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">⚠️</div>
+                    <div class="kpi-content">
+                        <h3>Stock faible</h3>
+                        <p class="kpi-value" id="kpi-low-stock-products" aria-live="polite">0</p>
+                        <small>Produits au seuil d’alerte</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">⛔</div>
+                    <div class="kpi-content">
+                        <h3>Ruptures de stock</h3>
+                        <p class="kpi-value" id="kpi-out-of-stock-products" aria-live="polite">0</p>
+                        <small>Produits indisponibles</small>
+                    </div>
+                </article>
+
+            </div>
+
+            <div class="sales-toolbar stock-toolbar">
+
+                <div class="stock-toolbar-left">
+
+                    <a href="mouvements-stock.html" class="btn-primary" id="open-stock-movements-btn">
+                        🔄 Voir les mouvements
+                    </a>
+
+                    <button type="button" class="btn-secondary" id="refresh-stock-btn">
+                        ↻ Actualiser
+                    </button>
+
+                    <div class="stock-export-menu" id="stock-export-menu">
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            id="export-stock-btn"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
+                            📤 Exporter <span aria-hidden="true">▾</span>
+                        </button>
+
+                        <div class="stock-export-dropdown" id="stock-export-dropdown" hidden>
+                            <button type="button" data-export-format="xlsx">
+                                <span>📊</span>
+                                <span><strong>Excel (.xlsx)</strong><small>Feuille modifiable</small></span>
+                            </button>
+
+                            <button type="button" data-export-format="pdf">
+                                <span>📄</span>
+                                <span><strong>PDF</strong><small>Document à partager</small></span>
+                            </button>
+
+                            <button type="button" data-export-format="csv">
+                                <span>📑</span>
+                                <span><strong>CSV</strong><small>Format universel UTF-8</small></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-secondary" id="print-stock-btn">
+                        🖨️ Imprimer
+                    </button>
+
+                </div>
+
+                <div class="stock-toolbar-right">
+                    <span class="stock-visible-count">
+                        <strong id="filtered-stock-count">0</strong>
+                        produit(s) affiché(s)
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="sales-filters stock-filters">
+
+                <div class="sales-search">
+                    <input
+                        type="search"
+                        id="stock-search-input"
+                        placeholder="Rechercher par produit, référence ou catégorie..."
+                        autocomplete="off"
+                        aria-label="Rechercher dans le stock"
+                    >
+                </div>
+
+                <select id="stock-category-filter" aria-label="Filtrer par catégorie">
+                    <option value="">Toutes les catégories</option>
+                </select>
+
+                <select id="stock-status-filter" aria-label="Filtrer par état du stock">
+                    <option value="">Tous les états</option>
+                    <option value="normal">Stock normal</option>
+                    <option value="faible">Stock faible</option>
+                    <option value="rupture">Rupture de stock</option>
+                </select>
+
+                <button type="button" class="btn-filter-reset" id="reset-stock-filters">
+                    Effacer les filtres
+                </button>
+
+            </div>
+
+            <div class="sales-table-container">
+
+                <table class="sales-table stock-table">
+
+                    <thead>
+                        <tr>
+                            <th>Référence</th>
+                            <th>Produit</th>
+                            <th>Catégorie</th>
+                            <th>Entrées</th>
+                            <th>Sorties</th>
+                            <th>Stock disponible</th>
+                            <th>Seuil d’alerte</th>
+                            <th>État</th>
+                            <th>Dernier mouvement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="stock-table-body">
+                        <tr>
+                            <td colspan="10" class="table-message">
+                                Chargement du stock...
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+                <div class="stock-pagination">
+
+                    <div class="stock-pagination-size">
+                        <label for="stock-page-size">Afficher</label>
+
+                        <select id="stock-page-size">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+
+                        <span>produits par page</span>
+                    </div>
+
+                    <div class="stock-pagination-summary" id="stock-pagination-summary">
+                        0 produit
+                    </div>
+
+                    <div
+                        class="stock-pagination-controls"
+                        id="stock-pagination-controls"
+                        aria-label="Pagination du stock"
+                    ></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/modules/stock.js"></script>
+
+</body>
+</html>
