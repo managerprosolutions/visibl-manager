@@ -1,0 +1,998 @@
+/* =========================================================
+   STOCK.CSS
+   Page : stock.html
+   Projet : VISIBL
+   Inspiré de fournisseurs.css
+========================================================= */
+
+
+/* =========================================================
+   1. VARIABLES PROPRES À LA PAGE
+========================================================= */
+
+:root {
+    --stock-primary: #2563eb;
+    --stock-primary-dark: #1d4ed8;
+    --stock-primary-light: #eff6ff;
+
+    --stock-success: #16a34a;
+    --stock-success-light: #dcfce7;
+
+    --stock-warning: #d97706;
+    --stock-warning-light: #fef3c7;
+
+    --stock-danger: #dc2626;
+    --stock-danger-light: #fee2e2;
+
+    --stock-gray-50: #f8fafc;
+    --stock-gray-100: #f1f5f9;
+    --stock-gray-200: #e2e8f0;
+    --stock-gray-300: #cbd5e1;
+    --stock-gray-500: #64748b;
+    --stock-gray-600: #475569;
+    --stock-gray-700: #334155;
+    --stock-gray-800: #1e293b;
+    --stock-gray-900: #0f172a;
+
+    --stock-white: #ffffff;
+
+    --stock-radius-sm: 6px;
+    --stock-radius-md: 10px;
+    --stock-radius-lg: 14px;
+
+    --stock-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --stock-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.09);
+}
+
+
+/* =========================================================
+   2. CONTENU PRINCIPAL
+========================================================= */
+
+.content {
+    width: 100%;
+    padding: 24px;
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   3. SECTION DE PRÉSENTATION
+========================================================= */
+
+.welcome-section {
+    margin-bottom: 24px;
+}
+
+.welcome-section h2 {
+    margin: 0 0 8px;
+    color: var(--stock-gray-900);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.welcome-section p {
+    max-width: 850px;
+    margin: 0;
+    color: var(--stock-gray-500);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   4. CARTES KPI
+========================================================= */
+
+#stock-kpi-grid,
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 130px;
+    padding: 20px;
+    overflow: hidden;
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-200);
+    border-radius: var(--stock-radius-lg);
+    box-shadow: var(--stock-shadow-sm);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--stock-gray-300);
+    box-shadow: var(--stock-shadow-md);
+}
+
+.kpi-card::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    content: "";
+    background: var(--stock-primary);
+}
+
+.kpi-card:nth-child(2)::before {
+    background: var(--stock-success);
+}
+
+.kpi-card:nth-child(3)::before {
+    background: var(--stock-warning);
+}
+
+.kpi-card:nth-child(4)::before {
+    background: var(--stock-danger);
+}
+
+.kpi-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    font-size: 26px;
+    background: var(--stock-primary-light);
+    border-radius: 14px;
+}
+
+.kpi-card:nth-child(2) .kpi-icon {
+    background: var(--stock-success-light);
+}
+
+.kpi-card:nth-child(3) .kpi-icon {
+    background: var(--stock-warning-light);
+}
+
+.kpi-card:nth-child(4) .kpi-icon {
+    background: var(--stock-danger-light);
+}
+
+.kpi-content {
+    min-width: 0;
+}
+
+.kpi-content h3 {
+    margin: 0 0 8px;
+    color: var(--stock-gray-600);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.kpi-value {
+    margin: 0 0 5px;
+    color: var(--stock-gray-900);
+    font-size: 25px;
+    font-weight: 750;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.kpi-content small {
+    display: block;
+    color: var(--stock-gray-500);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   5. BARRE D'ACTIONS
+========================================================= */
+
+.sales-toolbar,
+.stock-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.stock-toolbar-left,
+.stock-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 11px 18px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: var(--stock-radius-md);
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.btn-primary {
+    color: var(--stock-white);
+    background: var(--stock-primary);
+    border: none;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+}
+
+.btn-primary:hover {
+    background: var(--stock-primary-dark);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    color: var(--stock-gray-700);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
+}
+
+.btn-secondary:hover {
+    background: var(--stock-gray-100);
+    border-color: #94a3b8;
+}
+
+.stock-visible-count {
+    color: var(--stock-gray-500);
+    font-size: 13px;
+}
+
+.stock-visible-count strong {
+    color: var(--stock-gray-900);
+}
+
+
+/* =========================================================
+   6. MENU D'EXPORT
+========================================================= */
+
+.stock-export-menu {
+    position: relative;
+    display: inline-flex;
+}
+
+.stock-export-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 1000;
+    width: 270px;
+    padding: 8px;
+    background: var(--stock-white);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: var(--stock-radius-lg);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+}
+
+.stock-export-dropdown[hidden] {
+    display: none;
+}
+
+.stock-export-dropdown button {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    padding: 11px 12px;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+}
+
+.stock-export-dropdown button:hover,
+.stock-export-dropdown button:focus-visible {
+    background: var(--stock-gray-100);
+    outline: none;
+}
+
+.stock-export-dropdown button span:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stock-export-dropdown small {
+    color: var(--stock-gray-500);
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   7. RECHERCHE ET FILTRES
+========================================================= */
+
+.sales-filters,
+.stock-filters {
+    display: grid;
+    grid-template-columns:
+        minmax(280px, 2fr)
+        minmax(180px, 1fr)
+        minmax(180px, 1fr)
+        auto;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 18px;
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-200);
+    border-radius: var(--stock-radius-lg);
+    box-shadow: var(--stock-shadow-sm);
+}
+
+.sales-search {
+    width: 100%;
+}
+
+.sales-search input,
+.stock-filters select {
+    width: 100%;
+    height: 44px;
+    padding: 0 13px;
+    color: var(--stock-gray-800);
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
+    border-radius: var(--stock-radius-md);
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.sales-search input::placeholder {
+    color: #94a3b8;
+}
+
+.sales-search input:hover,
+.stock-filters select:hover {
+    border-color: #94a3b8;
+}
+
+.sales-search input:focus,
+.stock-filters select:focus {
+    border-color: var(--stock-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.stock-filters select {
+    cursor: pointer;
+}
+
+.btn-filter-reset {
+    min-height: 44px;
+    padding: 0 15px;
+    color: var(--stock-gray-700);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
+    border-radius: var(--stock-radius-md);
+}
+
+.btn-filter-reset:hover {
+    background: var(--stock-gray-100);
+}
+
+
+/* =========================================================
+   8. CONTENEUR DU TABLEAU
+========================================================= */
+
+.sales-table-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-200);
+    border-radius: var(--stock-radius-lg);
+    box-shadow: var(--stock-shadow-sm);
+    scrollbar-width: thin;
+    scrollbar-color: var(--stock-gray-300) transparent;
+}
+
+.sales-table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 10px;
+}
+
+.sales-table-container::-webkit-scrollbar-track {
+    background: var(--stock-gray-100);
+    border-radius: 10px;
+}
+
+.sales-table-container::-webkit-scrollbar-thumb {
+    background: var(--stock-gray-300);
+    border-radius: 10px;
+}
+
+.sales-table-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+
+/* =========================================================
+   9. TABLEAU DU STOCK
+========================================================= */
+
+.sales-table,
+.stock-table {
+    width: max-content;
+    min-width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.stock-table thead {
+    background: var(--stock-gray-50);
+}
+
+.stock-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 14px 12px;
+    color: var(--stock-gray-700);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--stock-gray-50);
+    border-bottom: 1px solid var(--stock-gray-200);
+}
+
+.stock-table td {
+    max-width: 230px;
+    padding: 13px 12px;
+    overflow: hidden;
+    color: var(--stock-gray-600);
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    background: var(--stock-white);
+    border-bottom: 1px solid var(--stock-gray-100);
+}
+
+.stock-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.stock-table tbody tr {
+    transition: background 0.18s ease;
+}
+
+.stock-table tbody tr:hover td {
+    background: #f8fbff;
+}
+
+.stock-table th:nth-child(1),
+.stock-table td:nth-child(1) {
+    min-width: 120px;
+}
+
+.stock-table th:nth-child(2),
+.stock-table td:nth-child(2) {
+    min-width: 220px;
+    font-weight: 600;
+    color: var(--stock-gray-800);
+}
+
+.stock-table th:nth-child(3),
+.stock-table td:nth-child(3) {
+    min-width: 160px;
+}
+
+.stock-table th:nth-child(4),
+.stock-table td:nth-child(4),
+.stock-table th:nth-child(5),
+.stock-table td:nth-child(5),
+.stock-table th:nth-child(6),
+.stock-table td:nth-child(6),
+.stock-table th:nth-child(7),
+.stock-table td:nth-child(7) {
+    min-width: 125px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.stock-table th:nth-child(8),
+.stock-table td:nth-child(8) {
+    min-width: 140px;
+    text-align: center;
+}
+
+.stock-table th:nth-child(9),
+.stock-table td:nth-child(9) {
+    min-width: 170px;
+}
+
+.stock-table th:nth-child(10),
+.stock-table td:nth-child(10) {
+    min-width: 110px;
+    text-align: center;
+}
+
+.stock-table td:nth-child(6) {
+    color: var(--stock-gray-900);
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   10. IDENTITÉ PRODUIT
+========================================================= */
+
+.stock-product-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 210px;
+}
+
+.stock-product-image,
+.stock-product-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    overflow: hidden;
+    object-fit: cover;
+    color: var(--stock-gray-500);
+    font-size: 18px;
+    background: var(--stock-gray-100);
+    border: 1px solid var(--stock-gray-200);
+    border-radius: 8px;
+}
+
+.stock-product-info {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.stock-product-info strong {
+    overflow: hidden;
+    color: var(--stock-gray-800);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stock-product-info small {
+    overflow: hidden;
+    color: var(--stock-gray-500);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   11. BADGES D'ÉTAT DU STOCK
+========================================================= */
+
+.stock-status-badge,
+.stock-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 90px;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 650;
+    border-radius: 999px;
+}
+
+.stock-status-normal,
+.stock-available,
+.stock-disponible {
+    color: #166534;
+    background: var(--stock-success-light);
+}
+
+.stock-status-low,
+.stock-low,
+.stock-faible {
+    color: #92400e;
+    background: var(--stock-warning-light);
+}
+
+.stock-status-out,
+.stock-out,
+.stock-rupture {
+    color: #991b1b;
+    background: var(--stock-danger-light);
+}
+
+.stock-status-unknown {
+    color: var(--stock-gray-600);
+    background: var(--stock-gray-200);
+}
+
+
+/* =========================================================
+   12. ACTIONS DU TABLEAU
+========================================================= */
+
+.stock-actions,
+.table-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.stock-action-btn,
+.table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.stock-action-btn:hover,
+.table-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+.stock-action-btn.view-movements,
+.table-action-btn.view-btn {
+    color: var(--stock-primary);
+    background: #dbeafe;
+}
+
+
+/* =========================================================
+   13. MESSAGES DU TABLEAU
+========================================================= */
+
+.table-message,
+.empty-table-message,
+.loading-row,
+.error-row {
+    padding: 35px 20px !important;
+    color: var(--stock-gray-500) !important;
+    text-align: center !important;
+    background: var(--stock-white) !important;
+}
+
+.error-row {
+    color: var(--stock-danger) !important;
+}
+
+
+/* =========================================================
+   14. PAGINATION
+========================================================= */
+
+.stock-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border-top: 1px solid var(--stock-gray-200);
+}
+
+.stock-pagination-size {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--stock-gray-500);
+    font-size: 13px;
+}
+
+.stock-pagination-size select {
+    min-height: 36px;
+    padding: 0 28px 0 10px;
+    color: var(--stock-gray-800);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
+    border-radius: 8px;
+}
+
+.stock-pagination-summary {
+    color: var(--stock-gray-500);
+    font-size: 13px;
+}
+
+.stock-pagination-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.stock-pagination-controls button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    color: var(--stock-gray-700);
+    cursor: pointer;
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
+    border-radius: 8px;
+}
+
+.stock-pagination-controls button:hover:not(:disabled) {
+    background: var(--stock-gray-100);
+}
+
+.stock-pagination-controls button.active {
+    color: var(--stock-white);
+    background: var(--stock-primary);
+    border-color: var(--stock-primary);
+}
+
+.stock-pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+
+/* =========================================================
+   15. RESPONSIVE TABLETTE
+========================================================= */
+
+@media screen and (max-width: 1200px) {
+    #stock-kpi-grid,
+    .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .stock-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sales-search {
+        grid-column: 1 / -1;
+    }
+
+    .btn-filter-reset {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   16. RESPONSIVE MOBILE
+========================================================= */
+
+@media screen and (max-width: 768px) {
+    .content {
+        padding: 16px;
+    }
+
+    .welcome-section {
+        margin-bottom: 18px;
+    }
+
+    .welcome-section h2 {
+        font-size: 23px;
+    }
+
+    .welcome-section p {
+        font-size: 13px;
+    }
+
+    #stock-kpi-grid,
+    .kpi-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .kpi-card {
+        min-height: 105px;
+        padding: 16px;
+    }
+
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 23px;
+    }
+
+    .kpi-value {
+        font-size: 22px;
+    }
+
+    .stock-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .stock-toolbar-left,
+    .stock-toolbar-right {
+        width: 100%;
+    }
+
+    .stock-toolbar-left > * {
+        flex: 1 1 auto;
+    }
+
+    .stock-export-menu {
+        flex: 1 1 auto;
+    }
+
+    .stock-export-menu > button {
+        width: 100%;
+    }
+
+    .stock-filters {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 13px;
+    }
+
+    .sales-search {
+        grid-column: auto;
+    }
+
+    .sales-search input,
+    .stock-filters select {
+        height: 43px;
+    }
+
+    .sales-table-container {
+        border-radius: 10px;
+    }
+
+    .stock-table th,
+    .stock-table td {
+        padding: 11px 10px;
+    }
+
+    .stock-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .stock-export-dropdown {
+        position: fixed;
+        top: auto;
+        right: 16px;
+        bottom: 16px;
+        left: 16px;
+        width: auto;
+    }
+}
+
+
+/* =========================================================
+   17. TRÈS PETITS ÉCRANS
+========================================================= */
+
+@media screen and (max-width: 480px) {
+    .content {
+        padding: 12px;
+    }
+
+    .welcome-section h2 {
+        font-size: 21px;
+    }
+
+    .kpi-card {
+        gap: 12px;
+    }
+
+    .kpi-content h3 {
+        font-size: 12px;
+    }
+
+    .kpi-value {
+        font-size: 20px;
+    }
+
+    .stock-filters {
+        padding: 11px;
+    }
+
+    .stock-toolbar-left {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .stock-toolbar-left > * {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   18. IMPRESSION
+========================================================= */
+
+@media print {
+    .sidebar,
+    .header,
+    .stock-toolbar,
+    .stock-filters,
+    .stock-pagination,
+    .stock-table th:last-child,
+    .stock-table td:last-child {
+        display: none !important;
+    }
+
+    .main-content {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    .content {
+        padding: 0 !important;
+    }
+
+    #stock-kpi-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .sales-table-container {
+        overflow: visible;
+        border: 1px solid var(--stock-gray-300);
+        box-shadow: none;
+    }
+
+    .stock-table {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .stock-table th {
+        position: static;
+    }
+}
