@@ -86,14 +86,258 @@ function synchroniserRechercheEnteteMouvements(event) {
 
 
 function initialiserBoutonNouveauMouvement() {
+    const boutonOuvrir =
+        document.getElementById("new-stock-movement-btn");
+
+    const boutonFermer =
+        document.getElementById("close-manual-adjustment-modal");
+
+    const boutonAnnuler =
+        document.getElementById("cancel-manual-adjustment-btn");
+
+    const modal =
+        document.getElementById("manual-adjustment-modal");
+
+    boutonOuvrir?.addEventListener("click", ouvrirModaleAjustementManuel);
+    boutonFermer?.addEventListener("click", fermerModaleAjustementManuel);
+    boutonAnnuler?.addEventListener("click", fermerModaleAjustementManuel);
+
+    modal?.addEventListener("click", event => {
+        if (event.target === modal) {
+            fermerModaleAjustementManuel();
+        }
+    });
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && modal?.classList.contains("active")) {
+            fermerModaleAjustementManuel();
+        }
+    });
+
     document
-        .getElementById("new-stock-movement-btn")
-        ?.addEventListener("click", () => {
-            afficherNotificationMouvement(
-                "Le formulaire de nouveau mouvement sera intégré à l’étape suivante.",
-                "info"
+        .getElementById("manual-adjustment-product")
+        ?.addEventListener("change", mettreAJourCalculAjustementManuel);
+
+    document
+        .getElementById("manual-adjustment-type")
+        ?.addEventListener("change", mettreAJourCalculAjustementManuel);
+
+    document
+        .getElementById("manual-adjustment-quantity")
+        ?.addEventListener("input", mettreAJourCalculAjustementManuel);
+
+    document
+        .getElementById("manual-adjustment-form")
+        ?.addEventListener("submit", event => {
+            event.preventDefault();
+
+            if (!validerAjustementManuel()) {
+                return;
+            }
+
+            afficherMessageFormulaireAjustement(
+                "Le formulaire est prêt. L’enregistrement backend sera connecté à l’étape suivante.",
+                "success"
             );
         });
+}
+
+
+function ouvrirModaleAjustementManuel() {
+    const modal = document.getElementById("manual-adjustment-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    remplirListeProduitsAjustement();
+    reinitialiserFormulaireAjustement();
+
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+
+    setTimeout(() => {
+        document.getElementById("manual-adjustment-product")?.focus();
+    }, 50);
+}
+
+
+function fermerModaleAjustementManuel() {
+    const modal = document.getElementById("manual-adjustment-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+}
+
+
+function remplirListeProduitsAjustement() {
+    const select = document.getElementById("manual-adjustment-product");
+
+    if (!select) {
+        return;
+    }
+
+    const valeurActuelle = select.value;
+
+    const produits = new Map();
+
+    mouvementsStock.forEach(mouvement => {
+        if (!mouvement.idProduit) {
+            return;
+        }
+
+        produits.set(mouvement.idProduit, {
+            idProduit: mouvement.idProduit,
+            produit: mouvement.produit || mouvement.idProduit,
+            referenceProduit: mouvement.referenceProduit || "",
+            stockDisponible: mouvement.stockApres
+        });
+    });
+
+    select.innerHTML = '<option value="">Sélectionner un produit</option>';
+
+    [...produits.values()]
+        .sort((a, b) => a.produit.localeCompare(b.produit, "fr"))
+        .forEach(produit => {
+            const option = document.createElement("option");
+            option.value = produit.idProduit;
+            option.textContent = produit.referenceProduit
+                ? `${produit.referenceProduit} — ${produit.produit}`
+                : produit.produit;
+            option.dataset.stock = String(produit.stockDisponible || 0);
+            select.appendChild(option);
+        });
+
+    select.value = valeurActuelle;
+}
+
+
+function reinitialiserFormulaireAjustement() {
+    const formulaire = document.getElementById("manual-adjustment-form");
+    formulaire?.reset();
+
+    definirTexteMouvement("manual-adjustment-stock-before", "—");
+    definirTexteMouvement("manual-adjustment-stock-after", "—");
+
+    const avant = document.getElementById("manual-adjustment-stock-before-value");
+    const apres = document.getElementById("manual-adjustment-stock-after-value");
+
+    if (avant) avant.value = "";
+    if (apres) apres.value = "";
+
+    afficherMessageFormulaireAjustement("", "");
+}
+
+
+function mettreAJourCalculAjustementManuel() {
+    const selectProduit = document.getElementById("manual-adjustment-product");
+    const type = normaliserTexteMouvementFrontend(
+        document.getElementById("manual-adjustment-type")?.value || ""
+    );
+    const quantite = Math.max(
+        0,
+        Math.trunc(
+            convertirNombreMouvementFrontend(
+                document.getElementById("manual-adjustment-quantity")?.value
+            )
+        )
+    );
+
+    const option = selectProduit?.selectedOptions?.[0];
+    const stockAvant = option?.value
+        ? convertirNombreMouvementFrontend(option.dataset.stock)
+        : null;
+
+    if (stockAvant === null) {
+        definirTexteMouvement("manual-adjustment-stock-before", "—");
+        definirTexteMouvement("manual-adjustment-stock-after", "—");
+        return;
+    }
+
+    const typesPositifs = ["ajustement positif"];
+    const variation = typesPositifs.includes(type) ? quantite : -quantite;
+    const stockApres = stockAvant + variation;
+
+    definirTexteMouvement(
+        "manual-adjustment-stock-before",
+        formaterQuantiteMouvement(stockAvant)
+    );
+
+    definirTexteMouvement(
+        "manual-adjustment-stock-after",
+        formaterQuantiteMouvement(stockApres)
+    );
+
+    const avant = document.getElementById("manual-adjustment-stock-before-value");
+    const apres = document.getElementById("manual-adjustment-stock-after-value");
+
+    if (avant) avant.value = String(stockAvant);
+    if (apres) apres.value = String(stockApres);
+
+    if (stockApres < 0) {
+        afficherMessageFormulaireAjustement(
+            "La quantité saisie dépasse le stock disponible.",
+            "error"
+        );
+    } else {
+        afficherMessageFormulaireAjustement("", "");
+    }
+}
+
+
+function validerAjustementManuel() {
+    const idProduit = document.getElementById("manual-adjustment-product")?.value || "";
+    const type = document.getElementById("manual-adjustment-type")?.value || "";
+    const quantite = Math.trunc(
+        convertirNombreMouvementFrontend(
+            document.getElementById("manual-adjustment-quantity")?.value
+        )
+    );
+    const commentaire = document.getElementById("manual-adjustment-comment")?.value.trim() || "";
+    const stockApres = convertirNombreMouvementFrontend(
+        document.getElementById("manual-adjustment-stock-after-value")?.value
+    );
+
+    if (!idProduit || !type || quantite <= 0 || !commentaire) {
+        afficherMessageFormulaireAjustement(
+            "Veuillez remplir tous les champs obligatoires.",
+            "error"
+        );
+        return false;
+    }
+
+    if (stockApres < 0) {
+        afficherMessageFormulaireAjustement(
+            "Impossible d’enregistrer un ajustement qui rendrait le stock négatif.",
+            "error"
+        );
+        return false;
+    }
+
+    return true;
+}
+
+
+function afficherMessageFormulaireAjustement(message, type) {
+    const zone = document.getElementById("manual-adjustment-form-message");
+
+    if (!zone) {
+        return;
+    }
+
+    zone.textContent = message;
+    zone.className = "form-message";
+
+    if (message) {
+        zone.classList.add("show");
+        if (type) zone.classList.add(type);
+    }
 }
 
 
