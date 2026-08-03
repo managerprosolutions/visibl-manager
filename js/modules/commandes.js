@@ -195,6 +195,8 @@ async function enregistrerClientRapide(event) {
         const resultat =
             await apiPost("createClient", client);
 
+       console.log("Réponse createClient :", resultat);
+
         if (!resultat?.success) {
             throw new Error(
                 resultat?.message ||
