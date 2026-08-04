@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Mouvements de stock</title>
+    <title>Stock</title>
 
     <link
         rel="stylesheet"
@@ -19,7 +19,7 @@
 
     <link
         rel="stylesheet"
-        href="../css/mouvement_stock.css"
+        href="../css/stock.css"
     >
 
 </head>
@@ -193,9 +193,10 @@
 
                             <a
                                 href="stock.html"
-                                class="nav-link"
+                                class="nav-link active"
+                                aria-current="page"
                             >
-                                Stock
+                                Stock & mouvements
                             </a>
 
                         </li>
@@ -358,7 +359,7 @@
                     <img src="../logo-vizibl.png" alt="Logo">
                 </a>
 
-                <h2>Mouvements de stock</h2>
+                <h2>Stock</h2>
 
             </div>
 
@@ -377,12 +378,12 @@
                         <input
                             type="text"
                             class="search-input"
-                            id="header-stock-movements-search-input"
-                            placeholder="Rechercher un mouvement..."
+                            id="header-stock-search-input"
+                            placeholder="Rechercher un produit en stock..."
                         >
 
                         <button class="search-btn"
-                            id="header-stock-movements-search-btn"
+                            id="header-stock-search-btn"
                             type="button"
                             aria-label="Rechercher">
                             🔍
@@ -486,6 +487,7 @@
 
 
 
+
         <!-- =================================================
              CONTENU DE LA PAGE
         ================================================== -->
@@ -493,83 +495,87 @@
         <section class="content">
 
             <div class="welcome-section">
-                <h2>Mouvements de stock</h2>
+                <h2>État du stock</h2>
                 <p>
-                    Consultez l’historique complet des entrées, sorties,
-                    ajustements et autres opérations affectant les stocks.
+                    Consultez en temps réel les quantités disponibles,
+                    les niveaux d’alerte et le dernier mouvement de chaque produit.
                 </p>
             </div>
 
-            <div class="kpi-grid" id="stock-movements-kpi-grid">
+            <div class="kpi-grid" id="stock-kpi-grid">
 
                 <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">🔄</div>
+                    <div class="kpi-icon" aria-hidden="true">📦</div>
                     <div class="kpi-content">
-                        <h3>Total des mouvements</h3>
-                        <p class="kpi-value" id="kpi-total-stock-movements">0</p>
-                        <small>Toutes les opérations enregistrées</small>
+                        <h3>Total produits</h3>
+                        <p class="kpi-value" id="kpi-total-stock-products" aria-live="polite">0</p>
+                        <small>Produits suivis dans le stock</small>
                     </div>
                 </article>
 
                 <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">📥</div>
+                    <div class="kpi-icon" aria-hidden="true">✅</div>
                     <div class="kpi-content">
-                        <h3>Entrées</h3>
-                        <p class="kpi-value" id="kpi-stock-entries">0</p>
-                        <small>Quantités ajoutées au stock</small>
+                        <h3>Produits disponibles</h3>
+                        <p class="kpi-value" id="kpi-available-stock-products" aria-live="polite">0</p>
+                        <small id="kpi-available-stock-percent" aria-live="polite">0 % du total</small>
                     </div>
                 </article>
 
                 <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">📤</div>
+                    <div class="kpi-icon" aria-hidden="true">⚠️</div>
                     <div class="kpi-content">
-                        <h3>Sorties</h3>
-                        <p class="kpi-value" id="kpi-stock-exits">0</p>
-                        <small>Quantités retirées du stock</small>
+                        <h3>Stock faible</h3>
+                        <p class="kpi-value" id="kpi-low-stock-products" aria-live="polite">0</p>
+                        <small>Produits au seuil d’alerte</small>
                     </div>
                 </article>
 
                 <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">🛠️</div>
+                    <div class="kpi-icon" aria-hidden="true">⛔</div>
                     <div class="kpi-content">
-                        <h3>Ajustements</h3>
-                        <p class="kpi-value" id="kpi-stock-adjustments">0</p>
-                        <small>Corrections manuelles du stock</small>
+                        <h3>Ruptures de stock</h3>
+                        <p class="kpi-value" id="kpi-out-of-stock-products" aria-live="polite">0</p>
+                        <small>Produits indisponibles</small>
                     </div>
                 </article>
 
             </div>
 
-            <div class="sales-toolbar stock-movements-toolbar">
+            <div class="sales-toolbar stock-toolbar">
 
-                <div class="stock-movements-toolbar-left">
+                <div class="stock-toolbar-left">
 
-                    <a href="stock.html" class="btn-secondary">
-                        ← Retour au stock
+                    <a href="mouvement_stock.html" class="btn-primary" id="open-stock-movements-btn">
+                        🔄 Voir les mouvements
                     </a>
 
-                    <button type="button" class="btn-primary" id="new-stock-movement-btn">
-                        ➕ Ajustement manuel
+                    <button type="button" class="btn-secondary" id="refresh-stock-btn">
+                        ↻ Actualiser
                     </button>
 
-                    <button type="button" class="btn-secondary" id="refresh-stock-movements-btn">
-                        🔄 Actualiser
-                    </button>
-
-                    <div class="stock-movements-export-menu" id="stock-movements-export-menu">
-                        <button type="button" class="btn-secondary" id="export-stock-movements-btn" aria-haspopup="true" aria-expanded="false">
+                    <div class="stock-export-menu" id="stock-export-menu">
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            id="export-stock-btn"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
                             📤 Exporter <span aria-hidden="true">▾</span>
                         </button>
 
-                        <div class="stock-movements-export-dropdown" id="stock-movements-export-dropdown" hidden>
+                        <div class="stock-export-dropdown" id="stock-export-dropdown" hidden>
                             <button type="button" data-export-format="xlsx">
                                 <span>📊</span>
-                                <span><strong>Excel (.xlsx)</strong><small>Feuille de calcul modifiable</small></span>
+                                <span><strong>Excel (.xlsx)</strong><small>Feuille modifiable</small></span>
                             </button>
+
                             <button type="button" data-export-format="pdf">
                                 <span>📄</span>
-                                <span><strong>PDF</strong><small>Document prêt à partager</small></span>
+                                <span><strong>PDF</strong><small>Document à partager</small></span>
                             </button>
+
                             <button type="button" data-export-format="csv">
                                 <span>📑</span>
                                 <span><strong>CSV</strong><small>Format universel UTF-8</small></span>
@@ -577,44 +583,41 @@
                         </div>
                     </div>
 
-                    <button type="button" class="btn-secondary" id="print-stock-movements-btn">
+                    <button type="button" class="btn-secondary" id="print-stock-btn">
                         🖨️ Imprimer
                     </button>
 
                 </div>
 
-                <div class="stock-movements-toolbar-right">
-                    <span class="stock-movements-visible-count">
-                        <strong id="filtered-stock-movements-count">0</strong>
-                        mouvement(s) affiché(s)
+                <div class="stock-toolbar-right">
+                    <span class="stock-visible-count">
+                        <strong id="filtered-stock-count">0</strong>
+                        produit(s) affiché(s)
                     </span>
                 </div>
 
             </div>
 
-            <div class="sales-filters stock-movements-filters">
+            <div class="sales-filters stock-filters">
 
                 <div class="sales-search">
-                    <input type="search" id="stock-movements-search-input" placeholder="Rechercher par produit, référence ou document..." autocomplete="off" aria-label="Rechercher un mouvement de stock">
+                    <input
+                        type="search"
+                        id="stock-search-input"
+                        placeholder="Rechercher par produit ou référence..."
+                        autocomplete="off"
+                        aria-label="Rechercher dans le stock"
+                    >
                 </div>
 
-                <select id="stock-movement-type-filter" aria-label="Filtrer par type de mouvement">
-                    <option value="">Tous les types</option>
-                    <option value="stock initial">Stock initial</option>
-                    <option value="approvisionnement">Approvisionnement</option>
-                    <option value="vente">Vente</option>
-                    <option value="retour client">Retour client</option>
-                    <option value="retour fournisseur">Retour fournisseur</option>
-                    <option value="ajustement positif">Ajustement positif</option>
-                    <option value="ajustement négatif">Ajustement négatif</option>
-                    <option value="perte">Perte</option>
-                    <option value="casse">Casse</option>
+                <select id="stock-status-filter" aria-label="Filtrer par état du stock">
+                    <option value="">Tous les états</option>
+                    <option value="normal">Stock normal</option>
+                    <option value="faible">Stock faible</option>
+                    <option value="rupture">Rupture de stock</option>
                 </select>
 
-                <input type="date" id="stock-movement-date-from" aria-label="Date de début">
-                <input type="date" id="stock-movement-date-to" aria-label="Date de fin">
-
-                <button type="button" class="btn-filter-reset" id="reset-stock-movements-filters">
+                <button type="button" class="btn-filter-reset" id="reset-stock-filters">
                     Effacer les filtres
                 </button>
 
@@ -622,46 +625,56 @@
 
             <div class="sales-table-container">
 
-                <table class="sales-table stock-movements-table">
+                <table class="sales-table stock-table">
+
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Heure</th>
-                            <th>Produit</th>
-                            <th>Type de mouvement</th>
-                            <th>Quantité</th>
-                            <th>Stock avant</th>
-                            <th>Stock après</th>
                             <th>Référence</th>
-                            <th>Module d’origine</th>
-                            <th>Utilisateur</th>
-                            <th>Commentaire</th>
+                            <th>Produit</th>
+                            <th>Stock initial</th>
+                            <th>Stock disponible</th>
+                            <th>Seuil d’alerte</th>
+                            <th>État</th>
+                            <th>Dernière opération</th>
+                            <th>Dernière mise à jour</th>
                         </tr>
                     </thead>
-                    <tbody id="stock-movements-table-body">
+
+                    <tbody id="stock-table-body">
                         <tr>
-                            <td colspan="11" class="table-message">
-                                Chargement des mouvements de stock...
+                            <td colspan="8" class="table-message">
+                                Chargement du stock...
                             </td>
                         </tr>
                     </tbody>
+
                 </table>
 
-                <div class="stock-movements-pagination">
-                    <div class="stock-movements-pagination-size">
-                        <label for="stock-movements-page-size">Afficher</label>
-                        <select id="stock-movements-page-size">
+                <div class="stock-pagination">
+
+                    <div class="stock-pagination-size">
+                        <label for="stock-page-size">Afficher</label>
+
+                        <select id="stock-page-size">
                             <option value="10" selected>10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
-                        <span>mouvements par page</span>
+
+                        <span>produits par page</span>
                     </div>
 
-                    <div class="stock-movements-pagination-summary" id="stock-movements-pagination-summary">0 mouvement</div>
+                    <div class="stock-pagination-summary" id="stock-pagination-summary">
+                        0 produit
+                    </div>
 
-                    <div class="stock-movements-pagination-controls" id="stock-movements-pagination-controls" aria-label="Pagination des mouvements de stock"></div>
+                    <div
+                        class="stock-pagination-controls"
+                        id="stock-pagination-controls"
+                        aria-label="Pagination du stock"
+                    ></div>
+
                 </div>
 
             </div>
@@ -672,174 +685,6 @@
 
 </div>
 
-
-<!-- =========================================================
-     MODALE : AJUSTEMENT MANUEL DU STOCK
-========================================================= -->
-<div
-    class="modal-overlay"
-    id="manual-adjustment-modal"
-    aria-hidden="true"
->
-    <div
-        class="modal-container manual-adjustment-modal-container"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="manual-adjustment-modal-title"
-    >
-        <div class="modal-header">
-            <div>
-                <h2 id="manual-adjustment-modal-title">
-                    Nouvel ajustement manuel
-                </h2>
-                <p>
-                    Corrigez exceptionnellement le stock d’un produit.
-                    Toutes les informations techniques seront générées automatiquement.
-                </p>
-            </div>
-
-            <button
-                type="button"
-                class="modal-close"
-                id="close-manual-adjustment-modal"
-                aria-label="Fermer le formulaire"
-            >
-                ✖
-            </button>
-        </div>
-
-        <form id="manual-adjustment-form">
-            <div class="modal-body">
-                <div
-                    id="manual-adjustment-form-message"
-                    class="form-message"
-                    aria-live="polite"
-                ></div>
-
-                <section class="form-section">
-                    <h3>Informations de l’ajustement</h3>
-
-                    <div class="form-grid">
-                        <div class="form-group form-group-full">
-                            <label for="manual-adjustment-product">
-                                Produit <span class="required">*</span>
-                            </label>
-                            <select
-                                id="manual-adjustment-product"
-                                name="idProduit"
-                                required
-                            >
-                                <option value="">Sélectionner un produit</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="manual-adjustment-type">
-                                Type d’ajustement <span class="required">*</span>
-                            </label>
-                            <select
-                                id="manual-adjustment-type"
-                                name="typeMouvement"
-                                required
-                            >
-                                <option value="">Sélectionner un type</option>
-                                <option value="Ajustement positif">Ajustement positif</option>
-                                <option value="Ajustement négatif">Ajustement négatif</option>
-                                <option value="Perte">Perte</option>
-                                <option value="Casse">Casse</option>
-                                <option value="Vol">Vol</option>
-                                <option value="Don">Don</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="manual-adjustment-quantity">
-                                Quantité <span class="required">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                id="manual-adjustment-quantity"
-                                name="quantite"
-                                min="1"
-                                step="1"
-                                placeholder="Exemple : 5"
-                                required
-                            >
-                        </div>
-                    </div>
-                </section>
-
-                <section class="form-section stock-calculation-section">
-                    <h3>Calcul automatique du stock</h3>
-
-                    <div class="stock-calculation-grid">
-                        <article class="stock-calculation-card">
-                            <span>Stock disponible actuel</span>
-                            <strong id="manual-adjustment-stock-before">—</strong>
-                        </article>
-
-                        <div class="stock-calculation-arrow" aria-hidden="true">→</div>
-
-                        <article class="stock-calculation-card stock-calculation-result">
-                            <span>Nouveau stock</span>
-                            <strong id="manual-adjustment-stock-after">—</strong>
-                        </article>
-                    </div>
-
-                    <input
-                        type="hidden"
-                        id="manual-adjustment-stock-before-value"
-                        name="stockAvant"
-                    >
-                    <input
-                        type="hidden"
-                        id="manual-adjustment-stock-after-value"
-                        name="stockApres"
-                    >
-                </section>
-
-                <section class="form-section">
-                    <h3>Justification</h3>
-
-                    <div class="form-group form-group-full">
-                        <label for="manual-adjustment-comment">
-                            Motif de l’ajustement <span class="required">*</span>
-                        </label>
-                        <textarea
-                            id="manual-adjustment-comment"
-                            name="commentaire"
-                            rows="4"
-                            placeholder="Expliquez clairement la raison de cette correction..."
-                            required
-                        ></textarea>
-                        <small class="form-help">
-                            Cette justification sera conservée dans l’historique du stock.
-                        </small>
-                    </div>
-                </section>
-            </div>
-
-            <div class="modal-footer">
-                <button
-                    type="button"
-                    class="btn-secondary"
-                    id="cancel-manual-adjustment-btn"
-                >
-                    Annuler
-                </button>
-
-                <button
-                    type="submit"
-                    class="btn-primary"
-                    id="save-manual-adjustment-btn"
-                >
-                    Enregistrer l’ajustement
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <div id="toast-container"></div>
 
 <script src="../js/api.js"></script>
@@ -848,7 +693,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="../js/modules/mouvement_stock.js"></script>
+<script src="../js/modules/stock.js"></script>
 
 </body>
 </html>
