@@ -1,8 +1,8 @@
 /* =========================================================
-   MOUVEMENT_STOCK.CSS
-   Page : mouvement_stock.html
+   STOCK.CSS
+   Page : stock.html
    Projet : VISIBL
-   Inspiré de produits.css
+   Inspiré de fournisseurs.css
 ========================================================= */
 
 
@@ -11,40 +11,37 @@
 ========================================================= */
 
 :root {
-    --movements-primary: #2563eb;
-    --movements-primary-dark: #1d4ed8;
-    --movements-primary-light: #eff6ff;
+    --stock-primary: #2563eb;
+    --stock-primary-dark: #1d4ed8;
+    --stock-primary-light: #eff6ff;
 
-    --movements-success: #16a34a;
-    --movements-success-light: #dcfce7;
+    --stock-success: #16a34a;
+    --stock-success-light: #dcfce7;
 
-    --movements-warning: #d97706;
-    --movements-warning-light: #fef3c7;
+    --stock-warning: #d97706;
+    --stock-warning-light: #fef3c7;
 
-    --movements-danger: #dc2626;
-    --movements-danger-light: #fee2e2;
+    --stock-danger: #dc2626;
+    --stock-danger-light: #fee2e2;
 
-    --movements-purple: #7c3aed;
-    --movements-purple-light: #f3e8ff;
+    --stock-gray-50: #f8fafc;
+    --stock-gray-100: #f1f5f9;
+    --stock-gray-200: #e2e8f0;
+    --stock-gray-300: #cbd5e1;
+    --stock-gray-500: #64748b;
+    --stock-gray-600: #475569;
+    --stock-gray-700: #334155;
+    --stock-gray-800: #1e293b;
+    --stock-gray-900: #0f172a;
 
-    --movements-gray-50: #f8fafc;
-    --movements-gray-100: #f1f5f9;
-    --movements-gray-200: #e2e8f0;
-    --movements-gray-300: #cbd5e1;
-    --movements-gray-500: #64748b;
-    --movements-gray-600: #475569;
-    --movements-gray-700: #334155;
-    --movements-gray-800: #1e293b;
-    --movements-gray-900: #0f172a;
+    --stock-white: #ffffff;
 
-    --movements-white: #ffffff;
+    --stock-radius-sm: 6px;
+    --stock-radius-md: 10px;
+    --stock-radius-lg: 14px;
 
-    --movements-radius-sm: 6px;
-    --movements-radius-md: 10px;
-    --movements-radius-lg: 14px;
-
-    --movements-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-    --movements-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.09);
+    --stock-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --stock-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.09);
 }
 
 
@@ -69,15 +66,15 @@
 
 .welcome-section h2 {
     margin: 0 0 8px;
-    color: var(--movements-gray-900);
+    color: var(--stock-gray-900);
     font-size: 28px;
     font-weight: 700;
 }
 
 .welcome-section p {
-    max-width: 900px;
+    max-width: 850px;
     margin: 0;
-    color: var(--movements-gray-500);
+    color: var(--stock-gray-500);
     font-size: 15px;
     line-height: 1.6;
 }
@@ -87,7 +84,7 @@
    4. CARTES KPI
 ========================================================= */
 
-#stock-movements-kpi-grid,
+#stock-kpi-grid,
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -103,10 +100,10 @@
     min-height: 130px;
     padding: 20px;
     overflow: hidden;
-    background: var(--movements-white);
-    border: 1px solid var(--movements-gray-200);
-    border-radius: var(--movements-radius-lg);
-    box-shadow: var(--movements-shadow-sm);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-200);
+    border-radius: var(--stock-radius-lg);
+    box-shadow: var(--stock-shadow-sm);
     transition:
         transform 0.2s ease,
         box-shadow 0.2s ease,
@@ -115,8 +112,8 @@
 
 .kpi-card:hover {
     transform: translateY(-3px);
-    border-color: var(--movements-gray-300);
-    box-shadow: var(--movements-shadow-md);
+    border-color: var(--stock-gray-300);
+    box-shadow: var(--stock-shadow-md);
 }
 
 .kpi-card::before {
@@ -126,19 +123,19 @@
     width: 5px;
     height: 100%;
     content: "";
-    background: var(--movements-primary);
+    background: var(--stock-primary);
 }
 
 .kpi-card:nth-child(2)::before {
-    background: var(--movements-success);
+    background: var(--stock-success);
 }
 
 .kpi-card:nth-child(3)::before {
-    background: var(--movements-danger);
+    background: var(--stock-warning);
 }
 
 .kpi-card:nth-child(4)::before {
-    background: var(--movements-purple);
+    background: var(--stock-danger);
 }
 
 .kpi-icon {
@@ -149,20 +146,20 @@
     width: 54px;
     height: 54px;
     font-size: 26px;
-    background: var(--movements-primary-light);
+    background: var(--stock-primary-light);
     border-radius: 14px;
 }
 
 .kpi-card:nth-child(2) .kpi-icon {
-    background: var(--movements-success-light);
+    background: var(--stock-success-light);
 }
 
 .kpi-card:nth-child(3) .kpi-icon {
-    background: var(--movements-danger-light);
+    background: var(--stock-warning-light);
 }
 
 .kpi-card:nth-child(4) .kpi-icon {
-    background: var(--movements-purple-light);
+    background: var(--stock-danger-light);
 }
 
 .kpi-content {
@@ -171,7 +168,7 @@
 
 .kpi-content h3 {
     margin: 0 0 8px;
-    color: var(--movements-gray-600);
+    color: var(--stock-gray-600);
     font-size: 13px;
     font-weight: 600;
     line-height: 1.4;
@@ -179,7 +176,7 @@
 
 .kpi-value {
     margin: 0 0 5px;
-    color: var(--movements-gray-900);
+    color: var(--stock-gray-900);
     font-size: 25px;
     font-weight: 750;
     line-height: 1.2;
@@ -188,7 +185,7 @@
 
 .kpi-content small {
     display: block;
-    color: var(--movements-gray-500);
+    color: var(--stock-gray-500);
     font-size: 11px;
     line-height: 1.4;
 }
@@ -199,7 +196,7 @@
 ========================================================= */
 
 .sales-toolbar,
-.stock-movements-toolbar {
+.stock-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -207,8 +204,8 @@
     margin-bottom: 16px;
 }
 
-.stock-movements-toolbar-left,
-.stock-movements-toolbar-right {
+.stock-toolbar-left,
+.stock-toolbar-right {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -228,7 +225,7 @@
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
-    border-radius: var(--movements-radius-md);
+    border-radius: var(--stock-radius-md);
     transition:
         background 0.2s ease,
         transform 0.2s ease,
@@ -237,36 +234,36 @@
 }
 
 .btn-primary {
-    color: var(--movements-white);
-    background: var(--movements-primary);
+    color: var(--stock-white);
+    background: var(--stock-primary);
     border: none;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
 }
 
 .btn-primary:hover {
-    background: var(--movements-primary-dark);
+    background: var(--stock-primary-dark);
     box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
     transform: translateY(-1px);
 }
 
 .btn-secondary {
-    color: var(--movements-gray-700);
-    background: var(--movements-white);
-    border: 1px solid var(--movements-gray-300);
+    color: var(--stock-gray-700);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
 }
 
 .btn-secondary:hover {
-    background: var(--movements-gray-100);
+    background: var(--stock-gray-100);
     border-color: #94a3b8;
 }
 
-.stock-movements-visible-count {
-    color: var(--movements-gray-500);
+.stock-visible-count {
+    color: var(--stock-gray-500);
     font-size: 13px;
 }
 
-.stock-movements-visible-count strong {
-    color: var(--movements-gray-900);
+.stock-visible-count strong {
+    color: var(--stock-gray-900);
 }
 
 
@@ -274,29 +271,29 @@
    6. MENU D'EXPORT
 ========================================================= */
 
-.stock-movements-export-menu {
+.stock-export-menu {
     position: relative;
     display: inline-flex;
 }
 
-.stock-movements-export-dropdown {
+.stock-export-dropdown {
     position: absolute;
     top: calc(100% + 10px);
     left: 0;
-    z-index: 1100;
+    z-index: 1000;
     width: 270px;
     padding: 8px;
-    background: var(--movements-white);
+    background: var(--stock-white);
     border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: var(--movements-radius-lg);
+    border-radius: var(--stock-radius-lg);
     box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
 }
 
-.stock-movements-export-dropdown[hidden] {
+.stock-export-dropdown[hidden] {
     display: none;
 }
 
-.stock-movements-export-dropdown button {
+.stock-export-dropdown button {
     display: grid;
     grid-template-columns: 30px 1fr;
     gap: 10px;
@@ -311,20 +308,20 @@
     border-radius: 10px;
 }
 
-.stock-movements-export-dropdown button:hover,
-.stock-movements-export-dropdown button:focus-visible {
-    background: var(--movements-gray-100);
+.stock-export-dropdown button:hover,
+.stock-export-dropdown button:focus-visible {
+    background: var(--stock-gray-100);
     outline: none;
 }
 
-.stock-movements-export-dropdown button > span:last-child {
+.stock-export-dropdown button span:last-child {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.stock-movements-export-dropdown small {
-    color: var(--movements-gray-500);
+.stock-export-dropdown small {
+    color: var(--stock-gray-500);
     font-size: 12px;
 }
 
@@ -334,21 +331,20 @@
 ========================================================= */
 
 .sales-filters,
-.stock-movements-filters {
+.stock-filters {
     display: grid;
     grid-template-columns:
         minmax(280px, 2fr)
-        minmax(190px, 1fr)
-        minmax(160px, 0.8fr)
-        minmax(160px, 0.8fr)
+        minmax(180px, 1fr)
+        minmax(180px, 1fr)
         auto;
     gap: 12px;
     padding: 16px;
     margin-bottom: 18px;
-    background: var(--movements-white);
-    border: 1px solid var(--movements-gray-200);
-    border-radius: var(--movements-radius-lg);
-    box-shadow: var(--movements-shadow-sm);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-200);
+    border-radius: var(--stock-radius-lg);
+    box-shadow: var(--stock-shadow-sm);
 }
 
 .sales-search {
@@ -356,22 +352,20 @@
 }
 
 .sales-search input,
-.stock-movements-filters select,
-.stock-movements-filters > input[type="date"] {
+.stock-filters select {
     width: 100%;
     height: 44px;
     padding: 0 13px;
-    color: var(--movements-gray-800);
+    color: var(--stock-gray-800);
     font-family: inherit;
     font-size: 13px;
-    background: var(--movements-white);
-    border: 1px solid var(--movements-gray-300);
-    border-radius: var(--movements-radius-md);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
+    border-radius: var(--stock-radius-md);
     outline: none;
     transition:
         border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
+        box-shadow 0.2s ease;
 }
 
 .sales-search input::placeholder {
@@ -379,38 +373,36 @@
 }
 
 .sales-search input:hover,
-.stock-movements-filters select:hover,
-.stock-movements-filters > input[type="date"]:hover {
+.stock-filters select:hover {
     border-color: #94a3b8;
 }
 
 .sales-search input:focus,
-.stock-movements-filters select:focus,
-.stock-movements-filters > input[type="date"]:focus {
-    border-color: var(--movements-primary);
+.stock-filters select:focus {
+    border-color: var(--stock-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
-.stock-movements-filters select {
+.stock-filters select {
     cursor: pointer;
 }
 
 .btn-filter-reset {
     min-height: 44px;
     padding: 0 15px;
-    color: var(--movements-gray-700);
+    color: var(--stock-gray-700);
     font-family: inherit;
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
-    background: var(--movements-white);
-    border: 1px solid var(--movements-gray-300);
-    border-radius: var(--movements-radius-md);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
+    border-radius: var(--stock-radius-md);
 }
 
 .btn-filter-reset:hover {
-    background: var(--movements-gray-100);
+    background: var(--stock-gray-100);
 }
 
 
@@ -424,12 +416,12 @@
     max-width: 100%;
     overflow-x: auto;
     overflow-y: visible;
-    background: var(--movements-white);
-    border: 1px solid var(--movements-gray-200);
-    border-radius: var(--movements-radius-lg);
-    box-shadow: var(--movements-shadow-sm);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-200);
+    border-radius: var(--stock-radius-lg);
+    box-shadow: var(--stock-shadow-sm);
     scrollbar-width: thin;
-    scrollbar-color: var(--movements-gray-300) transparent;
+    scrollbar-color: var(--stock-gray-300) transparent;
 }
 
 .sales-table-container::-webkit-scrollbar {
@@ -438,12 +430,12 @@
 }
 
 .sales-table-container::-webkit-scrollbar-track {
-    background: var(--movements-gray-100);
+    background: var(--stock-gray-100);
     border-radius: 10px;
 }
 
 .sales-table-container::-webkit-scrollbar-thumb {
-    background: var(--movements-gray-300);
+    background: var(--stock-gray-300);
     border-radius: 10px;
 }
 
@@ -453,11 +445,11 @@
 
 
 /* =========================================================
-   9. TABLEAU DES MOUVEMENTS
+   9. TABLEAU DU STOCK
 ========================================================= */
 
 .sales-table,
-.stock-movements-table {
+.stock-table {
     width: max-content;
     min-width: 100%;
     border-spacing: 0;
@@ -466,173 +458,244 @@
     white-space: nowrap;
 }
 
-.stock-movements-table thead {
-    background: var(--movements-gray-50);
+.stock-table thead {
+    background: var(--stock-gray-50);
 }
 
-.stock-movements-table th {
+.stock-table th {
     position: sticky;
     top: 0;
     z-index: 2;
     padding: 14px 12px;
-    color: var(--movements-gray-700);
+    color: var(--stock-gray-700);
     font-size: 11px;
     font-weight: 700;
     text-align: left;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    background: var(--movements-gray-50);
-    border-bottom: 1px solid var(--movements-gray-200);
+    background: var(--stock-gray-50);
+    border-bottom: 1px solid var(--stock-gray-200);
 }
 
-.stock-movements-table td {
-    max-width: 240px;
+.stock-table td {
+    max-width: 230px;
     padding: 13px 12px;
     overflow: hidden;
-    color: var(--movements-gray-600);
+    color: var(--stock-gray-600);
     text-overflow: ellipsis;
     vertical-align: middle;
-    background: var(--movements-white);
-    border-bottom: 1px solid var(--movements-gray-100);
+    background: var(--stock-white);
+    border-bottom: 1px solid var(--stock-gray-100);
 }
 
-.stock-movements-table tbody tr:last-child td {
+.stock-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-.stock-movements-table tbody tr {
+.stock-table tbody tr {
     transition: background 0.18s ease;
 }
 
-.stock-movements-table tbody tr:hover td {
+.stock-table tbody tr:hover td {
     background: #f8fbff;
 }
 
-.stock-movements-table th:nth-child(1),
-.stock-movements-table td:nth-child(1) {
-    min-width: 115px;
-}
-
-.stock-movements-table th:nth-child(2),
-.stock-movements-table td:nth-child(2) {
-    min-width: 90px;
-    text-align: center;
-}
-
-.stock-movements-table th:nth-child(3),
-.stock-movements-table td:nth-child(3) {
-    min-width: 210px;
-    font-weight: 600;
-    color: var(--movements-gray-800);
-}
-
-.stock-movements-table th:nth-child(4),
-.stock-movements-table td:nth-child(4) {
-    min-width: 175px;
-    text-align: center;
-}
-
-.stock-movements-table th:nth-child(5),
-.stock-movements-table td:nth-child(5),
-.stock-movements-table th:nth-child(6),
-.stock-movements-table td:nth-child(6),
-.stock-movements-table th:nth-child(7),
-.stock-movements-table td:nth-child(7) {
+.stock-table th:nth-child(1),
+.stock-table td:nth-child(1) {
     min-width: 120px;
+}
+
+.stock-table th:nth-child(2),
+.stock-table td:nth-child(2) {
+    min-width: 220px;
+    font-weight: 600;
+    color: var(--stock-gray-800);
+}
+
+.stock-table th:nth-child(3),
+.stock-table td:nth-child(3) {
+    min-width: 160px;
+}
+
+.stock-table th:nth-child(4),
+.stock-table td:nth-child(4),
+.stock-table th:nth-child(5),
+.stock-table td:nth-child(5),
+.stock-table th:nth-child(6),
+.stock-table td:nth-child(6),
+.stock-table th:nth-child(7),
+.stock-table td:nth-child(7) {
+    min-width: 125px;
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
 
-.stock-movements-table th:nth-child(8),
-.stock-movements-table td:nth-child(8) {
-    min-width: 175px;
+.stock-table th:nth-child(8),
+.stock-table td:nth-child(8) {
+    min-width: 140px;
+    text-align: center;
 }
 
-.stock-movements-table th:nth-child(9),
-.stock-movements-table td:nth-child(9) {
-    min-width: 145px;
+.stock-table th:nth-child(9),
+.stock-table td:nth-child(9) {
+    min-width: 170px;
 }
 
-.stock-movements-table th:nth-child(10),
-.stock-movements-table td:nth-child(10) {
-    min-width: 220px;
-    max-width: 280px;
+.stock-table th:nth-child(10),
+.stock-table td:nth-child(10) {
+    min-width: 110px;
+    text-align: center;
+}
+
+.stock-table td:nth-child(6) {
+    color: var(--stock-gray-900);
+    font-weight: 750;
 }
 
 
 /* =========================================================
-   10. BADGES DES TYPES DE MOUVEMENT
+   10. IDENTITÉ PRODUIT
 ========================================================= */
 
-.movement-type-badge {
+.stock-product-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 210px;
+}
+
+.stock-product-image,
+.stock-product-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    overflow: hidden;
+    object-fit: cover;
+    color: var(--stock-gray-500);
+    font-size: 18px;
+    background: var(--stock-gray-100);
+    border: 1px solid var(--stock-gray-200);
+    border-radius: 8px;
+}
+
+.stock-product-info {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.stock-product-info strong {
+    overflow: hidden;
+    color: var(--stock-gray-800);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stock-product-info small {
+    overflow: hidden;
+    color: var(--stock-gray-500);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   11. BADGES D'ÉTAT DU STOCK
+========================================================= */
+
+.stock-status-badge,
+.stock-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 110px;
-    padding: 6px 10px;
+    min-width: 90px;
+    padding: 5px 9px;
     font-size: 11px;
-    font-weight: 700;
-    line-height: 1;
+    font-weight: 650;
     border-radius: 999px;
 }
 
-.movement-type-entry,
-.movement-type-initial,
-.movement-type-supply,
-.movement-type-return-client,
-.movement-type-positive {
+.stock-status-normal,
+.stock-available,
+.stock-disponible {
     color: #166534;
-    background: var(--movements-success-light);
+    background: var(--stock-success-light);
 }
 
-.movement-type-exit,
-.movement-type-sale,
-.movement-type-return-supplier,
-.movement-type-negative,
-.movement-type-loss,
-.movement-type-breakage {
-    color: #991b1b;
-    background: var(--movements-danger-light);
-}
-
-.movement-type-adjustment {
+.stock-status-low,
+.stock-low,
+.stock-faible {
     color: #92400e;
-    background: var(--movements-warning-light);
+    background: var(--stock-warning-light);
 }
 
-.movement-type-other {
-    color: var(--movements-gray-600);
-    background: var(--movements-gray-200);
+.stock-status-out,
+.stock-out,
+.stock-rupture {
+    color: #991b1b;
+    background: var(--stock-danger-light);
+}
+
+.stock-status-unknown {
+    color: var(--stock-gray-600);
+    background: var(--stock-gray-200);
 }
 
 
 /* =========================================================
-   11. VALEURS DES QUANTITÉS
+   12. ACTIONS DU TABLEAU
 ========================================================= */
 
-.movement-quantity {
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
+.stock-actions,
+.table-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
 }
 
-.movement-quantity-positive {
-    color: var(--movements-success);
+.stock-action-btn,
+.table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
 }
 
-.movement-quantity-negative {
-    color: var(--movements-danger);
+.stock-action-btn:hover,
+.table-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
 }
 
-.stock-before-value,
-.stock-after-value {
-    font-variant-numeric: tabular-nums;
-    font-weight: 650;
-    color: var(--movements-gray-800);
+.stock-action-btn.view-movements,
+.table-action-btn.view-btn {
+    color: var(--stock-primary);
+    background: #dbeafe;
 }
 
 
 /* =========================================================
-   12. MESSAGE DU TABLEAU
+   13. MESSAGES DU TABLEAU
 ========================================================= */
 
 .table-message,
@@ -640,99 +703,99 @@
 .loading-row,
 .error-row {
     padding: 35px 20px !important;
-    color: var(--movements-gray-500) !important;
+    color: var(--stock-gray-500) !important;
     text-align: center !important;
-    background: var(--movements-white) !important;
+    background: var(--stock-white) !important;
 }
 
 .error-row {
-    color: var(--movements-danger) !important;
+    color: var(--stock-danger) !important;
 }
 
 
 /* =========================================================
-   13. PAGINATION
+   14. PAGINATION
 ========================================================= */
 
-.stock-movements-pagination {
+.stock-pagination {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
     padding: 16px;
-    border-top: 1px solid var(--movements-gray-200);
+    border-top: 1px solid var(--stock-gray-200);
 }
 
-.stock-movements-pagination-size {
+.stock-pagination-size {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--movements-gray-500);
+    color: var(--stock-gray-500);
     font-size: 13px;
 }
 
-.stock-movements-pagination-size select {
+.stock-pagination-size select {
     min-height: 36px;
     padding: 0 28px 0 10px;
-    color: var(--movements-gray-800);
-    background: var(--movements-white);
-    border: 1px solid var(--movements-gray-300);
+    color: var(--stock-gray-800);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
     border-radius: 8px;
 }
 
-.stock-movements-pagination-summary {
-    color: var(--movements-gray-500);
+.stock-pagination-summary {
+    color: var(--stock-gray-500);
     font-size: 13px;
 }
 
-.stock-movements-pagination-controls {
+.stock-pagination-controls {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
 }
 
-.stock-movements-pagination-controls button {
+.stock-pagination-controls button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 36px;
     height: 36px;
     padding: 0 10px;
-    color: var(--movements-gray-700);
+    color: var(--stock-gray-700);
     cursor: pointer;
-    background: var(--movements-white);
-    border: 1px solid var(--movements-gray-300);
+    background: var(--stock-white);
+    border: 1px solid var(--stock-gray-300);
     border-radius: 8px;
 }
 
-.stock-movements-pagination-controls button:hover:not(:disabled) {
-    background: var(--movements-gray-100);
+.stock-pagination-controls button:hover:not(:disabled) {
+    background: var(--stock-gray-100);
 }
 
-.stock-movements-pagination-controls button.active {
-    color: var(--movements-white);
-    background: var(--movements-primary);
-    border-color: var(--movements-primary);
+.stock-pagination-controls button.active {
+    color: var(--stock-white);
+    background: var(--stock-primary);
+    border-color: var(--stock-primary);
 }
 
-.stock-movements-pagination-controls button:disabled {
+.stock-pagination-controls button:disabled {
     cursor: not-allowed;
     opacity: 0.45;
 }
 
 
 /* =========================================================
-   14. RESPONSIVE TABLETTE
+   15. RESPONSIVE TABLETTE
 ========================================================= */
 
 @media screen and (max-width: 1200px) {
-    #stock-movements-kpi-grid,
+    #stock-kpi-grid,
     .kpi-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .stock-movements-filters {
+    .stock-filters {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -747,7 +810,7 @@
 
 
 /* =========================================================
-   15. RESPONSIVE MOBILE
+   16. RESPONSIVE MOBILE
 ========================================================= */
 
 @media screen and (max-width: 768px) {
@@ -767,7 +830,7 @@
         font-size: 13px;
     }
 
-    #stock-movements-kpi-grid,
+    #stock-kpi-grid,
     .kpi-grid {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -788,29 +851,29 @@
         font-size: 22px;
     }
 
-    .stock-movements-toolbar {
+    .stock-toolbar {
         align-items: stretch;
         flex-direction: column;
     }
 
-    .stock-movements-toolbar-left,
-    .stock-movements-toolbar-right {
+    .stock-toolbar-left,
+    .stock-toolbar-right {
         width: 100%;
     }
 
-    .stock-movements-toolbar-left > * {
+    .stock-toolbar-left > * {
         flex: 1 1 auto;
     }
 
-    .stock-movements-export-menu {
+    .stock-export-menu {
         flex: 1 1 auto;
     }
 
-    .stock-movements-export-menu > button {
+    .stock-export-menu > button {
         width: 100%;
     }
 
-    .stock-movements-filters {
+    .stock-filters {
         grid-template-columns: 1fr;
         gap: 10px;
         padding: 13px;
@@ -821,8 +884,7 @@
     }
 
     .sales-search input,
-    .stock-movements-filters select,
-    .stock-movements-filters > input[type="date"] {
+    .stock-filters select {
         height: 43px;
     }
 
@@ -830,17 +892,17 @@
         border-radius: 10px;
     }
 
-    .stock-movements-table th,
-    .stock-movements-table td {
+    .stock-table th,
+    .stock-table td {
         padding: 11px 10px;
     }
 
-    .stock-movements-pagination {
+    .stock-pagination {
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .stock-movements-export-dropdown {
+    .stock-export-dropdown {
         position: fixed;
         top: auto;
         right: 16px;
@@ -852,7 +914,7 @@
 
 
 /* =========================================================
-   16. TRÈS PETITS ÉCRANS
+   17. TRÈS PETITS ÉCRANS
 ========================================================= */
 
 @media screen and (max-width: 480px) {
@@ -876,31 +938,33 @@
         font-size: 20px;
     }
 
-    .stock-movements-filters {
+    .stock-filters {
         padding: 11px;
     }
 
-    .stock-movements-toolbar-left {
+    .stock-toolbar-left {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .stock-movements-toolbar-left > * {
+    .stock-toolbar-left > * {
         width: 100%;
     }
 }
 
 
 /* =========================================================
-   17. IMPRESSION
+   18. IMPRESSION
 ========================================================= */
 
 @media print {
     .sidebar,
     .header,
-    .stock-movements-toolbar,
-    .stock-movements-filters,
-    .stock-movements-pagination {
+    .stock-toolbar,
+    .stock-filters,
+    .stock-pagination,
+    .stock-table th:last-child,
+    .stock-table td:last-child {
         display: none !important;
     }
 
@@ -913,165 +977,29 @@
         padding: 0 !important;
     }
 
-    #stock-movements-kpi-grid {
+    #stock-kpi-grid {
         grid-template-columns: repeat(4, 1fr);
     }
 
     .sales-table-container {
         overflow: visible;
-        border: 1px solid var(--movements-gray-300);
+        border: 1px solid var(--stock-gray-300);
         box-shadow: none;
     }
 
-    .stock-movements-table {
+    .stock-table {
         width: 100%;
         min-width: 0;
     }
 
-    .stock-movements-table th {
+    .stock-table th {
         position: static;
     }
 }
 
-/* ==========================================================
-   RESPONSIVITÉ — MOUVEMENTS DE STOCK
-========================================================== */
-
-@media (max-width: 900px) {
-    #stock-movements-kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .stock-movements-filters {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .stock-movements-filters .sales-search,
-    .stock-movements-filters .btn-filter-reset {
-        grid-column: 1 / -1;
-    }
-}
-
-@media (max-width: 768px) {
-    .header {
-        gap: 10px;
-    }
-
-    .header-left {
-        min-width: 0;
-    }
-
-    .header-left h2 {
-        max-width: 44vw;
-        overflow: hidden;
-        font-size: 16px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .header-right,
-    .header-icons {
-        flex-shrink: 0;
-    }
-
-    .stock-movements-toolbar {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .stock-movements-toolbar-left {
-        width: 100%;
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .stock-movements-toolbar-left > a,
-    .stock-movements-toolbar-left > button,
-    .stock-movements-export-menu,
-    .stock-movements-export-menu > button {
-        width: 100%;
-    }
-
-    .stock-movements-toolbar-right {
-        width: 100%;
-        justify-content: flex-start;
-    }
-
-    .stock-movements-filters {
-        grid-template-columns: 1fr;
-    }
-
-    .stock-movements-filters .sales-search,
-    .stock-movements-filters .btn-filter-reset {
-        grid-column: auto;
-    }
-
-    .sales-table-container {
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .stock-movements-table {
-        min-width: 1180px;
-    }
-
-    .stock-movements-pagination {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .stock-movements-pagination-controls {
-        max-width: 100%;
-        overflow-x: auto;
-        padding-bottom: 4px;
-    }
-
-    .manual-adjustment-modal-container {
-        width: calc(100% - 24px);
-        max-height: calc(100vh - 24px);
-    }
-
-    .stock-calculation-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stock-calculation-arrow {
-        transform: rotate(90deg);
-    }
-}
-
-@media (max-width: 540px) {
-    #stock-movements-kpi-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .content {
-        padding-right: 14px;
-        padding-left: 14px;
-    }
-
-    .welcome-section {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .modal-header,
-    .modal-body,
-    .modal-footer {
-        padding-right: 16px;
-        padding-left: 16px;
-    }
-
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ==========================================================
-   HEADER RESPONSIF — MOUVEMENTS DE STOCK
-========================================================== */
+/* =========================================================
+   19. HEADER, PROFIL ET NOTIFICATIONS RESPONSIFS
+========================================================= */
 
 @media screen and (max-width: 768px) {
     .header {
@@ -1106,11 +1034,15 @@
         left: auto;
         max-width: calc(100vw - 24px);
     }
+
+    .search-container.active {
+        z-index: 1200;
+    }
 }
 
 @media screen and (max-width: 480px) {
     .header-left h2 {
-        max-width: 36vw;
+        max-width: 34vw;
         font-size: 15px;
     }
 
@@ -1122,6 +1054,15 @@
         left: 12px;
         width: auto;
         max-width: none;
+    }
+
+    .header-icons {
+        gap: 4px;
+    }
+
+    .header .icon-btn {
+        width: 38px;
+        height: 38px;
     }
 }
 
