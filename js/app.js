@@ -297,3 +297,63 @@ function showToast(message, type = "success") {
 
     }, 3000);
 }
+
+// ========================================
+// DÉCONNEXION GLOBALE
+// ========================================
+
+function initialiserDeconnexionGlobale() {
+    const bouton =
+        document.getElementById(
+            "logout-button"
+        );
+
+    if (!bouton) {
+        return;
+    }
+
+    if (
+        bouton.dataset.logoutInitialized ===
+        "true"
+    ) {
+        return;
+    }
+
+    bouton.dataset.logoutInitialized =
+        "true";
+
+    bouton.addEventListener(
+        "click",
+        function (event) {
+            event.preventDefault();
+
+            if (
+                typeof logoutUser ===
+                "function"
+            ) {
+                logoutUser();
+                return;
+            }
+
+            localStorage.removeItem(
+                "visibl_user"
+            );
+
+            window.location.replace(
+                "connexion.html"
+            );
+        }
+    );
+}
+
+if (
+    document.readyState ===
+    "loading"
+) {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initialiserDeconnexionGlobale
+    );
+} else {
+    initialiserDeconnexionGlobale();
+}
