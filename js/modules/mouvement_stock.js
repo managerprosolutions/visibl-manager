@@ -252,8 +252,15 @@ function mettreAJourCalculAjustementManuel() {
         return;
     }
 
-    const typesPositifs = ["ajustement positif"];
-    const variation = typesPositifs.includes(type) ? quantite : -quantite;
+    const sens =
+        obtenirSensMouvementFrontend(type);
+
+    const variation =
+        sens === "entree"
+            ? quantite
+            : sens === "sortie"
+                ? -quantite
+                : 0;
     const stockApres = stockAvant + variation;
 
     definirTexteMouvement(
@@ -1219,6 +1226,57 @@ function obtenirPagesPaginationMouvement(
 }
 
 
+
+/* ===========================================================
+   CLASSIFICATION CENTRALE DES MOUVEMENTS — FRONTEND
+=========================================================== */
+
+const TYPES_MOUVEMENTS_ENTREE = [
+    "stock initial",
+    "initial",
+    "entree",
+    "approvisionnement",
+    "achat",
+    "retour client",
+    "ajustement positif",
+    "correction positive",
+    "inventaire positif"
+];
+
+const TYPES_MOUVEMENTS_SORTIE = [
+    "sortie",
+    "vente",
+    "livraison",
+    "retour fournisseur",
+    "ajustement negatif",
+    "correction negative",
+    "inventaire negatif",
+    "perte",
+    "casse",
+    "vol",
+    "don",
+    "produit endommage"
+];
+
+
+function obtenirSensMouvementFrontend(typeMouvement) {
+    const type =
+        normaliserTexteMouvementFrontend(
+            typeMouvement
+        );
+
+    if (TYPES_MOUVEMENTS_ENTREE.includes(type)) {
+        return "entree";
+    }
+
+    if (TYPES_MOUVEMENTS_SORTIE.includes(type)) {
+        return "sortie";
+    }
+
+    return "inconnu";
+}
+
+
 /* ===========================================================
    BADGES ET VARIATIONS
 =========================================================== */
@@ -1229,30 +1287,16 @@ function creerBadgeTypeMouvement(typeMouvement) {
             typeMouvement
         );
 
+    const sens =
+        obtenirSensMouvementFrontend(
+            typeMouvement
+        );
+
     let classe = "movement-type-other";
 
-    if (
-        [
-            "stock initial",
-            "entree",
-            "approvisionnement",
-            "retour client",
-            "ajustement positif"
-        ].includes(type)
-    ) {
+    if (sens === "entree") {
         classe = "movement-type-entry";
-    } else if (
-        [
-            "sortie",
-            "vente",
-            "retour fournisseur",
-            "ajustement negatif",
-            "perte",
-            "casse",
-            "vol",
-            "don"
-        ].includes(type)
-    ) {
+    } else if (sens === "sortie") {
         classe = "movement-type-exit";
     } else if (
         type.includes("ajustement") ||
@@ -1284,31 +1328,26 @@ function obtenirVariationSigneeMouvement(mouvement) {
         return difference;
     }
 
-    const type =
-        normaliserTexteMouvementFrontend(
-            mouvement.typeMouvement
-        );
-
     const quantite = Math.abs(
         convertirNombreMouvementFrontend(
             mouvement.quantite
         )
     );
 
-    const typesNegatifs = [
-        "sortie",
-        "vente",
-        "retour fournisseur",
-        "ajustement negatif",
-        "perte",
-        "casse",
-        "vol",
-        "don"
-    ];
+    const sens =
+        obtenirSensMouvementFrontend(
+            mouvement.typeMouvement
+        );
 
-    return typesNegatifs.includes(type)
-        ? -quantite
-        : quantite;
+    if (sens === "sortie") {
+        return -quantite;
+    }
+
+    if (sens === "entree") {
+        return quantite;
+    }
+
+    return 0;
 }
 
 
