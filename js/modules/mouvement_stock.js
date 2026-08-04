@@ -70,41 +70,30 @@ function initialiserModuleMouvementsStock() {
     initialiserMenuExportMouvementsStock();
     initialiserBoutonNouveauMouvement();
     initialiserMenuProfilMouvementStock();
+    initialiserDeconnexionMouvementStock();
     chargerMouvementsStock();
 }
 
 
 /* ===========================================================
-   MENU PROFIL DU HEADER
+   DÉCONNEXION
 =========================================================== */
 
-function initialiserMenuProfilMouvementStock() {
+function initialiserDeconnexionMouvementStock() {
     const bouton =
         document.getElementById(
-            "profile-menu-button"
+            "logout-button"
         );
 
-    const menu =
-        document.getElementById(
-            "profile-dropdown"
-        );
-
-    if (!bouton || !menu) {
-        console.warn(
-            "Menu profil indisponible : bouton ou menu introuvable."
-        );
+    if (!bouton) {
         return;
     }
 
-    /*
-     * Évite une double initialisation si app.js
-     * a déjà attaché ce comportement.
-     */
-    if (bouton.dataset.profileInitialized === "true") {
+    if (bouton.dataset.logoutInitialized === "true") {
         return;
     }
 
-    bouton.dataset.profileInitialized = "true";
+    bouton.dataset.logoutInitialized = "true";
 
     bouton.addEventListener(
         "click",
@@ -112,64 +101,40 @@ function initialiserMenuProfilMouvementStock() {
             event.preventDefault();
             event.stopPropagation();
 
-            const estOuvert =
-                !menu.hidden;
+            const menu =
+                document.getElementById(
+                    "profile-dropdown"
+                );
 
-            menu.hidden =
-                estOuvert;
+            const boutonProfil =
+                document.getElementById(
+                    "profile-menu-button"
+                );
 
-            bouton.setAttribute(
-                "aria-expanded",
-                String(!estOuvert)
-            );
-        }
-    );
-
-    menu.addEventListener(
-        "click",
-        event => {
-            event.stopPropagation();
-        }
-    );
-
-    document.addEventListener(
-        "click",
-        event => {
-            if (
-                menu.hidden ||
-                bouton.contains(event.target) ||
-                menu.contains(event.target)
-            ) {
-                return;
+            if (menu) {
+                menu.hidden = true;
             }
 
-            menu.hidden = true;
-
-            bouton.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-        }
-    );
-
-    document.addEventListener(
-        "keydown",
-        event => {
-            if (
-                event.key !== "Escape" ||
-                menu.hidden
-            ) {
-                return;
-            }
-
-            menu.hidden = true;
-
-            bouton.setAttribute(
+            boutonProfil?.setAttribute(
                 "aria-expanded",
                 "false"
             );
 
-            bouton.focus();
+            if (typeof logoutUser === "function") {
+                logoutUser();
+                return;
+            }
+
+            /*
+             * Solution de secours cohérente avec auth.js.
+             */
+            localStorage.removeItem(
+                "visibl_user"
+            );
+
+            window.location.replace(
+                "connexion.html"
+            );
         }
     );
 }
