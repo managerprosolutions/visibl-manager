@@ -128,18 +128,10 @@ function initialiserBoutonNouveauMouvement() {
 
     document
         .getElementById("manual-adjustment-form")
-        ?.addEventListener("submit", event => {
-            event.preventDefault();
-
-            if (!validerAjustementManuel()) {
-                return;
-            }
-
-            afficherMessageFormulaireAjustement(
-                "Le formulaire est prêt. L’enregistrement backend sera connecté à l’étape suivante.",
-                "success"
-            );
-        });
+        ?.addEventListener(
+            "submit",
+            enregistrerAjustementManuel
+        );
 }
 
 
@@ -338,6 +330,180 @@ function afficherMessageFormulaireAjustement(message, type) {
         zone.classList.add("show");
         if (type) zone.classList.add(type);
     }
+}
+
+
+
+/* ===========================================================
+   ENREGISTREMENT DE L'AJUSTEMENT MANUEL
+=========================================================== */
+
+async function enregistrerAjustementManuel(event) {
+    event.preventDefault();
+
+    if (!validerAjustementManuel()) {
+        return;
+    }
+
+    const bouton =
+        document.getElementById(
+            "save-manual-adjustment-btn"
+        );
+
+    const texteInitial =
+        bouton?.textContent || "";
+
+    try {
+        if (typeof apiPost !== "function") {
+            throw new Error(
+                "La fonction apiPost est indisponible."
+            );
+        }
+
+        if (bouton) {
+            bouton.disabled = true;
+            bouton.textContent =
+                "Enregistrement...";
+        }
+
+        afficherMessageFormulaireAjustement(
+            "Enregistrement en cours...",
+            "info"
+        );
+
+        const payload = {
+            idProduit:
+                document
+                    .getElementById(
+                        "manual-adjustment-product"
+                    )
+                    ?.value || "",
+
+            typeMouvement:
+                document
+                    .getElementById(
+                        "manual-adjustment-type"
+                    )
+                    ?.value || "",
+
+            quantite:
+                Math.trunc(
+                    convertirNombreMouvementFrontend(
+                        document
+                            .getElementById(
+                                "manual-adjustment-quantity"
+                            )
+                            ?.value
+                    )
+                ),
+
+            commentaire:
+                document
+                    .getElementById(
+                        "manual-adjustment-comment"
+                    )
+                    ?.value
+                    .trim() || "",
+
+            idUtilisateur:
+                obtenirIdUtilisateurConnecteMouvement()
+        };
+
+        const resultat = await apiPost(
+            "createMouvementStock",
+            payload
+        );
+
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible d'enregistrer l'ajustement."
+            );
+        }
+
+        afficherNotificationMouvement(
+            resultat.message,
+            "success"
+        );
+
+        await chargerMouvementsStock();
+
+        fermerModaleAjustementManuel();
+        reinitialiserFormulaireAjustement();
+
+    } catch (error) {
+        console.error(
+            "Erreur d'enregistrement :",
+            error
+        );
+
+        afficherMessageFormulaireAjustement(
+            error.message ||
+            "Une erreur est survenue.",
+            "error"
+        );
+
+    } finally {
+        if (bouton) {
+            bouton.disabled = false;
+            bouton.textContent =
+                texteInitial ||
+                "Enregistrer l'ajustement";
+        }
+    }
+}
+
+
+function obtenirIdUtilisateurConnecteMouvement() {
+    const cles = [
+        "idUtilisateur",
+        "userId",
+        "utilisateurId",
+        "currentUserId"
+    ];
+
+    for (const cle of cles) {
+        const valeur =
+            localStorage.getItem(cle) ||
+            sessionStorage.getItem(cle);
+
+        if (valeur) {
+            return String(valeur).trim();
+        }
+    }
+
+    const objets = [
+        "user",
+        "currentUser",
+        "utilisateur",
+        "visiblUser"
+    ];
+
+    for (const cle of objets) {
+        const valeur =
+            localStorage.getItem(cle) ||
+            sessionStorage.getItem(cle);
+
+        if (!valeur) {
+            continue;
+        }
+
+        try {
+            const objet = JSON.parse(valeur);
+
+            const id =
+                objet?.idUtilisateur ||
+                objet?.userId ||
+                objet?.id ||
+                "";
+
+            if (id) {
+                return String(id).trim();
+            }
+        } catch (error) {}
+    }
+
+    return "SYSTEM";
 }
 
 
@@ -1083,7 +1249,8 @@ function creerBadgeTypeMouvement(typeMouvement) {
             "ajustement negatif",
             "perte",
             "casse",
-            "vol"
+            "vol",
+            "don"
         ].includes(type)
     ) {
         classe = "movement-type-exit";
@@ -1135,7 +1302,8 @@ function obtenirVariationSigneeMouvement(mouvement) {
         "ajustement negatif",
         "perte",
         "casse",
-        "vol"
+        "vol",
+        "don"
     ];
 
     return typesNegatifs.includes(type)
