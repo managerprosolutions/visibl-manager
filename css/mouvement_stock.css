@@ -1070,281 +1070,226 @@
 }
 
 /* ==========================================================
-   MODALE D’AJUSTEMENT MANUEL
+   CORRECTION FORCÉE — MODALE D’AJUSTEMENT MANUEL
 ========================================================== */
 
-.modal-overlay {
+#manual-adjustment-modal {
     position: fixed;
     inset: 0;
-    z-index: 2000;
-
-    display: none;
+    z-index: 3000;
+    display: none !important;
     align-items: center;
     justify-content: center;
-
     padding: 24px;
-
     background: rgba(15, 23, 42, 0.58);
     backdrop-filter: blur(4px);
 }
 
-.modal-overlay.active,
-.modal-overlay[aria-hidden="false"] {
-    display: flex;
+#manual-adjustment-modal[aria-hidden="true"] {
+    display: none !important;
 }
 
-.modal-container {
+#manual-adjustment-modal.active,
+#manual-adjustment-modal[aria-hidden="false"] {
+    display: flex !important;
+}
+
+#manual-adjustment-modal .manual-adjustment-modal-container {
     width: min(900px, 100%);
     max-height: calc(100vh - 48px);
-
     overflow: hidden;
-
     background: #ffffff;
     border-radius: 16px;
     box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
 }
 
-.manual-adjustment-modal-container form {
+#manual-adjustment-modal form {
     display: flex;
     max-height: calc(100vh - 48px);
     flex-direction: column;
 }
 
-.modal-header {
+#manual-adjustment-modal .modal-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
-
     padding: 20px 24px;
-
+    background: #ffffff;
     border-bottom: 1px solid #e5e7eb;
 }
 
-.modal-header h2 {
+#manual-adjustment-modal .modal-header h2 {
     margin: 0 0 5px;
     color: #0f172a;
     font-size: 21px;
 }
 
-.modal-header p {
+#manual-adjustment-modal .modal-header p {
     margin: 0;
     color: #64748b;
     font-size: 13px;
     line-height: 1.5;
 }
 
-.modal-close {
+#manual-adjustment-modal .modal-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     width: 36px;
     height: 36px;
     flex: 0 0 36px;
-
     color: #64748b;
     font-size: 18px;
-
+    cursor: pointer;
     background: #f8fafc;
     border: 1px solid #e5e7eb;
     border-radius: 9px;
-
-    cursor: pointer;
 }
 
-.modal-close:hover {
-    color: #dc2626;
-    background: #fef2f2;
-    border-color: #fecaca;
-}
-
-.modal-body {
+#manual-adjustment-modal .modal-body {
     overflow-y: auto;
     padding: 22px 24px;
     background: #f8fafc;
 }
 
-.modal-footer {
+#manual-adjustment-modal .modal-footer {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 12px;
-
     padding: 16px 24px;
-
     background: #ffffff;
     border-top: 1px solid #e5e7eb;
 }
 
-.form-section {
+#manual-adjustment-modal .form-section {
     padding: 20px;
-
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 13px;
 }
 
-.form-section + .form-section {
+#manual-adjustment-modal .form-section + .form-section {
     margin-top: 16px;
 }
 
-.form-section h3 {
+#manual-adjustment-modal .form-section h3 {
     margin: 0 0 18px;
     color: #0f172a;
     font-size: 16px;
 }
 
-.form-grid {
+#manual-adjustment-modal .form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
 }
 
-.form-group {
+#manual-adjustment-modal .form-group {
     display: flex;
     min-width: 0;
     flex-direction: column;
     gap: 7px;
 }
 
-.form-group-full {
+#manual-adjustment-modal .form-group-full {
     grid-column: 1 / -1;
 }
 
-.form-group label {
+#manual-adjustment-modal .form-group label {
     color: #334155;
     font-size: 12px;
     font-weight: 700;
 }
 
-.required {
+#manual-adjustment-modal .required {
     color: #dc2626;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+#manual-adjustment-modal .form-group input,
+#manual-adjustment-modal .form-group select,
+#manual-adjustment-modal .form-group textarea {
     width: 100%;
     min-width: 0;
-
     padding: 11px 12px;
-
     color: #334155;
     font: inherit;
     font-size: 13px;
-
     background: #ffffff;
     border: 1px solid #dbe2ea;
     border-radius: 9px;
     outline: none;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-}
-
-.form-group textarea {
+#manual-adjustment-modal .form-group textarea {
     resize: vertical;
 }
 
-.form-help {
-    color: #64748b;
-    font-size: 11px;
-    line-height: 1.5;
-}
-
-.stock-calculation-grid {
+#manual-adjustment-modal .stock-calculation-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 20px;
 }
 
-.stock-calculation-card {
+#manual-adjustment-modal .stock-calculation-card {
     padding: 24px;
-
     text-align: center;
-
     background: #ffffff;
     border: 1px solid #dbeafe;
     border-radius: 14px;
 }
 
-.stock-calculation-card span {
+#manual-adjustment-modal .stock-calculation-card span {
     display: block;
     margin-bottom: 12px;
-
     color: #64748b;
     font-size: 12px;
     font-weight: 700;
 }
 
-.stock-calculation-card strong {
+#manual-adjustment-modal .stock-calculation-card strong {
     color: #0f172a;
     font-size: 30px;
 }
 
-.stock-calculation-result {
+#manual-adjustment-modal .stock-calculation-result {
     background: #ecfdf5;
     border-color: #bbf7d0;
 }
 
-.stock-calculation-result strong {
+#manual-adjustment-modal .stock-calculation-result strong {
     color: #15803d;
 }
 
-.stock-calculation-arrow {
+#manual-adjustment-modal .stock-calculation-arrow {
     color: #2563eb;
     font-size: 28px;
     font-weight: 700;
 }
 
-.automatic-fields-note {
+#manual-adjustment-modal .automatic-fields-note {
     margin-top: 16px;
     padding: 14px 16px;
-
     color: #475569;
     font-size: 12px;
     line-height: 1.6;
-
     background: #eff6ff;
     border: 1px solid #bfdbfe;
     border-radius: 10px;
 }
 
-.form-message {
+#manual-adjustment-modal .form-message {
     display: none;
     margin-bottom: 16px;
     padding: 12px 14px;
-
     font-size: 12px;
     border-radius: 9px;
 }
 
-.form-message.show {
+#manual-adjustment-modal .form-message.show {
     display: block;
-}
-
-.form-message.error {
-    color: #b91c1c;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-}
-
-.form-message.success {
-    color: #166534;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-}
-
-.form-message.info {
-    color: #1d4ed8;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
 }
 
 body.modal-open {
@@ -1352,30 +1297,27 @@ body.modal-open {
 }
 
 @media (max-width: 768px) {
-    .modal-overlay {
+    #manual-adjustment-modal {
         padding: 12px;
     }
 
-    .modal-container {
+    #manual-adjustment-modal .manual-adjustment-modal-container {
         width: 100%;
         max-height: calc(100vh - 24px);
     }
 
-    .form-grid {
+    #manual-adjustment-modal .form-grid,
+    #manual-adjustment-modal .stock-calculation-grid {
         grid-template-columns: 1fr;
     }
 
-    .stock-calculation-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stock-calculation-arrow {
+    #manual-adjustment-modal .stock-calculation-arrow {
         transform: rotate(90deg);
     }
 
-    .modal-header,
-    .modal-body,
-    .modal-footer {
+    #manual-adjustment-modal .modal-header,
+    #manual-adjustment-modal .modal-body,
+    #manual-adjustment-modal .modal-footer {
         padding-right: 16px;
         padding-left: 16px;
     }
