@@ -135,15 +135,15 @@ function initialiserBoutonNouveauMouvement() {
 }
 
 
-function ouvrirModaleAjustementManuel() {
+async function ouvrirModaleAjustementManuel() {
     const modal = document.getElementById("manual-adjustment-modal");
 
     if (!modal) {
         return;
     }
 
-    remplirListeProduitsAjustement();
     reinitialiserFormulaireAjustement();
+    await remplirListeProduitsAjustement();
 
     modal.classList.add("active");
     modal.setAttribute("aria-hidden", "false");
@@ -168,45 +168,105 @@ function fermerModaleAjustementManuel() {
 }
 
 
-function remplirListeProduitsAjustement() {
-    const select = document.getElementById("manual-adjustment-product");
+async function remplirListeProduitsAjustement() {
+    const select =
+        document.getElementById(
+            "manual-adjustment-product"
+        );
 
     if (!select) {
         return;
     }
 
-    const valeurActuelle = select.value;
+    select.disabled = true;
+    select.innerHTML =
+        '<option value="">Chargement des produits...</option>';
 
-    const produits = new Map();
-
-    mouvementsStock.forEach(mouvement => {
-        if (!mouvement.idProduit) {
-            return;
+    try {
+        if (typeof apiGet !== "function") {
+            throw new Error(
+                "La fonction apiGet est indisponible."
+            );
         }
 
-        produits.set(mouvement.idProduit, {
-            idProduit: mouvement.idProduit,
-            produit: mouvement.produit || mouvement.idProduit,
-            referenceProduit: mouvement.referenceProduit || "",
-            stockDisponible: mouvement.stockApres
-        });
-    });
+        /*
+         * Source officielle du stock actuel :
+         * StockService.gs via l'action getStock.
+         *
+         * On ne déduit plus le stock à partir des lignes
+         * déjà affichées dans l'historique, car leur ordre
+         * peut conduire à reprendre une ancienne valeur.
+         */
+        const resultat =
+            await apiGet("getStock");
 
-    select.innerHTML = '<option value="">Sélectionner un produit</option>';
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de charger le stock actuel."
+            );
+        }
 
-    [...produits.values()]
-        .sort((a, b) => a.produit.localeCompare(b.produit, "fr"))
-        .forEach(produit => {
-            const option = document.createElement("option");
-            option.value = produit.idProduit;
-            option.textContent = produit.referenceProduit
-                ? `${produit.referenceProduit} — ${produit.produit}`
-                : produit.produit;
-            option.dataset.stock = String(produit.stockDisponible || 0);
-            select.appendChild(option);
-        });
+        const produits = Array.isArray(resultat.data)
+            ? resultat.data
+            : [];
 
-    select.value = valeurActuelle;
+        select.innerHTML =
+            '<option value="">Sélectionner un produit</option>';
+
+        produits
+            .slice()
+            .sort((a, b) =>
+                String(a.produit || "")
+                    .localeCompare(
+                        String(b.produit || ""),
+                        "fr",
+                        { sensitivity: "base" }
+                    )
+            )
+            .forEach(produit => {
+                const option =
+                    document.createElement("option");
+
+                option.value =
+                    String(produit.idProduit || "").trim();
+
+                option.textContent =
+                    produit.reference
+                        ? `${produit.reference} — ${produit.produit}`
+                        : String(
+                            produit.produit ||
+                            produit.idProduit ||
+                            ""
+                        );
+
+                option.dataset.stock = String(
+                    convertirNombreMouvementFrontend(
+                        produit.stockDisponible
+                    )
+                );
+
+                select.appendChild(option);
+            });
+
+    } catch (error) {
+        console.error(
+            "Erreur de chargement du stock pour l'ajustement :",
+            error
+        );
+
+        select.innerHTML =
+            '<option value="">Impossible de charger les produits</option>';
+
+        afficherMessageFormulaireAjustement(
+            error.message ||
+            "Impossible de charger le stock actuel.",
+            "error"
+        );
+
+    } finally {
+        select.disabled = false;
+    }
 }
 
 
@@ -252,15 +312,8 @@ function mettreAJourCalculAjustementManuel() {
         return;
     }
 
-    const sens =
-        obtenirSensMouvementFrontend(type);
-
-    const variation =
-        sens === "entree"
-            ? quantite
-            : sens === "sortie"
-                ? -quantite
-                : 0;
+    const typesPositifs = ["ajustement positif"];
+    const variation = typesPositifs.includes(type) ? quantite : -quantite;
     const stockApres = stockAvant + variation;
 
     definirTexteMouvement(
@@ -1226,57 +1279,6 @@ function obtenirPagesPaginationMouvement(
 }
 
 
-
-/* ===========================================================
-   CLASSIFICATION CENTRALE DES MOUVEMENTS — FRONTEND
-=========================================================== */
-
-const TYPES_MOUVEMENTS_ENTREE = [
-    "stock initial",
-    "initial",
-    "entree",
-    "approvisionnement",
-    "achat",
-    "retour client",
-    "ajustement positif",
-    "correction positive",
-    "inventaire positif"
-];
-
-const TYPES_MOUVEMENTS_SORTIE = [
-    "sortie",
-    "vente",
-    "livraison",
-    "retour fournisseur",
-    "ajustement negatif",
-    "correction negative",
-    "inventaire negatif",
-    "perte",
-    "casse",
-    "vol",
-    "don",
-    "produit endommage"
-];
-
-
-function obtenirSensMouvementFrontend(typeMouvement) {
-    const type =
-        normaliserTexteMouvementFrontend(
-            typeMouvement
-        );
-
-    if (TYPES_MOUVEMENTS_ENTREE.includes(type)) {
-        return "entree";
-    }
-
-    if (TYPES_MOUVEMENTS_SORTIE.includes(type)) {
-        return "sortie";
-    }
-
-    return "inconnu";
-}
-
-
 /* ===========================================================
    BADGES ET VARIATIONS
 =========================================================== */
@@ -1287,16 +1289,30 @@ function creerBadgeTypeMouvement(typeMouvement) {
             typeMouvement
         );
 
-    const sens =
-        obtenirSensMouvementFrontend(
-            typeMouvement
-        );
-
     let classe = "movement-type-other";
 
-    if (sens === "entree") {
+    if (
+        [
+            "stock initial",
+            "entree",
+            "approvisionnement",
+            "retour client",
+            "ajustement positif"
+        ].includes(type)
+    ) {
         classe = "movement-type-entry";
-    } else if (sens === "sortie") {
+    } else if (
+        [
+            "sortie",
+            "vente",
+            "retour fournisseur",
+            "ajustement negatif",
+            "perte",
+            "casse",
+            "vol",
+            "don"
+        ].includes(type)
+    ) {
         classe = "movement-type-exit";
     } else if (
         type.includes("ajustement") ||
@@ -1328,26 +1344,31 @@ function obtenirVariationSigneeMouvement(mouvement) {
         return difference;
     }
 
+    const type =
+        normaliserTexteMouvementFrontend(
+            mouvement.typeMouvement
+        );
+
     const quantite = Math.abs(
         convertirNombreMouvementFrontend(
             mouvement.quantite
         )
     );
 
-    const sens =
-        obtenirSensMouvementFrontend(
-            mouvement.typeMouvement
-        );
+    const typesNegatifs = [
+        "sortie",
+        "vente",
+        "retour fournisseur",
+        "ajustement negatif",
+        "perte",
+        "casse",
+        "vol",
+        "don"
+    ];
 
-    if (sens === "sortie") {
-        return -quantite;
-    }
-
-    if (sens === "entree") {
-        return quantite;
-    }
-
-    return 0;
+    return typesNegatifs.includes(type)
+        ? -quantite
+        : quantite;
 }
 
 
