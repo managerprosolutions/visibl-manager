@@ -69,7 +69,109 @@ function initialiserModuleMouvementsStock() {
 
     initialiserMenuExportMouvementsStock();
     initialiserBoutonNouveauMouvement();
+    initialiserMenuProfilMouvementStock();
     chargerMouvementsStock();
+}
+
+
+/* ===========================================================
+   MENU PROFIL DU HEADER
+=========================================================== */
+
+function initialiserMenuProfilMouvementStock() {
+    const bouton =
+        document.getElementById(
+            "profile-menu-button"
+        );
+
+    const menu =
+        document.getElementById(
+            "profile-dropdown"
+        );
+
+    if (!bouton || !menu) {
+        console.warn(
+            "Menu profil indisponible : bouton ou menu introuvable."
+        );
+        return;
+    }
+
+    /*
+     * Évite une double initialisation si app.js
+     * a déjà attaché ce comportement.
+     */
+    if (bouton.dataset.profileInitialized === "true") {
+        return;
+    }
+
+    bouton.dataset.profileInitialized = "true";
+
+    bouton.addEventListener(
+        "click",
+        event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const estOuvert =
+                !menu.hidden;
+
+            menu.hidden =
+                estOuvert;
+
+            bouton.setAttribute(
+                "aria-expanded",
+                String(!estOuvert)
+            );
+        }
+    );
+
+    menu.addEventListener(
+        "click",
+        event => {
+            event.stopPropagation();
+        }
+    );
+
+    document.addEventListener(
+        "click",
+        event => {
+            if (
+                menu.hidden ||
+                bouton.contains(event.target) ||
+                menu.contains(event.target)
+            ) {
+                return;
+            }
+
+            menu.hidden = true;
+
+            bouton.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        event => {
+            if (
+                event.key !== "Escape" ||
+                menu.hidden
+            ) {
+                return;
+            }
+
+            menu.hidden = true;
+
+            bouton.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+            bouton.focus();
+        }
+    );
 }
 
 
