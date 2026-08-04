@@ -1,24 +1,19 @@
 /* ===========================================================
-   VISIBL ERP — mouvement_stock.js
-   Consultation des mouvements de stock
+   VISIBL ERP — Module Stock
+   Affichage initial à partir du module Produits
 =========================================================== */
 
-let mouvementsStock = [];
-let mouvementsStockFiltres = [];
-let pageMouvementsActuelle = 1;
-let taillePageMouvements = 10;
-
-
-/* ===========================================================
-   INITIALISATION
-=========================================================== */
+let stockProduits = [];
+let stockProduitsFiltres = [];
+let pageStockActuelle = 1;
+let taillePageStock = 10;
 
 document.addEventListener("DOMContentLoaded", () => {
-    initialiserModuleMouvementsStock();
+    initialiserModuleStock();
 });
 
 
-function initialiserDeconnexion() {
+function initialiserDeconnexionStock() {
     const logoutButton =
         document.getElementById("logout-button");
 
@@ -52,7 +47,7 @@ function initialiserDeconnexion() {
 }
 
 
-function initialiserModuleMouvementsStock() {
+function initialiserModuleStock() {
     if (
         typeof requireAuth === "function" &&
         !requireAuth()
@@ -60,598 +55,61 @@ function initialiserModuleMouvementsStock() {
         return;
     }
 
-    initialiserDeconnexion();
+    initialiserDeconnexionStock();
 
     document
-        .getElementById("refresh-stock-movements-btn")
-        ?.addEventListener("click", chargerMouvementsStock);
+        .getElementById("refresh-stock-btn")
+        ?.addEventListener("click", chargerStockDepuisProduits);
 
     document
-        .getElementById("stock-movements-search-input")
-        ?.addEventListener("input", appliquerFiltresMouvementsStock);
+        .getElementById("stock-search-input")
+        ?.addEventListener("input", appliquerFiltresStock);
 
     document
-        .getElementById("header-stock-movements-search-input")
-        ?.addEventListener("input", synchroniserRechercheEnteteMouvements);
+        .getElementById("header-stock-search-input")
+        ?.addEventListener("input", event => {
+            const recherchePage =
+                document.getElementById("stock-search-input");
 
-    document
-        .getElementById("header-stock-movements-search-btn")
-        ?.addEventListener("click", appliquerFiltresMouvementsStock);
+            if (recherchePage) {
+                recherchePage.value = event.target.value;
+            }
 
-    document
-        .getElementById("stock-movement-type-filter")
-        ?.addEventListener("change", appliquerFiltresMouvementsStock);
-
-    document
-        .getElementById("stock-movement-date-from")
-        ?.addEventListener("change", appliquerFiltresMouvementsStock);
-
-    document
-        .getElementById("stock-movement-date-to")
-        ?.addEventListener("change", appliquerFiltresMouvementsStock);
-
-    document
-        .getElementById("reset-stock-movements-filters")
-        ?.addEventListener("click", reinitialiserFiltresMouvementsStock);
-
-    document
-        .getElementById("stock-movements-page-size")
-        ?.addEventListener("change", event => {
-            taillePageMouvements = Math.max(
-                1,
-                Number(event.target.value) || 10
-            );
-
-            pageMouvementsActuelle = 1;
-            afficherTableauMouvementsStock();
+            appliquerFiltresStock();
         });
 
     document
-        .getElementById("print-stock-movements-btn")
+        .getElementById("header-stock-search-btn")
+        ?.addEventListener("click", appliquerFiltresStock);
+
+    document
+        .getElementById("stock-status-filter")
+        ?.addEventListener("change", appliquerFiltresStock);
+
+    document
+        .getElementById("reset-stock-filters")
+        ?.addEventListener("click", reinitialiserFiltresStock);
+
+    document
+        .getElementById("stock-page-size")
+        ?.addEventListener("change", event => {
+            taillePageStock =
+                Math.max(1, Number(event.target.value) || 10);
+
+            pageStockActuelle = 1;
+            afficherTableauStock();
+        });
+
+    document
+        .getElementById("print-stock-btn")
         ?.addEventListener("click", () => window.print());
 
-    initialiserMenuExportMouvementsStock();
-    initialiserBoutonNouveauMouvement();
-    chargerMouvementsStock();
+    chargerStockDepuisProduits();
 }
 
 
-
-
-function synchroniserRechercheEnteteMouvements(event) {
-    const champPage =
-        document.getElementById("stock-movements-search-input");
-
-    if (champPage) {
-        champPage.value = event.target.value;
-    }
-
-    appliquerFiltresMouvementsStock();
-}
-
-
-function initialiserBoutonNouveauMouvement() {
-    const boutonOuvrir =
-        document.getElementById("new-stock-movement-btn");
-
-    const boutonFermer =
-        document.getElementById("close-manual-adjustment-modal");
-
-    const boutonAnnuler =
-        document.getElementById("cancel-manual-adjustment-btn");
-
-    const modal =
-        document.getElementById("manual-adjustment-modal");
-
-    boutonOuvrir?.addEventListener("click", ouvrirModaleAjustementManuel);
-    boutonFermer?.addEventListener("click", fermerModaleAjustementManuel);
-    boutonAnnuler?.addEventListener("click", fermerModaleAjustementManuel);
-
-    modal?.addEventListener("click", event => {
-        if (event.target === modal) {
-            fermerModaleAjustementManuel();
-        }
-    });
-
-    document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && modal?.classList.contains("active")) {
-            fermerModaleAjustementManuel();
-        }
-    });
-
-    document
-        .getElementById("manual-adjustment-product")
-        ?.addEventListener("change", mettreAJourCalculAjustementManuel);
-
-    document
-        .getElementById("manual-adjustment-type")
-        ?.addEventListener("change", mettreAJourCalculAjustementManuel);
-
-    document
-        .getElementById("manual-adjustment-quantity")
-        ?.addEventListener("input", mettreAJourCalculAjustementManuel);
-
-    document
-        .getElementById("manual-adjustment-form")
-        ?.addEventListener(
-            "submit",
-            enregistrerAjustementManuel
-        );
-}
-
-
-async function ouvrirModaleAjustementManuel() {
-    const modal =
-        document.getElementById(
-            "manual-adjustment-modal"
-        );
-
-    if (!modal) {
-        return;
-    }
-
-    reinitialiserFormulaireAjustement();
-
-    /*
-     * Ouverture immédiate de la fenêtre.
-     */
-    modal.classList.add("active");
-    modal.setAttribute(
-        "aria-hidden",
-        "false"
-    );
-
-    document.body.classList.add(
-        "modal-open"
-    );
-
-    const selectProduit =
-        document.getElementById(
-            "manual-adjustment-product"
-        );
-
-    if (selectProduit) {
-        selectProduit.disabled = true;
-        selectProduit.innerHTML = `
-            <option value="">
-                Chargement des produits...
-            </option>
-        `;
-    }
-
-    /*
-     * Chargement après l'ouverture de la modale.
-     */
-    await remplirListeProduitsAjustement();
-
-    setTimeout(() => {
-        document
-            .getElementById(
-                "manual-adjustment-product"
-            )
-            ?.focus();
-    }, 50);
-}
-
-function fermerModaleAjustementManuel() {
-    const modal = document.getElementById("manual-adjustment-modal");
-
-    if (!modal) {
-        return;
-    }
-
-    modal.classList.remove("active");
-    modal.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("modal-open");
-}
-
-
-async function remplirListeProduitsAjustement() {
-    const select =
-        document.getElementById(
-            "manual-adjustment-product"
-        );
-
-    if (!select) {
-        return;
-    }
-
-    select.disabled = true;
-    select.innerHTML =
-        '<option value="">Chargement des produits...</option>';
-
-    try {
-        if (typeof apiGet !== "function") {
-            throw new Error(
-                "La fonction apiGet est indisponible."
-            );
-        }
-
-        /*
-         * Source officielle du stock actuel :
-         * StockService.gs via l'action getStock.
-         *
-         * On ne déduit plus le stock à partir des lignes
-         * déjà affichées dans l'historique, car leur ordre
-         * peut conduire à reprendre une ancienne valeur.
-         */
-        const resultat =
-            await apiGet("getStock");
-
-        if (!resultat?.success) {
-            throw new Error(
-                resultat?.message ||
-                "Impossible de charger le stock actuel."
-            );
-        }
-
-        const produits = Array.isArray(resultat.data)
-            ? resultat.data
-            : [];
-
-        select.innerHTML =
-            '<option value="">Sélectionner un produit</option>';
-
-        produits
-            .slice()
-            .sort((a, b) =>
-                String(a.produit || "")
-                    .localeCompare(
-                        String(b.produit || ""),
-                        "fr",
-                        { sensitivity: "base" }
-                    )
-            )
-            .forEach(produit => {
-                const option =
-                    document.createElement("option");
-
-                option.value =
-                    String(produit.idProduit || "").trim();
-
-                option.textContent =
-                    produit.reference
-                        ? `${produit.reference} — ${produit.produit}`
-                        : String(
-                            produit.produit ||
-                            produit.idProduit ||
-                            ""
-                        );
-
-                option.dataset.stock = String(
-                    convertirNombreMouvementFrontend(
-                        produit.stockDisponible
-                    )
-                );
-
-                select.appendChild(option);
-            });
-
-    } catch (error) {
-        console.error(
-            "Erreur de chargement du stock pour l'ajustement :",
-            error
-        );
-
-        select.innerHTML =
-            '<option value="">Impossible de charger les produits</option>';
-
-        afficherMessageFormulaireAjustement(
-            error.message ||
-            "Impossible de charger le stock actuel.",
-            "error"
-        );
-
-    } finally {
-        select.disabled = false;
-    }
-}
-
-
-function reinitialiserFormulaireAjustement() {
-    const formulaire = document.getElementById("manual-adjustment-form");
-    formulaire?.reset();
-
-    definirTexteMouvement("manual-adjustment-stock-before", "—");
-    definirTexteMouvement("manual-adjustment-stock-after", "—");
-
-    const avant = document.getElementById("manual-adjustment-stock-before-value");
-    const apres = document.getElementById("manual-adjustment-stock-after-value");
-
-    if (avant) avant.value = "";
-    if (apres) apres.value = "";
-
-    afficherMessageFormulaireAjustement("", "");
-}
-
-
-function mettreAJourCalculAjustementManuel() {
-    const selectProduit = document.getElementById("manual-adjustment-product");
-    const type = normaliserTexteMouvementFrontend(
-        document.getElementById("manual-adjustment-type")?.value || ""
-    );
-    const quantite = Math.max(
-        0,
-        Math.trunc(
-            convertirNombreMouvementFrontend(
-                document.getElementById("manual-adjustment-quantity")?.value
-            )
-        )
-    );
-
-    const option = selectProduit?.selectedOptions?.[0];
-    const stockAvant = option?.value
-        ? convertirNombreMouvementFrontend(option.dataset.stock)
-        : null;
-
-    if (stockAvant === null) {
-        definirTexteMouvement("manual-adjustment-stock-before", "—");
-        definirTexteMouvement("manual-adjustment-stock-after", "—");
-        return;
-    }
-
-    const typesPositifs = ["ajustement positif"];
-    const variation = typesPositifs.includes(type) ? quantite : -quantite;
-    const stockApres = stockAvant + variation;
-
-    definirTexteMouvement(
-        "manual-adjustment-stock-before",
-        formaterQuantiteMouvement(stockAvant)
-    );
-
-    definirTexteMouvement(
-        "manual-adjustment-stock-after",
-        formaterQuantiteMouvement(stockApres)
-    );
-
-    const avant = document.getElementById("manual-adjustment-stock-before-value");
-    const apres = document.getElementById("manual-adjustment-stock-after-value");
-
-    if (avant) avant.value = String(stockAvant);
-    if (apres) apres.value = String(stockApres);
-
-    if (stockApres < 0) {
-        afficherMessageFormulaireAjustement(
-            "La quantité saisie dépasse le stock disponible.",
-            "error"
-        );
-    } else {
-        afficherMessageFormulaireAjustement("", "");
-    }
-}
-
-
-function validerAjustementManuel() {
-    const idProduit = document.getElementById("manual-adjustment-product")?.value || "";
-    const type = document.getElementById("manual-adjustment-type")?.value || "";
-    const quantite = Math.trunc(
-        convertirNombreMouvementFrontend(
-            document.getElementById("manual-adjustment-quantity")?.value
-        )
-    );
-    const commentaire = document.getElementById("manual-adjustment-comment")?.value.trim() || "";
-    const stockApres = convertirNombreMouvementFrontend(
-        document.getElementById("manual-adjustment-stock-after-value")?.value
-    );
-
-    if (!idProduit || !type || quantite <= 0 || !commentaire) {
-        afficherMessageFormulaireAjustement(
-            "Veuillez remplir tous les champs obligatoires.",
-            "error"
-        );
-        return false;
-    }
-
-    if (stockApres < 0) {
-        afficherMessageFormulaireAjustement(
-            "Impossible d’enregistrer un ajustement qui rendrait le stock négatif.",
-            "error"
-        );
-        return false;
-    }
-
-    return true;
-}
-
-
-function afficherMessageFormulaireAjustement(message, type) {
-    const zone = document.getElementById("manual-adjustment-form-message");
-
-    if (!zone) {
-        return;
-    }
-
-    zone.textContent = message;
-    zone.className = "form-message";
-
-    if (message) {
-        zone.classList.add("show");
-        if (type) zone.classList.add(type);
-    }
-}
-
-
-
-/* ===========================================================
-   ENREGISTREMENT DE L'AJUSTEMENT MANUEL
-=========================================================== */
-
-async function enregistrerAjustementManuel(event) {
-    event.preventDefault();
-
-    if (!validerAjustementManuel()) {
-        return;
-    }
-
-    const bouton =
-        document.getElementById(
-            "save-manual-adjustment-btn"
-        );
-
-    const texteInitial =
-        bouton?.textContent || "";
-
-    try {
-        if (typeof apiPost !== "function") {
-            throw new Error(
-                "La fonction apiPost est indisponible."
-            );
-        }
-
-        if (bouton) {
-            bouton.disabled = true;
-            bouton.textContent =
-                "Enregistrement...";
-        }
-
-        afficherMessageFormulaireAjustement(
-            "Enregistrement en cours...",
-            "info"
-        );
-
-        const payload = {
-            idProduit:
-                document
-                    .getElementById(
-                        "manual-adjustment-product"
-                    )
-                    ?.value || "",
-
-            typeMouvement:
-                document
-                    .getElementById(
-                        "manual-adjustment-type"
-                    )
-                    ?.value || "",
-
-            quantite:
-                Math.trunc(
-                    convertirNombreMouvementFrontend(
-                        document
-                            .getElementById(
-                                "manual-adjustment-quantity"
-                            )
-                            ?.value
-                    )
-                ),
-
-            commentaire:
-                document
-                    .getElementById(
-                        "manual-adjustment-comment"
-                    )
-                    ?.value
-                    .trim() || "",
-
-            idUtilisateur:
-                obtenirIdUtilisateurConnecteMouvement()
-        };
-
-        const resultat = await apiPost(
-            "createMouvementStock",
-            payload
-        );
-
-        if (!resultat?.success) {
-            throw new Error(
-                resultat?.message ||
-                "Impossible d'enregistrer l'ajustement."
-            );
-        }
-
-        afficherNotificationMouvement(
-            resultat.message,
-            "success"
-        );
-
-        await chargerMouvementsStock();
-
-        fermerModaleAjustementManuel();
-        reinitialiserFormulaireAjustement();
-
-    } catch (error) {
-        console.error(
-            "Erreur d'enregistrement :",
-            error
-        );
-
-        afficherMessageFormulaireAjustement(
-            error.message ||
-            "Une erreur est survenue.",
-            "error"
-        );
-
-    } finally {
-        if (bouton) {
-            bouton.disabled = false;
-            bouton.textContent =
-                texteInitial ||
-                "Enregistrer l'ajustement";
-        }
-    }
-}
-
-
-function obtenirIdUtilisateurConnecteMouvement() {
-    const cles = [
-        "idUtilisateur",
-        "userId",
-        "utilisateurId",
-        "currentUserId"
-    ];
-
-    for (const cle of cles) {
-        const valeur =
-            localStorage.getItem(cle) ||
-            sessionStorage.getItem(cle);
-
-        if (valeur) {
-            return String(valeur).trim();
-        }
-    }
-
-    const objets = [
-        "user",
-        "currentUser",
-        "utilisateur",
-        "visiblUser"
-    ];
-
-    for (const cle of objets) {
-        const valeur =
-            localStorage.getItem(cle) ||
-            sessionStorage.getItem(cle);
-
-        if (!valeur) {
-            continue;
-        }
-
-        try {
-            const objet = JSON.parse(valeur);
-
-            const id =
-                objet?.idUtilisateur ||
-                objet?.userId ||
-                objet?.id ||
-                "";
-
-            if (id) {
-                return String(id).trim();
-            }
-        } catch (error) {}
-    }
-
-    return "SYSTEM";
-}
-
-
-/* ===========================================================
-   CHARGEMENT DES DONNÉES
-=========================================================== */
-
-async function chargerMouvementsStock() {
-    const tbody =
-        document.getElementById("stock-movements-table-body");
+async function chargerStockDepuisProduits() {
+    const tbody = document.getElementById("stock-table-body");
 
     if (!tbody) {
         return;
@@ -659,8 +117,8 @@ async function chargerMouvementsStock() {
 
     tbody.innerHTML = `
         <tr>
-            <td colspan="11" class="table-message">
-                Chargement des mouvements de stock...
+            <td colspan="8" class="table-message">
+                Chargement des produits...
             </td>
         </tr>
     `;
@@ -672,307 +130,232 @@ async function chargerMouvementsStock() {
             );
         }
 
-        const resultat =
-            await apiGet("getMouvementsStock");
+        const resultat = await apiGet("getStock");
 
         if (!resultat?.success) {
             throw new Error(
                 resultat?.message ||
-                "Impossible de charger les mouvements de stock."
+                "Impossible de charger les produits."
             );
         }
 
-        const donnees =
-            Array.isArray(resultat.data)
-                ? resultat.data
-                : Array.isArray(resultat.data?.mouvements)
-                    ? resultat.data.mouvements
-                    : Array.isArray(resultat.mouvements)
-                        ? resultat.mouvements
-                        : [];
+        const produits = Array.isArray(resultat.data)
+            ? resultat.data
+            : Array.isArray(resultat.data?.produits)
+                ? resultat.data.produits
+                : Array.isArray(resultat.produits)
+                    ? resultat.produits
+                    : [];
 
-        mouvementsStock = donnees
-            .map(normaliserMouvementStock)
-            .filter(mouvement =>
-                mouvement.idMouvement ||
-                mouvement.idProduit ||
-                mouvement.typeMouvement
-            );
+        stockProduits = produits
+            .map(normaliserProduitStock)
+            .filter(produit => produit.idProduit);
 
-        mouvementsStockFiltres = [...mouvementsStock];
-        pageMouvementsActuelle = 1;
+        stockProduitsFiltres = [...stockProduits];
+        pageStockActuelle = 1;
 
-        mettreAJourKpiMouvementsStock(
-            resultat.meta || resultat.data?.meta
-        );
-
-        afficherTableauMouvementsStock();
+        mettreAJourKpiStock();
+        afficherTableauStock();
 
         console.log(
-            `${mouvementsStock.length} mouvement(s) de stock chargé(s).`
+            `${stockProduits.length} produit(s) chargé(s) dans le module Stock.`
         );
 
     } catch (error) {
         console.error(
-            "Erreur lors du chargement des mouvements :",
+            "Erreur lors du chargement du stock :",
             error
         );
 
-        mouvementsStock = [];
-        mouvementsStockFiltres = [];
-
         tbody.innerHTML = `
             <tr>
-                <td colspan="11" class="error-row">
-                    ${echapperHTMLMouvement(
+                <td colspan="8" class="error-row">
+                    ${echapperHTMLStock(
                         error.message ||
-                        "Impossible de charger les mouvements."
+                        "Impossible de charger le stock."
                     )}
                 </td>
             </tr>
         `;
 
-        mettreAJourKpiMouvementsStock();
-        mettreAJourCompteurMouvementsStock();
-        afficherPaginationMouvementsStock();
+        stockProduits = [];
+        stockProduitsFiltres = [];
+        mettreAJourKpiStock();
+        mettreAJourCompteurStock();
+        afficherPaginationStock();
     }
 }
 
 
-function normaliserMouvementStock(mouvement) {
-    const quantite =
-        convertirNombreMouvementFrontend(
-            mouvement.quantite ??
-            mouvement["Quantité"] ??
-            mouvement["Quantite"] ??
-            0
-        );
+function normaliserProduitStock(produit) {
+    const idProduit = lireValeurStock(
+        produit,
+        ["idProduit", "ID Produit", "Identifiant", "identifiant"]
+    );
+
+    const reference = lireValeurStock(
+        produit,
+        [
+            "reference",
+            "Référence",
+            "Reference",
+            "Référence Produit",
+            "referenceProduit"
+        ]
+    ) || idProduit;
+
+    const designation = lireValeurStock(
+        produit,
+        [
+            "produit",
+            "Désignation",
+            "Designation",
+            "designation",
+            "Nom Produit",
+            "Nom du Produit",
+            "nomProduit",
+            "Produit",
+            "Nom",
+            "Libellé",
+            "Libelle"
+        ]
+    ) || idProduit;
+
+    const stockInitial = Math.trunc(
+        convertirNombreStock(
+            lireValeurStock(
+                produit,
+                ["stockInitial", "Stock initial", "Stock Initial"]
+            )
+        )
+    );
+
+    const stockDisponible = Math.trunc(
+        convertirNombreStock(
+            lireValeurStock(
+                produit,
+                ["stockDisponible", "Stock disponible", "Stock Disponible"]
+            )
+        )
+    );
+
+    const seuilAlerte = Math.max(
+        0,
+        Math.trunc(
+            convertirNombreStock(
+                lireValeurStock(
+                    produit,
+                    [
+                        "seuilAlerte",
+                        "Seuil d'Alerte",
+                        "Seuil d’Alerte",
+                        "Seuil Alerte"
+                    ]
+                )
+            )
+        )
+    );
+
+    const etat = String(
+        lireValeurStock(
+            produit,
+            ["etat", "État", "Etat"]
+        ) || calculerEtatStock(stockDisponible, seuilAlerte)
+    ).trim().toLowerCase();
+
+    const derniereOperation = lireValeurStock(
+        produit,
+        ["derniereOperation", "Dernière opération", "Derniere operation"]
+    ) || "Aucun mouvement";
+
+    const derniereMiseAJour = lireValeurStock(
+        produit,
+        ["derniereMiseAJour", "Dernière mise à jour", "Derniere mise a jour"]
+    ) || "—";
 
     return {
-        idMouvement: String(
-            mouvement.idMouvement ??
-            mouvement["ID Mouvement"] ??
-            ""
-        ).trim(),
-
-        date: String(
-            mouvement.date ??
-            mouvement["Date"] ??
-            ""
-        ).trim(),
-
-        heure: String(
-            mouvement.heure ??
-            mouvement["Heure"] ??
-            ""
-        ).trim(),
-
-        idProduit: String(
-            mouvement.idProduit ??
-            mouvement["ID Produit"] ??
-            ""
-        ).trim(),
-
-        produit: String(
-            mouvement.produit ??
-            mouvement.designation ??
-            mouvement["Produit"] ??
-            mouvement["Désignation"] ??
-            mouvement["ID Produit"] ??
-            ""
-        ).trim(),
-
-        referenceProduit: String(
-            mouvement.referenceProduit ??
-            mouvement["Référence Produit"] ??
-            ""
-        ).trim(),
-
-        typeMouvement: String(
-            mouvement.typeMouvement ??
-            mouvement["Type de Mouvement"] ??
-            ""
-        ).trim(),
-
-        quantite,
-
-        stockAvant:
-            convertirNombreMouvementFrontend(
-                mouvement.stockAvant ??
-                mouvement["Stock Avant"] ??
-                0
-            ),
-
-        stockApres:
-            convertirNombreMouvementFrontend(
-                mouvement.stockApres ??
-                mouvement["Stock Après"] ??
-                mouvement["Stock Apres"] ??
-                0
-            ),
-
-        reference: String(
-            mouvement.reference ??
-            mouvement["Référence"] ??
-            mouvement["Reference"] ??
-            ""
-        ).trim(),
-
-        moduleOrigine: String(
-            mouvement.moduleOrigine ??
-            mouvement["Module d’Origine"] ??
-            mouvement["Module d'Origine"] ??
-            ""
-        ).trim(),
-
-        idUtilisateur: String(
-            mouvement.idUtilisateur ??
-            mouvement["ID Utilisateur"] ??
-            ""
-        ).trim(),
-
-        utilisateur: String(
-            mouvement.utilisateur ??
-            mouvement["Utilisateur"] ??
-            mouvement["ID Utilisateur"] ??
-            ""
-        ).trim(),
-
-        commentaire: String(
-            mouvement.commentaire ??
-            mouvement["Commentaire"] ??
-            ""
-        ).trim()
+        idProduit: String(idProduit || "").trim(),
+        reference: String(reference || "").trim(),
+        produit: String(designation || "").trim(),
+        stockInitial,
+        stockDisponible,
+        seuilAlerte,
+        etat,
+        derniereOperation: String(derniereOperation || "").trim(),
+        derniereMiseAJour: String(derniereMiseAJour || "—").trim()
     };
 }
 
 
-/* ===========================================================
-   FILTRES
-=========================================================== */
-
-function appliquerFiltresMouvementsStock() {
+function appliquerFiltresStock() {
     const recherche = String(
-        document
-            .getElementById("stock-movements-search-input")
-            ?.value ||
-        document
-            .getElementById("header-stock-movements-search-input")
-            ?.value ||
+        document.getElementById("stock-search-input")?.value ||
+        document.getElementById("header-stock-search-input")?.value ||
         ""
     )
         .trim()
         .toLowerCase();
 
-    const typeRecherche = normaliserTexteMouvementFrontend(
-        document
-            .getElementById("stock-movement-type-filter")
-            ?.value ||
-        ""
-    );
+    const etat = String(
+        document.getElementById("stock-status-filter")?.value || ""
+    )
+        .trim()
+        .toLowerCase();
 
-    const dateDebut = convertirDateFiltreMouvement(
-        document
-            .getElementById("stock-movement-date-from")
-            ?.value
-    );
-
-    const dateFin = convertirDateFiltreMouvement(
-        document
-            .getElementById("stock-movement-date-to")
-            ?.value,
-        true
-    );
-
-    mouvementsStockFiltres = mouvementsStock.filter(
-        mouvement => {
-            const texteRecherche = [
-                mouvement.idMouvement,
-                mouvement.idProduit,
-                mouvement.produit,
-                mouvement.referenceProduit,
-                mouvement.typeMouvement,
-                mouvement.reference,
-                mouvement.moduleOrigine,
-                mouvement.idUtilisateur,
-                mouvement.utilisateur,
-                mouvement.commentaire
+    stockProduitsFiltres = stockProduits.filter(produit => {
+        const correspondRecherche =
+            !recherche ||
+            [
+                produit.reference,
+                produit.produit,
+                produit.idProduit
             ]
                 .join(" ")
-                .toLowerCase();
+                .toLowerCase()
+                .includes(recherche);
 
-            const correspondRecherche =
-                !recherche ||
-                texteRecherche.includes(recherche);
+        const correspondEtat =
+            !etat ||
+            produit.etat === etat;
 
-            const correspondType =
-                !typeRecherche ||
-                normaliserTexteMouvementFrontend(
-                    mouvement.typeMouvement
-                ) === typeRecherche;
-
-            const dateMouvement =
-                convertirDateAfficheeMouvement(
-                    mouvement.date,
-                    mouvement.heure
-                );
-
-            const correspondDateDebut =
-                !dateDebut ||
-                (
-                    dateMouvement &&
-                    dateMouvement >= dateDebut
-                );
-
-            const correspondDateFin =
-                !dateFin ||
-                (
-                    dateMouvement &&
-                    dateMouvement <= dateFin
-                );
-
-            return (
-                correspondRecherche &&
-                correspondType &&
-                correspondDateDebut &&
-                correspondDateFin
-            );
-        }
-    );
-
-    pageMouvementsActuelle = 1;
-    afficherTableauMouvementsStock();
-}
-
-
-function reinitialiserFiltresMouvementsStock() {
-    [
-        "stock-movements-search-input",
-        "header-stock-movements-search-input",
-        "stock-movement-type-filter",
-        "stock-movement-date-from",
-        "stock-movement-date-to"
-    ].forEach(id => {
-        const element = document.getElementById(id);
-
-        if (element) {
-            element.value = "";
-        }
+        return correspondRecherche && correspondEtat;
     });
 
-    mouvementsStockFiltres = [...mouvementsStock];
-    pageMouvementsActuelle = 1;
-    afficherTableauMouvementsStock();
+    pageStockActuelle = 1;
+    afficherTableauStock();
 }
 
 
-/* ===========================================================
-   AFFICHAGE DU TABLEAU
-=========================================================== */
+function reinitialiserFiltresStock() {
+    const recherchePage =
+        document.getElementById("stock-search-input");
 
-function afficherTableauMouvementsStock() {
-    const tbody =
-        document.getElementById("stock-movements-table-body");
+    const rechercheHeader =
+        document.getElementById("header-stock-search-input");
+
+    const filtreEtat =
+        document.getElementById("stock-status-filter");
+
+    if (recherchePage) {
+        recherchePage.value = "";
+    }
+
+    if (rechercheHeader) {
+        rechercheHeader.value = "";
+    }
+
+    if (filtreEtat) {
+        filtreEtat.value = "";
+    }
+
+    stockProduitsFiltres = [...stockProduits];
+    pageStockActuelle = 1;
+    afficherTableauStock();
+}
+
+
+function afficherTableauStock() {
+    const tbody = document.getElementById("stock-table-body");
 
     if (!tbody) {
         return;
@@ -981,256 +364,156 @@ function afficherTableauMouvementsStock() {
     const totalPages = Math.max(
         1,
         Math.ceil(
-            mouvementsStockFiltres.length /
-            taillePageMouvements
+            stockProduitsFiltres.length /
+            taillePageStock
         )
     );
 
-    if (pageMouvementsActuelle > totalPages) {
-        pageMouvementsActuelle = totalPages;
+    if (pageStockActuelle > totalPages) {
+        pageStockActuelle = totalPages;
     }
 
-    const indexDebut =
-        (pageMouvementsActuelle - 1) *
-        taillePageMouvements;
+    const debut =
+        (pageStockActuelle - 1) * taillePageStock;
 
-    const mouvementsPage =
-        mouvementsStockFiltres.slice(
-            indexDebut,
-            indexDebut + taillePageMouvements
+    const produitsPage =
+        stockProduitsFiltres.slice(
+            debut,
+            debut + taillePageStock
         );
 
-    if (!mouvementsPage.length) {
+    if (!produitsPage.length) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="11" class="empty-table-message">
-                    Aucun mouvement de stock trouvé.
+                <td colspan="8" class="empty-table-message">
+                    Aucun produit trouvé.
                 </td>
             </tr>
         `;
 
-        mettreAJourCompteurMouvementsStock();
-        afficherPaginationMouvementsStock();
+        mettreAJourCompteurStock();
+        afficherPaginationStock();
         return;
     }
 
-    tbody.innerHTML = mouvementsPage
-        .map(mouvement => {
-            const variation =
-                obtenirVariationSigneeMouvement(
-                    mouvement
-                );
+    tbody.innerHTML = produitsPage
+        .map(produit => `
+            <tr>
+                <td title="${echapperHTMLStock(produit.reference)}">
+                    ${echapperHTMLStock(produit.reference)}
+                </td>
 
-            return `
-                <tr>
-                    <td>
-                        ${echapperHTMLMouvement(
-                            mouvement.date || "—"
+                <td title="${echapperHTMLStock(produit.produit)}">
+                    ${echapperHTMLStock(produit.produit)}
+                </td>
+
+                <td>
+                    ${formaterQuantiteStock(
+                        produit.stockInitial
+                    )}
+                </td>
+
+                <td>
+                    <strong>
+                        ${formaterQuantiteStock(
+                            produit.stockDisponible
                         )}
-                    </td>
+                    </strong>
+                </td>
 
-                    <td>
-                        ${echapperHTMLMouvement(
-                            mouvement.heure || "—"
-                        )}
-                    </td>
+                <td>
+                    ${formaterQuantiteStock(
+                        produit.seuilAlerte
+                    )}
+                </td>
 
-                    <td title="${echapperHTMLMouvement(
-                        mouvement.referenceProduit
-                            ? `${mouvement.referenceProduit} — ${mouvement.produit}`
-                            : mouvement.produit
-                    )}">
-                        <strong>
-                            ${echapperHTMLMouvement(
-                                mouvement.produit ||
-                                mouvement.idProduit ||
-                                "—"
-                            )}
-                        </strong>
-                    </td>
+                <td>
+                    ${creerBadgeEtatStock(produit.etat)}
+                </td>
 
-                    <td>
-                        ${creerBadgeTypeMouvement(
-                            mouvement.typeMouvement
-                        )}
-                    </td>
+                <td>
+                    ${echapperHTMLStock(
+                        produit.derniereOperation
+                    )}
+                </td>
 
-                    <td>
-                        <span class="${variation >= 0
-                            ? "movement-quantity movement-quantity-positive"
-                            : "movement-quantity movement-quantity-negative"
-                        }">
-                            ${formaterVariationMouvement(
-                                variation
-                            )}
-                        </span>
-                    </td>
-
-                    <td>
-                        <span class="stock-before-value">
-                            ${formaterQuantiteMouvement(
-                                mouvement.stockAvant
-                            )}
-                        </span>
-                    </td>
-
-                    <td>
-                        <span class="stock-after-value">
-                            ${formaterQuantiteMouvement(
-                                mouvement.stockApres
-                            )}
-                        </span>
-                    </td>
-
-                    <td title="${echapperHTMLMouvement(
-                        mouvement.reference
-                    )}">
-                        ${echapperHTMLMouvement(
-                            mouvement.reference || "—"
-                        )}
-                    </td>
-
-                    <td>
-                        ${echapperHTMLMouvement(
-                            mouvement.moduleOrigine || "—"
-                        )}
-                    </td>
-
-                    <td title="${echapperHTMLMouvement(
-                        mouvement.idUtilisateur
-                    )}">
-                        ${echapperHTMLMouvement(
-                            mouvement.utilisateur ||
-                            mouvement.idUtilisateur ||
-                            "—"
-                        )}
-                    </td>
-
-                    <td title="${echapperHTMLMouvement(
-                        mouvement.commentaire
-                    )}">
-                        ${echapperHTMLMouvement(
-                            mouvement.commentaire || "—"
-                        )}
-                    </td>
-                </tr>
-            `;
-        })
+                <td>
+                    ${echapperHTMLStock(
+                        produit.derniereMiseAJour
+                    )}
+                </td>
+            </tr>
+        `)
         .join("");
 
-    mettreAJourCompteurMouvementsStock();
-    afficherPaginationMouvementsStock();
+    mettreAJourCompteurStock();
+    afficherPaginationStock();
 }
 
 
-/* ===========================================================
-   KPI
-=========================================================== */
+function mettreAJourKpiStock() {
+    const total = stockProduits.length;
 
-function mettreAJourKpiMouvementsStock(metaBackend) {
-    const statistiques =
-        metaBackend && typeof metaBackend === "object"
-            ? {
-                totalMouvements:
-                    Number(metaBackend.totalMouvements) || 0,
-                totalEntrees:
-                    Number(metaBackend.totalEntrees) || 0,
-                totalSorties:
-                    Number(metaBackend.totalSorties) || 0,
-                totalAjustements:
-                    Number(metaBackend.totalAjustements) || 0
-            }
-            : calculerKpiMouvementsFrontend(
-                mouvementsStock
-            );
+    const disponibles = stockProduits.filter(
+        produit => produit.stockDisponible > 0
+    ).length;
 
-    definirTexteMouvement(
-        "kpi-total-stock-movements",
-        statistiques.totalMouvements
+    const faibles = stockProduits.filter(
+        produit => produit.etat === "faible"
+    ).length;
+
+    const ruptures = stockProduits.filter(
+        produit => produit.etat === "rupture"
+    ).length;
+
+    definirTexteStock(
+        "kpi-total-stock-products",
+        total
     );
 
-    definirTexteMouvement(
-        "kpi-stock-entries",
-        formaterQuantiteMouvement(
-            statistiques.totalEntrees
-        )
+    definirTexteStock(
+        "kpi-available-stock-products",
+        disponibles
     );
 
-    definirTexteMouvement(
-        "kpi-stock-exits",
-        formaterQuantiteMouvement(
-            statistiques.totalSorties
-        )
+    definirTexteStock(
+        "kpi-low-stock-products",
+        faibles
     );
 
-    definirTexteMouvement(
-        "kpi-stock-adjustments",
-        statistiques.totalAjustements
-    );
-}
-
-
-function calculerKpiMouvementsFrontend(mouvements) {
-    let entrees = 0;
-    let sorties = 0;
-    let ajustements = 0;
-
-    mouvements.forEach(mouvement => {
-        const type = normaliserTexteMouvementFrontend(
-            mouvement.typeMouvement
-        );
-
-        const variation =
-            obtenirVariationSigneeMouvement(
-                mouvement
-            );
-
-        if (variation > 0) {
-            entrees += Math.abs(variation);
-        }
-
-        if (variation < 0) {
-            sorties += Math.abs(variation);
-        }
-
-        if (
-            type.includes("ajustement") ||
-            type.includes("inventaire")
-        ) {
-            ajustements += 1;
-        }
-    });
-
-    return {
-        totalMouvements: mouvements.length,
-        totalEntrees: entrees,
-        totalSorties: sorties,
-        totalAjustements: ajustements
-    };
-}
-
-
-/* ===========================================================
-   PAGINATION
-=========================================================== */
-
-function mettreAJourCompteurMouvementsStock() {
-    definirTexteMouvement(
-        "filtered-stock-movements-count",
-        mouvementsStockFiltres.length
+    definirTexteStock(
+        "kpi-out-of-stock-products",
+        ruptures
     );
 
-    definirTexteMouvement(
-        "stock-movements-pagination-summary",
-        `${mouvementsStockFiltres.length} mouvement(s)`
+    definirTexteStock(
+        "kpi-available-stock-percent",
+        total
+            ? `${Math.round(
+                disponibles * 100 / total
+            )} % du total`
+            : "0 % du total"
     );
 }
 
 
-function afficherPaginationMouvementsStock() {
+function mettreAJourCompteurStock() {
+    definirTexteStock(
+        "filtered-stock-count",
+        stockProduitsFiltres.length
+    );
+
+    definirTexteStock(
+        "stock-pagination-summary",
+        `${stockProduitsFiltres.length} produit(s)`
+    );
+}
+
+
+function afficherPaginationStock() {
     const conteneur =
         document.getElementById(
-            "stock-movements-pagination-controls"
+            "stock-pagination-controls"
         );
 
     if (!conteneur) {
@@ -1240,8 +523,8 @@ function afficherPaginationMouvementsStock() {
     const totalPages = Math.max(
         1,
         Math.ceil(
-            mouvementsStockFiltres.length /
-            taillePageMouvements
+            stockProduitsFiltres.length /
+            taillePageStock
         )
     );
 
@@ -1250,43 +533,31 @@ function afficherPaginationMouvementsStock() {
     boutons.push(`
         <button
             type="button"
-            data-movement-page="${pageMouvementsActuelle - 1}"
-            ${pageMouvementsActuelle <= 1 ? "disabled" : ""}
+            data-stock-page="${pageStockActuelle - 1}"
+            ${pageStockActuelle <= 1 ? "disabled" : ""}
             aria-label="Page précédente"
         >
             ‹
         </button>
     `);
 
-    const pages = obtenirPagesPaginationMouvement(
-        totalPages,
-        pageMouvementsActuelle
-    );
-
-    pages.forEach(page => {
-        if (page === "...") {
-            boutons.push(
-                `<span aria-hidden="true">…</span>`
-            );
-            return;
-        }
-
+    for (let page = 1; page <= totalPages; page += 1) {
         boutons.push(`
             <button
                 type="button"
-                data-movement-page="${page}"
-                class="${page === pageMouvementsActuelle ? "active" : ""}"
+                data-stock-page="${page}"
+                class="${page === pageStockActuelle ? "active" : ""}"
             >
                 ${page}
             </button>
         `);
-    });
+    }
 
     boutons.push(`
         <button
             type="button"
-            data-movement-page="${pageMouvementsActuelle + 1}"
-            ${pageMouvementsActuelle >= totalPages ? "disabled" : ""}
+            data-stock-page="${pageStockActuelle + 1}"
+            ${pageStockActuelle >= totalPages ? "disabled" : ""}
             aria-label="Page suivante"
         >
             ›
@@ -1296,11 +567,11 @@ function afficherPaginationMouvementsStock() {
     conteneur.innerHTML = boutons.join("");
 
     conteneur
-        .querySelectorAll("[data-movement-page]")
+        .querySelectorAll("[data-stock-page]")
         .forEach(bouton => {
             bouton.addEventListener("click", () => {
                 const page =
-                    Number(bouton.dataset.movementPage);
+                    Number(bouton.dataset.stockPage);
 
                 if (
                     !Number.isFinite(page) ||
@@ -1310,404 +581,81 @@ function afficherPaginationMouvementsStock() {
                     return;
                 }
 
-                pageMouvementsActuelle = page;
-                afficherTableauMouvementsStock();
+                pageStockActuelle = page;
+                afficherTableauStock();
             });
         });
 }
 
 
-function obtenirPagesPaginationMouvement(
-    totalPages,
-    pageActuelle
-) {
-    if (totalPages <= 7) {
-        return Array.from(
-            { length: totalPages },
-            (_, index) => index + 1
-        );
+function calculerEtatStock(stockDisponible, seuilAlerte) {
+    if (stockDisponible <= 0) {
+        return "rupture";
     }
 
-    const pages = [1];
-
-    if (pageActuelle > 4) {
-        pages.push("...");
+    if (
+        seuilAlerte > 0 &&
+        stockDisponible <= seuilAlerte
+    ) {
+        return "faible";
     }
 
-    const debut = Math.max(
-        2,
-        pageActuelle - 1
-    );
-
-    const fin = Math.min(
-        totalPages - 1,
-        pageActuelle + 1
-    );
-
-    for (let page = debut; page <= fin; page += 1) {
-        pages.push(page);
-    }
-
-    if (pageActuelle < totalPages - 3) {
-        pages.push("...");
-    }
-
-    pages.push(totalPages);
-    return pages;
+    return "normal";
 }
 
 
-/* ===========================================================
-   BADGES ET VARIATIONS
-=========================================================== */
+function creerBadgeEtatStock(etat) {
+    const configuration = {
+        normal: {
+            libelle: "Stock normal",
+            classe: "stock-status-normal"
+        },
+        faible: {
+            libelle: "Stock faible",
+            classe: "stock-status-low"
+        },
+        rupture: {
+            libelle: "Rupture",
+            classe: "stock-status-out"
+        }
+    };
 
-function creerBadgeTypeMouvement(typeMouvement) {
-    const type =
-        normaliserTexteMouvementFrontend(
-            typeMouvement
-        );
-
-    let classe = "movement-type-other";
-
-    if (
-        [
-            "stock initial",
-            "entree",
-            "approvisionnement",
-            "retour client",
-            "ajustement positif"
-        ].includes(type)
-    ) {
-        classe = "movement-type-entry";
-    } else if (
-        [
-            "sortie",
-            "vente",
-            "retour fournisseur",
-            "ajustement negatif",
-            "perte",
-            "casse",
-            "vol",
-            "don"
-        ].includes(type)
-    ) {
-        classe = "movement-type-exit";
-    } else if (
-        type.includes("ajustement") ||
-        type.includes("inventaire")
-    ) {
-        classe = "movement-type-adjustment";
-    }
+    const statut =
+        configuration[etat] ||
+        {
+            libelle: "Indéterminé",
+            classe: "stock-status-unknown"
+        };
 
     return `
-        <span class="movement-type-badge ${classe}">
-            ${echapperHTMLMouvement(
-                typeMouvement || "Autre"
-            )}
+        <span class="stock-status-badge ${statut.classe}">
+            ${statut.libelle}
         </span>
     `;
 }
 
 
-function obtenirVariationSigneeMouvement(mouvement) {
-    const difference =
-        convertirNombreMouvementFrontend(
-            mouvement.stockApres
-        ) -
-        convertirNombreMouvementFrontend(
-            mouvement.stockAvant
-        );
-
-    if (difference !== 0) {
-        return difference;
+function lireValeurStock(objet, cles) {
+    if (!objet || !Array.isArray(cles)) {
+        return "";
     }
 
-    const type =
-        normaliserTexteMouvementFrontend(
-            mouvement.typeMouvement
-        );
-
-    const quantite = Math.abs(
-        convertirNombreMouvementFrontend(
-            mouvement.quantite
-        )
-    );
-
-    const typesNegatifs = [
-        "sortie",
-        "vente",
-        "retour fournisseur",
-        "ajustement negatif",
-        "perte",
-        "casse",
-        "vol",
-        "don"
-    ];
-
-    return typesNegatifs.includes(type)
-        ? -quantite
-        : quantite;
-}
-
-
-/* ===========================================================
-   EXPORTS
-=========================================================== */
-
-function initialiserMenuExportMouvementsStock() {
-    const bouton =
-        document.getElementById(
-            "export-stock-movements-btn"
-        );
-
-    const menu =
-        document.getElementById(
-            "stock-movements-export-dropdown"
-        );
-
-    if (!bouton || !menu) {
-        return;
-    }
-
-    bouton.addEventListener("click", event => {
-        event.stopPropagation();
-
-        const ouvert = !menu.hidden;
-        menu.hidden = ouvert;
-        bouton.setAttribute(
-            "aria-expanded",
-            String(!ouvert)
-        );
-    });
-
-    menu
-        .querySelectorAll("[data-export-format]")
-        .forEach(option => {
-            option.addEventListener("click", () => {
-                const format =
-                    option.dataset.exportFormat;
-
-                menu.hidden = true;
-                bouton.setAttribute(
-                    "aria-expanded",
-                    "false"
-                );
-
-                exporterMouvementsStock(format);
-            });
-        });
-
-    document.addEventListener("click", event => {
+    for (const cle of cles) {
         if (
-            !menu.hidden &&
-            !menu.contains(event.target) &&
-            !bouton.contains(event.target)
+            Object.prototype.hasOwnProperty.call(objet, cle) &&
+            objet[cle] !== null &&
+            objet[cle] !== undefined &&
+            objet[cle] !== ""
         ) {
-            menu.hidden = true;
-            bouton.setAttribute(
-                "aria-expanded",
-                "false"
-            );
+            return objet[cle];
         }
-    });
-}
-
-
-function exporterMouvementsStock(format) {
-    if (!mouvementsStockFiltres.length) {
-        afficherNotificationMouvement(
-            "Aucun mouvement à exporter.",
-            "error"
-        );
-        return;
     }
 
-    switch (format) {
-        case "xlsx":
-            exporterMouvementsExcel();
-            break;
-
-        case "csv":
-            exporterMouvementsCSV();
-            break;
-
-        case "pdf":
-            exporterMouvementsPDF();
-            break;
-
-        default:
-            afficherNotificationMouvement(
-                "Format d’export non reconnu.",
-                "error"
-            );
-    }
+    return "";
 }
 
 
-function obtenirDonneesExportMouvements() {
-    return mouvementsStockFiltres.map(mouvement => ({
-        Date: mouvement.date,
-        Heure: mouvement.heure,
-        Produit: mouvement.produit,
-        "Type de mouvement": mouvement.typeMouvement,
-        Quantité: obtenirVariationSigneeMouvement(mouvement),
-        "Stock avant": mouvement.stockAvant,
-        "Stock après": mouvement.stockApres,
-        Référence: mouvement.reference,
-        "Module d’origine": mouvement.moduleOrigine,
-        Utilisateur: mouvement.utilisateur,
-        Commentaire: mouvement.commentaire
-    }));
-}
-
-
-function exporterMouvementsExcel() {
-    if (typeof XLSX === "undefined") {
-        afficherNotificationMouvement(
-            "La bibliothèque Excel est indisponible.",
-            "error"
-        );
-        return;
-    }
-
-    const feuille = XLSX.utils.json_to_sheet(
-        obtenirDonneesExportMouvements()
-    );
-
-    const classeur = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(
-        classeur,
-        feuille,
-        "Mouvements stock"
-    );
-
-    XLSX.writeFile(
-        classeur,
-        `mouvements_stock_${obtenirDateFichierMouvement()}.xlsx`
-    );
-}
-
-
-function exporterMouvementsCSV() {
-    const donnees =
-        obtenirDonneesExportMouvements();
-
-    const entetes = Object.keys(donnees[0]);
-
-    const lignes = [
-        entetes,
-        ...donnees.map(ligne =>
-            entetes.map(entete =>
-                ligne[entete]
-            )
-        )
-    ];
-
-    const csv = lignes
-        .map(ligne =>
-            ligne
-                .map(cellule =>
-                    `"${String(cellule ?? "")
-                        .replaceAll('"', '""')}"`
-                )
-                .join(";")
-        )
-        .join("\n");
-
-    telechargerFichierMouvement(
-        "\uFEFF" + csv,
-        `mouvements_stock_${obtenirDateFichierMouvement()}.csv`,
-        "text/csv;charset=utf-8"
-    );
-}
-
-
-function exporterMouvementsPDF() {
-    const jsPDF =
-        window.jspdf?.jsPDF;
-
-    if (!jsPDF) {
-        afficherNotificationMouvement(
-            "La bibliothèque PDF est indisponible.",
-            "error"
-        );
-        return;
-    }
-
-    const documentPDF =
-        new jsPDF({
-            orientation: "landscape",
-            unit: "mm",
-            format: "a4"
-        });
-
-    documentPDF.setFontSize(16);
-    documentPDF.text(
-        "VISIBL — Mouvements de stock",
-        14,
-        15
-    );
-
-    const lignes =
-        mouvementsStockFiltres.map(mouvement => [
-            mouvement.date,
-            mouvement.heure,
-            mouvement.produit,
-            mouvement.typeMouvement,
-            formaterVariationMouvement(
-                obtenirVariationSigneeMouvement(
-                    mouvement
-                )
-            ),
-            formaterQuantiteMouvement(
-                mouvement.stockAvant
-            ),
-            formaterQuantiteMouvement(
-                mouvement.stockApres
-            ),
-            mouvement.reference,
-            mouvement.moduleOrigine,
-            mouvement.utilisateur,
-            mouvement.commentaire
-        ]);
-
-    documentPDF.autoTable({
-        startY: 22,
-        head: [[
-            "Date",
-            "Heure",
-            "Produit",
-            "Type",
-            "Quantité",
-            "Avant",
-            "Après",
-            "Référence",
-            "Module",
-            "Utilisateur",
-            "Commentaire"
-        ]],
-        body: lignes,
-        styles: {
-            fontSize: 7,
-            cellPadding: 2
-        },
-        headStyles: {
-            fontStyle: "bold"
-        }
-    });
-
-    documentPDF.save(
-        `mouvements_stock_${obtenirDateFichierMouvement()}.pdf`
-    );
-}
-
-
-/* ===========================================================
-   OUTILS
-=========================================================== */
-
-function convertirNombreMouvementFrontend(valeur) {
+function convertirNombreStock(valeur) {
     const nombre = Number(
         String(valeur ?? "")
             .replace(/\s/g, "")
@@ -1720,189 +668,23 @@ function convertirNombreMouvementFrontend(valeur) {
 }
 
 
-function formaterQuantiteMouvement(valeur) {
+function formaterQuantiteStock(valeur) {
     return Math.trunc(
-        convertirNombreMouvementFrontend(valeur)
+        convertirNombreStock(valeur)
     ).toLocaleString("fr-FR");
 }
 
 
-function formaterVariationMouvement(valeur) {
-    const nombre = Math.trunc(
-        convertirNombreMouvementFrontend(valeur)
-    );
-
-    return nombre > 0
-        ? `+${nombre.toLocaleString("fr-FR")}`
-        : nombre.toLocaleString("fr-FR");
-}
-
-
-function normaliserTexteMouvementFrontend(valeur) {
-    return String(valeur || "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-}
-
-
-function convertirDateAfficheeMouvement(dateTexte, heureTexte = "") {
-    const texte = String(dateTexte || "").trim();
-
-    let date = null;
-
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(texte)) {
-        const [jour, mois, annee] =
-            texte.split("/").map(Number);
-
-        date = new Date(
-            annee,
-            mois - 1,
-            jour
-        );
-    } else if (/^\d{4}-\d{2}-\d{2}$/.test(texte)) {
-        const [annee, mois, jour] =
-            texte.split("-").map(Number);
-
-        date = new Date(
-            annee,
-            mois - 1,
-            jour
-        );
-    } else {
-        const candidate = new Date(texte);
-
-        if (!Number.isNaN(candidate.getTime())) {
-            date = candidate;
-        }
-    }
-
-    if (!date) {
-        return null;
-    }
-
-    const heure = String(
-        heureTexte || ""
-    ).match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-
-    if (heure) {
-        date.setHours(
-            Number(heure[1]),
-            Number(heure[2]),
-            Number(heure[3] || 0),
-            0
-        );
-    }
-
-    return date;
-}
-
-
-function convertirDateFiltreMouvement(
-    valeur,
-    finDeJournee = false
-) {
-    if (!valeur) {
-        return null;
-    }
-
-    const [annee, mois, jour] =
-        String(valeur)
-            .split("-")
-            .map(Number);
-
-    const date = new Date(
-        annee,
-        mois - 1,
-        jour
-    );
-
-    if (finDeJournee) {
-        date.setHours(
-            23,
-            59,
-            59,
-            999
-        );
-    }
-
-    return date;
-}
-
-
-function definirTexteMouvement(id, valeur) {
-    const element =
-        document.getElementById(id);
+function definirTexteStock(id, valeur) {
+    const element = document.getElementById(id);
 
     if (element) {
-        element.textContent =
-            String(valeur);
+        element.textContent = String(valeur);
     }
 }
 
 
-function obtenirDateFichierMouvement() {
-    const maintenant = new Date();
-
-    return [
-        maintenant.getFullYear(),
-        String(
-            maintenant.getMonth() + 1
-        ).padStart(2, "0"),
-        String(
-            maintenant.getDate()
-        ).padStart(2, "0")
-    ].join("-");
-}
-
-
-function telechargerFichierMouvement(
-    contenu,
-    nomFichier,
-    typeMime
-) {
-    const blob = new Blob(
-        [contenu],
-        { type: typeMime }
-    );
-
-    const url =
-        URL.createObjectURL(blob);
-
-    const lien =
-        document.createElement("a");
-
-    lien.href = url;
-    lien.download = nomFichier;
-
-    document.body.appendChild(lien);
-    lien.click();
-    lien.remove();
-
-    URL.revokeObjectURL(url);
-}
-
-
-function afficherNotificationMouvement(
-    message,
-    type = "info"
-) {
-    if (typeof showToast === "function") {
-        showToast(message, type);
-        return;
-    }
-
-    if (typeof afficherToast === "function") {
-        afficherToast(message, type);
-        return;
-    }
-
-    console.log(`[${type}] ${message}`);
-}
-
-
-function echapperHTMLMouvement(valeur) {
+function echapperHTMLStock(valeur) {
     return String(valeur ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
