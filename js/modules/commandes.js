@@ -513,25 +513,65 @@ function lireValeurClientCommande(client, cles) {
 
 
 function initialiserProduitsCommande() {
-    document
-        .getElementById("add-order-product-btn")
-        ?.addEventListener("click", ajouterProduitCommande);
+    const boutonAjouter =
+        document.getElementById(
+            "add-order-product-btn"
+        );
+
+    if (
+        boutonAjouter &&
+        boutonAjouter.dataset.initialized !==
+            "true"
+    ) {
+        boutonAjouter.dataset.initialized =
+            "true";
+
+        boutonAjouter.addEventListener(
+            "click",
+            ajouterProduitCommande
+        );
+    }
 
     document
-        .getElementById("order-product-select")
-        ?.addEventListener("change", mettreAJourPrixProduitSelectionne);
+        .getElementById(
+            "order-product-select"
+        )
+        ?.addEventListener(
+            "change",
+            mettreAJourPrixProduitSelectionne
+        );
 
     document
-        .getElementById("order-product-quantity")
-        ?.addEventListener("input", verifierQuantiteProduitSelectionne);
+        .getElementById(
+            "order-product-quantity"
+        )
+        ?.addEventListener(
+            "input",
+            verifierQuantiteProduitSelectionne
+        );
 
     document
-        .getElementById("order-lines-table-body")
-        ?.addEventListener("click", event => {
-            const bouton = event.target.closest("[data-remove-order-line]");
-            if (!bouton) return;
-            supprimerLigneCommande(bouton.dataset.removeOrderLine);
-        });
+        .getElementById(
+            "order-lines-table-body"
+        )
+        ?.addEventListener(
+            "click",
+            event => {
+                const bouton =
+                    event.target.closest(
+                        "[data-remove-order-line]"
+                    );
+
+                if (!bouton) {
+                    return;
+                }
+
+                supprimerLigneCommande(
+                    bouton.dataset
+                        .removeOrderLine
+                );
+            }
+        );
 
     chargerProduitsCommande();
 }
@@ -803,17 +843,22 @@ function obtenirPrixProduit(produit) {
 }
 
 function obtenirStockProduit(produit) {
-    return Math.max(0, Math.trunc(convertirNombre(
-        produit["Stock Actuel"] ??
-        produit.stockActuel ??
-        produit["Stock Disponible"] ??
-        produit.stockDisponible ??
-        produit["Quantité en Stock"] ??
-        produit["Quantite en Stock"] ??
-        produit.quantiteStock ??
-        produit.stock ??
-        0
-    )));
+    return Math.max(
+        0,
+        Math.trunc(
+            convertirNombre(
+                produit?.stockDisponible ??
+                produit?.["Stock Disponible"] ??
+                produit?.stockActuel ??
+                produit?.["Stock Actuel"] ??
+                produit?.["Quantité en Stock"] ??
+                produit?.["Quantite en Stock"] ??
+                produit?.quantiteStock ??
+                produit?.stock ??
+                0
+            )
+        )
+    );
 }
 
 function obtenirProduitSelectionneCommande() {
@@ -912,15 +957,38 @@ function mettreAJourPrixProduitSelectionne() {
 }
 
 
-function ajouterProduitCommande() {
-    const select = document.getElementById("order-product-select");
-    const idProduit = select?.value || "";
-    const quantite = Math.max(1, Math.trunc(convertirNombre(document.getElementById("order-product-quantity")?.value)));
-    const prixUnitaire = convertirNombre(document.getElementById("order-product-price")?.value);
-    const remise = convertirNombre(document.getElementById("order-product-discount")?.value);
+function ajouterProduitCommande(event) {
+    event?.preventDefault();
+
+    const select =
+        document.getElementById(
+            "order-product-select"
+        );
+
+    const champQuantite =
+        document.getElementById(
+            "order-product-quantity"
+        );
+
+    const champPrix =
+        document.getElementById(
+            "order-product-price"
+        );
+
+    const champRemise =
+        document.getElementById(
+            "order-product-discount"
+        );
+
+    const idProduit =
+        String(select?.value || "").trim();
 
     if (!idProduit) {
-        afficherMessageCommande("Sélectionnez un produit.", "error");
+        afficherMessageCommande(
+            "Sélectionnez un produit.",
+            "error"
+        );
+        select?.focus();
         return;
     }
 
@@ -929,63 +997,202 @@ function ajouterProduitCommande() {
             item =>
                 obtenirIdProduitCommande(
                     item
-                ) === String(idProduit)
+                ) === idProduit
         );
 
     if (!produit) {
-        afficherMessageCommande("Produit introuvable.", "error");
-        return;
-    }
-
-    const stockDisponible = obtenirStockProduit(produit);
-
-    if (stockDisponible <= 0) {
-        afficherMessageCommande("Ce produit est en rupture de stock.", "error");
-        return;
-    }
-
-    if (quantite > stockDisponible) {
         afficherMessageCommande(
-            `Stock insuffisant : ${stockDisponible} unité${stockDisponible > 1 ? "s" : ""} disponible${stockDisponible > 1 ? "s" : ""}, ${quantite} demandée${quantite > 1 ? "s" : ""}. Il manque ${quantite - stockDisponible} unité${quantite - stockDisponible > 1 ? "s" : ""}.`,
+            "Le produit sélectionné est introuvable.",
             "error"
         );
         return;
     }
 
-    const sousTotal = Math.max(0, quantite * prixUnitaire - remise);
-    const indexExistant = lignesCommande.findIndex(ligne => ligne.idProduit === idProduit);
+    const option =
+        select?.selectedOptions?.[0];
+
+    /*
+     * Le stock affiché dans l'option provient directement
+     * de getStock. Il devient la source prioritaire ici.
+     */
+    const stockDisponible =
+        option?.dataset?.stock !==
+            undefined
+            ? Math.max(
+                0,
+                Math.trunc(
+                    convertirNombre(
+                        option.dataset.stock
+                    )
+                )
+            )
+            : obtenirStockProduit(
+                produit
+            );
+
+    const quantite =
+        Math.max(
+            1,
+            Math.trunc(
+                convertirNombre(
+                    champQuantite?.value
+                )
+            )
+        );
+
+    const prixUnitaire =
+        convertirNombre(
+            champPrix?.value
+        );
+
+    const remise =
+        Math.max(
+            0,
+            convertirNombre(
+                champRemise?.value
+            )
+        );
+
+    if (stockDisponible <= 0) {
+        afficherMessageCommande(
+            "Ce produit est en rupture de stock.",
+            "error"
+        );
+        return;
+    }
+
+    /*
+     * Si le produit existe déjà dans la commande,
+     * on tient compte de la quantité déjà ajoutée.
+     */
+    const indexExistant =
+        lignesCommande.findIndex(
+            ligne =>
+                String(
+                    ligne.idProduit
+                ) === idProduit
+        );
+
+    const quantiteDejaAjoutee =
+        indexExistant >= 0
+            ? Math.max(
+                0,
+                Math.trunc(
+                    convertirNombre(
+                        lignesCommande[
+                            indexExistant
+                        ].quantite
+                    )
+                )
+            )
+            : 0;
+
+    const nouvelleQuantite =
+        quantiteDejaAjoutee +
+        quantite;
+
+    if (
+        nouvelleQuantite >
+        stockDisponible
+    ) {
+        const manque =
+            nouvelleQuantite -
+            stockDisponible;
+
+        afficherMessageCommande(
+            `Stock insuffisant : ${stockDisponible} unité${stockDisponible > 1 ? "s" : ""} disponible${stockDisponible > 1 ? "s" : ""}. Quantité totale demandée : ${nouvelleQuantite}. Il manque ${manque} unité${manque > 1 ? "s" : ""}.`,
+            "error"
+        );
+
+        champQuantite?.focus();
+        return;
+    }
+
+    const sousTotal =
+        Math.max(
+            0,
+            nouvelleQuantite *
+                prixUnitaire -
+                remise
+        );
 
     const ligne = {
-        idLigne: indexExistant >= 0 ? lignesCommande[indexExistant].idLigne : crypto.randomUUID?.() || String(Date.now()),
+        idLigne:
+            indexExistant >= 0
+                ? lignesCommande[
+                    indexExistant
+                ].idLigne
+                : (
+                    crypto.randomUUID?.() ||
+                    String(Date.now())
+                ),
+
         idProduit,
-        designation: obtenirNomProduit(produit),
+        designation:
+            obtenirNomProduit(
+                produit
+            ),
+
         stockDisponible,
-        quantite,
+        quantite:
+            nouvelleQuantite,
         prixUnitaire,
         remise,
         sousTotal
     };
 
     if (indexExistant >= 0) {
-        lignesCommande[indexExistant] = ligne;
+        lignesCommande[
+            indexExistant
+        ] = ligne;
     } else {
-        lignesCommande.push(ligne);
+        lignesCommande.push(
+            ligne
+        );
     }
 
     afficherLignesCommande();
     recalculerTotauxCommande();
 
-    if (select) select.value = "";
-    document.getElementById("order-product-quantity").value = 1;
-    document.getElementById("order-product-quantity").removeAttribute("max");
-    document.getElementById("order-product-price").value = "";
-    document.getElementById("order-product-discount").value = "";
+    if (select) {
+        select.value = "";
+    }
 
-    const boutonAjouter = document.getElementById("add-order-product-btn");
-    if (boutonAjouter) boutonAjouter.disabled = false;
+    if (champQuantite) {
+        champQuantite.value = 1;
+        champQuantite.removeAttribute(
+            "max"
+        );
+    }
 
-    afficherStockProduitCommande(0, false);
-    afficherMessageCommande("Produit ajouté à la commande.", "success");
+    if (champPrix) {
+        champPrix.value = "";
+    }
+
+    if (champRemise) {
+        champRemise.value = "";
+    }
+
+    const boutonAjouter =
+        document.getElementById(
+            "add-order-product-btn"
+        );
+
+    if (boutonAjouter) {
+        boutonAjouter.disabled = false;
+    }
+
+    afficherStockProduitCommande(
+        0,
+        false
+    );
+
+    afficherMessageCommande(
+        indexExistant >= 0
+            ? "La quantité du produit a été mise à jour."
+            : "Produit ajouté à la commande.",
+        "success"
+    );
 }
 
 
