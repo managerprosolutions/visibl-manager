@@ -18,7 +18,43 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+
+function initialiserDeconnexion() {
+    const logoutButton =
+        document.getElementById("logout-button");
+
+    if (!logoutButton) {
+        return;
+    }
+
+    if (logoutButton.dataset.logoutInitialized === "true") {
+        return;
+    }
+
+    logoutButton.dataset.logoutInitialized = "true";
+
+    logoutButton.addEventListener(
+        "click",
+        function (event) {
+            event.preventDefault();
+
+            if (typeof logoutUser === "function") {
+                logoutUser();
+            }
+        }
+    );
+}
+
+
 function initialiserModuleMouvementsStock() {
+    if (
+        typeof requireAuth === "function" &&
+        !requireAuth()
+    ) {
+        return;
+    }
+
+    initialiserDeconnexion();
     document
         .getElementById("refresh-stock-movements-btn")
         ?.addEventListener("click", chargerMouvementsStock);
@@ -71,6 +107,7 @@ function initialiserModuleMouvementsStock() {
     initialiserBoutonNouveauMouvement();
     chargerMouvementsStock();
 }
+
 
 
 function synchroniserRechercheEnteteMouvements(event) {
