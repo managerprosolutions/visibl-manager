@@ -136,24 +136,57 @@ function initialiserBoutonNouveauMouvement() {
 
 
 async function ouvrirModaleAjustementManuel() {
-    const modal = document.getElementById("manual-adjustment-modal");
+    const modal =
+        document.getElementById(
+            "manual-adjustment-modal"
+        );
 
     if (!modal) {
         return;
     }
 
     reinitialiserFormulaireAjustement();
+
+    /*
+     * Ouverture immédiate de la fenêtre.
+     */
+    modal.classList.add("active");
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    document.body.classList.add(
+        "modal-open"
+    );
+
+    const selectProduit =
+        document.getElementById(
+            "manual-adjustment-product"
+        );
+
+    if (selectProduit) {
+        selectProduit.disabled = true;
+        selectProduit.innerHTML = `
+            <option value="">
+                Chargement des produits...
+            </option>
+        `;
+    }
+
+    /*
+     * Chargement après l'ouverture de la modale.
+     */
     await remplirListeProduitsAjustement();
 
-    modal.classList.add("active");
-    modal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("modal-open");
-
     setTimeout(() => {
-        document.getElementById("manual-adjustment-product")?.focus();
+        document
+            .getElementById(
+                "manual-adjustment-product"
+            )
+            ?.focus();
     }, 50);
 }
-
 
 function fermerModaleAjustementManuel() {
     const modal = document.getElementById("manual-adjustment-modal");
