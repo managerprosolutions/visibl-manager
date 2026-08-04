@@ -1322,3 +1322,61 @@ body.modal-open {
         padding-left: 16px;
     }
 }
+
+/* ==========================================================
+   CORRECTION PIED DE MODALE — AJUSTEMENT MANUEL
+========================================================== */
+
+#manual-adjustment-modal .manual-adjustment-modal-container {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+}
+
+#manual-adjustment-modal #manual-adjustment-form {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+#manual-adjustment-modal .modal-header {
+    flex-shrink: 0;
+}
+
+#manual-adjustment-modal .modal-body {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+#manual-adjustment-modal .modal-footer {
+    position: relative;
+    z-index: 5;
+
+    display: flex;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    gap: 12px;
+
+    padding: 16px 24px;
+
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.06);
+}
+
+@media screen and (max-width: 768px) {
+    #manual-adjustment-modal .manual-adjustment-modal-container {
+        max-height: calc(100vh - 24px);
+    }
+
+    #manual-adjustment-modal .modal-footer {
+        padding: 14px 16px;
+    }
+
+    #manual-adjustment-modal .modal-footer button {
+        flex: 1;
+    }
+}
