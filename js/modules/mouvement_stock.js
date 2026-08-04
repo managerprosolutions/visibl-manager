@@ -69,74 +69,7 @@ function initialiserModuleMouvementsStock() {
 
     initialiserMenuExportMouvementsStock();
     initialiserBoutonNouveauMouvement();
-    initialiserMenuProfilMouvementStock();
-    initialiserDeconnexionMouvementStock();
     chargerMouvementsStock();
-}
-
-
-/* ===========================================================
-   DÉCONNEXION
-=========================================================== */
-
-function initialiserDeconnexionMouvementStock() {
-    const bouton =
-        document.getElementById(
-            "logout-button"
-        );
-
-    if (!bouton) {
-        return;
-    }
-
-    if (bouton.dataset.logoutInitialized === "true") {
-        return;
-    }
-
-    bouton.dataset.logoutInitialized = "true";
-
-    bouton.addEventListener(
-        "click",
-        event => {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const menu =
-                document.getElementById(
-                    "profile-dropdown"
-                );
-
-            const boutonProfil =
-                document.getElementById(
-                    "profile-menu-button"
-                );
-
-            if (menu) {
-                menu.hidden = true;
-            }
-
-            boutonProfil?.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-
-            if (typeof logoutUser === "function") {
-                logoutUser();
-                return;
-            }
-
-            /*
-             * Solution de secours cohérente avec auth.js.
-             */
-            localStorage.removeItem(
-                "visibl_user"
-            );
-
-            window.location.replace(
-                "connexion.html"
-            );
-        }
-    );
 }
 
 
