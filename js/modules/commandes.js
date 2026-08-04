@@ -31,6 +31,12 @@ function initialiserModaleCommande() {
 
     const ouvrir = () => {
         initialiserDateHeureCommande();
+
+        /*
+         * Actualise le stock avant chaque nouvelle commande.
+         */
+        chargerProduitsCommande();
+
         modale.classList.add("active");
         modale.setAttribute("aria-hidden", "false");
         document.body.classList.add("modal-open");
@@ -532,44 +538,243 @@ function initialiserProduitsCommande() {
 
 
 async function chargerProduitsCommande() {
-    const select = document.getElementById("order-product-select");
-    if (!select || typeof apiGet !== "function") return;
+    const select =
+        document.getElementById(
+            "order-product-select"
+        );
+
+    if (
+        !select ||
+        typeof apiGet !== "function"
+    ) {
+        return;
+    }
+
+    const valeurActuelle =
+        String(select.value || "").trim();
 
     select.disabled = true;
-    select.innerHTML = '<option value="">Chargement des produits...</option>';
+    select.innerHTML =
+        '<option value="">Chargement des produits et du stock...</option>';
+
+    afficherStockProduitCommande(0, false);
 
     try {
-        const resultat = await apiGet("getProduits");
-        if (!resultat?.success) {
-            throw new Error(resultat?.message || "Impossible de charger les produits.");
+        /*
+         * Les informations commerciales viennent de getProduits
+         * et le stock officiel vient exclusivement de getStock.
+         */
+        const [
+            resultatProduits,
+            resultatStock
+        ] = await Promise.all([
+            apiGet("getProduits"),
+            apiGet("getStock")
+        ]);
+
+        if (!resultatProduits?.success) {
+            throw new Error(
+                resultatProduits?.message ||
+                "Impossible de charger les produits."
+            );
         }
 
-        catalogueProduitsCommande = Array.isArray(resultat.data) ? resultat.data : [];
+        if (!resultatStock?.success) {
+            throw new Error(
+                resultatStock?.message ||
+                "Impossible de charger le stock actuel."
+            );
+        }
 
-        select.innerHTML = '<option value="">Sélectionner un produit</option>';
+        const produits =
+            extraireListeCommande(
+                resultatProduits,
+                "produits"
+            );
+
+        const stocks =
+            extraireListeCommande(
+                resultatStock,
+                "produits"
+            );
+
+        const stockParProduit = new Map();
+
+        stocks.forEach(element => {
+            const id = obtenirIdProduitCommande(
+                element
+            );
+
+            if (!id) {
+                return;
+            }
+
+            stockParProduit.set(
+                id,
+                obtenirStockProduit(element)
+            );
+        });
+
+        catalogueProduitsCommande =
+            produits.map(produit => {
+                const id =
+                    obtenirIdProduitCommande(
+                        produit
+                    );
+
+                return {
+                    ...produit,
+
+                    /*
+                     * Cette propriété écrase toute ancienne
+                     * quantité présente dans la feuille Produits.
+                     */
+                    stockDisponible:
+                        stockParProduit.has(id)
+                            ? stockParProduit.get(id)
+                            : 0
+                };
+            });
+
+        select.innerHTML =
+            '<option value="">Sélectionner un produit</option>';
 
         catalogueProduitsCommande
             .filter(produit => {
-                const statut = String(produit["Statut"] || produit.statut || "").toLowerCase();
-                return !statut || statut === "actif";
-            })
-            .sort((a, b) => obtenirNomProduit(a).localeCompare(obtenirNomProduit(b), "fr", { sensitivity: "base" }))
-            .forEach(produit => {
-                const id = String(produit["ID Produit"] || produit.idProduit || "").trim();
-                if (!id) return;
+                const statut = String(
+                    produit["Statut"] ||
+                    produit.statut ||
+                    ""
+                )
+                    .trim()
+                    .toLowerCase();
 
-                const option = document.createElement("option");
+                return (
+                    !statut ||
+                    statut === "actif"
+                );
+            })
+            .sort((a, b) =>
+                obtenirNomProduit(a)
+                    .localeCompare(
+                        obtenirNomProduit(b),
+                        "fr",
+                        { sensitivity: "base" }
+                    )
+            )
+            .forEach(produit => {
+                const id =
+                    obtenirIdProduitCommande(
+                        produit
+                    );
+
+                if (!id) {
+                    return;
+                }
+
+                const stock =
+                    obtenirStockProduit(
+                        produit
+                    );
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
                 option.value = id;
-                option.textContent = obtenirNomProduit(produit) || id;
-                option.dataset.stock = String(obtenirStockProduit(produit));
+                option.textContent =
+                    obtenirNomProduit(produit) ||
+                    id;
+
+                option.dataset.stock =
+                    String(stock);
+
                 select.appendChild(option);
             });
+
+        if (
+            valeurActuelle &&
+            Array.from(select.options).some(
+                option =>
+                    option.value ===
+                    valeurActuelle
+            )
+        ) {
+            select.value =
+                valeurActuelle;
+
+            mettreAJourPrixProduitSelectionne();
+        }
+
     } catch (error) {
-        console.error("Erreur de chargement des produits :", error);
-        select.innerHTML = '<option value="">Impossible de charger les produits</option>';
+        console.error(
+            "Erreur de chargement des produits et du stock :",
+            error
+        );
+
+        catalogueProduitsCommande = [];
+
+        select.innerHTML =
+            '<option value="">Impossible de charger les produits</option>';
+
+        afficherStockProduitCommande(
+            0,
+            false
+        );
+
+        afficherMessageCommande(
+            error.message ||
+            "Impossible de charger le stock actuel.",
+            "error"
+        );
+
     } finally {
         select.disabled = false;
     }
+}
+
+
+function extraireListeCommande(
+    resultat,
+    nomCollection = ""
+) {
+    if (Array.isArray(resultat?.data)) {
+        return resultat.data;
+    }
+
+    if (
+        nomCollection &&
+        Array.isArray(
+            resultat?.data?.[nomCollection]
+        )
+    ) {
+        return resultat.data[nomCollection];
+    }
+
+    if (
+        nomCollection &&
+        Array.isArray(
+            resultat?.[nomCollection]
+        )
+    ) {
+        return resultat[nomCollection];
+    }
+
+    return [];
+}
+
+
+function obtenirIdProduitCommande(
+    produit
+) {
+    return String(
+        produit?.["ID Produit"] ||
+        produit?.idProduit ||
+        produit?.["Identifiant"] ||
+        produit?.identifiant ||
+        ""
+    ).trim();
 }
 
 
@@ -578,6 +783,12 @@ function obtenirNomProduit(produit) {
         produit["Désignation"] ||
         produit.designation ||
         produit["Nom Produit"] ||
+        produit.nomProduit ||
+        produit["Produit"] ||
+        produit.produit ||
+        produit["Nom"] ||
+        produit.nom ||
+        produit.idProduit ||
         ""
     ).trim();
 }
@@ -606,10 +817,22 @@ function obtenirStockProduit(produit) {
 }
 
 function obtenirProduitSelectionneCommande() {
-    const idProduit = document.getElementById("order-product-select")?.value || "";
-    return catalogueProduitsCommande.find(item =>
-        String(item["ID Produit"] || item.idProduit || "") === String(idProduit)
-    ) || null;
+    const idProduit =
+        document
+            .getElementById(
+                "order-product-select"
+            )
+            ?.value || "";
+
+    return (
+        catalogueProduitsCommande.find(
+            item =>
+                obtenirIdProduitCommande(
+                    item
+                ) === String(idProduit)
+        ) ||
+        null
+    );
 }
 
 function afficherStockProduitCommande(stock, produitSelectionne = true) {
@@ -701,9 +924,13 @@ function ajouterProduitCommande() {
         return;
     }
 
-    const produit = catalogueProduitsCommande.find(item =>
-        String(item["ID Produit"] || item.idProduit || "") === String(idProduit)
-    );
+    const produit =
+        catalogueProduitsCommande.find(
+            item =>
+                obtenirIdProduitCommande(
+                    item
+                ) === String(idProduit)
+        );
 
     if (!produit) {
         afficherMessageCommande("Produit introuvable.", "error");
@@ -719,7 +946,7 @@ function ajouterProduitCommande() {
 
     if (quantite > stockDisponible) {
         afficherMessageCommande(
-            `La quantité demandée (${quantite}) dépasse le stock disponible (${stockDisponible}).`,
+            `Stock insuffisant : ${stockDisponible} unité${stockDisponible > 1 ? "s" : ""} disponible${stockDisponible > 1 ? "s" : ""}, ${quantite} demandée${quantite > 1 ? "s" : ""}. Il manque ${quantite - stockDisponible} unité${quantite - stockDisponible > 1 ? "s" : ""}.`,
             "error"
         );
         return;
