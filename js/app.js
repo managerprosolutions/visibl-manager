@@ -23,36 +23,176 @@ document.addEventListener("click", (e) => {
     }
 });
 
-// ===== PROFILE MENU DROPDOWN =====
+// ===== PROFILE MENU DROPDOWN GLOBAL =====
 
-const profileBtn = document.querySelector(".profile-menu .icon-btn");
-const profileMenu = document.querySelector(".profile-menu");
+const profileBtn =
+    document.getElementById(
+        "profile-menu-button"
+    ) ||
+    document.querySelector(
+        ".profile-menu .icon-btn"
+    );
+
+const profileMenu =
+    document.querySelector(
+        ".profile-menu"
+    );
+
+const profileDropdown =
+    document.getElementById(
+        "profile-dropdown"
+    );
+
+
+function fermerMenuProfil() {
+    if (profileDropdown) {
+        profileDropdown.hidden = true;
+    }
+
+    if (profileMenu) {
+        profileMenu.classList.remove(
+            "active"
+        );
+    }
+
+    profileBtn?.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+}
+
+
+function ouvrirOuFermerMenuProfil(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    /*
+     * Ferme la recherche mobile si elle existe.
+     */
+    if (
+        window.innerWidth <= 768 &&
+        typeof searchContainer !== "undefined" &&
+        searchContainer
+    ) {
+        searchContainer.classList.remove(
+            "active"
+        );
+    }
+
+    /*
+     * Ferme le panneau de notifications.
+     */
+    const notificationPanel =
+        document.getElementById(
+            "notification-panel"
+        );
+
+    const notificationButton =
+        document.getElementById(
+            "notification-button"
+        );
+
+    if (notificationPanel) {
+        notificationPanel.setAttribute(
+            "hidden",
+            ""
+        );
+    }
+
+    notificationButton?.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+
+    /*
+     * Pages utilisant l'attribut hidden.
+     */
+    if (profileDropdown) {
+        const doitOuvrir =
+            profileDropdown.hidden;
+
+        profileDropdown.hidden =
+            !doitOuvrir;
+
+        profileBtn.setAttribute(
+            "aria-expanded",
+            String(doitOuvrir)
+        );
+
+        return;
+    }
+
+    /*
+     * Compatibilité avec les anciennes pages.
+     */
+    if (profileMenu) {
+        const estOuvert =
+            profileMenu.classList.toggle(
+                "active"
+            );
+
+        profileBtn.setAttribute(
+            "aria-expanded",
+            String(estOuvert)
+        );
+    }
+}
+
 
 if (profileBtn) {
-    profileBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-
-        // Sur mobile, fermer la recherche si elle existe
-        if (window.innerWidth <= 768 && searchContainer) {
-            searchContainer.classList.remove("active");
-        }
-
-        const notificationPanel = document.getElementById("notification-panel");
-
-        if (notificationPanel) {
-            notificationPanel.setAttribute("hidden", "");
-        }
-
-        profileMenu.classList.toggle("active");
-    });
-
-    // Fermer le menu en cliquant ailleurs
-    document.addEventListener("click", (e) => {
-        if (!profileMenu.contains(e.target)) {
-            profileMenu.classList.remove("active");
-        }
-    });
+    profileBtn.addEventListener(
+        "click",
+        ouvrirOuFermerMenuProfil
+    );
 }
+
+
+profileDropdown?.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
+    }
+);
+
+
+profileMenu?.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
+    }
+);
+
+
+document.addEventListener(
+    "click",
+    event => {
+        if (
+            profileBtn?.contains(
+                event.target
+            ) ||
+            profileDropdown?.contains(
+                event.target
+            ) ||
+            profileMenu?.contains(
+                event.target
+            )
+        ) {
+            return;
+        }
+
+        fermerMenuProfil();
+    }
+);
+
+
+document.addEventListener(
+    "keydown",
+    event => {
+        if (event.key === "Escape") {
+            fermerMenuProfil();
+        }
+    }
+);
 
 // ===== ACTIVE NAV LINK =====
 
