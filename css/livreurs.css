@@ -524,18 +524,30 @@
 }
 
 .modal {
+    display: flex;
     width: min(980px, 100%);
     max-height: calc(100vh - 48px);
+    flex-direction: column;
     overflow: hidden;
     background: #ffffff;
     border-radius: 16px;
     box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
 }
 
-.driver-modal form {
+.driver-modal {
     display: flex;
+    width: min(1100px, 95vw);
     max-height: calc(100vh - 48px);
     flex-direction: column;
+    overflow: hidden;
+}
+
+.driver-modal form {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .modal-header {
@@ -584,12 +596,35 @@
 
 .modal-body {
     min-height: 0;
+    flex: 1;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 22px 24px;
     background: #f8fafc;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .modal-footer {
+    position: relative;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -598,7 +633,7 @@
     padding: 16px 24px;
     background: #ffffff;
     border-top: 1px solid #e5e7eb;
-    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.06);
 }
 
 .form-section {
@@ -966,7 +1001,13 @@ body.modal-open {
         padding: 12px;
     }
 
-    .modal {
+    .modal,
+    .driver-modal {
+        width: 100%;
+        max-height: calc(100vh - 24px);
+    }
+
+    .driver-modal form {
         max-height: calc(100vh - 24px);
     }
 
@@ -988,6 +1029,10 @@ body.modal-open {
     .modal-footer {
         padding-right: 16px;
         padding-left: 16px;
+    }
+
+    .modal-footer {
+        flex-shrink: 0;
     }
 
     .modal-footer button {
