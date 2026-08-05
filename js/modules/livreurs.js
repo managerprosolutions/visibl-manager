@@ -542,20 +542,6 @@ async function enregistrerLivreur(
 ) {
     event.preventDefault();
 
-    if (
-        event.currentTarget
-            ?.dataset
-            ?.processing ===
-        "true"
-    ) {
-        return;
-    }
-
-    if (event.currentTarget) {
-        event.currentTarget.dataset.processing =
-            "true";
-    }
-
     const formulaire =
         document.getElementById(
             "driver-form"
@@ -567,6 +553,13 @@ async function enregistrerLivreur(
         );
 
     if (!formulaire) {
+        return;
+    }
+
+    if (
+        formulaire.dataset.processing ===
+        "true"
+    ) {
         return;
     }
 
@@ -587,6 +580,14 @@ async function enregistrerLivreur(
         );
         return;
     }
+
+    /*
+     * Le verrou est activé uniquement après
+     * toutes les validations. Ainsi, une erreur
+     * de formulaire ne bloque pas les clics suivants.
+     */
+    formulaire.dataset.processing =
+        "true";
 
     const donnees = {
         idLivreur:
@@ -757,10 +758,8 @@ async function enregistrerLivreur(
         );
 
     } finally {
-        if (event.currentTarget) {
-            event.currentTarget.dataset.processing =
-                "false";
-        }
+        formulaire.dataset.processing =
+            "false";
 
         if (bouton) {
             bouton.disabled = false;
