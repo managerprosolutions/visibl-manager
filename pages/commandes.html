@@ -566,9 +566,84 @@
                             <section class="form-section">
                                 <div class="form-section-header"><span class="form-section-icon">🚚</span><div><h3>Livraison et paiement prévu</h3><p>Livreur, destination et moyen de règlement</p></div></div>
                                 <div class="form-grid">
-                                    <div class="form-group"><label for="order-delivery-person">Livreur</label><select id="order-delivery-person" name="idLivreur"><option value="">Aucun livreur affecté</option></select></div>
-                                    <div class="form-group"><label for="order-delivery-zone">Zone de livraison</label><input type="text" id="order-delivery-zone" name="zoneLivraison" placeholder="Exemple : Cocody"></div>
-                                    <div class="form-group form-group-full"><label for="order-delivery-address">Adresse de livraison</label><textarea id="order-delivery-address" name="adresseLivraison" rows="3" placeholder="Adresse complète de livraison"></textarea></div>
+                                    <div class="form-group">
+                                        <label for="order-delivery-commune">
+                                            Commune de livraison
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="order-delivery-commune"
+                                            name="communeLivraison"
+                                            required
+                                        >
+                                            <option value="">Sélectionner une commune</option>
+                                            <option value="Abobo">Abobo</option>
+                                            <option value="Adjamé">Adjamé</option>
+                                            <option value="Attécoubé">Attécoubé</option>
+                                            <option value="Bingerville">Bingerville</option>
+                                            <option value="Cocody">Cocody</option>
+                                            <option value="Koumassi">Koumassi</option>
+                                            <option value="Marcory">Marcory</option>
+                                            <option value="Plateau">Plateau</option>
+                                            <option value="Port-Bouët">Port-Bouët</option>
+                                            <option value="Songon">Songon</option>
+                                            <option value="Treichville">Treichville</option>
+                                            <option value="Yopougon">Yopougon</option>
+                                        </select>
+
+                                        <small class="form-help">
+                                            La commune sélectionnée filtre automatiquement les livreurs actifs.
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-delivery-zone">
+                                            Zone / quartier de livraison
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="order-delivery-zone"
+                                            name="zoneLivraison"
+                                            placeholder="Exemple : Riviera 2, Angré, Maroc..."
+                                        >
+                                    </div>
+
+                                    <div class="form-group form-group-full">
+                                        <label for="order-delivery-address">
+                                            Adresse précise de livraison
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <textarea
+                                            id="order-delivery-address"
+                                            name="adresseLivraison"
+                                            rows="3"
+                                            required
+                                            placeholder="Rue, lot, immeuble, repère ou autres indications..."
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="form-group form-group-full">
+                                        <label for="order-delivery-person">
+                                            Livreur
+                                        </label>
+
+                                        <select
+                                            id="order-delivery-person"
+                                            name="idLivreur"
+                                        >
+                                            <option value="">
+                                                Sélectionnez d'abord une commune
+                                            </option>
+                                        </select>
+
+                                        <small class="form-help">
+                                            Seuls les livreurs actifs couvrant la commune choisie sont proposés.
+                                            La commande peut toutefois être enregistrée sans livreur.
+                                        </small>
+                                    </div>
                                     <div class="form-group"><label for="order-delivery-contact">Contact de livraison</label><input type="tel" id="order-delivery-contact" name="contactLivraison" placeholder="07 00 00 00 00"></div>
                                     <div class="form-group"><label for="order-delivery-date">Date de livraison prévue</label><input type="date" id="order-delivery-date" name="dateLivraisonPrevue"></div>
                                     <div class="form-group"><label for="order-payment-method">Mode de paiement prévu</label><select id="order-payment-method" name="modePaiementPrevu"><option value="">Sélectionner</option><option value="especes">Espèces</option><option value="mobile-money">Mobile Money</option><option value="carte-bancaire">Carte bancaire</option><option value="virement">Virement</option><option value="cheque">Chèque</option><option value="credit">Crédit</option></select></div>
