@@ -542,6 +542,20 @@ async function enregistrerLivreur(
 ) {
     event.preventDefault();
 
+    if (
+        event.currentTarget
+            ?.dataset
+            ?.processing ===
+        "true"
+    ) {
+        return;
+    }
+
+    if (event.currentTarget) {
+        event.currentTarget.dataset.processing =
+            "true";
+    }
+
     const formulaire =
         document.getElementById(
             "driver-form"
@@ -703,7 +717,31 @@ async function enregistrerLivreur(
             );
         }
 
-        await chargerLivreurs();
+        const livreurSauvegarde =
+            resultat.data ||
+            {
+                ...donnees,
+                idLivreur:
+                    donnees.idLivreur ||
+                    resultat.idLivreur ||
+                    "",
+                nombreLivraisons: 0,
+                montantTotalEncaisse: 0,
+                ecartTotal: 0,
+                dateAjout:
+                    new Date()
+                        .toISOString()
+                        .slice(0, 10),
+                derniereLivraison: ""
+            };
+
+        mettreAJourLivreurLocal(
+            livreurSauvegarde,
+            Boolean(
+                livreurEnModificationId
+            )
+        );
+
         fermerModaleLivreur();
 
     } catch (error) {
@@ -719,6 +757,11 @@ async function enregistrerLivreur(
         );
 
     } finally {
+        if (event.currentTarget) {
+            event.currentTarget.dataset.processing =
+                "false";
+        }
+
         if (bouton) {
             bouton.disabled = false;
             bouton.textContent =
@@ -915,7 +958,9 @@ function synchroniserRechercheLivreurs(
 }
 
 
-function appliquerFiltresLivreurs() {
+function appliquerFiltresLivreurs(
+    conserverPage = false
+) {
     const recherche =
         normaliserTexteLivreurFrontend(
             obtenirValeurLivreur(
@@ -1000,7 +1045,10 @@ function appliquerFiltresLivreurs() {
             }
         );
 
-    pageLivreursActuelle = 1;
+    if (!conserverPage) {
+        pageLivreursActuelle = 1;
+    }
+
     afficherTableauLivreurs();
 }
 
@@ -1535,8 +1583,15 @@ async function confirmerSuppressionLivreur() {
             );
         }
 
+        const idSupprime =
+            livreurASupprimer
+                .idLivreur;
+
+        retirerLivreurLocal(
+            idSupprime
+        );
+
         fermerModaleSuppressionLivreur();
-        await chargerLivreurs();
 
     } catch (error) {
         console.error(
@@ -1562,6 +1617,67 @@ async function confirmerSuppressionLivreur() {
                 "Supprimer";
         }
     }
+}
+
+
+/* ===========================================================
+   MISE À JOUR LOCALE RAPIDE
+=========================================================== */
+
+function mettreAJourLivreurLocal(
+    livreur,
+    estModification = false
+) {
+    if (
+        !livreur ||
+        !livreur.idLivreur
+    ) {
+        return;
+    }
+
+    const index =
+        livreursCharges.findIndex(
+            element =>
+                String(
+                    element.idLivreur
+                ) ===
+                String(
+                    livreur.idLivreur
+                )
+        );
+
+    if (index >= 0) {
+        livreursCharges[index] = {
+            ...livreursCharges[index],
+            ...livreur
+        };
+    } else {
+        livreursCharges.unshift(
+            livreur
+        );
+    }
+
+    mettreAJourKPILivreurs();
+    appliquerFiltresLivreurs(true);
+}
+
+
+function retirerLivreurLocal(
+    idLivreur
+) {
+    livreursCharges =
+        livreursCharges.filter(
+            livreur =>
+                String(
+                    livreur.idLivreur
+                ) !==
+                String(
+                    idLivreur
+                )
+        );
+
+    mettreAJourKPILivreurs();
+    appliquerFiltresLivreurs(true);
 }
 
 
