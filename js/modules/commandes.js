@@ -559,7 +559,7 @@ function initialiserListeCommandes() {
     [
         "order-status-filter",
         "order-payment-status-filter",
-        "order-delivery-status-filter"
+        "order-commune-filter"
     ].forEach(id => {
         document
             .getElementById(id)
@@ -902,6 +902,7 @@ async function chargerCommandes() {
                 "commandes"
             );
 
+        actualiserFiltreCommunesCommandes();
         mettreAJourKPICommandes();
         appliquerFiltresCommandes();
 
@@ -952,6 +953,7 @@ function mettreAJourCommandeLocale(commande) {
         );
     }
 
+    actualiserFiltreCommunesCommandes();
     mettreAJourKPICommandes();
     appliquerFiltresCommandes(true);
 }
@@ -965,6 +967,7 @@ function retirerCommandeLocale(idCommande) {
                 String(idCommande)
         );
 
+    actualiserFiltreCommunesCommandes();
     mettreAJourKPICommandes();
     appliquerFiltresCommandes(true);
 }
@@ -981,6 +984,11 @@ function appliquerFiltresCommandes(
     const statut =
         normaliserTexteCommande(
             obtenirValeurCommande("order-status-filter")
+        );
+
+    const commune =
+        normaliserTexteCommande(
+            obtenirValeurCommande("order-commune-filter")
         );
 
     commandesFiltrees =
@@ -1016,9 +1024,16 @@ function appliquerFiltresCommandes(
                         commande.statut
                     ) === statut;
 
+                const correspondCommune =
+                    !commune ||
+                    normaliserTexteCommande(
+                        commande.communeLivraison
+                    ) === commune;
+
                 return (
                     correspondRecherche &&
-                    correspondStatut
+                    correspondStatut &&
+                    correspondCommune
                 );
             }
         );
@@ -1031,12 +1046,97 @@ function appliquerFiltresCommandes(
 }
 
 
+
+function actualiserFiltreCommunesCommandes() {
+    const select =
+        document.getElementById(
+            "order-commune-filter"
+        );
+
+    if (!select) {
+        return;
+    }
+
+    const valeurActuelle =
+        String(
+            select.value ||
+            ""
+        ).trim();
+
+    const communes =
+        Array.from(
+            new Set(
+                commandesChargees
+                    .map(
+                        commande =>
+                            String(
+                                commande.communeLivraison ||
+                                ""
+                            ).trim()
+                    )
+                    .filter(Boolean)
+            )
+        )
+            .sort(
+                (a, b) =>
+                    a.localeCompare(
+                        b,
+                        "fr",
+                        {
+                            sensitivity:
+                                "base"
+                        }
+                    )
+            );
+
+    select.innerHTML =
+        '<option value="">Toutes les communes</option>';
+
+    communes.forEach(
+        commune => {
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                commune;
+
+            option.textContent =
+                commune;
+
+            select.appendChild(
+                option
+            );
+        }
+    );
+
+    if (
+        valeurActuelle &&
+        communes.some(
+            commune =>
+                normaliserTexteCommande(
+                    commune
+                ) ===
+                normaliserTexteCommande(
+                    valeurActuelle
+                )
+        )
+    ) {
+        select.value =
+            valeurActuelle;
+    } else {
+        select.value = "";
+    }
+}
+
+
 function reinitialiserFiltresCommandes() {
     [
         "orders-search-input",
         "order-status-filter",
         "order-payment-status-filter",
-        "order-delivery-status-filter"
+        "order-commune-filter"
     ].forEach(
         id => definirValeurCommande(id, "")
     );
