@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,16 +8,28 @@
 
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/livreurs.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
 </head>
 
 <body>
 
 <div class="container">
 
-    <!-- ===== Sidebar ===== -->
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
     <aside id="sidebar" class="sidebar">
 
-        <button id="sidebar-close" class="sidebar-close">
+        <button
+            id="sidebar-close"
+            class="sidebar-close"
+            type="button"
+            aria-label="Fermer le menu"
+        >
             ✖
         </button>
 
@@ -35,7 +46,6 @@
                     </a>
                 </li>
 
-                <!-- ===== Menu Commercial ===== -->
                 <li class="menu-category">
 
                     <a href="#" class="nav-link category-title">
@@ -70,7 +80,11 @@
                         </li>
 
                         <li>
-                            <a href="livreurs.html" class="nav-link">
+                            <a
+                                href="livreurs.html"
+                                class="nav-link active"
+                                aria-current="page"
+                            >
                                 Livreurs
                             </a>
                         </li>
@@ -79,7 +93,6 @@
 
                 </li>
 
-                <!-- ===== Menu Stock et approvisionnement ===== -->
                 <li class="menu-category">
 
                     <a href="#" class="nav-link category-title">
@@ -92,6 +105,18 @@
                         <li>
                             <a href="produits.html" class="nav-link">
                                 Produits
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="stock.html" class="nav-link">
+                                Stock
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="mouvement_stock.html" class="nav-link">
+                                Mouvements de stock
                             </a>
                         </li>
 
@@ -117,7 +142,6 @@
 
                 </li>
 
-                <!-- ===== Menu Finance ===== -->
                 <li class="menu-category">
 
                     <a href="#" class="nav-link category-title">
@@ -146,7 +170,7 @@
                         </li>
 
                         <li>
-                            <a href="comptabilité.html" class="nav-link">
+                            <a href="comptabilite.html" class="nav-link">
                                 Comptabilité
                             </a>
                         </li>
@@ -172,15 +196,25 @@
 
     </aside>
 
-    <!-- ===== Contenu principal ===== -->
+
+    <!-- =====================================================
+         CONTENU PRINCIPAL
+    ====================================================== -->
     <main class="main-content">
 
-        <!-- ===== Header ===== -->
+        <!-- =================================================
+             HEADER
+        ================================================== -->
         <header class="header">
 
             <div class="header-left">
 
-                <button id="sidebar-toggle" class="sidebar-toggle">
+                <button
+                    id="sidebar-toggle"
+                    class="sidebar-toggle"
+                    type="button"
+                    aria-label="Ouvrir le menu"
+                >
                     ☰
                 </button>
 
@@ -196,21 +230,30 @@
 
                 <div class="search-box">
 
-                    <!-- Icône visible sur mobile -->
-                    <button class="icon-btn" id="mobile-search-btn">
+                    <button
+                        class="icon-btn"
+                        id="mobile-search-btn"
+                        type="button"
+                        aria-label="Afficher la recherche"
+                    >
                         🔍
                     </button>
 
-                    <!-- Barre de recherche -->
                     <div class="search-container">
 
                         <input
-                            type="text"
+                            type="search"
                             class="search-input"
+                            id="header-drivers-search-input"
                             placeholder="Rechercher un livreur..."
                         >
 
-                        <button class="search-btn">
+                        <button
+                            class="search-btn"
+                            id="header-drivers-search-btn"
+                            type="button"
+                            aria-label="Lancer la recherche"
+                        >
                             🔍
                         </button>
 
@@ -220,30 +263,83 @@
 
                 <div class="header-icons">
 
-                    <button class="icon-btn notifications">
-                        🔔
-                        <span class="notification-badge">3</span>
-                    </button>
+                    <div class="notification-menu">
+
+                        <button
+                            id="notification-button"
+                            class="icon-btn notifications"
+                            type="button"
+                            aria-label="Afficher les notifications"
+                            aria-expanded="false"
+                        >
+                            🔔
+                            <span class="notification-badge">3</span>
+                        </button>
+
+                        <div
+                            id="notification-panel"
+                            class="notification-panel"
+                            hidden
+                        >
+
+                            <div class="notification-panel-header">
+                                <h3>Notifications</h3>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">🚚</span>
+                                <div>
+                                    <strong>Nouveau livreur</strong>
+                                    <p>Un nouveau livreur a été enregistré.</p>
+                                    <small>Il y a quelques minutes</small>
+                                </div>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">📦</span>
+                                <div>
+                                    <strong>Charge élevée</strong>
+                                    <p>Un livreur approche de sa capacité maximale.</p>
+                                    <small>Aujourd’hui</small>
+                                </div>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">⚠️</span>
+                                <div>
+                                    <strong>Écart d’encaissement</strong>
+                                    <p>Un écart doit être vérifié.</p>
+                                    <small>Aujourd’hui</small>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
 
                     <div class="profile-menu">
 
-                        <button class="icon-btn">
+                        <button
+                            class="icon-btn"
+                            type="button"
+                            aria-label="Afficher le menu du profil"
+                        >
                             👤
                         </button>
 
                         <div class="dropdown-menu">
 
-                            <a href="#">
-                                Mon profil
-                            </a>
-
-                            <a href="#">
-                                Paramètres
+                            <a href="moncompte.html">
+                                Mon compte
                             </a>
 
                             <hr>
 
-                            <a href="#" class="logout">
+                            <a
+                                href="#"
+                                class="logout"
+                                id="logout-button"
+                            >
                                 Déconnexion
                             </a>
 
@@ -257,348 +353,305 @@
 
         </header>
 
-        <!-- ===== Contenu de la page ===== -->
+
+        <!-- =================================================
+             PAGE LIVREURS
+        ================================================== -->
         <section class="content">
 
-            <!-- ===== Présentation ===== -->
             <div class="welcome-section">
 
-                <h2>Livreurs</h2>
+                <div>
+                    <h2>Gestion des livreurs</h2>
 
-                <p>
-                    Enregistrez, consultez et gérez les livreurs chargés
-                    d'effectuer les livraisons de votre boutique.
-                </p>
+                    <p>
+                        Enregistrez, consultez et gérez les livreurs,
+                        leurs zones, leur capacité et leurs performances.
+                    </p>
+                </div>
 
-            </div>
-
-            <!-- ===== Bouton nouveau livreur ===== -->
-            <div class="sales-toolbar">
-
-                <button class="btn-primary" id="new-driver-btn">
+                <button
+                    class="btn-primary"
+                    id="new-driver-btn"
+                    type="button"
+                >
                     ➕ Nouveau livreur
                 </button>
 
             </div>
 
-            <!-- ===== Recherche et filtres ===== -->
-            <div class="sales-filters">
 
-                <div class="sales-search">
+            <!-- =================================================
+                 KPI
+            ================================================== -->
+            <div class="kpi-grid drivers-kpi-grid">
+
+                <article class="kpi-card">
+
+                    <div class="kpi-card-header">
+                        <span class="kpi-icon">🚚</span>
+                        <span class="kpi-title">Total livreurs</span>
+                    </div>
+
+                    <h3 class="kpi-value" id="total-drivers-value">
+                        0
+                    </h3>
+
+                    <p class="kpi-description">
+                        Livreurs enregistrés
+                    </p>
+
+                </article>
+
+                <article class="kpi-card">
+
+                    <div class="kpi-card-header">
+                        <span class="kpi-icon">✅</span>
+                        <span class="kpi-title">Livreurs actifs</span>
+                    </div>
+
+                    <h3 class="kpi-value" id="active-drivers-value">
+                        0
+                    </h3>
+
+                    <p class="kpi-description" id="active-drivers-description">
+                        0 % des livreurs
+                    </p>
+
+                </article>
+
+                <article class="kpi-card">
+
+                    <div class="kpi-card-header">
+                        <span class="kpi-icon">📦</span>
+                        <span class="kpi-title">Livraisons réalisées</span>
+                    </div>
+
+                    <h3 class="kpi-value" id="total-deliveries-value">
+                        0
+                    </h3>
+
+                    <p class="kpi-description">
+                        Total cumulé
+                    </p>
+
+                </article>
+
+                <article class="kpi-card">
+
+                    <div class="kpi-card-header">
+                        <span class="kpi-icon">💰</span>
+                        <span class="kpi-title">Montant encaissé</span>
+                    </div>
+
+                    <h3 class="kpi-value" id="total-collected-value">
+                        0 FCFA
+                    </h3>
+
+                    <p class="kpi-description">
+                        Total encaissé par les livreurs
+                    </p>
+
+                </article>
+
+            </div>
+
+
+            <!-- =================================================
+                 BARRE D'ACTIONS
+            ================================================== -->
+            <div class="drivers-toolbar">
+
+                <div class="toolbar-left">
+
+                    <button
+                        class="btn-primary"
+                        id="new-driver-toolbar-btn"
+                        type="button"
+                    >
+                        ➕ Nouveau livreur
+                    </button>
+
+                    <button
+                        class="btn-secondary"
+                        id="export-drivers-btn"
+                        type="button"
+                    >
+                        📤 Exporter CSV
+                    </button>
+
+                    <button
+                        class="btn-secondary"
+                        id="print-drivers-btn"
+                        type="button"
+                    >
+                        🖨️ Imprimer
+                    </button>
+
+                    <button
+                        class="btn-secondary"
+                        id="refresh-drivers-btn"
+                        type="button"
+                    >
+                        🔄 Actualiser
+                    </button>
+
+                </div>
+
+                <div class="toolbar-right">
+
+                    <span class="driver-count">
+                        <strong id="filtered-driver-count">0</strong>
+                        livreur(s) affiché(s)
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 FILTRES
+            ================================================== -->
+            <div class="drivers-filters">
+
+                <div class="drivers-search">
+
+                    <span class="search-icon">🔍</span>
 
                     <input
-                        type="text"
+                        type="search"
                         id="drivers-search-input"
-                        placeholder="Rechercher par nom, téléphone ou zone..."
+                        placeholder="Rechercher par nom, téléphone, zone..."
                     >
 
                 </div>
 
-                <!-- Filtre statut -->
                 <select id="driver-status-filter">
-
-                    <option value="">
-                        Tous les statuts
-                    </option>
-
-                    <option value="disponible">
-                        Disponible
-                    </option>
-
-                    <option value="en-livraison">
-                        En livraison
-                    </option>
-
-                    <option value="indisponible">
-                        Indisponible
-                    </option>
-
-                    <option value="suspendu">
-                        Suspendu
-                    </option>
-
-                    <option value="inactif">
-                        Inactif
-                    </option>
-
+                    <option value="">Tous les statuts</option>
+                    <option value="actif">Actif</option>
+                    <option value="inactif">Inactif</option>
+                    <option value="suspendu">Suspendu</option>
+                    <option value="archive">Archivé</option>
                 </select>
 
-                <!-- Filtre type de véhicule -->
-                <select id="vehicle-type-filter">
-
-                    <option value="">
-                        Tous les véhicules
-                    </option>
-
-                    <option value="moto">
-                        Moto
-                    </option>
-
-                    <option value="velo">
-                        Vélo
-                    </option>
-
-                    <option value="tricycle">
-                        Tricycle
-                    </option>
-
-                    <option value="voiture">
-                        Voiture
-                    </option>
-
-                    <option value="camionnette">
-                        Camionnette
-                    </option>
-
-                    <option value="sans-vehicule">
-                        Sans véhicule
-                    </option>
-
+                <select id="driver-type-filter">
+                    <option value="">Tous les types</option>
+                    <option value="interne">Interne</option>
+                    <option value="independant">Indépendant</option>
+                    <option value="prestataire">Prestataire</option>
+                    <option value="partenaire">Partenaire</option>
                 </select>
 
-                <!-- Filtre zone -->
-                <select id="driver-zone-filter">
-
-                    <option value="">
-                        Toutes les zones
-                    </option>
-
-                    <option value="abobo">
-                        Abobo
-                    </option>
-
-                    <option value="adjame">
-                        Adjamé
-                    </option>
-
-                    <option value="attecoube">
-                        Attécoubé
-                    </option>
-
-                    <option value="cocody">
-                        Cocody
-                    </option>
-
-                    <option value="koumassi">
-                        Koumassi
-                    </option>
-
-                    <option value="marcory">
-                        Marcory
-                    </option>
-
-                    <option value="plateau">
-                        Plateau
-                    </option>
-
-                    <option value="port-bouet">
-                        Port-Bouët
-                    </option>
-
-                    <option value="treichville">
-                        Treichville
-                    </option>
-
-                    <option value="yopougon">
-                        Yopougon
-                    </option>
-
-                    <option value="toutes-zones">
-                        Toutes les zones
-                    </option>
-
+                <select id="driver-transport-filter">
+                    <option value="">Tous les transports</option>
+                    <option value="a-pied">À pied</option>
+                    <option value="velo">Vélo</option>
+                    <option value="moto">Moto</option>
+                    <option value="tricycle">Tricycle</option>
+                    <option value="voiture">Voiture</option>
+                    <option value="camionnette">Camionnette</option>
                 </select>
+
+                <button
+                    class="btn-filter-reset"
+                    id="reset-driver-filters"
+                    type="button"
+                >
+                    Effacer les filtres
+                </button>
 
             </div>
 
-            <!-- ===== Tableau des livreurs ===== -->
-            <div class="sales-table-container">
 
-                <table class="sales-table">
+            <!-- =================================================
+                 TABLEAU
+            ================================================== -->
+            <div class="drivers-table-container">
 
-                    <thead>
+                <div class="table-responsive">
 
-                        <tr>
-                            <th>ID Livreur</th>
-                            <th>Nom complet</th>
-                            <th>Téléphone</th>
-                            <th>Véhicule</th>
-                            <th>Immatriculation</th>
-                            <th>Zone</th>
-                            <th>Livraisons</th>
-                            <th>Statut</th>
-                            <th>Actions</th>
-                        </tr>
+                    <table class="drivers-table">
 
-                    </thead>
+                        <thead>
+                            <tr>
+                                <th>ID Livreur</th>
+                                <th>Nom complet</th>
+                                <th>Téléphone</th>
+                                <th>Zones</th>
+                                <th>Type</th>
+                                <th>Transport</th>
+                                <th>Capacité</th>
+                                <th>Livraisons</th>
+                                <th>Montant encaissé</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
 
-                    <tbody id="drivers-table-body">
+                        <tbody id="drivers-table-body">
 
-                        <!-- ===== Exemple livreur 1 ===== -->
-                        <tr>
+                            <tr>
+                                <td colspan="11" class="empty-table">
+                                    Chargement des livreurs...
+                                </td>
+                            </tr>
 
-                            <td>#LVR0001</td>
+                        </tbody>
 
-                            <td>Ali Koné</td>
+                    </table>
 
-                            <td>07 00 00 00 01</td>
+                </div>
 
-                            <td>Moto</td>
 
-                            <td>AB 1234 CI</td>
+                <div class="table-pagination">
 
-                            <td>Cocody</td>
+                    <div class="pagination-info">
 
-                            <td>28</td>
+                        <span>Afficher</span>
 
-                            <td>
-                                <span class="status-badge status-paid">
-                                    Disponible
-                                </span>
-                            </td>
+                        <select id="drivers-per-page">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
 
-                            <td>
+                        <span>éléments par page</span>
 
-                                <div class="table-actions">
+                    </div>
 
-                                    <button
-                                        class="action-btn view-btn"
-                                        title="Voir le livreur"
-                                    >
-                                        👁
-                                    </button>
+                    <div class="pagination-controls">
 
-                                    <button
-                                        class="action-btn edit-btn"
-                                        title="Modifier le livreur"
-                                    >
-                                        ✏️
-                                    </button>
+                        <button
+                            class="pagination-btn"
+                            id="previous-driver-page-btn"
+                            type="button"
+                        >
+                            ‹
+                        </button>
 
-                                    <button
-                                        class="action-btn delete-btn"
-                                        title="Supprimer le livreur"
-                                    >
-                                        🗑️
-                                    </button>
+                        <span
+                            id="drivers-page-buttons"
+                            class="pagination-controls"
+                        ></span>
 
-                                </div>
+                        <span
+                            class="pagination-summary"
+                            id="drivers-pagination-summary"
+                        ></span>
 
-                            </td>
+                        <button
+                            class="pagination-btn"
+                            id="next-driver-page-btn"
+                            type="button"
+                        >
+                            ›
+                        </button>
 
-                        </tr>
+                    </div>
 
-                        <!-- ===== Exemple livreur 2 ===== -->
-                        <tr>
-
-                            <td>#LVR0002</td>
-
-                            <td>Moussa Traoré</td>
-
-                            <td>05 00 00 00 02</td>
-
-                            <td>Moto</td>
-
-                            <td>CD 5678 CI</td>
-
-                            <td>Marcory</td>
-
-                            <td>19</td>
-
-                            <td>
-                                <span class="status-badge status-delivery">
-                                    En livraison
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="table-actions">
-
-                                    <button
-                                        class="action-btn view-btn"
-                                        title="Voir le livreur"
-                                    >
-                                        👁
-                                    </button>
-
-                                    <button
-                                        class="action-btn edit-btn"
-                                        title="Modifier le livreur"
-                                    >
-                                        ✏️
-                                    </button>
-
-                                    <button
-                                        class="action-btn delete-btn"
-                                        title="Supprimer le livreur"
-                                    >
-                                        🗑️
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                        <!-- ===== Exemple livreur 3 ===== -->
-                        <tr>
-
-                            <td>#LVR0003</td>
-
-                            <td>Jean Kouassi</td>
-
-                            <td>01 00 00 00 03</td>
-
-                            <td>Tricycle</td>
-
-                            <td>EF 9012 CI</td>
-
-                            <td>Yopougon</td>
-
-                            <td>14</td>
-
-                            <td>
-                                <span class="status-badge status-pending">
-                                    Indisponible
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="table-actions">
-
-                                    <button
-                                        class="action-btn view-btn"
-                                        title="Voir le livreur"
-                                    >
-                                        👁
-                                    </button>
-
-                                    <button
-                                        class="action-btn edit-btn"
-                                        title="Modifier le livreur"
-                                    >
-                                        ✏️
-                                    </button>
-
-                                    <button
-                                        class="action-btn delete-btn"
-                                        title="Supprimer le livreur"
-                                    >
-                                        🗑️
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                    </tbody>
-
-                </table>
+                </div>
 
             </div>
 
@@ -608,8 +661,634 @@
 
 </div>
 
+
+<!-- =========================================================
+     MODALE CRÉATION / MODIFICATION
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="driver-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal driver-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="driver-modal-title"
+    >
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="driver-modal-title">
+                    Nouveau livreur
+                </h2>
+
+                <p>
+                    Renseignez les informations personnelles,
+                    professionnelles et logistiques du livreur.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-driver-modal"
+                aria-label="Fermer"
+            >
+                ✕
+            </button>
+
+        </div>
+
+        <form id="driver-form">
+
+            <div class="modal-body">
+
+                <div
+                    id="driver-form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+                <input
+                    type="hidden"
+                    id="driver-id"
+                    name="idLivreur"
+                >
+
+
+                <section class="form-section">
+
+                    <div class="form-section-header">
+
+                        <span class="form-section-icon">
+                            👤
+                        </span>
+
+                        <div>
+                            <h3>Informations personnelles</h3>
+                            <p>Identité et coordonnées</p>
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="driver-lastname">
+                                Nom <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="driver-lastname"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-firstname">
+                                Prénom <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="driver-firstname"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-phone">
+                                Téléphone <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="driver-phone"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-secondary-phone">
+                                Téléphone secondaire
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="driver-secondary-phone"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-email">
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="driver-email"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-start-date">
+                                Date de début
+                            </label>
+
+                            <input
+                                type="date"
+                                id="driver-start-date"
+                            >
+
+                        </div>
+
+                        <div class="form-group form-group-full">
+
+                            <label for="driver-address">
+                                Adresse
+                            </label>
+
+                            <input
+                                type="text"
+                                id="driver-address"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <section class="form-section">
+
+                    <div class="form-section-header">
+
+                        <span class="form-section-icon">
+                            🗺️
+                        </span>
+
+                        <div>
+                            <h3>Zones de livraison</h3>
+                            <p>
+                                Sélectionnez une ou plusieurs zones
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="zones-grid"
+                        id="driver-zones-group"
+                    >
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Abobo">
+                            <span>Abobo</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Adjamé">
+                            <span>Adjamé</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Attécoubé">
+                            <span>Attécoubé</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Cocody">
+                            <span>Cocody</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Koumassi">
+                            <span>Koumassi</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Marcory">
+                            <span>Marcory</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Plateau">
+                            <span>Plateau</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Port-Bouët">
+                            <span>Port-Bouët</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Treichville">
+                            <span>Treichville</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Yopougon">
+                            <span>Yopougon</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Bingerville">
+                            <span>Bingerville</span>
+                        </label>
+
+                        <label class="zone-option">
+                            <input type="checkbox" value="Songon">
+                            <span>Songon</span>
+                        </label>
+
+                    </div>
+
+                </section>
+
+
+                <section class="form-section">
+
+                    <div class="form-section-header">
+
+                        <span class="form-section-icon">
+                            🛵
+                        </span>
+
+                        <div>
+                            <h3>Informations professionnelles</h3>
+                            <p>Type de livreur, transport et capacité</p>
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="driver-type">
+                                Type de livreur
+                                <span class="required">*</span>
+                            </label>
+
+                            <select id="driver-type" required>
+                                <option value="">Sélectionner</option>
+                                <option value="Interne">Interne</option>
+                                <option value="Indépendant">Indépendant</option>
+                                <option value="Prestataire">Prestataire</option>
+                                <option value="Partenaire">Partenaire</option>
+                            </select>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-transport">
+                                Moyen de transport
+                                <span class="required">*</span>
+                            </label>
+
+                            <select id="driver-transport" required>
+                                <option value="">Sélectionner</option>
+                                <option value="À pied">À pied</option>
+                                <option value="Vélo">Vélo</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Tricycle">Tricycle</option>
+                                <option value="Voiture">Voiture</option>
+                                <option value="Camionnette">Camionnette</option>
+                            </select>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-capacity">
+                                Capacité maximale
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                id="driver-capacity"
+                                min="1"
+                                step="1"
+                                required
+                            >
+
+                            <small class="form-help">
+                                Moto : 20 par défaut.
+                            </small>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-registration">
+                                Immatriculation
+                            </label>
+
+                            <input
+                                type="text"
+                                id="driver-registration"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <section class="form-section">
+
+                    <div class="form-section-header">
+
+                        <span class="form-section-icon">
+                            🪪
+                        </span>
+
+                        <div>
+                            <h3>Pièce d’identité</h3>
+                            <p>Document d’identification du livreur</p>
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="driver-id-type">
+                                Type de pièce
+                            </label>
+
+                            <select id="driver-id-type">
+                                <option value="">Sélectionner</option>
+                                <option value="CNI">CNI</option>
+                                <option value="Passeport">Passeport</option>
+                                <option value="Permis de conduire">
+                                    Permis de conduire
+                                </option>
+                                <option value="Carte consulaire">
+                                    Carte consulaire
+                                </option>
+                                <option value="Autre">Autre</option>
+                            </select>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="driver-id-number">
+                                Numéro de pièce
+                            </label>
+
+                            <input
+                                type="text"
+                                id="driver-id-number"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <section class="form-section">
+
+                    <div class="form-section-header">
+
+                        <span class="form-section-icon">
+                            ⚙️
+                        </span>
+
+                        <div>
+                            <h3>Statut et commentaire</h3>
+                            <p>État administratif du livreur</p>
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="driver-status">
+                                Statut
+                                <span class="required">*</span>
+                            </label>
+
+                            <select id="driver-status" required>
+                                <option value="Actif">Actif</option>
+                                <option value="Inactif">Inactif</option>
+                                <option value="Suspendu">Suspendu</option>
+                                <option value="Archivé">Archivé</option>
+                            </select>
+
+                        </div>
+
+                        <div class="form-group form-group-full">
+
+                            <label for="driver-comment">
+                                Commentaire
+                            </label>
+
+                            <textarea
+                                id="driver-comment"
+                                rows="4"
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-driver-btn"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-driver-btn"
+                >
+                    Enregistrer le livreur
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODALE VOIR LIVREUR
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="view-driver-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal driver-view-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="view-driver-modal-title"
+    >
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="view-driver-modal-title">
+                    Fiche du livreur
+                </h2>
+
+                <p>
+                    Informations complètes et statistiques
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-view-driver-modal"
+            >
+                ✕
+            </button>
+
+        </div>
+
+        <div class="modal-body">
+
+            <div
+                class="driver-details-grid"
+                id="driver-details-content"
+            ></div>
+
+        </div>
+
+        <div class="modal-footer">
+
+            <button
+                type="button"
+                class="btn-secondary"
+                id="close-view-driver-footer"
+            >
+                Fermer
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODALE SUPPRESSION
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="delete-driver-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal confirmation-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-driver-modal-title"
+    >
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="delete-driver-modal-title">
+                    Supprimer le livreur
+                </h2>
+
+                <p>
+                    Cette action est définitive.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="modal-body">
+
+            <p>
+                Voulez-vous vraiment supprimer
+                <strong id="delete-driver-name">
+                    ce livreur
+                </strong>
+                ?
+            </p>
+
+        </div>
+
+        <div class="modal-footer">
+
+            <button
+                type="button"
+                class="btn-secondary"
+                id="cancel-delete-driver-btn"
+            >
+                Annuler
+            </button>
+
+            <button
+                type="button"
+                class="btn-danger"
+                id="confirm-delete-driver-btn"
+            >
+                Supprimer
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div id="toast-container" class="toast-container"></div>
+
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
 <script src="../js/app.js"></script>
+<script src="../js/modules/livreurs.js"></script>
 
 </body>
-
 </html>
