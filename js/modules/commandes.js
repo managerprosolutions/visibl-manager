@@ -4,12 +4,14 @@
 
 let lignesCommande = [];
 let catalogueProduitsCommande = [];
+let catalogueLivreursCommande = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     initialiserModaleCommande();
     initialiserDateHeureCommande();
     initialiserGestionClientsCommande();
     initialiserProduitsCommande();
+    initialiserLivreursCommande();
     initialiserCalculsCommande();
 });
 
@@ -36,6 +38,12 @@ function initialiserModaleCommande() {
          * Actualise le stock avant chaque nouvelle commande.
          */
         chargerProduitsCommande();
+
+        /*
+         * Actualise aussi la liste des livreurs actifs.
+         * Le filtrage visible dépendra de la commune choisie.
+         */
+        chargerLivreursCommande();
 
         modale.classList.add("active");
         modale.setAttribute("aria-hidden", "false");
@@ -509,6 +517,416 @@ function lireValeurClientCommande(client, cles) {
     }
 
     return "";
+}
+
+
+
+/* ===========================================================
+   LIVREURS ET COMMUNE DE LIVRAISON
+=========================================================== */
+
+function initialiserLivreursCommande() {
+    document
+        .getElementById(
+            "order-delivery-commune"
+        )
+        ?.addEventListener(
+            "change",
+            afficherLivreursParCommuneCommande
+        );
+
+    /*
+     * Charge une première fois les livreurs.
+     * Aucun livreur n'est affiché tant qu'une commune
+     * n'a pas été sélectionnée.
+     */
+    chargerLivreursCommande();
+}
+
+
+async function chargerLivreursCommande() {
+    const select =
+        document.getElementById(
+            "order-delivery-person"
+        );
+
+    if (
+        !select ||
+        typeof apiGet !== "function"
+    ) {
+        return;
+    }
+
+    const idActuel =
+        String(
+            select.value ||
+            ""
+        ).trim();
+
+    select.disabled = true;
+    select.innerHTML =
+        '<option value="">Chargement des livreurs...</option>';
+
+    try {
+        const resultat =
+            await apiGet(
+                "getLivreurs"
+            );
+
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de charger les livreurs."
+            );
+        }
+
+        const livreurs =
+            extraireListeCommande(
+                resultat,
+                "livreurs"
+            );
+
+        catalogueLivreursCommande =
+            livreurs.filter(
+                livreur => {
+                    const statut =
+                        normaliserTexteCommande(
+                            livreur.statut ||
+                            livreur["Statut"] ||
+                            ""
+                        );
+
+                    return (
+                        !statut ||
+                        statut === "actif"
+                    );
+                }
+            );
+
+        afficherLivreursParCommuneCommande(
+            idActuel
+        );
+
+    } catch (error) {
+        console.error(
+            "Erreur de chargement des livreurs :",
+            error
+        );
+
+        catalogueLivreursCommande = [];
+
+        select.innerHTML =
+            '<option value="">Impossible de charger les livreurs</option>';
+
+        afficherMessageCommande(
+            error.message ||
+            "Impossible de charger les livreurs.",
+            "error"
+        );
+
+    } finally {
+        select.disabled = false;
+    }
+}
+
+
+function afficherLivreursParCommuneCommande(
+    idAConserver = ""
+) {
+    const select =
+        document.getElementById(
+            "order-delivery-person"
+        );
+
+    const commune =
+        obtenirValeurCommande(
+            "order-delivery-commune"
+        );
+
+    if (!select) {
+        return;
+    }
+
+    const ancienneValeur =
+        typeof idAConserver === "string"
+            ? idAConserver
+            : String(
+                select.value ||
+                ""
+            ).trim();
+
+    select.innerHTML = "";
+
+    const optionVide =
+        document.createElement(
+            "option"
+        );
+
+    optionVide.value = "";
+
+    if (!commune) {
+        optionVide.textContent =
+            "Sélectionnez d'abord une commune";
+
+        select.appendChild(
+            optionVide
+        );
+
+        select.value = "";
+        return;
+    }
+
+    optionVide.textContent =
+        "Aucun livreur affecté";
+
+    select.appendChild(
+        optionVide
+    );
+
+    const communeNormalisee =
+        normaliserTexteCommande(
+            commune
+        );
+
+    const livreursCompatibles =
+        catalogueLivreursCommande
+            .filter(
+                livreur => {
+                    const zones =
+                        obtenirZonesLivreurCommande(
+                            livreur
+                        );
+
+                    return zones.some(
+                        zone => {
+                            const zoneNormalisee =
+                                normaliserTexteCommande(
+                                    zone
+                                );
+
+                            return (
+                                zoneNormalisee ===
+                                    communeNormalisee ||
+                                zoneNormalisee ===
+                                    "toutes-les-zones" ||
+                                zoneNormalisee ===
+                                    "toute-zone" ||
+                                zoneNormalisee ===
+                                    "toutes-zones"
+                            );
+                        }
+                    );
+                }
+            )
+            .sort(
+                (a, b) =>
+                    obtenirNomLivreurCommande(a)
+                        .localeCompare(
+                            obtenirNomLivreurCommande(b),
+                            "fr",
+                            {
+                                sensitivity:
+                                    "base"
+                            }
+                        )
+            );
+
+    if (!livreursCompatibles.length) {
+        const optionAucun =
+            document.createElement(
+                "option"
+            );
+
+        optionAucun.value = "";
+        optionAucun.disabled = true;
+        optionAucun.textContent =
+            `Aucun livreur actif ne couvre ${commune}`;
+
+        select.appendChild(
+            optionAucun
+        );
+
+        select.value = "";
+        return;
+    }
+
+    livreursCompatibles.forEach(
+        livreur => {
+            const id =
+                String(
+                    livreur.idLivreur ||
+                    livreur["ID Livreur"] ||
+                    ""
+                ).trim();
+
+            if (!id) {
+                return;
+            }
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value = id;
+            option.textContent =
+                construireLibelleLivreurCommande(
+                    livreur
+                );
+
+            select.appendChild(
+                option
+            );
+        }
+    );
+
+    if (
+        ancienneValeur &&
+        Array.from(
+            select.options
+        ).some(
+            option =>
+                option.value ===
+                ancienneValeur
+        )
+    ) {
+        select.value =
+            ancienneValeur;
+    } else {
+        select.value = "";
+    }
+}
+
+
+function obtenirZonesLivreurCommande(
+    livreur
+) {
+    if (
+        Array.isArray(
+            livreur?.zonesLivraison
+        )
+    ) {
+        return livreur
+            .zonesLivraison
+            .map(
+                zone =>
+                    String(
+                        zone ||
+                        ""
+                    ).trim()
+            )
+            .filter(Boolean);
+    }
+
+    return String(
+        livreur?.zoneLivraison ||
+        livreur?.["Zone de Livraison"] ||
+        ""
+    )
+        .split(
+            /[,;|]+/
+        )
+        .map(
+            zone =>
+                zone.trim()
+        )
+        .filter(Boolean);
+}
+
+
+function obtenirNomLivreurCommande(
+    livreur
+) {
+    const nom =
+        String(
+            livreur?.nom ||
+            livreur?.["Nom"] ||
+            ""
+        ).trim();
+
+    const prenom =
+        String(
+            livreur?.prenom ||
+            livreur?.["Prénom"] ||
+            livreur?.["Prenom"] ||
+            ""
+        ).trim();
+
+    return (
+        [nom, prenom]
+            .filter(Boolean)
+            .join(" ")
+            .trim() ||
+        String(
+            livreur?.idLivreur ||
+            livreur?.["ID Livreur"] ||
+            ""
+        ).trim()
+    );
+}
+
+
+function construireLibelleLivreurCommande(
+    livreur
+) {
+    const nom =
+        obtenirNomLivreurCommande(
+            livreur
+        );
+
+    const transport =
+        String(
+            livreur?.moyenTransport ||
+            livreur?.["Moyen de Transport"] ||
+            ""
+        ).trim();
+
+    const capacite =
+        Math.max(
+            0,
+            Math.trunc(
+                convertirNombre(
+                    livreur?.capaciteMaximale ??
+                    livreur?.["Capacité Maximale"] ??
+                    0
+                )
+            )
+        );
+
+    return [
+        nom,
+        transport,
+        capacite > 0
+            ? `Capacité ${capacite}`
+            : ""
+    ]
+        .filter(Boolean)
+        .join(" • ");
+}
+
+
+function normaliserTexteCommande(
+    valeur
+) {
+    return String(
+        valeur ??
+        ""
+    )
+        .normalize("NFD")
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+        .trim()
+        .toLowerCase()
+        .replace(
+            /['’]/g,
+            ""
+        )
+        .replace(
+            /\s+/g,
+            "-"
+        );
 }
 
 
