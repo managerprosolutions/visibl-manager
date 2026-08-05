@@ -5,6 +5,12 @@
 let lignesCommande = [];
 let catalogueProduitsCommande = [];
 let catalogueLivreursCommande = [];
+let catalogueClientsCommande = [];
+let commandesChargees = [];
+let commandesFiltrees = [];
+let commandeEnModificationId = null;
+let pageCommandesActuelle = 1;
+let taillePageCommandes = 10;
 
 document.addEventListener("DOMContentLoaded", () => {
     initialiserModaleCommande();
@@ -13,6 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserProduitsCommande();
     initialiserLivreursCommande();
     initialiserCalculsCommande();
+    initialiserEnregistrementCommande();
+    initialiserListeCommandes();
 });
 
 
@@ -32,6 +40,10 @@ function initialiserModaleCommande() {
     }
 
     const ouvrir = () => {
+        if (!commandeEnModificationId) {
+            reinitialiserFormulaireCommande();
+        }
+
         initialiserDateHeureCommande();
 
         /*
@@ -51,9 +63,7 @@ function initialiserModaleCommande() {
     };
 
     const fermer = () => {
-        modale.classList.remove("active");
-        modale.setAttribute("aria-hidden", "true");
-        document.body.classList.remove("modal-open");
+        fermerModaleCommande();
     };
 
     boutonsOuvrir.forEach(bouton => bouton.addEventListener("click", ouvrir));
@@ -387,6 +397,8 @@ async function chargerClientsCommande(idASelectionner = "", libelleSecours = "")
                     ? resultat.clients
                     : [];
 
+        catalogueClientsCommande = clients;
+
         select.innerHTML = '<option value="">Sélectionner un client</option>';
 
         clients
@@ -519,6 +531,1296 @@ function lireValeurClientCommande(client, cles) {
     return "";
 }
 
+
+
+
+/* ===========================================================
+   ENREGISTREMENT ET LISTE DES COMMANDES
+=========================================================== */
+
+function initialiserEnregistrementCommande() {
+    document
+        .getElementById("order-form")
+        ?.addEventListener(
+            "submit",
+            enregistrerCommande
+        );
+}
+
+
+function initialiserListeCommandes() {
+    document
+        .getElementById("orders-search-input")
+        ?.addEventListener(
+            "input",
+            appliquerFiltresCommandes
+        );
+
+    [
+        "order-status-filter",
+        "order-payment-status-filter",
+        "order-delivery-status-filter"
+    ].forEach(id => {
+        document
+            .getElementById(id)
+            ?.addEventListener(
+                "change",
+                appliquerFiltresCommandes
+            );
+    });
+
+    document
+        .getElementById("reset-order-filters")
+        ?.addEventListener(
+            "click",
+            reinitialiserFiltresCommandes
+        );
+
+    document
+        .getElementById("refresh-orders-btn")
+        ?.addEventListener(
+            "click",
+            chargerCommandes
+        );
+
+    document
+        .getElementById("orders-per-page")
+        ?.addEventListener(
+            "change",
+            event => {
+                taillePageCommandes =
+                    Math.max(
+                        1,
+                        Number(event.target.value) || 10
+                    );
+
+                pageCommandesActuelle = 1;
+                afficherTableauCommandes();
+            }
+        );
+
+    document
+        .getElementById("previous-order-page-btn")
+        ?.addEventListener(
+            "click",
+            () => {
+                if (pageCommandesActuelle > 1) {
+                    pageCommandesActuelle--;
+                    afficherTableauCommandes();
+                }
+            }
+        );
+
+    document
+        .getElementById("next-order-page-btn")
+        ?.addEventListener(
+            "click",
+            () => {
+                const totalPages =
+                    Math.max(
+                        1,
+                        Math.ceil(
+                            commandesFiltrees.length /
+                            taillePageCommandes
+                        )
+                    );
+
+                if (pageCommandesActuelle < totalPages) {
+                    pageCommandesActuelle++;
+                    afficherTableauCommandes();
+                }
+            }
+        );
+
+    document
+        .getElementById("orders-table-body")
+        ?.addEventListener(
+            "click",
+            gererActionsTableauCommandes
+        );
+
+    document
+        .getElementById("print-orders-btn")
+        ?.addEventListener(
+            "click",
+            () => window.print()
+        );
+
+    chargerCommandes();
+}
+
+
+async function enregistrerCommande(event) {
+    event.preventDefault();
+
+    const formulaire =
+        document.getElementById("order-form");
+
+    const bouton =
+        document.getElementById("save-order-btn");
+
+    if (!formulaire) {
+        return;
+    }
+
+    if (
+        formulaire.dataset.processing ===
+        "true"
+    ) {
+        return;
+    }
+
+    if (!formulaire.checkValidity()) {
+        formulaire.reportValidity();
+        return;
+    }
+
+    if (!lignesCommande.length) {
+        afficherMessageCommande(
+            "Ajoutez au moins un produit à la commande.",
+            "error"
+        );
+        return;
+    }
+
+    formulaire.dataset.processing = "true";
+
+    const utilisateur =
+        typeof getCurrentUser === "function"
+            ? getCurrentUser()
+            : null;
+
+    const donnees = {
+        idCommande:
+            commandeEnModificationId || "",
+
+        idClient:
+            obtenirValeurCommande("order-client"),
+
+        dateCommande:
+            obtenirValeurCommande("order-date"),
+
+        heureCommande:
+            obtenirValeurCommande("order-time"),
+
+        statut:
+            obtenirValeurCommande("order-status") ||
+            "en-attente",
+
+        totalCommande:
+            convertirNombre(
+                obtenirValeurCommande("order-total")
+            ),
+
+        remiseTotale:
+            convertirNombre(
+                obtenirValeurCommande("order-discount")
+            ),
+
+        fraisLivraison:
+            convertirNombre(
+                obtenirValeurCommande("order-delivery-fees")
+            ),
+
+        totalAPayer:
+            convertirNombre(
+                obtenirValeurCommande("order-total-payable")
+            ),
+
+        idLivreur:
+            obtenirValeurCommande("order-delivery-person"),
+
+        zoneLivraison:
+            obtenirValeurCommande("order-delivery-zone"),
+
+        communeLivraison:
+            obtenirValeurCommande("order-delivery-commune"),
+
+        adresseLivraison:
+            obtenirValeurCommande("order-delivery-address"),
+
+        dateLivraisonPrevue:
+            obtenirValeurCommande("order-delivery-date"),
+
+        modePaiementPrevu:
+            obtenirValeurCommande("order-payment-method"),
+
+        origineCommande:
+            obtenirValeurCommande("order-origin") ||
+            "Saisie manuelle",
+
+        commentaire:
+            obtenirValeurCommande("order-comment"),
+
+        idUtilisateur:
+            String(
+                utilisateur?.idUtilisateur ||
+                utilisateur?.["ID Utilisateur"] ||
+                utilisateur?.id ||
+                ""
+            ).trim(),
+
+        lignes:
+            lignesCommande.map(
+                ligne => ({
+                    idProduit: ligne.idProduit,
+                    quantite: ligne.quantite,
+                    prixUnitaire: ligne.prixUnitaire,
+                    remise: ligne.remise,
+                    sousTotal: ligne.sousTotal
+                })
+            )
+    };
+
+    try {
+        if (bouton) {
+            bouton.disabled = true;
+            bouton.textContent =
+                commandeEnModificationId
+                    ? "Modification..."
+                    : "Enregistrement...";
+        }
+
+        afficherMessageCommande(
+            commandeEnModificationId
+                ? "Modification de la commande..."
+                : "Enregistrement de la commande...",
+            "info"
+        );
+
+        const action =
+            commandeEnModificationId
+                ? "updateCommande"
+                : "createCommande";
+
+        const resultat =
+            await apiPost(
+                action,
+                donnees
+            );
+
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible d'enregistrer la commande."
+            );
+        }
+
+        const commandeSauvegardee =
+            resultat.data || {
+                ...donnees,
+                idCommande:
+                    donnees.idCommande ||
+                    resultat.idCommande ||
+                    "",
+                numeroCommande:
+                    resultat.numeroCommande ||
+                    ""
+            };
+
+        mettreAJourCommandeLocale(
+            commandeSauvegardee
+        );
+
+        if (typeof showToast === "function") {
+            showToast(
+                resultat.message ||
+                "Commande enregistrée avec succès.",
+                "success"
+            );
+        }
+
+        fermerModaleCommande();
+        reinitialiserFormulaireCommande();
+
+        /*
+         * Actualise le stock en arrière-plan sans bloquer
+         * l'interface après la création.
+         */
+        chargerProduitsCommande()
+            .catch(error => {
+                console.warn(
+                    "Actualisation différée du stock impossible :",
+                    error
+                );
+            });
+
+    } catch (error) {
+        console.error(
+            "Erreur d'enregistrement de la commande :",
+            error
+        );
+
+        afficherMessageCommande(
+            error.message ||
+            "Une erreur est survenue.",
+            "error"
+        );
+
+    } finally {
+        formulaire.dataset.processing = "false";
+
+        if (bouton) {
+            bouton.disabled = false;
+            bouton.textContent =
+                commandeEnModificationId
+                    ? "Enregistrer les modifications"
+                    : "Enregistrer la commande";
+        }
+    }
+}
+
+
+async function chargerCommandes() {
+    const tbody =
+        document.getElementById("orders-table-body");
+
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" class="empty-table">
+                    Chargement des commandes...
+                </td>
+            </tr>
+        `;
+    }
+
+    try {
+        const resultat =
+            await apiGet("getCommandes");
+
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de charger les commandes."
+            );
+        }
+
+        commandesChargees =
+            extraireListeCommande(
+                resultat,
+                "commandes"
+            );
+
+        mettreAJourKPICommandes();
+        appliquerFiltresCommandes();
+
+    } catch (error) {
+        console.error(
+            "Erreur de chargement des commandes :",
+            error
+        );
+
+        commandesChargees = [];
+        commandesFiltrees = [];
+        afficherTableauCommandes();
+
+        if (typeof showToast === "function") {
+            showToast(
+                error.message ||
+                "Impossible de charger les commandes.",
+                "error"
+            );
+        }
+    }
+}
+
+
+function mettreAJourCommandeLocale(commande) {
+    if (
+        !commande ||
+        !commande.idCommande
+    ) {
+        return;
+    }
+
+    const index =
+        commandesChargees.findIndex(
+            element =>
+                String(element.idCommande) ===
+                String(commande.idCommande)
+        );
+
+    if (index >= 0) {
+        commandesChargees[index] = {
+            ...commandesChargees[index],
+            ...commande
+        };
+    } else {
+        commandesChargees.unshift(
+            commande
+        );
+    }
+
+    mettreAJourKPICommandes();
+    appliquerFiltresCommandes(true);
+}
+
+
+function retirerCommandeLocale(idCommande) {
+    commandesChargees =
+        commandesChargees.filter(
+            commande =>
+                String(commande.idCommande) !==
+                String(idCommande)
+        );
+
+    mettreAJourKPICommandes();
+    appliquerFiltresCommandes(true);
+}
+
+
+function appliquerFiltresCommandes(
+    conserverPage = false
+) {
+    const recherche =
+        normaliserTexteCommande(
+            obtenirValeurCommande("orders-search-input")
+        );
+
+    const statut =
+        normaliserTexteCommande(
+            obtenirValeurCommande("order-status-filter")
+        );
+
+    commandesFiltrees =
+        commandesChargees.filter(
+            commande => {
+                const texte =
+                    normaliserTexteCommande(
+                        [
+                            commande.numeroCommande,
+                            commande.idCommande,
+                            commande.idClient,
+                            obtenirNomClientCommandeParId(
+                                commande.idClient
+                            ),
+                            commande.idLivreur,
+                            obtenirNomLivreurCommandeParId(
+                                commande.idLivreur
+                            ),
+                            commande.communeLivraison,
+                            commande.zoneLivraison,
+                            commande.statut,
+                            commande.modePaiementPrevu
+                        ].join(" ")
+                    );
+
+                const correspondRecherche =
+                    !recherche ||
+                    texte.includes(recherche);
+
+                const correspondStatut =
+                    !statut ||
+                    normaliserTexteCommande(
+                        commande.statut
+                    ) === statut;
+
+                return (
+                    correspondRecherche &&
+                    correspondStatut
+                );
+            }
+        );
+
+    if (!conserverPage) {
+        pageCommandesActuelle = 1;
+    }
+
+    afficherTableauCommandes();
+}
+
+
+function reinitialiserFiltresCommandes() {
+    [
+        "orders-search-input",
+        "order-status-filter",
+        "order-payment-status-filter",
+        "order-delivery-status-filter"
+    ].forEach(
+        id => definirValeurCommande(id, "")
+    );
+
+    appliquerFiltresCommandes();
+}
+
+
+function afficherTableauCommandes() {
+    const tbody =
+        document.getElementById("orders-table-body");
+
+    if (!tbody) {
+        return;
+    }
+
+    const total =
+        commandesFiltrees.length;
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                total /
+                taillePageCommandes
+            )
+        );
+
+    pageCommandesActuelle =
+        Math.min(
+            pageCommandesActuelle,
+            totalPages
+        );
+
+    const debut =
+        (pageCommandesActuelle - 1) *
+        taillePageCommandes;
+
+    const fin =
+        debut +
+        taillePageCommandes;
+
+    const page =
+        commandesFiltrees.slice(
+            debut,
+            fin
+        );
+
+    if (!page.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" class="empty-table">
+                    Aucune commande enregistrée.
+                </td>
+            </tr>
+        `;
+    } else {
+        tbody.innerHTML =
+            page
+                .map(
+                    creerLigneCommandeHTML
+                )
+                .join("");
+    }
+
+    const compteur =
+        document.getElementById(
+            "filtered-order-count"
+        );
+
+    if (compteur) {
+        compteur.textContent =
+            String(total);
+    }
+
+    afficherPaginationCommandes(
+        totalPages,
+        total,
+        debut,
+        Math.min(fin, total)
+    );
+}
+
+
+function creerLigneCommandeHTML(commande) {
+    const client =
+        obtenirNomClientCommandeParId(
+            commande.idClient
+        ) ||
+        commande.idClient ||
+        "—";
+
+    const livreur =
+        obtenirNomLivreurCommandeParId(
+            commande.idLivreur
+        ) ||
+        (
+            commande.idLivreur
+                ? commande.idLivreur
+                : "Non affecté"
+        );
+
+    const lieu =
+        [
+            commande.communeLivraison,
+            commande.zoneLivraison
+        ]
+            .filter(Boolean)
+            .join(" • ") ||
+        "—";
+
+    return `
+        <tr>
+            <td>
+                <input
+                    type="checkbox"
+                    aria-label="Sélectionner la commande"
+                >
+            </td>
+
+            <td>
+                <strong>
+                    ${echapperHTMLCommande(
+                        commande.numeroCommande ||
+                        commande.idCommande ||
+                        "—"
+                    )}
+                </strong>
+            </td>
+
+            <td>
+                ${echapperHTMLCommande(client)}
+            </td>
+
+            <td>
+                ${echapperHTMLCommande(
+                    [
+                        commande.dateCommande,
+                        commande.heureCommande
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                )}
+            </td>
+
+            <td>
+                <strong>
+                    ${formaterFCFA(
+                        commande.totalAPayer
+                    )}
+                </strong>
+            </td>
+
+            <td>
+                ${echapperHTMLCommande(livreur)}
+            </td>
+
+            <td>
+                ${echapperHTMLCommande(lieu)}
+            </td>
+
+            <td>
+                ${echapperHTMLCommande(
+                    commande.modePaiementPrevu ||
+                    "—"
+                )}
+            </td>
+
+            <td>
+                <span class="status-badge">
+                    ${echapperHTMLCommande(
+                        commande.statut ||
+                        "—"
+                    )}
+                </span>
+            </td>
+
+            <td>
+                <div class="table-actions">
+                    <button
+                        type="button"
+                        class="table-action-btn edit-btn"
+                        data-edit-order="${echapperHTMLCommande(
+                            commande.idCommande
+                        )}"
+                        title="Modifier"
+                    >
+                        ✏️
+                    </button>
+
+                    <button
+                        type="button"
+                        class="table-action-btn delete-btn"
+                        data-delete-order="${echapperHTMLCommande(
+                            commande.idCommande
+                        )}"
+                        title="Supprimer"
+                    >
+                        🗑️
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+
+function gererActionsTableauCommandes(event) {
+    const boutonModifier =
+        event.target.closest(
+            "[data-edit-order]"
+        );
+
+    if (boutonModifier) {
+        ouvrirModificationCommande(
+            boutonModifier.dataset.editOrder
+        );
+        return;
+    }
+
+    const boutonSupprimer =
+        event.target.closest(
+            "[data-delete-order]"
+        );
+
+    if (boutonSupprimer) {
+        supprimerCommandeFrontend(
+            boutonSupprimer.dataset.deleteOrder
+        );
+    }
+}
+
+
+async function ouvrirModificationCommande(
+    idCommande
+) {
+    const commande =
+        commandesChargees.find(
+            element =>
+                String(element.idCommande) ===
+                String(idCommande)
+        );
+
+    if (!commande) {
+        return;
+    }
+
+    commandeEnModificationId =
+        commande.idCommande;
+
+    definirValeurCommande(
+        "order-id",
+        commande.idCommande
+    );
+
+    definirValeurCommande(
+        "order-number",
+        commande.numeroCommande
+    );
+
+    definirValeurCommande(
+        "order-client",
+        commande.idClient
+    );
+
+    definirValeurCommande(
+        "order-date",
+        commande.dateCommande
+    );
+
+    definirValeurCommande(
+        "order-time",
+        commande.heureCommande
+    );
+
+    definirValeurCommande(
+        "order-status",
+        commande.statut
+    );
+
+    definirValeurCommande(
+        "order-discount",
+        commande.remiseTotale
+    );
+
+    definirValeurCommande(
+        "order-delivery-fees",
+        commande.fraisLivraison
+    );
+
+    definirValeurCommande(
+        "order-delivery-zone",
+        commande.zoneLivraison
+    );
+
+    definirValeurCommande(
+        "order-delivery-commune",
+        commande.communeLivraison
+    );
+
+    definirValeurCommande(
+        "order-delivery-address",
+        commande.adresseLivraison
+    );
+
+    definirValeurCommande(
+        "order-delivery-date",
+        commande.dateLivraisonPrevue
+    );
+
+    definirValeurCommande(
+        "order-payment-method",
+        commande.modePaiementPrevu
+    );
+
+    definirValeurCommande(
+        "order-comment",
+        commande.commentaire
+    );
+
+    lignesCommande =
+        Array.isArray(commande.lignes)
+            ? commande.lignes.map(
+                ligne => ({
+                    idLigne:
+                        ligne.idDetailCommande ||
+                        crypto.randomUUID?.() ||
+                        String(Date.now()),
+                    idProduit:
+                        ligne.idProduit,
+                    designation:
+                        obtenirNomProduitCommandeParId(
+                            ligne.idProduit
+                        ) ||
+                        ligne.idProduit,
+                    stockDisponible:
+                        obtenirStockProduit(
+                            catalogueProduitsCommande.find(
+                                produit =>
+                                    obtenirIdProduitCommande(
+                                        produit
+                                    ) ===
+                                    String(ligne.idProduit)
+                            ) || {}
+                        ),
+                    quantite:
+                        ligne.quantite,
+                    prixUnitaire:
+                        ligne.prixUnitaire,
+                    remise:
+                        ligne.remise,
+                    sousTotal:
+                        ligne.sousTotal
+                })
+            )
+            : [];
+
+    afficherLignesCommande();
+    recalculerTotauxCommande();
+
+    afficherLivreursParCommuneCommande(
+        commande.idLivreur || ""
+    );
+
+    const titre =
+        document.getElementById(
+            "order-modal-title"
+        );
+
+    const bouton =
+        document.getElementById(
+            "save-order-btn"
+        );
+
+    if (titre) {
+        titre.textContent =
+            "Modifier la commande";
+    }
+
+    if (bouton) {
+        bouton.textContent =
+            "Enregistrer les modifications";
+    }
+
+    const modal =
+        document.getElementById(
+            "order-modal"
+        );
+
+    modal?.classList.add("active");
+    modal?.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    document.body.classList.add(
+        "modal-open"
+    );
+}
+
+
+async function supprimerCommandeFrontend(
+    idCommande
+) {
+    const commande =
+        commandesChargees.find(
+            element =>
+                String(element.idCommande) ===
+                String(idCommande)
+        );
+
+    if (!commande) {
+        return;
+    }
+
+    const confirme =
+        window.confirm(
+            `Supprimer définitivement la commande ${
+                commande.numeroCommande ||
+                commande.idCommande
+            } ?`
+        );
+
+    if (!confirme) {
+        return;
+    }
+
+    try {
+        const resultat =
+            await apiPost(
+                "deleteCommande",
+                {
+                    idCommande:
+                        commande.idCommande
+                }
+            );
+
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de supprimer la commande."
+            );
+        }
+
+        retirerCommandeLocale(
+            commande.idCommande
+        );
+
+        if (typeof showToast === "function") {
+            showToast(
+                resultat.message,
+                "success"
+            );
+        }
+
+    } catch (error) {
+        console.error(
+            "Erreur de suppression de la commande :",
+            error
+        );
+
+        if (typeof showToast === "function") {
+            showToast(
+                error.message ||
+                "Impossible de supprimer la commande.",
+                "error"
+            );
+        }
+    }
+}
+
+
+function mettreAJourKPICommandes() {
+    const total =
+        commandesChargees.length;
+
+    const revenu =
+        commandesChargees.reduce(
+            (somme, commande) =>
+                somme +
+                convertirNombre(
+                    commande.totalAPayer
+                ),
+            0
+        );
+
+    const enAttente =
+        commandesChargees.filter(
+            commande =>
+                normaliserTexteCommande(
+                    commande.statut
+                ) ===
+                "en-attente"
+        ).length;
+
+    const terminees =
+        commandesChargees.filter(
+            commande => {
+                const statut =
+                    normaliserTexteCommande(
+                        commande.statut
+                    );
+
+                return (
+                    statut === "terminee" ||
+                    statut === "livree"
+                );
+            }
+        ).length;
+
+    const correspondances = {
+        "total-orders-value": total,
+        "orders-revenue-value":
+            formaterFCFA(revenu),
+        "pending-orders-value":
+            enAttente,
+        "completed-orders-value":
+            terminees
+    };
+
+    Object.entries(
+        correspondances
+    ).forEach(
+        ([id, valeur]) => {
+            const element =
+                document.getElementById(id);
+
+            if (element) {
+                element.textContent =
+                    valeur;
+            }
+        }
+    );
+}
+
+
+function afficherPaginationCommandes(
+    totalPages,
+    total,
+    debut,
+    fin
+) {
+    const precedent =
+        document.getElementById(
+            "previous-order-page-btn"
+        );
+
+    const suivant =
+        document.getElementById(
+            "next-order-page-btn"
+        );
+
+    const boutons =
+        document.getElementById(
+            "orders-page-buttons"
+        );
+
+    if (precedent) {
+        precedent.disabled =
+            pageCommandesActuelle <= 1;
+    }
+
+    if (suivant) {
+        suivant.disabled =
+            pageCommandesActuelle >= totalPages;
+    }
+
+    if (boutons) {
+        boutons.innerHTML = "";
+
+        const debutPage =
+            Math.max(
+                1,
+                pageCommandesActuelle - 2
+            );
+
+        const finPage =
+            Math.min(
+                totalPages,
+                debutPage + 4
+            );
+
+        for (
+            let page = debutPage;
+            page <= finPage;
+            page++
+        ) {
+            const bouton =
+                document.createElement(
+                    "button"
+                );
+
+            bouton.type = "button";
+            bouton.className =
+                "pagination-btn";
+            bouton.textContent =
+                String(page);
+
+            if (
+                page ===
+                pageCommandesActuelle
+            ) {
+                bouton.classList.add(
+                    "active"
+                );
+            }
+
+            bouton.addEventListener(
+                "click",
+                () => {
+                    pageCommandesActuelle =
+                        page;
+
+                    afficherTableauCommandes();
+                }
+            );
+
+            boutons.appendChild(
+                bouton
+            );
+        }
+    }
+
+    const resume =
+        document.getElementById(
+            "orders-pagination-summary"
+        );
+
+    if (resume) {
+        resume.textContent =
+            total
+                ? `${debut + 1}-${fin} sur ${total}`
+                : "0 résultat";
+    }
+}
+
+
+function fermerModaleCommande() {
+    const modale =
+        document.getElementById(
+            "order-modal"
+        );
+
+    modale?.classList.remove(
+        "active"
+    );
+
+    modale?.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+}
+
+
+function reinitialiserFormulaireCommande() {
+    const formulaire =
+        document.getElementById(
+            "order-form"
+        );
+
+    formulaire?.reset();
+
+    commandeEnModificationId = null;
+    lignesCommande = [];
+
+    definirValeurCommande(
+        "order-id",
+        ""
+    );
+
+    definirValeurCommande(
+        "order-number",
+        "Génération automatique..."
+    );
+
+    definirValeurCommande(
+        "order-status",
+        "en-attente"
+    );
+
+    afficherLignesCommande();
+    recalculerTotauxCommande();
+    initialiserDateHeureCommande();
+    afficherStockProduitCommande(
+        0,
+        false
+    );
+
+    const titre =
+        document.getElementById(
+            "order-modal-title"
+        );
+
+    const bouton =
+        document.getElementById(
+            "save-order-btn"
+        );
+
+    if (titre) {
+        titre.textContent =
+            "Nouvelle commande";
+    }
+
+    if (bouton) {
+        bouton.textContent =
+            "Enregistrer la commande";
+    }
+
+    afficherLivreursParCommuneCommande();
+}
+
+
+function obtenirNomClientCommandeParId(
+    idClient
+) {
+    const client =
+        catalogueClientsCommande.find(
+            element => {
+                const id =
+                    String(
+                        lireValeurClientCommande(
+                            element,
+                            [
+                                "ID Client",
+                                "idClient",
+                                "Identifiant",
+                                "identifiant"
+                            ]
+                        ) || ""
+                    ).trim();
+
+                return (
+                    id ===
+                    String(idClient || "")
+                );
+            }
+        );
+
+    return client
+        ? obtenirNomClient(client)
+        : "";
+}
+
+
+function obtenirNomLivreurCommandeParId(
+    idLivreur
+) {
+    const livreur =
+        catalogueLivreursCommande.find(
+            element =>
+                String(
+                    element.idLivreur ||
+                    element["ID Livreur"] ||
+                    ""
+                ) ===
+                String(idLivreur || "")
+        );
+
+    return livreur
+        ? obtenirNomLivreurCommande(livreur)
+        : "";
+}
+
+
+function obtenirNomProduitCommandeParId(
+    idProduit
+) {
+    const produit =
+        catalogueProduitsCommande.find(
+            element =>
+                obtenirIdProduitCommande(
+                    element
+                ) ===
+                String(idProduit || "")
+        );
+
+    return produit
+        ? obtenirNomProduit(produit)
+        : "";
+}
 
 
 /* ===========================================================
