@@ -856,6 +856,7 @@ async function chargerLivreurs() {
                     ? resultat.livreurs
                     : [];
 
+        actualiserFiltreZonesLivreurs();
         mettreAJourKPILivreurs();
         appliquerFiltresLivreurs();
 
@@ -919,7 +920,7 @@ function initialiserFiltresLivreurs() {
     [
         "driver-status-filter",
         "driver-type-filter",
-        "driver-transport-filter"
+        "driver-zone-filter"
     ].forEach(id => {
         document
             .getElementById(id)
@@ -981,10 +982,10 @@ function appliquerFiltresLivreurs(
             )
         );
 
-    const transport =
+    const zone =
         normaliserTexteLivreurFrontend(
             obtenirValeurLivreur(
-                "driver-transport-filter"
+                "driver-zone-filter"
             )
         );
 
@@ -1029,17 +1030,25 @@ function appliquerFiltresLivreurs(
                         livreur.typeLivreur
                     ) === type;
 
-                const correspondTransport =
-                    !transport ||
-                    normaliserTexteLivreurFrontend(
-                        livreur.moyenTransport
-                    ) === transport;
+                const zonesLivreur =
+                    obtenirZonesLivreur(
+                        livreur
+                    ).map(
+                        normaliserTexteLivreurFrontend
+                    );
+
+                const correspondZone =
+                    !zone ||
+                    zonesLivreur.includes(zone) ||
+                    zonesLivreur.includes("toutes-les-zones") ||
+                    zonesLivreur.includes("toutes-zones") ||
+                    zonesLivreur.includes("toute-zone");
 
                 return (
                     correspondRecherche &&
                     correspondStatut &&
                     correspondType &&
-                    correspondTransport
+                    correspondZone
                 );
             }
         );
@@ -1052,13 +1061,84 @@ function appliquerFiltresLivreurs(
 }
 
 
+
+function actualiserFiltreZonesLivreurs() {
+    const select =
+        document.getElementById(
+            "driver-zone-filter"
+        );
+
+    if (!select) {
+        return;
+    }
+
+    const valeurActuelle =
+        String(select.value || "").trim();
+
+    const zones =
+        Array.from(
+            new Set(
+                livreursCharges
+                    .flatMap(
+                        livreur =>
+                            obtenirZonesLivreur(
+                                livreur
+                            )
+                    )
+                    .map(
+                        zone =>
+                            String(zone || "").trim()
+                    )
+                    .filter(Boolean)
+            )
+        )
+            .sort(
+                (a, b) =>
+                    a.localeCompare(
+                        b,
+                        "fr",
+                        { sensitivity: "base" }
+                    )
+            );
+
+    select.innerHTML =
+        '<option value="">Toutes les zones</option>';
+
+    zones.forEach(
+        zone => {
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value = zone;
+            option.textContent = zone;
+            select.appendChild(option);
+        }
+    );
+
+    if (
+        valeurActuelle &&
+        zones.some(
+            zone =>
+                normaliserTexteLivreurFrontend(zone) ===
+                normaliserTexteLivreurFrontend(valeurActuelle)
+        )
+    ) {
+        select.value = valeurActuelle;
+    } else {
+        select.value = "";
+    }
+}
+
+
 function reinitialiserFiltresLivreurs() {
     [
         "drivers-search-input",
         "header-drivers-search-input",
         "driver-status-filter",
         "driver-type-filter",
-        "driver-transport-filter"
+        "driver-zone-filter"
     ].forEach(id => {
         definirValeurLivreur(
             id,
@@ -1656,6 +1736,7 @@ function mettreAJourLivreurLocal(
         );
     }
 
+    actualiserFiltreZonesLivreurs();
     mettreAJourKPILivreurs();
     appliquerFiltresLivreurs(true);
 }
@@ -1675,6 +1756,7 @@ function retirerLivreurLocal(
                 )
         );
 
+    actualiserFiltreZonesLivreurs();
     mettreAJourKPILivreurs();
     appliquerFiltresLivreurs(true);
 }
