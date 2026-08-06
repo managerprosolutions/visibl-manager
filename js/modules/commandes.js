@@ -640,6 +640,34 @@ function initialiserListeCommandes() {
         );
 
     document
+        .getElementById("close-view-order-modal")
+        ?.addEventListener(
+            "click",
+            fermerModaleVoirCommande
+        );
+
+    document
+        .getElementById("close-view-order-footer")
+        ?.addEventListener(
+            "click",
+            fermerModaleVoirCommande
+        );
+
+    document
+        .getElementById("view-order-modal")
+        ?.addEventListener(
+            "click",
+            event => {
+                if (
+                    event.target.id ===
+                    "view-order-modal"
+                ) {
+                    fermerModaleVoirCommande();
+                }
+            }
+        );
+
+    document
         .getElementById("print-orders-btn")
         ?.addEventListener(
             "click",
@@ -1318,6 +1346,17 @@ function creerLigneCommandeHTML(commande) {
                 <div class="table-actions">
                     <button
                         type="button"
+                        class="table-action-btn view-btn"
+                        data-view-order="${echapperHTMLCommande(
+                            commande.idCommande
+                        )}"
+                        title="Voir la commande"
+                    >
+                        👁
+                    </button>
+
+                    <button
+                        type="button"
                         class="table-action-btn edit-btn"
                         data-edit-order="${echapperHTMLCommande(
                             commande.idCommande
@@ -1345,6 +1384,18 @@ function creerLigneCommandeHTML(commande) {
 
 
 function gererActionsTableauCommandes(event) {
+    const boutonVoir =
+        event.target.closest(
+            "[data-view-order]"
+        );
+
+    if (boutonVoir) {
+        voirCommande(
+            boutonVoir.dataset.viewOrder
+        );
+        return;
+    }
+
     const boutonModifier =
         event.target.closest(
             "[data-edit-order]"
@@ -1367,6 +1418,258 @@ function gererActionsTableauCommandes(event) {
             boutonSupprimer.dataset.deleteOrder
         );
     }
+}
+
+
+
+function voirCommande(idCommande) {
+    const commande =
+        commandesChargees.find(
+            element =>
+                String(element.idCommande) ===
+                String(idCommande)
+        );
+
+    if (!commande) {
+        if (typeof showToast === "function") {
+            showToast(
+                "Commande introuvable.",
+                "error"
+            );
+        }
+        return;
+    }
+
+    const titre =
+        document.getElementById(
+            "view-order-modal-title"
+        );
+
+    const sousTitre =
+        document.getElementById(
+            "view-order-modal-subtitle"
+        );
+
+    const zoneGenerale =
+        document.getElementById(
+            "view-order-general-details"
+        );
+
+    const zoneFinanciere =
+        document.getElementById(
+            "view-order-financial-details"
+        );
+
+    const tbody =
+        document.getElementById(
+            "view-order-lines-body"
+        );
+
+    const modal =
+        document.getElementById(
+            "view-order-modal"
+        );
+
+    if (
+        !zoneGenerale ||
+        !zoneFinanciere ||
+        !tbody ||
+        !modal
+    ) {
+        return;
+    }
+
+    const client =
+        obtenirNomClientCommandeParId(
+            commande.idClient
+        ) ||
+        commande.idClient ||
+        "—";
+
+    const livreur =
+        obtenirNomLivreurCommandeParId(
+            commande.idLivreur
+        ) ||
+        (
+            commande.idLivreur
+                ? commande.idLivreur
+                : "Non affecté"
+        );
+
+    if (titre) {
+        titre.textContent =
+            commande.numeroCommande ||
+            commande.idCommande ||
+            "Détails de la commande";
+    }
+
+    if (sousTitre) {
+        sousTitre.textContent =
+            `Commande du ${
+                commande.dateCommande || "—"
+            } à ${
+                commande.heureCommande || "—"
+            }`;
+    }
+
+    const detailsGeneraux = [
+        ["ID Commande", commande.idCommande],
+        ["Client", client],
+        ["Statut", commande.statut],
+        ["Livreur", livreur],
+        ["Commune", commande.communeLivraison],
+        ["Zone / quartier", commande.zoneLivraison],
+        ["Adresse de livraison", commande.adresseLivraison],
+        ["Date de livraison prévue", commande.dateLivraisonPrevue],
+        ["Mode de paiement prévu", commande.modePaiementPrevu],
+        ["Origine de la commande", commande.origineCommande],
+        ["Commentaire", commande.commentaire]
+    ];
+
+    zoneGenerale.innerHTML =
+        detailsGeneraux
+            .map(
+                ([libelle, valeur], index) => `
+                    <div class="driver-detail-card ${
+                        index === detailsGeneraux.length - 1
+                            ? "driver-detail-card-full"
+                            : ""
+                    }">
+                        <span>
+                            ${echapperHTMLCommande(libelle)}
+                        </span>
+                        <strong>
+                            ${echapperHTMLCommande(valeur || "—")}
+                        </strong>
+                    </div>
+                `
+            )
+            .join("");
+
+    const lignes =
+        Array.isArray(commande.lignes)
+            ? commande.lignes
+            : Array.isArray(commande.detailsCommande)
+                ? commande.detailsCommande
+                : [];
+
+    if (!lignes.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-table">
+                    Aucun produit enregistré pour cette commande.
+                </td>
+            </tr>
+        `;
+    } else {
+        tbody.innerHTML =
+            lignes
+                .map(
+                    (ligne, index) => {
+                        const designation =
+                            obtenirNomProduitCommandeParId(
+                                ligne.idProduit
+                            ) ||
+                            ligne.designation ||
+                            ligne.idProduit ||
+                            "Produit";
+
+                        return `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>
+                                    <strong>
+                                        ${echapperHTMLCommande(designation)}
+                                    </strong>
+                                    <br>
+                                    <small>
+                                        ${echapperHTMLCommande(
+                                            ligne.idProduit || ""
+                                        )}
+                                    </small>
+                                </td>
+                                <td>
+                                    ${convertirNombre(
+                                        ligne.quantite
+                                    )}
+                                </td>
+                                <td>
+                                    ${formaterFCFA(
+                                        ligne.prixUnitaire
+                                    )}
+                                </td>
+                                <td>
+                                    ${formaterFCFA(
+                                        ligne.remise
+                                    )}
+                                </td>
+                                <td>
+                                    <strong>
+                                        ${formaterFCFA(
+                                            ligne.sousTotal
+                                        )}
+                                    </strong>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                )
+                .join("");
+    }
+
+    const detailsFinanciers = [
+        ["Total commande", formaterFCFA(commande.totalCommande)],
+        ["Remise totale", formaterFCFA(commande.remiseTotale)],
+        ["Frais de livraison", formaterFCFA(commande.fraisLivraison)],
+        ["Total à payer", formaterFCFA(commande.totalAPayer)]
+    ];
+
+    zoneFinanciere.innerHTML =
+        detailsFinanciers
+            .map(
+                ([libelle, valeur]) => `
+                    <div class="driver-detail-card">
+                        <span>
+                            ${echapperHTMLCommande(libelle)}
+                        </span>
+                        <strong>
+                            ${echapperHTMLCommande(valeur)}
+                        </strong>
+                    </div>
+                `
+            )
+            .join("");
+
+    modal.classList.add("active");
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    document.body.classList.add(
+        "modal-open"
+    );
+}
+
+
+function fermerModaleVoirCommande() {
+    const modal =
+        document.getElementById(
+            "view-order-modal"
+        );
+
+    modal?.classList.remove(
+        "active"
+    );
+
+    modal?.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    document.body.classList.remove(
+        "modal-open"
+    );
 }
 
 
