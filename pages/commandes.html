@@ -669,9 +669,6 @@
                 </div>
             </div>
 
-
-
-
             <!-- ===== Fenêtre Voir une commande ===== -->
             <div
                 class="modal-overlay"
@@ -684,45 +681,121 @@
                     aria-modal="true"
                     aria-labelledby="view-order-modal-title"
                 >
-                    <div class="modal-header">
-                        <div>
-                            <h2 id="view-order-modal-title">
-                                Détails de la commande
-                            </h2>
-                            <p id="view-order-modal-subtitle">
-                                Informations générales et produits commandés
-                            </p>
+                    <div class="order-view-header">
+                        <div class="order-view-header-main">
+                            <span class="order-view-header-icon">
+                                <i class="fa-solid fa-receipt"></i>
+                            </span>
+
+                            <div>
+                                <h2 id="view-order-modal-title">
+                                    Détails de la commande
+                                </h2>
+                                <p id="view-order-modal-subtitle">
+                                    Informations générales et produits commandés
+                                </p>
+                            </div>
                         </div>
 
                         <button
                             type="button"
-                            class="modal-close"
+                            class="order-view-close"
                             id="close-view-order-modal"
                             aria-label="Fermer"
                         >
-                            ✕
+                            <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
 
-                    <div class="modal-body">
-                        <section class="form-section">
-                            <div class="form-section-header">
-                                <span class="form-section-icon">🧾</span>
+                    <div class="modal-body order-view-body">
+                        <section class="order-view-overview">
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-blue">
+                                    <i class="fa-regular fa-calendar"></i>
+                                </span>
                                 <div>
-                                    <h3>Informations générales</h3>
-                                    <p>Client, livraison, paiement et statut</p>
+                                    <small>Date de commande</small>
+                                    <strong id="view-order-date-summary">—</strong>
                                 </div>
-                            </div>
+                            </article>
 
-                            <div
-                                id="view-order-general-details"
-                                class="driver-details-grid order-details-grid"
-                            ></div>
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-green">
+                                    <i class="fa-regular fa-clock"></i>
+                                </span>
+                                <div>
+                                    <small>Livraison prévue</small>
+                                    <strong id="view-order-delivery-summary">—</strong>
+                                </div>
+                            </article>
+
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-purple">
+                                    <i class="fa-regular fa-credit-card"></i>
+                                </span>
+                                <div>
+                                    <small>Paiement prévu</small>
+                                    <strong id="view-order-payment-summary">—</strong>
+                                </div>
+                            </article>
+
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-orange">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                </span>
+                                <div>
+                                    <small>Statut</small>
+                                    <strong
+                                        id="view-order-status-summary"
+                                        class="order-view-status"
+                                    >
+                                        —
+                                    </strong>
+                                </div>
+                            </article>
                         </section>
 
-                        <section class="form-section">
-                            <div class="form-section-header">
-                                <span class="form-section-icon">🛒</span>
+                        <div class="order-view-main-grid">
+                            <section class="order-view-card">
+                                <div class="order-view-card-title">
+                                    <span>
+                                        <i class="fa-solid fa-circle-info"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Informations générales</h3>
+                                        <p>Client, livreur et destination</p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    id="view-order-general-details"
+                                    class="order-info-list"
+                                ></div>
+                            </section>
+
+                            <section class="order-view-card order-financial-card">
+                                <div class="order-view-card-title">
+                                    <span>
+                                        <i class="fa-solid fa-chart-column"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Récapitulatif financier</h3>
+                                        <p>Montants calculés de la commande</p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    id="view-order-financial-details"
+                                    class="order-financial-list"
+                                ></div>
+                            </section>
+                        </div>
+
+                        <section class="order-view-card order-products-card">
+                            <div class="order-view-card-title">
+                                <span>
+                                    <i class="fa-solid fa-cart-shopping"></i>
+                                </span>
                                 <div>
                                     <h3>Produits commandés</h3>
                                     <p>Détail des lignes de la commande</p>
@@ -730,7 +803,7 @@
                             </div>
 
                             <div class="table-responsive">
-                                <table class="orders-table order-lines-table">
+                                <table class="orders-table order-view-products-table">
                                     <thead>
                                         <tr>
                                             <th>N°</th>
@@ -751,35 +824,30 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </section>
 
-                        <section class="form-section">
-                            <div class="form-section-header">
-                                <span class="form-section-icon">💰</span>
-                                <div>
-                                    <h3>Récapitulatif financier</h3>
-                                    <p>Montants calculés de la commande</p>
-                                </div>
+                            <div class="order-products-count">
+                                <span id="view-order-products-count">
+                                    0 article
+                                </span>
                             </div>
-
-                            <div
-                                id="view-order-financial-details"
-                                class="driver-details-grid order-details-grid"
-                            ></div>
                         </section>
                     </div>
 
-                    <div class="modal-footer">
+                    <div class="modal-footer order-view-footer">
                         <button
                             type="button"
                             class="btn-secondary"
                             id="close-view-order-footer"
                         >
+                            <i class="fa-solid fa-xmark"></i>
                             Fermer
                         </button>
                     </div>
                 </div>
             </div>
+
+
+
 
 
             <!-- ===== Fenêtre Nouveau client depuis une commande ===== -->
