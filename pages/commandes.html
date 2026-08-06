@@ -671,6 +671,117 @@
 
 
 
+
+            <!-- ===== Fenêtre Voir une commande ===== -->
+            <div
+                class="modal-overlay"
+                id="view-order-modal"
+                aria-hidden="true"
+            >
+                <div
+                    class="modal order-view-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="view-order-modal-title"
+                >
+                    <div class="modal-header">
+                        <div>
+                            <h2 id="view-order-modal-title">
+                                Détails de la commande
+                            </h2>
+                            <p id="view-order-modal-subtitle">
+                                Informations générales et produits commandés
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="modal-close"
+                            id="close-view-order-modal"
+                            aria-label="Fermer"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <section class="form-section">
+                            <div class="form-section-header">
+                                <span class="form-section-icon">🧾</span>
+                                <div>
+                                    <h3>Informations générales</h3>
+                                    <p>Client, livraison, paiement et statut</p>
+                                </div>
+                            </div>
+
+                            <div
+                                id="view-order-general-details"
+                                class="driver-details-grid order-details-grid"
+                            ></div>
+                        </section>
+
+                        <section class="form-section">
+                            <div class="form-section-header">
+                                <span class="form-section-icon">🛒</span>
+                                <div>
+                                    <h3>Produits commandés</h3>
+                                    <p>Détail des lignes de la commande</p>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="orders-table order-lines-table">
+                                    <thead>
+                                        <tr>
+                                            <th>N°</th>
+                                            <th>Produit</th>
+                                            <th>Quantité</th>
+                                            <th>Prix unitaire</th>
+                                            <th>Remise</th>
+                                            <th>Sous-total</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="view-order-lines-body">
+                                        <tr>
+                                            <td colspan="6" class="empty-table">
+                                                Aucun produit.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="form-section">
+                            <div class="form-section-header">
+                                <span class="form-section-icon">💰</span>
+                                <div>
+                                    <h3>Récapitulatif financier</h3>
+                                    <p>Montants calculés de la commande</p>
+                                </div>
+                            </div>
+
+                            <div
+                                id="view-order-financial-details"
+                                class="driver-details-grid order-details-grid"
+                            ></div>
+                        </section>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            id="close-view-order-footer"
+                        >
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- ===== Fenêtre Nouveau client depuis une commande ===== -->
             <div class="modal-overlay" id="quick-client-modal" aria-hidden="true">
 
