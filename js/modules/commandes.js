@@ -1513,32 +1513,31 @@ function voirCommande(idCommande) {
     }
 
     const detailsGeneraux = [
-        ["ID Commande", commande.idCommande],
-        ["Client", client],
-        ["Statut", commande.statut],
-        ["Livreur", livreur],
-        ["Commune", commande.communeLivraison],
-        ["Zone / quartier", commande.zoneLivraison],
-        ["Adresse de livraison", commande.adresseLivraison],
-        ["Date de livraison prévue", commande.dateLivraisonPrevue],
-        ["Mode de paiement prévu", commande.modePaiementPrevu],
-        ["Origine de la commande", commande.origineCommande],
-        ["Commentaire", commande.commentaire]
+        ["fa-hashtag", "ID Commande", commande.idCommande],
+        ["fa-user", "Client", client],
+        ["fa-motorcycle", "Livreur", livreur],
+        ["fa-location-dot", "Commune", commande.communeLivraison],
+        ["fa-map", "Zone / quartier", commande.zoneLivraison],
+        ["fa-map-pin", "Adresse de livraison", commande.adresseLivraison],
+        ["fa-bullseye", "Origine de la commande", commande.origineCommande],
+        ["fa-credit-card", "Mode de paiement prévu", commande.modePaiementPrevu],
+        ["fa-message", "Commentaire", commande.commentaire]
     ];
 
     zoneGenerale.innerHTML =
         detailsGeneraux
             .map(
-                ([libelle, valeur], index) => `
-                    <div class="driver-detail-card ${
-                        index === detailsGeneraux.length - 1
-                            ? "driver-detail-card-full"
-                            : ""
-                    }">
-                        <span>
+                ([icone, libelle, valeur]) => `
+                    <div class="order-info-row">
+                        <span class="order-info-row-icon">
+                            <i class="fa-solid ${icone}"></i>
+                        </span>
+
+                        <span class="order-info-row-label">
                             ${echapperHTMLCommande(libelle)}
                         </span>
-                        <strong>
+
+                        <strong class="order-info-row-value">
                             ${echapperHTMLCommande(valeur || "—")}
                         </strong>
                     </div>
@@ -1578,15 +1577,23 @@ function voirCommande(idCommande) {
                             <tr>
                                 <td>${index + 1}</td>
                                 <td>
-                                    <strong>
-                                        ${echapperHTMLCommande(designation)}
-                                    </strong>
-                                    <br>
-                                    <small>
-                                        ${echapperHTMLCommande(
-                                            ligne.idProduit || ""
-                                        )}
-                                    </small>
+                                    <div class="order-product-cell">
+                                        <span class="order-product-thumb">
+                                            <i class="fa-solid fa-box"></i>
+                                        </span>
+
+                                        <div>
+                                            <strong>
+                                                ${echapperHTMLCommande(designation)}
+                                            </strong>
+
+                                            <small>
+                                                ${echapperHTMLCommande(
+                                                    ligne.idProduit || ""
+                                                )}
+                                            </small>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
                                     ${convertirNombre(
@@ -1617,21 +1624,46 @@ function voirCommande(idCommande) {
                 .join("");
     }
 
+    const compteurProduits =
+        document.getElementById(
+            "view-order-products-count"
+        );
+
+    if (compteurProduits) {
+        const nombreArticles =
+            lignes.reduce(
+                (total, ligne) =>
+                    total +
+                    convertirNombre(
+                        ligne.quantite
+                    ),
+                0
+            );
+
+        compteurProduits.textContent =
+            `${nombreArticles} article${
+                nombreArticles > 1 ? "s" : ""
+            } commandé${
+                nombreArticles > 1 ? "s" : ""
+            }`;
+    }
+
     const detailsFinanciers = [
-        ["Total commande", formaterFCFA(commande.totalCommande)],
-        ["Remise totale", formaterFCFA(commande.remiseTotale)],
-        ["Frais de livraison", formaterFCFA(commande.fraisLivraison)],
-        ["Total à payer", formaterFCFA(commande.totalAPayer)]
+        ["Sous-total", formaterFCFA(commande.totalCommande), ""],
+        ["Remise totale", formaterFCFA(commande.remiseTotale), "is-discount"],
+        ["Frais de livraison", formaterFCFA(commande.fraisLivraison), ""],
+        ["Total à payer", formaterFCFA(commande.totalAPayer), "is-total"]
     ];
 
     zoneFinanciere.innerHTML =
         detailsFinanciers
             .map(
-                ([libelle, valeur]) => `
-                    <div class="driver-detail-card">
+                ([libelle, valeur, classe]) => `
+                    <div class="order-financial-row ${classe}">
                         <span>
                             ${echapperHTMLCommande(libelle)}
                         </span>
+
                         <strong>
                             ${echapperHTMLCommande(valeur)}
                         </strong>
@@ -1639,6 +1671,44 @@ function voirCommande(idCommande) {
                 `
             )
             .join("");
+
+    definirTexteVueCommande(
+        "view-order-date-summary",
+        formaterDateHeureVueCommande(
+            commande.dateCommande,
+            commande.heureCommande
+        )
+    );
+
+    definirTexteVueCommande(
+        "view-order-delivery-summary",
+        formaterDateVueCommande(
+            commande.dateLivraisonPrevue
+        )
+    );
+
+    definirTexteVueCommande(
+        "view-order-payment-summary",
+        commande.modePaiementPrevu || "Non défini"
+    );
+
+    const statutVue =
+        document.getElementById(
+            "view-order-status-summary"
+        );
+
+    if (statutVue) {
+        statutVue.textContent =
+            formaterStatutVueCommande(
+                commande.statut
+            );
+
+        statutVue.className =
+            "order-view-status " +
+            obtenirClasseStatutVueCommande(
+                commande.statut
+            );
+    }
 
     modal.classList.add("active");
     modal.setAttribute(
@@ -1649,6 +1719,91 @@ function voirCommande(idCommande) {
     document.body.classList.add(
         "modal-open"
     );
+}
+
+
+
+function definirTexteVueCommande(id, valeur) {
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+        element.textContent =
+            valeur || "—";
+    }
+}
+
+
+function formaterDateVueCommande(valeur) {
+    if (!valeur) {
+        return "Non définie";
+    }
+
+    const date =
+        new Date(
+            `${valeur}T00:00:00`
+        );
+
+    if (isNaN(date.getTime())) {
+        return valeur;
+    }
+
+    return new Intl.DateTimeFormat(
+        "fr-FR",
+        {
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        }
+    ).format(date);
+}
+
+
+function formaterDateHeureVueCommande(date, heure) {
+    const dateFormatee =
+        formaterDateVueCommande(date);
+
+    return heure
+        ? `${dateFormatee} à ${heure}`
+        : dateFormatee;
+}
+
+
+function formaterStatutVueCommande(statut) {
+    return String(
+        statut || "Non défini"
+    )
+        .replaceAll("-", " ")
+        .toUpperCase();
+}
+
+
+function obtenirClasseStatutVueCommande(statut) {
+    const valeur =
+        normaliserTexteCommande(statut);
+
+    if (
+        valeur === "terminee" ||
+        valeur === "livree"
+    ) {
+        return "status-success";
+    }
+
+    if (
+        valeur === "annulee"
+    ) {
+        return "status-danger";
+    }
+
+    if (
+        valeur === "en-preparation" ||
+        valeur === "confirmee" ||
+        valeur === "prete"
+    ) {
+        return "status-warning";
+    }
+
+    return "status-neutral";
 }
 
 
