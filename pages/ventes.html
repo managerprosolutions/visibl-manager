@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <!-- Anti-flash d'authentification : bloque l'affichage avant validation locale de session -->
+    <style>
+        html.visibl-auth-pending body {
+            visibility: hidden !important;
+        }
+    </style>
+    <script>
+        (function () {
+            document.documentElement.classList.add("visibl-auth-pending");
+
+            try {
+                const storedUser = localStorage.getItem("visibl_user");
+
+                if (!storedUser) {
+                    window.location.replace("connexion.html");
+                    return;
+                }
+
+                const user = JSON.parse(storedUser);
+
+                if (!user || typeof user !== "object") {
+                    localStorage.removeItem("visibl_user");
+                    window.location.replace("connexion.html");
+                    return;
+                }
+
+                document.documentElement.classList.remove("visibl-auth-pending");
+            } catch (error) {
+                localStorage.removeItem("visibl_user");
+                window.location.replace("connexion.html");
+            }
+        })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ventes</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/ventes.css">
+
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
+
+<style>
+    .export-clients-menu { position: relative; display: inline-flex; }
+    .export-clients-trigger { display: inline-flex; align-items: center; gap: .45rem; }
+    .export-arrow { transition: transform .2s ease; }
+    .export-clients-menu.is-open .export-arrow { transform: rotate(180deg); }
+    .export-clients-dropdown {
+        position: absolute; top: calc(100% + 10px); left: 0; z-index: 1000;
+        width: 270px; padding: 8px; border: 1px solid rgba(15, 23, 42, .12);
+        border-radius: 14px; background: #fff; box-shadow: 0 18px 45px rgba(15, 23, 42, .16);
+    }
+    .export-clients-dropdown[hidden] { display: none; }
+    .export-option {
+        width: 100%; display: grid; grid-template-columns: 30px 1fr; gap: 10px;
+        align-items: center; padding: 11px 12px; border: 0; border-radius: 10px;
+        background: transparent; color: inherit; text-align: left; cursor: pointer;
+    }
+    .export-option:hover, .export-option:focus-visible { background: #f3f6fb; outline: none; }
+    .export-option span:last-child { display: flex; flex-direction: column; gap: 2px; }
+    .export-option small { color: #64748b; font-size: .75rem; }
+    @media (max-width: 640px) {
+        .export-clients-dropdown { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; }
+    }
+
+
+    /* ===== Étape 4 : tri, pagination, sélection et colonnes ===== */
+    .bulk-clients-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 14px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; }
+    .bulk-clients-bar[hidden] { display:none; }
+    .bulk-clients-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .bulk-clients-count { font-weight:700; }
+    .columns-clients-menu { position:relative; display:inline-flex; }
+    .columns-clients-dropdown { position:absolute; top:calc(100% + 10px); right:0; z-index:1000; min-width:245px; padding:10px; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:#fff; box-shadow:0 18px 45px rgba(15,23,42,.16); }
+    .columns-clients-dropdown[hidden] { display:none; }
+    .column-option { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:8px; cursor:pointer; }
+    .column-option:hover { background:#f3f6fb; }
+    .clients-table th[data-sort-key] { cursor:pointer; user-select:none; white-space:nowrap; }
+    .sort-indicator { display:inline-block; min-width:14px; margin-left:5px; color:#64748b; font-size:.75rem; }
+    .clients-table tr.is-selected { background:#eff6ff; }
+    .pagination-controls { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+    .pagination-summary { margin:0 8px; color:#64748b; font-size:.88rem; }
+    .pagination-btn[hidden] { display:none; }
+    .btn-danger-soft { border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; }
+    .btn-danger-soft:hover { background:#ffe4e6; }
+    @media (max-width:760px) { .bulk-clients-bar { align-items:flex-start; flex-direction:column; } .columns-clients-dropdown { position:fixed; left:16px; right:16px; top:auto; bottom:16px; min-width:0; } }
+
+    .product-stock-info{margin-top:8px;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:700;line-height:1.35}
+    .product-stock-info.stock-neutral{color:#475569;background:#f1f5f9;border:1px solid #e2e8f0}
+    .product-stock-info.stock-ok{color:#166534;background:#dcfce7;border:1px solid #bbf7d0}
+    .product-stock-info.stock-low{color:#92400e;background:#fef3c7;border:1px solid #fde68a}
+    .product-stock-info.stock-out{color:#b91c1c;background:#fee2e2;border:1px solid #fecaca}
+
+    .sale-payment-history{margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0}
+    .sale-payment-history-title{margin-bottom:8px;font-size:.9rem}
+    .sale-payment-history-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:.86rem;border-bottom:1px dashed #e2e8f0}
+    .sale-payment-history-row:last-child{border-bottom:0}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
+
+        <button id="sidebar-close" class="sidebar-close">
+            ✖
+        </button>
+
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo">
+        </a>
+
+        <nav>
+            <ul>
+
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>🛒 Commercial</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="ventes.html" class="nav-link active" aria-current="page">
+                                Ventes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="commandes.html" class="nav-link">
+                                Commandes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="clients.html" class="nav-link">
+                                Clients
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livraisons.html" class="nav-link">
+                                Livraisons
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livreurs.html" class="nav-link">
+                                Livreurs
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>📦 Stock & Approvisionnement</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="produits.html" class="nav-link">
+                                Produits
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="stock.html" class="nav-link">
+                                Stock & Mouvements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="approvisionnements.html" class="nav-link">
+                                Approvisionnements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="fournisseurs.html" class="nav-link">
+                                Fournisseurs
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="transitaires.html" class="nav-link">
+                                Transitaires
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>💰 Finance</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="caisse.html" class="nav-link">
+                                Caisse
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="paiements.html" class="nav-link">
+                                Paiements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="factures.html" class="nav-link">
+                                Factures
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="comptabilité.html" class="nav-link">
+                                Comptabilité
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="paramètres.html" class="nav-link">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </aside>
+
+    <!-- ===== Contenu principal ===== -->
+    <main class="main-content">
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
+                </a>
+
+                <h2>Ventes</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            placeholder="Rechercher une vente..."
+                        >
+
+                        <button class="search-btn">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
+
+        🔔
+        <span class="notification-badge" hidden>0</span>
+
+    </button>
+
+    <div
+        id="notification-panel"
+        class="notification-panel"
+        hidden>
+
+        <div class="notification-panel-header">
+            <h3>Notifications</h3>
+        </div>
+
+        <div class="notification-empty-state">
+            <span aria-hidden="true">🔔</span>
+            <p>Les notifications réelles seront activées lors du réglage global de l’ERP.</p>
+        </div>
+
+    </div>
+
+</div>
+
+                    <div class="profile-menu">
+
+                        <button class="icon-btn">
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ===== Contenu de la page ===== -->
+        <section class="content">
+
+            <div class="welcome-section">
+                <div>
+                    <h2>Gestion des ventes</h2>
+                    <p>Consultez les ventes générées automatiquement à partir des commandes finalisées.</p>
+                </div>
+            </div>
+
+            <div class="kpi-grid sales-kpi-grid">
+                <article class="kpi-card">
+                    <div class="kpi-card-header"><span class="kpi-icon">🧾</span><span class="kpi-title">Total ventes</span></div>
+                    <h3 class="kpi-value is-loading" id="total-sales-value">—</h3>
+                    <p class="kpi-trend up" id="total-sales-description">Chargement...</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-card-header"><span class="kpi-icon">💰</span><span class="kpi-title">Chiffre d'affaires</span></div>
+                    <h3 class="kpi-value is-loading" id="sales-revenue-value">—</h3>
+                    <p class="kpi-description">Montant net total des ventes</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-card-header"><span class="kpi-icon">💳</span><span class="kpi-title">Montants encaissés</span></div>
+                    <h3 class="kpi-value is-loading" id="sales-paid-value">—</h3>
+                    <p class="kpi-description" id="sales-paid-description">Chargement...</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-card-header"><span class="kpi-icon">📌</span><span class="kpi-title">Créances clients</span></div>
+                    <h3 class="kpi-value is-loading" id="sales-balance-value">—</h3>
+                    <p class="kpi-description" id="sales-balance-description">Chargement...</p>
+                </article>
+            </div>
+
+            <div class="clients-toolbar sales-toolbar">
+                <div class="toolbar-left sales-toolbar-summary">
+                    <span class="order-count"><strong id="filtered-sale-count">0</strong> vente(s) affichée(s)</span>
+                </div>
+
+                <div class="toolbar-right sales-toolbar-actions">
+<div class="sales-actions-menu">
+                        <button
+                            class="btn-secondary sales-actions-trigger"
+                            id="sales-actions-trigger"
+                            type="button"
+                            aria-expanded="false"
+                            aria-controls="sales-actions-dropdown"
+                        >
+                            Actions <span aria-hidden="true">⌄</span>
+                        </button>
+
+                        <div class="sales-actions-dropdown" id="sales-actions-dropdown" hidden>
+                            <button type="button" id="export-sales-btn">📤 <span>Exporter</span></button>
+                            <button type="button" id="print-sales-btn">🖨️ <span>Imprimer</span></button>
+                            <button type="button" id="refresh-sales-btn">🔄 <span>Actualiser</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="clients-filters sales-filters">
+                <select id="sale-payment-status-filter">
+                    <option value="">Tous les paiements</option>
+                    <option value="impayee">Impayée</option>
+                    <option value="partiellement payee">Partiellement payée</option>
+                    <option value="payee">Payée</option>
+                </select>
+                <select id="sale-delivery-status-filter">
+                    <option value="">Toutes les livraisons</option>
+                    <option value="retrait-boutique">Retrait en boutique</option>
+                    <option value="a-preparer">À préparer</option>
+                    <option value="en-preparation">En préparation</option>
+                    <option value="en-livraison">En livraison</option>
+                    <option value="livree">Livrée</option>
+                </select>
+                <select id="sale-payment-method-filter">
+                    <option value="">Tous les modes de paiement</option>
+                    <option value="especes">Espèces</option>
+                    <option value="mobile-money">Mobile Money</option>
+                    <option value="carte-bancaire">Carte bancaire</option>
+                    <option value="virement">Virement</option>
+                    <option value="cheque">Chèque</option>
+                </select>
+                <select id="sale-client-filter">
+                    <option value="">Tous les clients</option>
+                </select>
+                <button class="btn-filter-reset" id="reset-sale-filters">Effacer les filtres</button>
+            </div>
+
+            <div class="clients-table-container sales-table-container">
+                <div class="table-responsive">
+                    <table class="clients-table sales-table">
+                        <thead>
+                            <tr>
+
+                                <th>N° Vente</th>
+                                <th>N° Commande</th>
+                                <th>Client</th>
+                                <th>Date / Heure</th>
+                                <th>Montant Net</th>
+                                <th>Montant Payé</th>
+                                <th>Reste</th>
+                                <th>Mode de Paiement</th>
+                                <th>Statut Paiement</th>
+                                <th>Statut Livraison</th>
+                                <th>Retour</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-table-body">
+                            <tr>
+                                <td colspan="13" class="empty-table sales-loading-cell">
+                                    <span class="sales-loader" aria-hidden="true"></span>
+                                    <span>Chargement des ventes...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-pagination">
+                    <div class="pagination-info">
+                        <span>Afficher</span>
+                        <select id="sales-per-page">
+                            <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option>
+                        </select>
+                        <span>éléments par page</span>
+                    </div>
+                    <div class="pagination-controls" id="sales-pagination-controls">
+                        <button type="button" class="pagination-btn" id="previous-sale-page-btn">‹</button>
+                        <span id="sales-page-buttons" class="pagination-controls"></span>
+                        <span class="pagination-summary" id="sales-pagination-summary"></span>
+                        <button type="button" class="pagination-btn" id="next-sale-page-btn">›</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="sale-modal" aria-hidden="true" hidden>
+                <div class="modal sale-modal" role="dialog" aria-modal="true" aria-labelledby="sale-modal-title">
+                    <div class="modal-header">
+                        <div><h2 id="sale-modal-title">Nouvelle vente</h2><p>Renseignez le client, les produits, le paiement et la livraison.</p></div>
+                        <button type="button" class="modal-close" id="close-sale-modal">✕</button>
+                    </div>
+                    <form id="sale-form">
+                        <div class="modal-body">
+                            <div id="sale-form-message" class="form-message" aria-live="polite"></div>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">🧾</span><div><h3>Informations générales</h3><p>Client, date et heure de vente</p></div></div>
+                                <input type="hidden" id="sale-id" name="idVente">
+                                <input type="hidden" id="sale-order-id" name="idCommande">
+                                <input type="hidden" id="sale-user-id" name="idUtilisateur">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="sale-number">Numéro de vente</label>
+                                        <input type="text" id="sale-number" readonly value="Génération automatique...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-client">Client <span class="required">*</span></label>
+                                        <div class="client-select-row">
+                                            <select id="sale-client" name="idClient" required><option value="">Sélectionner un client</option></select>
+                                            <button type="button" class="btn-secondary compact-btn" id="open-new-sale-client-modal-btn">➕ Nouveau client</button>
+                                            <button type="button" class="btn-secondary compact-btn" id="refresh-sale-clients-btn" title="Actualiser la liste des clients">↻</button>
+                                        </div>
+                                        <small class="form-help">Le nouveau client créé sera automatiquement ajouté et sélectionné.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-date">Date de vente</label>
+                                        <input type="date" id="sale-date" name="dateVente" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-time">Heure de vente</label>
+                                        <input type="time" id="sale-time" name="heureVente" readonly>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">🛒</span><div><h3>Produits vendus</h3><p>Sélectionnez les produits et contrôlez leur stock disponible</p></div></div>
+                                <div class="form-grid">
+                                    <div class="form-group form-group-full">
+                                        <label for="sale-product-select">Produit</label>
+                                        <select id="sale-product-select"><option value="">Sélectionner un produit</option></select>
+                                        <div id="sale-product-stock" class="product-stock-info stock-neutral" aria-live="polite">Stock disponible : —</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-product-quantity">Quantité</label>
+                                        <input type="text" id="sale-product-quantity" inputmode="numeric" autocomplete="off" placeholder="Quantité">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-product-price">Prix de vente unitaire</label>
+                                        <div class="money-input"><input type="text" id="sale-product-price" inputmode="numeric" readonly><span>FCFA</span></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-product-discount">Remise</label>
+                                        <div class="money-input"><input type="text" id="sale-product-discount" inputmode="numeric" autocomplete="off" placeholder="Montant"><span>FCFA</span></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-product-line-total">Total ligne</label>
+                                        <div class="money-input"><input type="text" id="sale-product-line-total" readonly value="0"><span>FCFA</span></div>
+                                        <small class="form-help">Quantité × prix unitaire - remise</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <button type="button" class="btn-secondary" id="add-sale-product-btn">➕ Ajouter le produit</button>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="sales-table sale-lines-table">
+                                        <thead><tr><th>Produit</th><th>Quantité</th><th>Prix</th><th>Remise</th><th>Sous-total</th><th>Action</th></tr></thead>
+                                        <tbody id="sale-lines-table-body"><tr><td colspan="6" class="empty-table">Aucun produit ajouté.</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">🚚</span><div><h3>Livraison</h3><p>Mode de remise, destination et livreur</p></div></div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="sale-delivery-mode">Mode de remise</label>
+                                        <select id="sale-delivery-mode" name="modeRemise">
+                                            <option value="retrait-boutique">Retrait en boutique</option>
+                                            <option value="livraison">Livraison</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-delivery-status-display">Statut livraison</label>
+                                        <input
+                                            type="text"
+                                            id="sale-delivery-status-display"
+                                            value="Retrait en boutique"
+                                            readonly
+                                            aria-readonly="true"
+                                        >
+                                        <input
+                                            type="hidden"
+                                            id="sale-delivery-status"
+                                            name="statutLivraison"
+                                            value="retrait-boutique"
+                                        >
+                                        <small class="form-help">
+                                            Ce statut est géré automatiquement dans le module Livraisons.
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div id="sale-delivery-details" class="form-grid" hidden>
+                                    <div class="form-group">
+                                        <label for="sale-delivery-commune">Commune de livraison <span class="required">*</span></label>
+                                        <select id="sale-delivery-commune" name="communeLivraison">
+                                            <option value="">Sélectionner une commune</option>
+                                            <option value="Abobo">Abobo</option>
+                                            <option value="Adjamé">Adjamé</option>
+                                            <option value="Attécoubé">Attécoubé</option>
+                                            <option value="Bingerville">Bingerville</option>
+                                            <option value="Cocody">Cocody</option>
+                                            <option value="Koumassi">Koumassi</option>
+                                            <option value="Marcory">Marcory</option>
+                                            <option value="Plateau">Plateau</option>
+                                            <option value="Port-Bouët">Port-Bouët</option>
+                                            <option value="Songon">Songon</option>
+                                            <option value="Treichville">Treichville</option>
+                                            <option value="Yopougon">Yopougon</option>
+                                        </select>
+                                        <small class="form-help">La commune sélectionnée filtre automatiquement les livreurs actifs.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-delivery-zone">Zone / quartier de livraison</label>
+                                        <input type="text" id="sale-delivery-zone" name="zoneLivraison" placeholder="Exemple : Riviera 2, Angré, Maroc...">
+                                    </div>
+                                    <div class="form-group form-group-full">
+                                        <label for="sale-delivery-address">Adresse précise de livraison <span class="required">*</span></label>
+                                        <textarea id="sale-delivery-address" name="adresseLivraison" rows="3" placeholder="Rue, lot, immeuble, repère ou autres indications..."></textarea>
+                                    </div>
+                                    <div class="form-group form-group-full">
+                                        <label for="sale-delivery-person">Livreur</label>
+                                        <select id="sale-delivery-person" name="idLivreur">
+                                            <option value="">Sélectionnez d'abord une commune</option>
+                                        </select>
+                                        <small class="form-help">Seuls les livreurs actifs couvrant la commune choisie sont proposés.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-delivery-date">Date de livraison prévue</label>
+                                        <input type="date" id="sale-delivery-date" name="dateLivraisonPrevue">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-delivery-fees">Frais de livraison</label>
+                                        <div class="money-input"><input type="text" id="sale-delivery-fees" name="fraisLivraison" inputmode="numeric" autocomplete="off" placeholder="Montant"><span>FCFA</span></div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">💰</span><div><h3>Récapitulatif financier</h3><p>Calcul automatique des montants de la vente</p></div></div>
+                                <div class="form-grid">
+                                    <div class="form-group"><label for="sale-total">Montant total</label><div class="money-input"><input type="text" id="sale-total" name="montantTotal" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="sale-global-discount">Remise supplémentaire sur le total</label><div class="money-input"><input type="text" id="sale-global-discount" name="remiseGlobale" inputmode="numeric" autocomplete="off" placeholder="Montant"><span>FCFA</span></div><small class="form-help">S'ajoute aux remises déjà appliquées sur les produits.</small></div>
+                                    <div class="form-group"><label for="sale-total-discount">Remise totale</label><div class="money-input"><input type="text" id="sale-total-discount" name="remiseTotale" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="sale-net-amount">Montant net</label><div class="money-input total-payable"><input type="text" id="sale-net-amount" name="montantNet" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="sale-paid-summary">Montant payé</label><div class="money-input"><input type="text" id="sale-paid-summary" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="sale-balance">Reste à payer</label><div class="money-input"><input type="text" id="sale-balance" name="resteAPayer" readonly><span>FCFA</span></div></div>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">💳</span><div><h3>Paiement</h3><p>Mode de règlement et montant encaissé</p></div></div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="sale-payment-method">Mode de paiement</label>
+                                        <select id="sale-payment-method" name="modePaiement">
+                                            <option value="">Sélectionner</option>
+                                            <option value="especes">Espèces</option>
+                                            <option value="mobile-money">Mobile Money</option>
+                                            <option value="carte-bancaire">Carte bancaire</option>
+                                            <option value="virement">Virement</option>
+                                            <option value="cheque">Chèque</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-amount-due">Montant à payer</label>
+                                        <div class="money-input"><input type="text" id="sale-amount-due" readonly value="0"><span>FCFA</span></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-paid-amount">Montant payé</label>
+                                        <div class="money-input"><input type="text" id="sale-paid-amount" name="montantPaye" inputmode="numeric" autocomplete="off" placeholder="Montant"><span>FCFA</span></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sale-payment-status">Statut paiement</label>
+                                        <input type="text" id="sale-payment-status" name="statutPaiement" value="Impayée" readonly>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-group"><label for="sale-comment">Commentaire</label><textarea id="sale-comment" name="commentaire" rows="4" placeholder="Informations complémentaires..."></textarea></div>
+                            </section>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn-secondary" id="cancel-sale-btn">Annuler</button>
+                            <button type="submit" class="btn-primary" id="save-sale-btn">Enregistrer la vente</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ===== Fenêtre Voir une vente ===== -->
+            <div class="modal-overlay" id="view-sale-modal" aria-hidden="true">
+                <div class="modal sale-view-modal" role="dialog" aria-modal="true" aria-labelledby="view-sale-modal-title">
+                    <div class="order-view-header">
+                        <div class="order-view-header-main">
+                            <span class="order-view-header-icon"><i class="fa-solid fa-receipt"></i></span>
+                            <div>
+                                <h2 id="view-sale-modal-title">Détails de la vente</h2>
+                                <p id="view-sale-modal-subtitle">Informations générales et produits vendus</p>
+                            </div>
+                        </div>
+                        <button type="button" class="order-view-close" id="close-view-sale-modal" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <div class="modal-body order-view-body">
+                        <section class="order-view-overview">
+                            <article class="order-overview-item"><span class="order-overview-icon icon-blue"><i class="fa-solid fa-calendar-day"></i></span><div><small>Date de vente</small><strong id="view-sale-date-summary">—</strong></div></article>
+                            <article class="order-overview-item"><span class="order-overview-icon icon-green"><i class="fa-solid fa-wallet"></i></span><div><small>Montant net</small><strong id="view-sale-net-summary">0 FCFA</strong></div></article>
+                            <article class="order-overview-item"><span class="order-overview-icon icon-purple"><i class="fa-solid fa-credit-card"></i></span><div><small>Paiement</small><strong id="view-sale-payment-summary">—</strong></div></article>
+                            <article class="order-overview-item"><span class="order-overview-icon icon-orange"><i class="fa-solid fa-truck"></i></span><div><small>Livraison</small><strong id="view-sale-delivery-summary">—</strong></div></article>
+                        </section>
+
+                        <div class="order-view-main-grid">
+                            <section class="order-view-card">
+                                <div class="order-view-card-title"><span><i class="fa-solid fa-circle-info"></i></span><div><h3>Informations générales</h3><p>Client, commande liée et paiement</p></div></div>
+                                <div id="view-sale-general-details" class="order-info-list"></div>
+                            </section>
+                            <section class="order-view-card order-financial-card">
+                                <div class="order-view-card-title"><span><i class="fa-solid fa-chart-column"></i></span><div><h3>Récapitulatif financier</h3><p>Montants calculés de la vente</p></div></div>
+                                <div id="view-sale-financial-details" class="order-financial-list"></div>
+                            </section>
+                        </div>
+
+                        <section class="order-view-card order-products-card">
+                            <div class="order-view-card-title"><span><i class="fa-solid fa-cart-shopping"></i></span><div><h3>Produits vendus</h3><p>Détail des lignes de la vente</p></div></div>
+                            <div class="table-responsive">
+                                <table class="sales-table order-view-products-table">
+                                    <thead><tr><th>N°</th><th>Produit</th><th>Quantité</th><th>Prix unitaire</th><th>Remise</th><th>Sous-total</th></tr></thead>
+                                    <tbody id="view-sale-lines-body"><tr><td colspan="7" class="empty-table">Aucun produit.</td></tr></tbody>
+                                </table>
+                            </div>
+                            <div class="order-products-count"><span id="view-sale-products-count">0 article</span></div>
+                        </section>
+                    </div>
+
+                    <div class="modal-footer order-view-footer">
+                        <button type="button" class="btn-primary" id="view-sale-payment-btn" hidden><i class="fa-solid fa-money-bill-wave"></i> Encaisser un paiement</button>
+                        <button type="button" class="btn-secondary" id="close-view-sale-footer"><i class="fa-solid fa-xmark"></i> Fermer</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ===== Fenêtre Encaissement complémentaire ===== -->
+            <div class="modal-overlay" id="sale-payment-modal" aria-hidden="true">
+                <div class="modal sale-modal" role="dialog" aria-modal="true" aria-labelledby="sale-payment-modal-title">
+                    <div class="modal-header">
+                        <div>
+                            <h2 id="sale-payment-modal-title">Encaisser un paiement</h2>
+                            <p id="sale-payment-modal-subtitle">Règlement complémentaire de la vente.</p>
+                        </div>
+                        <button type="button" class="modal-close" id="close-sale-payment-modal" aria-label="Fermer">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-message" id="sale-payment-message" aria-live="polite"></div>
+                        <input type="hidden" id="sale-payment-sale-id">
+                        <section class="form-section">
+                            <div class="form-section-header">
+                                <span class="form-section-icon">💳</span>
+                                <div>
+                                    <h3>Paiement complémentaire</h3>
+                                    <p>La date, l'heure et l'utilisateur sont enregistrés automatiquement.</p>
+                                </div>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Reste à payer</label>
+                                    <div class="return-financial-value return-financial-highlight" id="sale-payment-balance-display">0 FCFA</div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sale-payment-amount">Montant encaissé <span class="required">*</span></label>
+                                    <div class="money-input"><input type="text" id="sale-payment-amount" inputmode="numeric" autocomplete="off" placeholder="Montant"><span>FCFA</span></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sale-payment-method-extra">Moyen de paiement <span class="required">*</span></label>
+                                    <select id="sale-payment-method-extra">
+                                        <option value="">Sélectionner</option>
+                                        <option value="especes">Espèces</option>
+                                        <option value="mobile-money">Mobile Money</option>
+                                        <option value="carte-bancaire">Carte bancaire</option>
+                                        <option value="virement">Virement</option>
+                                        <option value="cheque">Chèque</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" id="cancel-sale-payment-btn">Annuler</button>
+                        <button type="button" class="btn-primary" id="confirm-sale-payment-btn">Encaisser</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Fenêtre Retour d'une vente ===== -->
+            <div class="modal-overlay" id="return-sale-modal" aria-hidden="true">
+                <div class="modal sale-modal" role="dialog" aria-modal="true" aria-labelledby="return-sale-modal-title">
+                    <div class="modal-header">
+                        <div>
+                            <h2 id="return-sale-modal-title">Retour de vente</h2>
+                            <p id="return-sale-modal-subtitle">Sélectionnez les produits et quantités à retourner.</p>
+                        </div>
+                        <button type="button" class="modal-close" id="close-return-sale-modal" aria-label="Fermer">✕</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-message" id="return-sale-message" aria-live="polite"></div>
+                        <input type="hidden" id="return-sale-id">
+
+                        <section class="form-section">
+                            <div class="form-section-header">
+                                <span class="form-section-icon">↩️</span>
+                                <div>
+                                    <h3>Produits à retourner</h3>
+                                    <p>Cochez les produits concernés puis indiquez la quantité retournée.</p>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="sales-table sale-lines-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Retour</th>
+                                            <th>Produit</th>
+                                            <th>Vendue</th>
+                                            <th>Déjà retournée</th>
+                                            <th>À retourner</th>
+                                            <th>État du produit</th>
+                                            <th>Prix unitaire</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="return-sale-lines-body">
+                                        <tr><td colspan="7" class="empty-table">Aucun produit.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <section class="form-section">
+                            <div class="form-section-header">
+                                <span class="form-section-icon">📝</span>
+                                <div>
+                                    <h3>Motif du retour</h3>
+                                    <p>Indiquez la raison communiquée par le client.</p>
+                                </div>
+                            </div>
+                            <div class="form-group form-group-full">
+                                <label for="return-sale-reason">Motif <span class="required">*</span></label>
+                                <textarea id="return-sale-reason" rows="3" placeholder="Exemple : produit défectueux, mauvaise référence, changement d'avis..."></textarea>
+                            </div>
+                        </section>
+
+                        <section class="form-section return-resolution-section">
+                            <div class="form-section-header">
+                                <span class="form-section-icon">⚖️</span>
+                                <div>
+                                    <h3>Résolution commerciale</h3>
+                                    <p>Choisissez ce que reçoit le client à la suite du retour.</p>
+                                </div>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="return-sale-resolution">Résolution <span class="required">*</span></label>
+                                    <select id="return-sale-resolution">
+                                        <option value="">Sélectionner une résolution</option>
+                                        <option value="remboursement">Remboursement</option>
+                                        <option value="avoir">Avoir</option>
+                                        <option value="echange">Échange</option>
+                                        <option value="aucune-compensation">Aucune compensation</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Valeur estimée du retour</label>
+                                    <div class="return-financial-value" id="return-sale-value">0 FCFA</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Réduction de créance estimée</label>
+                                    <div class="return-financial-value" id="return-sale-debt-reduction">0 FCFA</div>
+                                    <small>Prioritaire si la vente comporte encore un reste à payer.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Montant disponible pour compensation</label>
+                                    <div class="return-financial-value return-financial-highlight" id="return-sale-compensation-available">0 FCFA</div>
+                                </div>
+                            </div>
+
+                            <div id="return-resolution-refund" class="return-resolution-panel" hidden>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="return-refund-amount">Montant du remboursement prévu</label>
+                                        <input id="return-refund-amount" type="number" min="0" step="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="return-refund-method">Mode de remboursement</label>
+                                        <select id="return-refund-method">
+                                            <option value="">Sélectionner</option>
+                                            <option value="especes">Espèces</option>
+                                            <option value="mobile-money">Mobile Money</option>
+                                            <option value="virement">Virement bancaire</option>
+                                            <option value="carte">Carte</option>
+                                            <option value="autre">Autre</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group form-group-full">
+                                        <div class="return-status-note">
+                                            Statut initial : <strong>Remboursement à effectuer</strong>. La sortie de caisse sera connectée lorsque le module Caisse sera prêt.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="return-resolution-credit" class="return-resolution-panel" hidden>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Montant de l'avoir prévu</label>
+                                        <div class="return-financial-value" id="return-credit-amount">0 FCFA</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Statut</label>
+                                        <div class="return-status-note"><strong>Avoir à émettre</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="return-resolution-exchange" class="return-resolution-panel" hidden>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="return-exchange-product">Produit de remplacement <span class="required">*</span></label>
+                                        <select id="return-exchange-product">
+                                            <option value="">Sélectionner un produit</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="return-exchange-quantity">Quantité <span class="required">*</span></label>
+                                        <input id="return-exchange-quantity" type="number" min="1" step="1" value="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Valeur du produit de remplacement</label>
+                                        <div class="return-financial-value" id="return-exchange-value">0 FCFA</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Différence</label>
+                                        <div class="return-financial-value" id="return-exchange-difference">0 FCFA</div>
+                                        <small id="return-exchange-difference-help">Aucune différence.</small>
+                                    </div>
+                                    <div class="form-group form-group-full" id="return-exchange-negative-treatment-wrap" hidden>
+                                        <label for="return-exchange-negative-treatment">Si le nouveau produit coûte moins cher</label>
+                                        <select id="return-exchange-negative-treatment">
+                                            <option value="">Choisir le traitement de la différence</option>
+                                            <option value="remboursement">Rembourser la différence</option>
+                                            <option value="avoir">Transformer la différence en avoir</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="return-resolution-none" class="return-resolution-panel" hidden>
+                                <div class="form-group form-group-full">
+                                    <label for="return-no-compensation-reason">Justification <span class="required">*</span></label>
+                                    <textarea id="return-no-compensation-reason" rows="3" placeholder="Expliquez pourquoi aucune compensation n'est accordée."></textarea>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" id="cancel-return-sale-btn">Annuler</button>
+                        <button type="button" class="btn-primary" id="continue-return-sale-btn" disabled>Enregistrer le retour</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Historique des retours d'une vente ===== -->
+            <div class="modal-overlay" id="return-history-modal" aria-hidden="true">
+                <div class="modal sale-modal return-history-modal" role="dialog" aria-modal="true" aria-labelledby="return-history-modal-title">
+                    <div class="modal-header">
+                        <div>
+                            <h2 id="return-history-modal-title">Historique des retours</h2>
+                            <p id="return-history-modal-subtitle">Consultez les retours enregistrés et annulez une saisie erronée.</p>
+                        </div>
+                        <button type="button" class="modal-close" id="close-return-history-modal" aria-label="Fermer">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="return-history-list" class="return-history-list">
+                            <div class="empty-table">Aucun retour enregistré.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" id="close-return-history-footer">Fermer</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ===== Contrôle d'un produit retourné ===== -->
+            <div class="modal-overlay" id="control-return-modal" aria-hidden="true">
+                <div class="modal control-return-modal" role="dialog" aria-modal="true" aria-labelledby="control-return-modal-title">
+                    <div class="modal-header">
+                        <div>
+                            <h2 id="control-return-modal-title">Effectuer le contrôle</h2>
+                            <p>Indiquez si le produit retourné peut être remis en vente.</p>
+                        </div>
+                        <button type="button" class="modal-close" id="close-control-return-modal" aria-label="Fermer">✕</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="hidden" id="control-return-sale-id">
+                        <input type="hidden" id="control-return-id">
+
+                        <div class="control-return-summary">
+                            <span>Retour concerné</span>
+                            <strong id="control-return-number">—</strong>
+                        </div>
+
+                        <div class="form-group form-group-full">
+                            <label>Résultat du contrôle <span class="required">*</span></label>
+
+                            <div class="control-return-choice-grid" role="radiogroup" aria-label="Résultat du contrôle">
+                                <label class="control-return-choice" for="control-return-resellable">
+                                    <input
+                                        type="radio"
+                                        name="control-return-result"
+                                        id="control-return-resellable"
+                                        value="revendable"
+                                    >
+                                    <span class="control-return-choice-icon">✓</span>
+                                    <span class="control-return-choice-text">
+                                        <strong>Revendable</strong>
+                                        <small>Le produit peut être remis dans le stock disponible.</small>
+                                    </span>
+                                </label>
+
+                                <label class="control-return-choice" for="control-return-not-resellable">
+                                    <input
+                                        type="radio"
+                                        name="control-return-result"
+                                        id="control-return-not-resellable"
+                                        value="non revendable"
+                                    >
+                                    <span class="control-return-choice-icon">×</span>
+                                    <span class="control-return-choice-text">
+                                        <strong>Non revendable</strong>
+                                        <small>Le produit reste hors du stock disponible.</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group form-group-full">
+                            <label for="control-return-observation">Observation</label>
+                            <textarea
+                                id="control-return-observation"
+                                rows="4"
+                                placeholder="Exemple : produit testé et fonctionnel, emballage endommagé, défaut confirmé..."
+                            ></textarea>
+                            <small class="form-help">Facultatif, mais recommandé pour garder une trace du contrôle.</small>
+                        </div>
+
+                        <div id="control-return-message" class="form-message" aria-live="polite"></div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" id="cancel-control-return-btn">Annuler</button>
+                        <button type="button" class="btn-primary" id="confirm-control-return-btn" disabled>Valider le contrôle</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ===== Confirmation annulation d'un retour ===== -->
+            <div class="modal-overlay" id="cancel-return-modal" aria-hidden="true">
+                <div class="modal cancel-return-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-return-modal-title">
+                    <div class="modal-header">
+                        <div>
+                            <h2 id="cancel-return-modal-title">Annuler ce retour ?</h2>
+                            <p>Le retour restera dans l'historique mais ne comptera plus dans les quantités retournées.</p>
+                        </div>
+                        <button type="button" class="modal-close" id="close-cancel-return-modal" aria-label="Fermer">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="cancel-return-sale-id">
+                        <input type="hidden" id="cancel-return-id">
+                        <div class="cancel-return-summary">
+                            <span>Retour concerné</span>
+                            <strong id="cancel-return-number">—</strong>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="cancel-return-reason">Motif d'annulation <span class="required">*</span></label>
+                            <textarea id="cancel-return-reason" rows="4" placeholder="Exemple : mauvaise quantité saisie, mauvais produit sélectionné..."></textarea>
+                        </div>
+                        <div id="cancel-return-message" class="form-message" aria-live="polite"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" id="cancel-return-back-btn">Retour</button>
+                        <button type="button" class="btn-danger" id="confirm-cancel-return-btn" disabled>Annuler le retour</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Confirmation suppression d'une vente ===== -->
+            <div class="modal-overlay" id="delete-sale-modal" aria-hidden="true">
+                <div class="modal delete-sale-modal" role="dialog" aria-modal="true" aria-labelledby="delete-sale-modal-title">
+                    <div class="delete-sale-icon-wrap"><span class="delete-sale-icon"><i class="fa-solid fa-trash-can"></i></span></div>
+                    <div class="delete-sale-content">
+                        <h2 id="delete-sale-modal-title">Supprimer cette vente ?</h2>
+                        <p>Cette action restaurera le stock concerné et supprimera la vente selon les règles prévues dans VISIBL.</p>
+                        <div class="delete-sale-summary"><span>Vente</span><strong id="delete-sale-number">—</strong></div>
+                        <div id="delete-sale-error" class="form-message" aria-live="polite"></div>
+                    </div>
+                    <div class="delete-sale-actions">
+                        <button type="button" class="btn-secondary" id="cancel-delete-sale-btn">Annuler</button>
+                        <button type="button" class="btn-danger delete-confirm-btn" id="confirm-delete-sale-btn"><i class="fa-solid fa-trash-can"></i> Supprimer la vente</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Fenêtre Nouveau client depuis une vente ===== -->
+            <div class="modal-overlay" id="quick-client-modal" aria-hidden="true">
+
+                <div
+                    class="modal quick-client-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="quick-client-modal-title"
+                >
+
+                    <div class="modal-header">
+
+                        <div>
+                            <h2 id="quick-client-modal-title">Nouveau client</h2>
+                            <p>Enregistrez rapidement le client sans quitter la vente.</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="modal-close"
+                            id="close-quick-client-modal"
+                            aria-label="Fermer la fenêtre"
+                        >
+                            ✕
+                        </button>
+
+                    </div>
+
+                    <form id="quick-client-form">
+
+                        <div class="modal-body">
+
+                            <div
+                                id="quick-client-form-message"
+                                class="form-message"
+                                aria-live="polite"
+                            ></div>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">👤</span>
+
+                                    <div>
+                                        <h3>Informations générales</h3>
+                                        <p>Identité et statut du client</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-type">
+                                            Type de client
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="quick-client-type"
+                                            name="typeClient"
+                                            required
+                                        >
+                                            <option value="">Sélectionner un type</option>
+                                            <option value="particulier">Particulier</option>
+                                            <option value="entreprise">Entreprise</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-status">
+                                            Statut
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="quick-client-status"
+                                            name="statut"
+                                            required
+                                        >
+                                            <option value="actif">Actif</option>
+                                            <option value="prospect">Prospect</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-lastname">
+                                            Nom
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-lastname"
+                                            name="nom"
+                                            autocomplete="family-name"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-firstname">
+                                            Prénom
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-firstname"
+                                            name="prenom"
+                                            autocomplete="given-name"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">📞</span>
+
+                                    <div>
+                                        <h3>Coordonnées</h3>
+                                        <p>Téléphone et email</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-phone">
+                                            Téléphone
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <input
+                                            type="tel"
+                                            id="quick-client-phone"
+                                            name="telephone"
+                                            autocomplete="tel"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-email">Email</label>
+
+                                        <input
+                                            type="email"
+                                            id="quick-client-email"
+                                            name="email"
+                                            autocomplete="email"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">📍</span>
+
+                                    <div>
+                                        <h3>Adresse</h3>
+                                        <p>Commune et quartier</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-commune">Commune</label>
+
+                                        <select
+                                            id="quick-client-commune"
+                                            name="commune"
+                                        >
+                                            <option value="">Sélectionner une commune</option>
+                                            <option value="abobo">Abobo</option>
+                                            <option value="adjame">Adjamé</option>
+                                            <option value="attecoube">Attécoubé</option>
+                                            <option value="cocody">Cocody</option>
+                                            <option value="koumassi">Koumassi</option>
+                                            <option value="marcory">Marcory</option>
+                                            <option value="plateau">Plateau</option>
+                                            <option value="port-bouet">Port-Bouët</option>
+                                            <option value="treichville">Treichville</option>
+                                            <option value="yopougon">Yopougon</option>
+                                            <option value="autre">Autre</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-neighborhood">Quartier</label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-neighborhood"
+                                            name="quartier"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-group">
+                                    <label for="quick-client-comment">Commentaire</label>
+
+                                    <textarea
+                                        id="quick-client-comment"
+                                        name="commentaire"
+                                        rows="3"
+                                    ></textarea>
+                                </div>
+
+                            </section>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                id="cancel-quick-client-btn"
+                            >
+                                Annuler
+                            </button>
+
+                            <button
+                                type="submit"
+                                class="btn-primary"
+                                id="save-quick-client-btn"
+                            >
+                                Enregistrer le client
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- Facture liée à la vente : aperçu local -->
+<div class="modal-overlay" id="sale-invoice-modal" aria-hidden="true">
+  <div class="modal sale-invoice-modal" role="dialog" aria-modal="true">
+    <div class="modal-header"><div><h2>Facture</h2><p id="sale-invoice-modal-subtitle">Document client</p></div><button type="button" class="modal-close" id="close-sale-invoice-modal">✕</button></div>
+    <div class="modal-body">
+      <div id="sale-invoice-loading" class="sale-invoice-loading" hidden><span class="sales-loader"></span><span>Chargement de la facture...</span></div>
+      <article class="sale-invoice-document" id="sale-invoice-document">
+        <div class="sale-invoice-head"><div><strong>VISIBL</strong><small>Document commercial</small></div><div><span>FACTURE</span><strong id="sale-invoice-number">—</strong></div></div>
+        <div class="sale-invoice-parties"><div class="sale-invoice-box"><small>CLIENT</small><strong id="sale-invoice-client">—</strong><span id="sale-invoice-contact">—</span></div><div class="sale-invoice-box"><div><b>Date :</b> <span id="sale-invoice-date">—</span></div><div><b>Vente :</b> <span id="sale-invoice-sale">—</span></div></div></div>
+        <div class="sale-invoice-lines"><table><thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire TTC</th><th>Remise</th><th>Sous-total TTC</th></tr></thead><tbody id="sale-invoice-lines-body"></tbody></table></div>
+        <div class="sale-invoice-summary"><div><small>STATUT</small><strong id="sale-invoice-status">—</strong></div><div class="sale-invoice-totals"><div><span>Montant TTC</span><strong id="sale-invoice-total">0 FCFA</strong></div><div><span>Paiement encaissé</span><strong id="sale-invoice-paid">0 FCFA</strong></div><div id="sale-invoice-credit-row" hidden style="display:none;"><span>Avoir client utilisé</span><strong id="sale-invoice-credit">0 FCFA</strong></div><div><span>Total réglé</span><strong id="sale-invoice-settled">0 FCFA</strong></div><div><span>Reste à payer</span><strong id="sale-invoice-balance">0 FCFA</strong></div></div></div>
+        <div class="sale-invoice-comment" id="sale-invoice-comment-box" hidden><small>COMMENTAIRE</small><p id="sale-invoice-comment"></p></div>
+      </article>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" id="download-sale-invoice-btn" type="button">⬇️ Télécharger</button><button class="btn-secondary" id="print-sale-invoice-btn" type="button">🖨️ Imprimer / PDF</button><button class="btn-primary" id="close-sale-invoice-footer-btn" type="button">Fermer</button></div>
+  </div>
+</div>
+
+<!-- Conteneur des notifications -->
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/modules/ventes.js"></script>
+
+</body>
+
+</html>

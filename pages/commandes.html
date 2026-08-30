@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <!-- Anti-flash d'authentification : bloque l'affichage avant validation locale de session -->
+    <style>
+        html.visibl-auth-pending body {
+            visibility: hidden !important;
+        }
+    </style>
+    <script>
+        (function () {
+            document.documentElement.classList.add("visibl-auth-pending");
+
+            try {
+                const storedUser = localStorage.getItem("visibl_user");
+
+                if (!storedUser) {
+                    window.location.replace("connexion.html");
+                    return;
+                }
+
+                const user = JSON.parse(storedUser);
+
+                if (!user || typeof user !== "object") {
+                    localStorage.removeItem("visibl_user");
+                    window.location.replace("connexion.html");
+                    return;
+                }
+
+                document.documentElement.classList.remove("visibl-auth-pending");
+            } catch (error) {
+                localStorage.removeItem("visibl_user");
+                window.location.replace("connexion.html");
+            }
+        })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Commandes</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/commandes.css">
+
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
+
+<style>
+    .export-clients-menu { position: relative; display: inline-flex; }
+    .export-clients-trigger { display: inline-flex; align-items: center; gap: .45rem; }
+    .export-arrow { transition: transform .2s ease; }
+    .export-clients-menu.is-open .export-arrow { transform: rotate(180deg); }
+    .export-clients-dropdown {
+        position: absolute; top: calc(100% + 10px); left: 0; z-index: 1000;
+        width: 270px; padding: 8px; border: 1px solid rgba(15, 23, 42, .12);
+        border-radius: 14px; background: #fff; box-shadow: 0 18px 45px rgba(15, 23, 42, .16);
+    }
+    .export-clients-dropdown[hidden] { display: none; }
+    .export-option {
+        width: 100%; display: grid; grid-template-columns: 30px 1fr; gap: 10px;
+        align-items: center; padding: 11px 12px; border: 0; border-radius: 10px;
+        background: transparent; color: inherit; text-align: left; cursor: pointer;
+    }
+    .export-option:hover, .export-option:focus-visible { background: #f3f6fb; outline: none; }
+    .export-option span:last-child { display: flex; flex-direction: column; gap: 2px; }
+    .export-option small { color: #64748b; font-size: .75rem; }
+    @media (max-width: 640px) {
+        .export-clients-dropdown { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; }
+    }
+
+
+    /* ===== Étape 4 : tri, pagination, sélection et colonnes ===== */
+    .bulk-clients-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 14px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; }
+    .bulk-clients-bar[hidden] { display:none; }
+    .bulk-clients-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .bulk-clients-count { font-weight:700; }
+    .columns-clients-menu { position:relative; display:inline-flex; }
+    .columns-clients-dropdown { position:absolute; top:calc(100% + 10px); right:0; z-index:1000; min-width:245px; padding:10px; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:#fff; box-shadow:0 18px 45px rgba(15,23,42,.16); }
+    .columns-clients-dropdown[hidden] { display:none; }
+    .column-option { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:8px; cursor:pointer; }
+    .column-option:hover { background:#f3f6fb; }
+    .clients-table th[data-sort-key] { cursor:pointer; user-select:none; white-space:nowrap; }
+    .sort-indicator { display:inline-block; min-width:14px; margin-left:5px; color:#64748b; font-size:.75rem; }
+    .clients-table tr.is-selected { background:#eff6ff; }
+    .pagination-controls { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+    .pagination-summary { margin:0 8px; color:#64748b; font-size:.88rem; }
+    .pagination-btn[hidden] { display:none; }
+    .btn-danger-soft { border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; }
+    .btn-danger-soft:hover { background:#ffe4e6; }
+    @media (max-width:760px) { .bulk-clients-bar { align-items:flex-start; flex-direction:column; } .columns-clients-dropdown { position:fixed; left:16px; right:16px; top:auto; bottom:16px; min-width:0; } }
+
+    .product-stock-info{margin-top:8px;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:700;line-height:1.35}
+    .product-stock-info.stock-neutral{color:#475569;background:#f1f5f9;border:1px solid #e2e8f0}
+    .product-stock-info.stock-ok{color:#166534;background:#dcfce7;border:1px solid #bbf7d0}
+    .product-stock-info.stock-low{color:#92400e;background:#fef3c7;border:1px solid #fde68a}
+    .product-stock-info.stock-out{color:#b91c1c;background:#fee2e2;border:1px solid #fecaca}
+
+    .delivery-only-field[hidden] { display: none !important; }
+    .reception-mode-note {
+        margin-top: 8px;
+        padding: 10px 12px;
+        border-radius: 9px;
+        font-size: 12px;
+        line-height: 1.45;
+        color: #475569;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+    }
+
+
+    /* ===== Champs numériques sans spinner ===== */
+    #order-product-quantity,
+    #order-product-discount,
+    #order-discount,
+    #order-delivery-fees,
+    #order-paid-amount {
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+
+    #order-product-quantity::-webkit-outer-spin-button,
+    #order-product-quantity::-webkit-inner-spin-button,
+    #order-product-discount::-webkit-outer-spin-button,
+    #order-product-discount::-webkit-inner-spin-button,
+    #order-discount::-webkit-outer-spin-button,
+    #order-discount::-webkit-inner-spin-button,
+    #order-delivery-fees::-webkit-outer-spin-button,
+    #order-delivery-fees::-webkit-inner-spin-button,
+    #order-paid-amount::-webkit-outer-spin-button,
+    #order-paid-amount::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+
+    /* ===== Crédit client / avoir ===== */
+    .order-credit-panel {
+        grid-column: 1 / -1;
+        display: none;
+        padding: 14px 16px;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    }
+
+    .order-credit-panel.is-visible {
+        display: block;
+    }
+
+    .order-credit-panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .order-credit-panel-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: #166534;
+        font-weight: 800;
+    }
+
+    .order-credit-panel-title i {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: #dcfce7;
+    }
+
+    .order-credit-available {
+        color: #15803d;
+        font-size: 1.05rem;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .order-credit-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(180px, .55fr);
+        gap: 12px;
+        align-items: end;
+    }
+
+    .order-credit-note {
+        margin-top: 8px;
+        color: #475569;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .order-credit-zero-note {
+        display: none;
+        grid-column: 1 / -1;
+        padding: 10px 12px;
+        color: #64748b;
+        font-size: 12px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 9px;
+        background: #f8fafc;
+    }
+
+    .order-credit-zero-note.is-visible {
+        display: block;
+    }
+
+    @media (max-width: 640px) {
+        .order-credit-panel-head {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .order-credit-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
+
+        <button id="sidebar-close" class="sidebar-close">
+            ✖
+        </button>
+
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo">
+        </a>
+
+        <nav>
+            <ul>
+
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>🛒 Commercial</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="ventes.html" class="nav-link">
+                                Ventes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="commandes.html" class="nav-link active" aria-current="page">
+                                Commandes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="clients.html" class="nav-link">
+                                Clients
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livraisons.html" class="nav-link">
+                                Livraisons
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livreurs.html" class="nav-link">
+                                Livreurs
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>📦 Stock & Approvisionnement</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="produits.html" class="nav-link">
+                                Produits
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="stock.html" class="nav-link">
+                                Stock & Mouvements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="approvisionnements.html" class="nav-link">
+                                Approvisionnements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="fournisseurs.html" class="nav-link">
+                                Fournisseurs
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="transitaires.html" class="nav-link">
+                                Transitaires
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>💰 Finance</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="caisse.html" class="nav-link">
+                                Caisse
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="paiements.html" class="nav-link">
+                                Paiements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="factures.html" class="nav-link">
+                                Factures
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="comptabilité.html" class="nav-link">
+                                Comptabilité
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="paramètres.html" class="nav-link">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </aside>
+
+    <!-- ===== Contenu principal ===== -->
+    <main class="main-content">
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
+                </a>
+
+                <h2>Commandes</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="orders-header-search-input"
+                            placeholder="Rechercher une commande..."
+                        >
+
+                        <button class="search-btn">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
+
+        🔔
+        <span class="notification-badge" hidden>0</span>
+    </button>
+    <div id="notification-panel" class="notification-panel" hidden>
+        <div class="notification-panel-header"><h3>Notifications</h3></div>
+        <div class="notification-empty-state">
+            <span aria-hidden="true">🔔</span>
+            <p>Les notifications réelles seront activées lors du réglage global de l’ERP.</p>
+        </div>
+    </div>
+</div>
+<div class="profile-menu">
+
+                        <button class="icon-btn">
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ===== Contenu de la page ===== -->
+        <section class="content">
+
+            <div class="welcome-section">
+                <div>
+                    <h2>Gestion des commandes</h2>
+                    <p>Créez, consultez et suivez les commandes clients, leurs produits, leurs paiements et leur livraison.</p>
+                </div>
+                <button class="btn-primary" id="new-order-btn">➕ Nouvelle commande</button>
+            </div>
+
+            <div class="kpi-grid orders-kpi-grid">
+                <article class="kpi-card">
+                    <div class="kpi-card-header"><span class="kpi-icon">📦</span><span class="kpi-title">Total commandes</span></div>
+                    <h3 class="kpi-value is-loading" id="total-orders-value">—</h3>
+                    <p class="kpi-trend up" id="total-orders-description">Chargement...</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-card-header"><span class="kpi-icon">💰</span><span class="kpi-title">Chiffre d'affaires</span></div>
+                    <h3 class="kpi-value is-loading" id="orders-revenue-value">—</h3>
+                    <p class="kpi-description">Montant total des commandes</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-card-header"><span class="kpi-icon">⏳</span><span class="kpi-title">En attente</span></div>
+                    <h3 class="kpi-value is-loading" id="pending-orders-value">—</h3>
+                    <p class="kpi-description">Commandes à traiter</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-card-header"><span class="kpi-icon">✅</span><span class="kpi-title">Terminées</span></div>
+                    <h3 class="kpi-value is-loading" id="completed-orders-value">—</h3>
+                    <p class="kpi-description">Commandes finalisées</p>
+                </article>
+            </div>
+
+            <div class="clients-toolbar orders-toolbar">
+                <div class="toolbar-left orders-toolbar-summary">
+                    <span class="order-count"><strong id="filtered-order-count">0</strong> commande(s) affichée(s)</span>
+                </div>
+                <div class="toolbar-right orders-toolbar-actions">
+                    <div class="orders-actions-menu">
+                        <button class="btn-secondary orders-actions-trigger" id="orders-actions-trigger" type="button"
+                            aria-expanded="false" aria-controls="orders-actions-dropdown">
+                            Actions <span aria-hidden="true">⌄</span>
+                        </button>
+                        <div class="orders-actions-dropdown" id="orders-actions-dropdown" hidden>
+                            <button type="button" id="export-orders-btn">📤 <span>Exporter</span></button>
+                            <button type="button" id="print-orders-btn">🖨️ <span>Imprimer</span></button>
+                            <button type="button" id="refresh-orders-btn">🔄 <span>Actualiser</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="orders-selection-bar" id="orders-selection-bar" hidden>
+                <div><strong id="selected-orders-count">0</strong> commande(s) sélectionnée(s)</div>
+                <div class="orders-selection-actions">
+                    <button type="button" class="btn-secondary" id="select-visible-orders-btn">Tout sélectionner</button>
+                    <button type="button" class="btn-secondary" id="clear-orders-selection-btn">Tout décocher</button>
+                    <button type="button" class="btn-secondary btn-danger-soft" id="delete-orders-selection-btn">🗑️ Supprimer la sélection</button>
+                    <button type="button" class="btn-secondary" id="close-orders-selection-btn">Quitter la sélection</button>
+                </div>
+            </div>
+<div class="clients-filters orders-filters">
+                <select id="order-status-filter">
+                    <option value="">Tous les statuts</option>
+                    <option value="en-attente">En attente</option>
+                    <option value="confirmee">Confirmée</option>
+                    <option value="en-preparation">En préparation</option>
+                    <option value="convertie-en-vente">Convertie en vente</option>
+                    <option value="terminee">Convertie en vente</option>
+                    <option value="livree">Livrée</option>
+                    <option value="annulee">Annulée</option>
+                </select>
+                <select id="order-payment-status-filter">
+                    <option value="">Tous les paiements</option>
+                    <option value="non-paye">Non payé</option>
+                    <option value="partiel">Partiel</option>
+                    <option value="paye">Payé</option>
+                </select>
+                <select id="order-commune-filter">
+                    <option value="">Toutes les communes</option>
+                </select>
+                <button class="btn-filter-reset" id="reset-order-filters">Effacer les filtres</button>
+            </div>
+
+            <div class="clients-table-container orders-table-container">
+                <div class="table-responsive">
+                    <table class="clients-table orders-table">
+                        <thead>
+                            <tr>
+                                <th class="order-selection-column"><input type="checkbox" id="select-all-orders" aria-label="Sélectionner toutes les commandes"></th>
+                                <th>N° Commande</th>
+                                <th>Origine</th>
+                                <th>ID Vente</th>
+                                <th>Client</th>
+                                <th>Date / Heure</th>
+                                <th>Total à payer</th>
+                                <th>Livreur</th>
+                                <th>Zone</th>
+                                <th>Mode de Paiement prévu</th>
+                                <th>Livraison</th>
+                                <th>Statut commande</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <tr><td colspan="13" class="empty-table">Aucune commande enregistrée.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-pagination">
+                    <div class="pagination-info">
+                        <span>Afficher</span>
+                        <select id="orders-per-page">
+                            <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option>
+                        </select>
+                        <span>éléments par page</span>
+                    </div>
+                    <div class="pagination-controls" id="orders-pagination-controls">
+                        <button type="button" class="pagination-btn" id="previous-order-page-btn">‹</button>
+                        <span id="orders-page-buttons" class="pagination-controls"></span>
+                        <span class="pagination-summary" id="orders-pagination-summary"></span>
+                        <button type="button" class="pagination-btn" id="next-order-page-btn">›</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="order-modal" aria-hidden="true">
+                <div class="modal order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+                    <div class="modal-header">
+                        <div><h2 id="order-modal-title">Nouvelle commande</h2><p>Renseignez le client et les produits commandés.</p></div>
+                        <button type="button" class="modal-close" id="close-order-modal">✕</button>
+                    </div>
+
+                    <form id="order-form">
+                        <div class="modal-body">
+                            <div id="order-form-message" class="form-message" aria-live="polite"></div>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">🧾</span><div><h3>Informations générales</h3><p>Client, date, heure et statut</p></div></div>
+
+                                <input type="hidden" id="order-id" name="idCommande">
+                                <input type="hidden" id="order-user-id" name="idUtilisateur">
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="order-number">Numéro de commande</label>
+                                        <input type="text" id="order-number" name="numeroCommande" readonly value="Génération automatique...">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-origin">Origine</label>
+                                        <input
+                                            type="text"
+                                            id="order-origin"
+                                            name="origine"
+                                            value="Commande"
+                                            readonly
+                                        >
+                                        <small class="form-help">
+                                            Défini automatiquement : Commande ou Vente directe.
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group" style="display: none;">
+                                        <label for="order-sale-id">ID Vente liée</label>
+                                        <input
+                                            type="text"
+                                            id="order-sale-id"
+                                            name="idVente"
+                                            placeholder="Aucune vente liée"
+                                            readonly
+                                        >
+                                        <small class="form-help">
+                                            Renseigné automatiquement lorsque la commande est convertie en vente.
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-client">Client <span class="required">*</span></label>
+                                        <div class="client-select-row">
+                                            <select id="order-client" name="idClient" required>
+                                                <option value="">Sélectionner un client</option>
+                                            </select>
+                                            <button type="button" class="btn-secondary compact-btn" id="open-new-client-modal-btn">➕ Nouveau client</button>
+                                            <button type="button" class="btn-secondary compact-btn" id="refresh-order-clients-btn" title="Actualiser la liste des clients">↻</button>
+                                        </div>
+                                        <small class="form-help">Créez un client sans quitter la commande. Il sera ensuite sélectionné automatiquement.</small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-date">Date de commande</label>
+                                        <input type="date" id="order-date" name="dateCommande" readonly>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-time">Heure de commande</label>
+                                        <input type="time" id="order-time" name="heureCommande" readonly>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="order-status-display">Statut commande</label>
+                                        <input
+                                            type="text"
+                                            id="order-status-display"
+                                            value="En attente"
+                                            readonly
+                                            aria-readonly="true"
+                                        >
+                                        <input
+                                            type="hidden"
+                                            id="order-status"
+                                            name="statut"
+                                            value="en-attente"
+                                        >
+                                        <small class="form-help">
+                                            Le statut évolue uniquement grâce aux actions métier : Confirmer, Livrer/Retirer ou Annuler.
+                                        </small>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">🛒</span><div><h3>Produits commandés</h3><p>Ajoutez un ou plusieurs produits</p></div></div>
+                                <div class="form-grid">
+                                    <div class="form-group form-group-full">
+                                        <label for="order-product-select">Produit</label>
+                                        <select id="order-product-select">
+                                            <option value="">Sélectionner un produit</option>
+                                        </select>
+                                        <div id="order-product-stock" class="product-stock-info stock-neutral" aria-live="polite">
+                                            Stock disponible : —
+                                        </div>
+                                    </div>
+                                    <div class="form-group"><label for="order-product-quantity">Quantité</label><input type="number" id="order-product-quantity" min="1" value="1"></div>
+                                    <div class="form-group"><label for="order-product-price">Prix unitaire</label><div class="money-input"><input type="number" id="order-product-price" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-product-discount">Remise</label><div class="money-input"><input type="number" id="order-product-discount" min="0" inputmode="numeric" placeholder="Montant"><span>FCFA</span></div></div>
+                                    <div class="form-group"><label>&nbsp;</label><button type="button" class="btn-secondary" id="add-order-product-btn">➕ Ajouter le produit</button></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="orders-table order-lines-table">
+                                        <thead><tr><th>Produit</th><th>Quantité</th><th>Prix</th><th>Remise</th><th>Sous-total</th><th>Action</th></tr></thead>
+                                        <tbody id="order-lines-table-body"><tr><td colspan="6" class="empty-table">Aucun produit ajouté.</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">🚚</span><div><h3>Livraison et paiement prévu</h3><p>Livreur, destination et moyen de règlement</p></div></div>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="order-reception-mode">
+                                            Mode de réception
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="order-reception-mode"
+                                            name="modeReception"
+                                            required
+                                        >
+                                            <option value="livraison">🚚 Livraison</option>
+                                            <option value="retrait-boutique">🏪 Retrait en boutique</option>
+                                        </select>
+
+                                        <small class="form-help">
+                                            Une livraison crée automatiquement une fiche dans le module Livraisons.
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group delivery-only-field">
+                                        <label for="order-delivery-commune">
+                                            Commune de livraison
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="order-delivery-commune"
+                                            name="communeLivraison"
+                                            required
+                                        >
+                                            <option value="">Sélectionner une commune</option>
+                                            <option value="Abobo">Abobo</option>
+                                            <option value="Adjamé">Adjamé</option>
+                                            <option value="Attécoubé">Attécoubé</option>
+                                            <option value="Bingerville">Bingerville</option>
+                                            <option value="Cocody">Cocody</option>
+                                            <option value="Koumassi">Koumassi</option>
+                                            <option value="Marcory">Marcory</option>
+                                            <option value="Plateau">Plateau</option>
+                                            <option value="Port-Bouët">Port-Bouët</option>
+                                            <option value="Songon">Songon</option>
+                                            <option value="Treichville">Treichville</option>
+                                            <option value="Yopougon">Yopougon</option>
+                                        </select>
+
+                                        <small class="form-help">
+                                            La commune sélectionnée filtre automatiquement les livreurs actifs.
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group delivery-only-field">
+                                        <label for="order-delivery-zone">
+                                            Zone / quartier de livraison
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="order-delivery-zone"
+                                            name="zoneLivraison"
+                                            placeholder="Exemple : Riviera 2, Angré, Maroc..."
+                                        >
+                                    </div>
+
+                                    <div class="form-group form-group-full delivery-only-field">
+                                        <label for="order-delivery-address">
+                                            Adresse précise de livraison
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <textarea
+                                            id="order-delivery-address"
+                                            name="adresseLivraison"
+                                            rows="3"
+                                            required
+                                            placeholder="Rue, lot, immeuble, repère ou autres indications..."
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="form-group form-group-full delivery-only-field">
+                                        <label for="order-delivery-person">
+                                            Livreur
+                                        </label>
+
+                                        <select
+                                            id="order-delivery-person"
+                                            name="idLivreur"
+                                        >
+                                            <option value="">
+                                                Sélectionnez d'abord une commune
+                                            </option>
+                                        </select>
+
+                                        <small class="form-help">
+                                            Seuls les livreurs actifs couvrant la commune choisie sont proposés.
+                                            La commande peut toutefois être enregistrée sans livreur.
+                                        </small>
+                                    </div>
+                                    <div class="form-group delivery-only-field"><label for="order-delivery-contact">Contact de livraison</label><input type="tel" id="order-delivery-contact" name="contactLivraison" placeholder="07 00 00 00 00"></div>
+                                    <div class="form-group delivery-only-field"><label for="order-delivery-date">Date de livraison prévue</label><input type="date" id="order-delivery-date" name="dateLivraisonPrevue"></div>
+                                    <div class="form-group"><label for="order-payment-method">Mode de paiement prévu</label><select id="order-payment-method" name="modePaiementPrevu"><option value="">Sélectionner</option><option value="especes">Espèces</option><option value="mobile-money">Mobile Money</option><option value="carte-bancaire">Carte bancaire</option><option value="virement">Virement</option><option value="cheque">Chèque</option><option value="credit">Crédit</option></select></div>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">💰</span><div><h3>Récapitulatif financier</h3><p>Calcul automatique de la commande</p></div></div>
+                                <div class="form-grid">
+                                    <div class="form-group"><label for="order-total">Total commande</label><div class="money-input"><input type="number" id="order-total" name="totalCommande" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-discount">Remise totale</label><div class="money-input"><input type="number" id="order-discount" name="remiseTotale" min="0" inputmode="numeric" placeholder="Montant"><span>FCFA</span></div></div>
+                                    <div class="form-group delivery-only-field"><label for="order-delivery-fees">Frais de livraison</label><div class="money-input"><input type="number" id="order-delivery-fees" name="fraisLivraison" min="0" inputmode="numeric" placeholder="Montant"><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-total-payable">Total à payer</label><div class="money-input total-payable"><input type="number" id="order-total-payable" name="totalAPayer" readonly><span>FCFA</span></div></div>
+                                </div>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-section-header"><span class="form-section-icon">💳</span><div><h3>Paiement</h3><p>Encaissement réel lié à la commande</p></div></div>
+
+                                <div id="order-credit-panel" class="order-credit-panel">
+                                    <div class="order-credit-panel-head">
+                                        <div class="order-credit-panel-title">
+                                            <i class="fa-solid fa-wallet"></i>
+                                            <div>
+                                                <div>Crédit client disponible</div>
+                                                <small>Issu des factures d’avoir encore utilisables</small>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            id="order-credit-available-display"
+                                            class="order-credit-available"
+                                        >
+                                            0 FCFA
+                                        </div>
+                                    </div>
+
+                                    <div class="order-credit-grid">
+                                        <div class="form-group">
+                                            <label for="order-credit-used">
+                                                Montant d’avoir à utiliser
+                                            </label>
+
+                                            <div class="money-input">
+                                                <input
+                                                    type="number"
+                                                    id="order-credit-used"
+                                                    name="montantAvoirUtilise"
+                                                    min="0"
+                                                    step="1"
+                                                    inputmode="numeric"
+                                                    value="0"
+                                                >
+                                                <span>FCFA</span>
+                                            </div>
+
+                                            <small class="order-credit-note">
+                                                Ce montant réduit le reste à payer mais ne crée aucun encaissement dans la Caisse.
+                                            </small>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <button
+                                                type="button"
+                                                class="btn-secondary"
+                                                id="use-max-credit-btn"
+                                            >
+                                                Utiliser le maximum
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="order-credit-zero-note" class="order-credit-zero-note">
+                                    Ce client ne possède actuellement aucun crédit disponible.
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group"><label for="order-payment-method-real">Mode de paiement</label><select id="order-payment-method-real" name="modePaiement"><option value="">Sélectionner</option><option value="especes">Espèces</option><option value="mobile-money">Mobile Money</option><option value="carte-bancaire">Carte bancaire</option><option value="virement">Virement</option><option value="cheque">Chèque</option><option value="credit">Crédit</option></select></div>
+                                    <div class="form-group"><label for="order-amount-due">Montant à payer</label><div class="money-input"><input type="number" id="order-amount-due" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-paid-amount">Montant encaissé</label><div class="money-input"><input type="number" id="order-paid-amount" name="montantPaye" min="0" inputmode="numeric" value="0"><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-balance">Reste à payer</label><div class="money-input"><input type="number" id="order-balance" readonly><span>FCFA</span></div></div>
+                                    <div class="form-group"><label for="order-payment-status">Statut paiement</label><input type="text" id="order-payment-status" readonly value="Impayée"></div>
+                                </div>
+                                <small class="form-help">Pour une livraison, les encaissements supplémentaires restent suivis dans Livraisons. Pour un retrait boutique, le paiement est saisi ici.</small>
+                            </section>
+
+                            <section class="form-section">
+                                <div class="form-group"><label for="order-comment">Commentaire</label><textarea id="order-comment" name="commentaire" rows="4" placeholder="Informations complémentaires..."></textarea></div>
+                            </section>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn-secondary" id="cancel-order-btn">Annuler</button>
+                            <button type="submit" class="btn-primary" id="save-order-btn">Enregistrer la commande</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ===== Fenêtre Voir une commande ===== -->
+            <div
+                class="modal-overlay"
+                id="view-order-modal"
+                aria-hidden="true"
+            >
+                <div
+                    class="modal order-view-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="view-order-modal-title"
+                >
+                    <div class="order-view-header">
+                        <div class="order-view-header-main">
+                            <span class="order-view-header-icon">
+                                <i class="fa-solid fa-receipt"></i>
+                            </span>
+
+                            <div>
+                                <h2 id="view-order-modal-title">
+                                    Détails de la commande
+                                </h2>
+                                <p id="view-order-modal-subtitle">
+                                    Informations générales et produits commandés
+                                </p>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="order-view-close"
+                            id="close-view-order-modal"
+                            aria-label="Fermer"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div class="modal-body order-view-body">
+                        <section class="order-view-overview">
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-blue">
+                                    <i class="fa-solid fa-route"></i>
+                                </span>
+                                <div>
+                                    <small>Origine</small>
+                                    <strong id="view-order-origin-summary">—</strong>
+                                </div>
+                            </article>
+
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-green">
+                                    <i class="fa-solid fa-receipt"></i>
+                                </span>
+                                <div>
+                                    <small>ID Vente liée</small>
+                                    <strong id="view-order-sale-id-summary">—</strong>
+                                </div>
+                            </article>
+
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-blue">
+                                    <i class="fa-regular fa-calendar"></i>
+                                </span>
+                                <div>
+                                    <small>Date de commande</small>
+                                    <strong id="view-order-date-summary">—</strong>
+                                </div>
+                            </article>
+
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-green">
+                                    <i class="fa-regular fa-clock"></i>
+                                </span>
+                                <div>
+                                    <small>Livraison prévue</small>
+                                    <strong id="view-order-delivery-summary">—</strong>
+                                </div>
+                            </article>
+
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-purple">
+                                    <i class="fa-regular fa-credit-card"></i>
+                                </span>
+                                <div>
+                                    <small>Paiement prévu</small>
+                                    <strong id="view-order-payment-summary">—</strong>
+                                </div>
+                            </article>
+
+                            <article class="order-overview-item">
+                                <span class="order-overview-icon icon-orange">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                </span>
+                                <div>
+                                    <small>Statut</small>
+                                    <strong
+                                        id="view-order-status-summary"
+                                        class="order-view-status"
+                                    >
+                                        —
+                                    </strong>
+                                </div>
+                            </article>
+                        </section>
+
+                        <div class="order-view-main-grid">
+                            <section class="order-view-card">
+                                <div class="order-view-card-title">
+                                    <span>
+                                        <i class="fa-solid fa-circle-info"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Informations générales</h3>
+                                        <p>Client, livreur et destination</p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    id="view-order-general-details"
+                                    class="order-info-list"
+                                ></div>
+                            </section>
+
+                            <section class="order-view-card order-financial-card">
+                                <div class="order-view-card-title">
+                                    <span>
+                                        <i class="fa-solid fa-chart-column"></i>
+                                    </span>
+                                    <div>
+                                        <h3>Récapitulatif financier</h3>
+                                        <p>Montants calculés de la commande</p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    id="view-order-financial-details"
+                                    class="order-financial-list"
+                                ></div>
+                            </section>
+                        </div>
+
+                        <section class="order-view-card order-products-card">
+                            <div class="order-view-card-title">
+                                <span>
+                                    <i class="fa-solid fa-cart-shopping"></i>
+                                </span>
+                                <div>
+                                    <h3>Produits commandés</h3>
+                                    <p>Détail des lignes de la commande</p>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="orders-table order-view-products-table">
+                                    <thead>
+                                        <tr>
+                                            <th>N°</th>
+                                            <th>Produit</th>
+                                            <th>Quantité</th>
+                                            <th>Prix unitaire</th>
+                                            <th>Remise</th>
+                                            <th>Sous-total</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="view-order-lines-body">
+                                        <tr>
+                                            <td colspan="6" class="empty-table">
+                                                Aucun produit.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="order-products-count">
+                                <span id="view-order-products-count">
+                                    0 article
+                                </span>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="modal-footer order-view-footer">
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            id="close-view-order-footer"
+                        >
+                            <i class="fa-solid fa-xmark"></i>
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+            <!-- ===== Fenêtre Nouveau client depuis une commande ===== -->
+            <div class="modal-overlay" id="quick-client-modal" aria-hidden="true">
+
+                <div
+                    class="modal quick-client-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="quick-client-modal-title"
+                >
+
+                    <div class="modal-header">
+
+                        <div>
+                            <h2 id="quick-client-modal-title">Nouveau client</h2>
+                            <p>Enregistrez rapidement le client sans quitter la commande.</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="modal-close"
+                            id="close-quick-client-modal"
+                            aria-label="Fermer la fenêtre"
+                        >
+                            ✕
+                        </button>
+
+                    </div>
+
+                    <form id="quick-client-form">
+
+                        <div class="modal-body">
+
+                            <div
+                                id="quick-client-form-message"
+                                class="form-message"
+                                aria-live="polite"
+                            ></div>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">👤</span>
+
+                                    <div>
+                                        <h3>Informations générales</h3>
+                                        <p>Identité et statut du client</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-type">
+                                            Type de client
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="quick-client-type"
+                                            name="typeClient"
+                                            required
+                                        >
+                                            <option value="">Sélectionner un type</option>
+                                            <option value="particulier">Particulier</option>
+                                            <option value="entreprise">Entreprise</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-status">
+                                            Statut
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <select
+                                            id="quick-client-status"
+                                            name="statut"
+                                            required
+                                        >
+                                            <option value="actif">Actif</option>
+                                            <option value="prospect">Prospect</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-lastname">
+                                            Nom
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-lastname"
+                                            name="nom"
+                                            autocomplete="family-name"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-firstname">
+                                            Prénom
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-firstname"
+                                            name="prenom"
+                                            autocomplete="given-name"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">📞</span>
+
+                                    <div>
+                                        <h3>Coordonnées</h3>
+                                        <p>Téléphone et email</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-phone">
+                                            Téléphone
+                                            <span class="required">*</span>
+                                        </label>
+
+                                        <input
+                                            type="tel"
+                                            id="quick-client-phone"
+                                            name="telephone"
+                                            autocomplete="tel"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-email">Email</label>
+
+                                        <input
+                                            type="email"
+                                            id="quick-client-email"
+                                            name="email"
+                                            autocomplete="email"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-section-header">
+                                    <span class="form-section-icon">📍</span>
+
+                                    <div>
+                                        <h3>Adresse</h3>
+                                        <p>Commune et quartier</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+                                        <label for="quick-client-commune">Commune</label>
+
+                                        <select
+                                            id="quick-client-commune"
+                                            name="commune"
+                                        >
+                                            <option value="">Sélectionner une commune</option>
+                                            <option value="abobo">Abobo</option>
+                                            <option value="adjame">Adjamé</option>
+                                            <option value="attecoube">Attécoubé</option>
+                                            <option value="cocody">Cocody</option>
+                                            <option value="koumassi">Koumassi</option>
+                                            <option value="marcory">Marcory</option>
+                                            <option value="plateau">Plateau</option>
+                                            <option value="port-bouet">Port-Bouët</option>
+                                            <option value="treichville">Treichville</option>
+                                            <option value="yopougon">Yopougon</option>
+                                            <option value="autre">Autre</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="quick-client-neighborhood">Quartier</label>
+
+                                        <input
+                                            type="text"
+                                            id="quick-client-neighborhood"
+                                            name="quartier"
+                                        >
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <section class="form-section">
+
+                                <div class="form-group">
+                                    <label for="quick-client-comment">Commentaire</label>
+
+                                    <textarea
+                                        id="quick-client-comment"
+                                        name="commentaire"
+                                        rows="3"
+                                    ></textarea>
+                                </div>
+
+                            </section>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                id="cancel-quick-client-btn"
+                            >
+                                Annuler
+                            </button>
+
+                            <button
+                                type="submit"
+                                class="btn-primary"
+                                id="save-quick-client-btn"
+                            >
+                                Enregistrer le client
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- Vente liée : aperçu direct depuis Commandes, sans changer de module -->
+<div class="modal-overlay" id="linked-sale-modal" aria-hidden="true">
+    <div class="modal linked-sale-modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+            <div>
+                <div class="linked-sale-title-row">
+                    <span class="linked-sale-title-icon" aria-hidden="true">🧾</span>
+                    <div>
+                        <h2 id="linked-sale-modal-title">Vente liée</h2>
+                        <p id="linked-sale-modal-subtitle">Détails de la vente</p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="modal-close" id="close-linked-sale-modal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="linked-sale-loading" class="linked-sale-loading" hidden>
+                <span class="orders-loader" aria-hidden="true"></span>
+                <span>Chargement de la vente...</span>
+            </div>
+            <div id="linked-sale-content">
+                <section class="linked-sale-section">
+                    <div class="linked-sale-section-head">
+                        <div>
+                            <h3><span class="linked-sale-section-icon" aria-hidden="true">ℹ️</span> Informations de la vente</h3>
+                            <p>Références et informations générales de la vente liée.</p>
+                        </div>
+                    </div>
+                    <div class="linked-sale-grid linked-sale-info-grid">
+                        <div class="linked-sale-box"><span>N° Vente</span><strong id="linked-sale-number">—</strong></div>
+                        <div class="linked-sale-box"><span>N° Commande</span><strong id="linked-sale-order">—</strong></div>
+                        <div class="linked-sale-box"><span>Client</span><strong id="linked-sale-client">—</strong></div>
+                        <div class="linked-sale-box"><span>Date / Heure</span><strong id="linked-sale-date">—</strong></div>
+                    </div>
+                </section>
+
+                <section class="linked-sale-section">
+                    <div class="linked-sale-section-head">
+                        <div>
+                            <h3><span class="linked-sale-section-icon" aria-hidden="true">💳</span> Situation financière</h3>
+                            <p>Montants et état du règlement de cette vente.</p>
+                        </div>
+                    </div>
+                    <div class="linked-sale-grid linked-sale-finance-grid">
+                        <div class="linked-sale-box linked-sale-kpi is-total"><span>Montant net</span><strong id="linked-sale-total">0 FCFA</strong></div>
+                        <div class="linked-sale-box linked-sale-kpi is-paid"><span>Montant payé</span><strong id="linked-sale-paid">0 FCFA</strong></div>
+                        <div class="linked-sale-box linked-sale-kpi is-balance"><span>Reste à payer</span><strong id="linked-sale-balance">0 FCFA</strong></div>
+                    </div>
+                    <div class="linked-sale-grid linked-sale-status-grid">
+                        <div class="linked-sale-box"><span>Mode de paiement</span><strong id="linked-sale-payment-method">—</strong></div>
+                        <div class="linked-sale-box"><span>Statut paiement</span><strong id="linked-sale-payment-status" class="linked-sale-status">—</strong></div>
+                        <div class="linked-sale-box"><span>Statut livraison</span><strong id="linked-sale-delivery-status" class="linked-sale-status">—</strong></div>
+                    </div>
+                </section>
+
+                <section class="linked-sale-section linked-sale-products-section">
+                    <div class="linked-sale-section-head">
+                        <div>
+                            <h3><span class="linked-sale-section-icon" aria-hidden="true">📦</span> Produits vendus</h3>
+                            <p>Détail des articles rattachés à la vente.</p>
+                        </div>
+                    </div>
+                    <div class="linked-sale-lines-wrapper">
+                        <table class="orders-table linked-sale-lines-table">
+                            <thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Remise</th><th>Sous-total</th></tr></thead>
+                            <tbody id="linked-sale-lines-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-primary" id="close-linked-sale-footer-btn">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Conteneur des notifications -->
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/modules/commandes.js"></script>
+
+</body>
+
+</html>

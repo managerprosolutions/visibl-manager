@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+<!-- VISIBL COMMON PATCH: anti-flash session -->
+<style id="visibl-common-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-common-auth-guard-script">
+(function(){
+  document.documentElement.classList.add("visibl-auth-pending");
+  try{
+    const raw=localStorage.getItem("visibl_user");
+    if(!raw){location.replace("connexion.html");return;}
+    const u=JSON.parse(raw);
+    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
+    document.documentElement.classList.remove("visibl-auth-pending");
+  }catch(e){
+    localStorage.removeItem("visibl_user");
+    location.replace("connexion.html");
+  }
+})();
+</script>
+
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Produits</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/produits.css"
+    >
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside
+        id="sidebar"
+        class="sidebar"
+    >
+
+        <button
+            id="sidebar-close"
+            class="sidebar-close"
+            type="button"
+            aria-label="Fermer le menu"
+        >
+            ✖
+        </button>
+
+        <a
+            href="dashboard.html"
+            class="logo"
+        >
+            <img
+                src="../logo-vizibl.png"
+                alt="Logo VISIBL"
+            >
+        </a>
+
+        <nav>
+
+            <ul>
+
+                <li>
+
+                    <a
+                        href="dashboard.html"
+                        class="nav-link"
+                    >
+                        📊 Tableau de bord
+                    </a>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU COMMERCIAL
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            🛒 Commercial
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="ventes.html"
+                                class="nav-link"
+                            >
+                                Ventes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="commandes.html"
+                                class="nav-link"
+                            >
+                                Commandes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="clients.html"
+                                class="nav-link"
+                            >
+                                Clients
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livraisons.html"
+                                class="nav-link"
+                            >
+                                Livraisons
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livreurs.html"
+                                class="nav-link"
+                            >
+                                Livreurs
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU STOCK ET APPROVISIONNEMENT
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            📦 Stock & Approvisionnement
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="produits.html"
+                                class="nav-link active"
+                                aria-current="page"
+                            >
+                                Produits
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <li>
+                            <a href="stock.html" class="nav-link">
+                                Stock & Mouvements
+                            </a>
+                        </li>
+
+                            <a
+                                href="approvisionnements.html"
+                                class="nav-link"
+                            >
+                                Approvisionnements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="fournisseurs.html"
+                                class="nav-link"
+                            >
+                                Fournisseurs
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="transitaires.html"
+                                class="nav-link"
+                            >
+                                Transitaires
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU FINANCE
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            💰 Finance
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="caisse.html"
+                                class="nav-link"
+                            >
+                                Caisse
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="paiements.html"
+                                class="nav-link"
+                            >
+                                Paiements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="factures.html"
+                                class="nav-link"
+                            >
+                                Factures
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="comptabilité.html"
+                                class="nav-link"
+                            >
+                                Comptabilité
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="rapports.html"
+                        class="nav-link"
+                    >
+                        📈 Rapports
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="paramètres.html"
+                        class="nav-link"
+                    >
+                        ⚙️ Paramètres
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =====================================================
+         CONTENU PRINCIPAL
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
+                </a>
+
+                <h2>Produits</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="header-products-search-input"
+                            placeholder="Rechercher un produit..."
+                        >
+
+                        <button class="search-btn"
+                            id="header-products-search-btn"
+                            type="button"
+                            aria-label="Rechercher">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
+
+        🔔
+        <span class="notification-badge" hidden>0</span>
+
+    </button>
+
+    <div
+        id="notification-panel"
+        class="notification-panel"
+        hidden>
+        <div class="notification-panel-header"><h3>Notifications</h3></div>
+        <div class="notification-empty-state">
+            <span aria-hidden="true">🔔</span>
+            <p>Aucune notification pour le moment.</p>
+        </div>
+    </div>
+
+    </div>
+
+    <div class="profile-menu id="product-profile-menu">
+
+                        <button
+                            class="icon-btn"
+                            id="profile-menu-button"
+                            type="button"
+                            aria-label="Afficher le menu du profil"
+                            aria-expanded="false">
+                            👤
+                        </button>
+
+                        <div
+                            class="dropdown-menu"
+                            id="profile-dropdown"
+                            hidden>
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             CONTENU DE LA PAGE
+        ================================================== -->
+
+        <section class="content">
+
+
+            <!-- =============================================
+                 PRÉSENTATION
+            ============================================== -->
+
+            <div class="welcome-section products-welcome-section">
+                <div>
+                    <h2>Produits</h2>
+                    <p>
+                        Enregistrez, consultez et gérez les produits,
+                        leurs coûts, leurs prix, leur stock initial
+                        et leur rentabilité.
+                    </p>
+                </div>
+
+                <button type="button" class="btn-primary" id="new-product-btn">
+                    ➕ Nouveau produit
+                </button>
+            </div>
+
+
+            <!-- =============================================
+                 CARTES KPI
+            ============================================== -->
+
+            <div
+                class="kpi-grid"
+                id="products-kpi-grid"
+            >
+
+
+                <!-- Total des produits -->
+
+                <article class="kpi-card">
+
+                    <div
+                        class="kpi-icon"
+                        aria-hidden="true"
+                    >
+                        📦
+                    </div>
+
+                    <div class="kpi-content">
+
+                        <h3>
+                            Total des produits
+                        </h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-total-products"
+                            aria-live="polite"
+                        >
+                            0
+                        </p>
+
+                        <small
+                            id="kpi-products-month"
+                            aria-live="polite"
+                        >
+                            +0 ce mois
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Valeur du stock initial -->
+
+                <article class="kpi-card">
+
+                    <div
+                        class="kpi-icon"
+                        aria-hidden="true"
+                    >
+                        💰
+                    </div>
+
+                    <div class="kpi-content">
+
+                        <h3>
+                            Valeur du stock initial
+                        </h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-stock-value"
+                            aria-live="polite"
+                        >
+                            0 FCFA
+                        </p>
+
+                        <small>
+                            Prix de revient × stock initial
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Marge moyenne -->
+
+                <article class="kpi-card">
+
+                    <div
+                        class="kpi-icon"
+                        aria-hidden="true"
+                    >
+                        📈
+                    </div>
+
+                    <div class="kpi-content">
+
+                        <h3>
+                            Marge moyenne
+                        </h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-average-margin"
+                            aria-live="polite"
+                        >
+                            0 %
+                        </p>
+
+                        <small
+                            id="kpi-average-margin-fcfa"
+                            aria-live="polite"
+                        >
+                            Marge moyenne
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Produits actifs -->
+
+                <article class="kpi-card">
+
+                    <div
+                        class="kpi-icon"
+                        aria-hidden="true"
+                    >
+                        ✅
+                    </div>
+
+                    <div class="kpi-content">
+
+                        <h3>
+                            Produits actifs
+                        </h3>
+
+                        <p
+                            class="kpi-value"
+                            id="kpi-active-products"
+                            aria-live="polite"
+                        >
+                            0
+                        </p>
+
+                        <small
+                            id="kpi-active-percent"
+                            aria-live="polite"
+                        >
+                            0 % du catalogue
+                        </small>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <!-- =============================================
+                 BARRE D'ACTIONS
+            ============================================== -->
+
+            <div class="sales-toolbar products-advanced-toolbar">
+
+                <div class="products-toolbar-left">
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="refresh-products-btn"
+                        title="Actualiser les produits"
+                    >
+                        🔄 Actualiser
+                    </button>
+
+                    <div class="products-export-menu" id="products-export-menu">
+
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            id="export-products-btn"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
+                            📤 Exporter <span aria-hidden="true">▾</span>
+                        </button>
+
+                        <div
+                            class="products-export-dropdown"
+                            id="products-export-dropdown"
+                            hidden
+                        >
+                            <button type="button" data-export-format="xlsx">
+                                <span>📊</span>
+                                <span>
+                                    <strong>Excel (.xlsx)</strong>
+                                    <small>Feuille de calcul modifiable</small>
+                                </span>
+                            </button>
+
+                            <button type="button" data-export-format="pdf">
+                                <span>📄</span>
+                                <span>
+                                    <strong>PDF</strong>
+                                    <small>Document prêt à partager</small>
+                                </span>
+                            </button>
+
+                            <button type="button" data-export-format="csv">
+                                <span>📑</span>
+                                <span>
+                                    <strong>CSV</strong>
+                                    <small>Format universel UTF-8</small>
+                                </span>
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="print-products-btn"
+                    >
+                        🖨️ Imprimer
+                    </button>
+
+                </div>
+
+                <div class="products-toolbar-controls">
+                    <select id="product-status-filter" aria-label="Filtrer les produits par statut">
+                        <option value="">Tous les statuts</option>
+                        <option value="actif">Actif</option>
+                        <option value="inactif">Inactif</option>
+                        <option value="archive">Archivé</option>
+                    </select>
+
+                    <button type="button" class="btn-secondary" id="selection-products-btn" aria-pressed="false">
+                        ☑️ Sélection
+                    </button>
+
+                    <div class="products-main-actions-menu">
+                        <button type="button" class="btn-secondary" id="products-main-actions-trigger" aria-expanded="false">
+                            Actions <span aria-hidden="true">⌄</span>
+                        </button>
+                        <div class="products-main-actions-dropdown" id="products-main-actions-dropdown" hidden></div>
+                    </div>
+                </div>
+
+                <div class="products-toolbar-right">
+                    <span class="products-visible-count">
+                        <strong id="filtered-product-count">0</strong>
+                        produit(s) affiché(s)
+                    </span>
+                </div>
+
+            </div>
+
+            <div
+                class="products-bulk-bar"
+                id="products-bulk-bar"
+                hidden
+            >
+                <span>
+                    <strong id="selected-products-count">0</strong>
+                    produit(s) sélectionné(s)
+                </span>
+
+                <div class="products-bulk-actions">
+                    <button
+                        type="button"
+                        class="btn-danger-soft"
+                        id="bulk-delete-products-btn"
+                    >
+                        🗑️ Supprimer la sélection
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="clear-products-selection-btn"
+                    >
+                        ✕ Désélectionner
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- =============================================
+                 RECHERCHE ET FILTRES
+            ============================================== -->
+
+            <div class="sales-filters products-simple-filters">
+</div>
+
+
+            <!-- =============================================
+                 TABLEAU DES PRODUITS
+            ============================================== -->
+
+            <div class="sales-table-container">
+
+                <table class="sales-table products-advanced-table">
+
+                    <thead>
+                        <tr>
+                            <th class="selection-column">
+                                <input
+                                    type="checkbox"
+                                    id="select-all-products"
+                                    aria-label="Sélectionner tous les produits de la page"
+                                >
+                            </th>
+                            <th>Référence</th>
+                            <th>Désignation</th>
+                            <th>Prix de revient</th>
+                            <th>Prix de vente</th>
+                            <th>Marge</th>
+                            <th>Fournisseur</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="products-table-body">
+                        <tr>
+                            <td
+                                colspan="9"
+                                class="table-message"
+                            >
+                                Chargement des produits...
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+                <div class="products-pagination">
+
+                    <div class="products-pagination-size">
+                        <label for="products-page-size">
+                            Afficher
+                        </label>
+
+                        <select id="products-page-size">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+
+                        <span>produits par page</span>
+                    </div>
+
+                    <div
+                        class="products-pagination-summary"
+                        id="products-pagination-summary"
+                    >
+                        0 produit
+                    </div>
+
+                    <div
+                        class="products-pagination-controls"
+                        id="products-pagination-controls"
+                        aria-label="Pagination des produits"
+                    ></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- =========================================================
+     MODALE : NOUVEAU PRODUIT
+========================================================== -->
+
+<div
+    class="modal-overlay"
+    id="product-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-container product-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-modal-title"
+    >
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="product-modal-title">
+                    Nouveau produit
+                </h2>
+
+                <p>
+                    Enregistrez un nouveau produit dans le catalogue.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-product-modal"
+                aria-label="Fermer le formulaire"
+            >
+                ✖
+            </button>
+
+        </div>
+
+
+        <!--
+             Formulaire unique :
+             - mode création : champs vides ;
+             - mode modification : mêmes champs préremplis.
+        -->
+        <form id="product-form">
+
+            <div class="modal-body">
+
+                <!-- Message du formulaire -->
+
+                <div
+                    id="product-form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+
+                <!-- =========================================
+                     INFORMATIONS GÉNÉRALES
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Informations générales
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-reference">
+                                Référence produit
+                                <span class="required">*</span>
+                            </label>
+
+                            <div class="reference-auto-field">
+                                <input
+                                    type="text"
+                                    id="product-reference"
+                                    name="referenceProduit"
+                                    value="Génération automatique..."
+                                    readonly
+                                    required
+                                    aria-describedby="product-reference-help"
+                                >
+                                <span class="reference-auto-badge">
+                                    Automatique
+                                </span>
+                            </div>
+
+                            <small
+                                class="form-help"
+                                id="product-reference-help"
+                            >
+                                La référence est créée automatiquement par VISIBL.
+                            </small>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-name">
+                                Désignation
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="product-name"
+                                name="designation"
+                                placeholder="Nom du produit"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-description">
+                                Description
+                            </label>
+
+                            <textarea
+                                id="product-description"
+                                name="description"
+                                rows="3"
+                                placeholder="Description du produit"
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     COÛTS ET PRIX
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Coûts et prix
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-purchase-price">
+                                Prix d’achat (FCFA)
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-purchase-price"
+                                name="prixAchat"
+                                min="0"
+                                step="1"
+                                required
+                                placeholder="Exemple : 8500"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-transport-cost">
+                                Frais de transport (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-transport-cost"
+                                name="fraisTransport"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 1000"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-customs-cost">
+                                Frais de douane (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-customs-cost"
+                                name="fraisDouane"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 500"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-other-costs">
+                                Autres frais (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-other-costs"
+                                name="autresFrais"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 250"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-cost-price">
+                                Prix de revient (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-cost-price"
+                                name="prixRevient"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-sale-price">
+                                Prix de vente (FCFA)
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-sale-price"
+                                name="prixVente"
+                                min="0"
+                                step="1"
+                                required
+                                placeholder="Exemple : 15000"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-minimum-price">
+                                Prix minimum de vente (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-minimum-price"
+                                name="prixMinimumVente"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 12000"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-margin-amount">
+                                Marge (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-margin-amount"
+                                name="margeFCFA"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-margin-rate">
+                                Taux de marge (%)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-margin-rate"
+                                name="tauxMarge"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     STOCK
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Stock
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-initial-stock">
+                                Stock initial
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-initial-stock"
+                                name="stockInitial"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 100"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-alert-threshold">
+                                Seuil d’alerte
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-alert-threshold"
+                                name="seuilAlerte"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 10"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     FOURNISSEUR ET GARANTIE
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Fournisseur et garantie
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-main-supplier">
+                                ID fournisseur principal
+                            </label>
+
+                            <select
+                                id="product-main-supplier"
+                                name="idFournisseurPrincipal"
+                            >
+                                <option value="">
+                                    Sélectionner un fournisseur
+                                </option>
+                            </select>
+
+                            <small class="form-help">
+                                La liste sera alimentée depuis le module Fournisseurs.
+                            </small>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-warranty">
+                                Garantie (mois)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-warranty"
+                                name="garantieMois"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 12"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-image-file">
+                                Image du produit
+                            </label>
+
+                            <div
+                                class="image-upload-zone"
+                                id="product-image-drop-zone"
+                                tabindex="0"
+                                role="button"
+                                aria-describedby="product-image-help"
+                            >
+                                <input
+                                    type="file"
+                                    id="product-image-file"
+                                    name="imageFichier"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    hidden
+                                >
+
+                                <input
+                                    type="hidden"
+                                    id="product-image-url"
+                                    name="imageURL"
+                                >
+
+                                <div
+                                    class="image-upload-placeholder"
+                                    id="product-image-placeholder"
+                                >
+                                    <span
+                                        class="image-upload-icon"
+                                        aria-hidden="true"
+                                    >
+                                        📷
+                                    </span>
+
+                                    <strong>
+                                        Cliquez pour ajouter une image
+                                    </strong>
+
+                                    <span>
+                                        ou glissez-déposez votre fichier ici
+                                    </span>
+
+                                    <small id="product-image-help">
+                                        JPG, PNG ou WEBP — 5 Mo maximum
+                                    </small>
+                                </div>
+
+                                <div
+                                    class="image-preview-wrapper"
+                                    id="product-image-preview-wrapper"
+                                    hidden
+                                >
+                                    <img
+                                        id="product-image-preview"
+                                        alt="Aperçu de l’image du produit"
+                                    >
+
+                                    <div class="image-preview-info">
+                                        <strong id="product-image-name">
+                                            Image sélectionnée
+                                        </strong>
+
+                                        <span id="product-image-size"></span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="remove-image-btn"
+                                        id="remove-product-image-btn"
+                                    >
+                                        Retirer l’image
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     STATUT ET COMMENTAIRE
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Statut et commentaire
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-status">
+                                Statut
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="product-status"
+                                name="statut"
+                                required
+                            >
+
+                                <option value="Actif" selected>
+                                    Actif
+                                </option>
+
+                                <option value="Inactif">
+                                    Inactif
+                                </option>
+
+                                <option value="Archivé">
+                                    Archivé
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-comment">
+                                Commentaire
+                            </label>
+
+                            <textarea
+                                id="product-comment"
+                                name="commentaire"
+                                rows="3"
+                                placeholder="Informations complémentaires"
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =============================================
+                 BOUTONS DU FORMULAIRE
+            ============================================== -->
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-product-btn"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-product-btn"
+                >
+                    Enregistrer le produit
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+    
+
+<!-- =========================================================
+     MODALE : VOIR LE PRODUIT
+========================================================== -->
+
+<div
+    class="modal-overlay"
+    id="product-view-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal-container product-view-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-view-modal-title"
+    >
+        <div class="modal-header product-view-header">
+            <div>
+                <span class="product-view-eyebrow">Fiche produit</span>
+                <h2 id="product-view-modal-title">Détails du produit</h2>
+                <p>Consultez toutes les informations du produit sélectionné.</p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-product-view-modal"
+                aria-label="Fermer les détails du produit"
+            >
+                ✖
+            </button>
+        </div>
+
+        <div class="modal-body product-view-body">
+
+            <section class="product-view-hero">
+                <div class="product-view-image-wrapper">
+                    <img
+                        id="product-view-image"
+                        alt="Image du produit"
+                        hidden
+                    >
+                    <div
+                        id="product-view-image-placeholder"
+                        class="product-view-image-placeholder"
+                    >
+                        <span class="product-view-placeholder-icon" aria-hidden="true">📦</span>
+                        <span>Aucune image disponible</span>
+                    </div>
+                </div>
+
+                <div class="product-view-summary">
+                    <div class="product-view-title-row">
+                        <div>
+                            <span class="product-view-reference-label">Référence</span>
+                            <strong id="view-product-reference" class="product-view-reference">—</strong>
+                        </div>
+
+                        <span id="product-view-status-badge" class="product-view-status-badge">
+                            <span id="view-product-status">—</span>
+                        </span>
+                    </div>
+
+                    <h3 id="view-product-name" class="product-view-product-name">—</h3>
+                    <p id="view-product-description" class="product-view-description">—</p>
+
+                    <div class="product-view-highlight-grid">
+                        <article class="product-view-highlight">
+                            <span>Prix de revient</span>
+                            <strong id="view-product-summary-cost-price">—</strong>
+                        </article>
+
+                        <article class="product-view-highlight">
+                            <span>Prix de vente</span>
+                            <strong id="view-product-sale-price">—</strong>
+                        </article>
+
+                        <article class="product-view-highlight product-view-highlight-margin">
+                            <span>Marge réalisée</span>
+                            <strong class="product-view-margin-value">
+                                <span id="view-product-summary-margin-amount">—</span>
+                            </strong>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+<section class="product-view-section product-view-stock-section">
+                <div class="product-view-section-heading">
+                    <span class="product-view-section-icon" aria-hidden="true">📦</span>
+                    <div><h3>Situation du stock</h3><p>Disponibilité actuelle de ce produit.</p></div>
+                </div>
+                <div class="product-stock-overview">
+                    <article class="product-stock-card"><span>Stock physique</span><strong id="view-product-stock-physical">—</strong><small>Unités physiquement présentes</small></article>
+                    <article class="product-stock-card"><span>Stock réservé</span><strong id="view-product-stock-reserved">—</strong><small>Unités affectées aux commandes</small></article>
+                    <article class="product-stock-card"><span>Non vendable</span><strong id="view-product-stock-unsellable">—</strong><small>Unités non disponibles à la vente</small></article>
+                    <article class="product-stock-card product-stock-card-primary"><span>Stock vendable</span><strong id="view-product-stock-sellable">—</strong><small>Unités réellement disponibles</small></article>
+                </div>
+                <div class="product-stock-meta">
+                    <div class="product-detail-item"><span>État du stock</span><strong id="view-product-stock-status" class="product-stock-status">—</strong></div>
+                    <div class="product-detail-item"><span>Seuil d'alerte</span><strong id="view-product-stock-threshold">—</strong></div>
+                    <div class="product-detail-item"><span>Dernière mise à jour</span><strong id="view-product-stock-updated">—</strong></div>
+                </div>
+                <div class="product-stock-message" id="view-product-stock-message" hidden></div>
+            </section>
+
+<section class="product-view-section">
+                <div class="product-view-section-heading">
+                    <span class="product-view-section-icon" aria-hidden="true">💰</span>
+                    <div>
+                        <h3>Informations commerciales</h3>
+                        <p>Coûts, prix et rentabilité du produit.</p>
+                    </div>
+                </div>
+
+                <div class="product-details-grid product-details-grid-commercial">
+                    <div class="product-detail-item"><span>Prix d'achat</span><strong id="view-product-purchase-price">—</strong></div>
+                    <div class="product-detail-item"><span>Frais de transport</span><strong id="view-product-transport-cost">—</strong></div>
+                    <div class="product-detail-item"><span>Frais de douane</span><strong id="view-product-customs-cost">—</strong></div>
+                    <div class="product-detail-item"><span>Autres frais</span><strong id="view-product-other-costs">—</strong></div>
+                    <div class="product-detail-item product-detail-emphasis"><span>Prix de revient</span><strong id="view-product-cost-price">—</strong></div>
+                    <div class="product-detail-item"><span>Prix minimum</span><strong id="view-product-minimum-price">—</strong></div>
+                    <div class="product-detail-item product-detail-success"><span>Marge en FCFA</span><strong id="view-product-margin-amount">—</strong></div>
+                </div>
+            </section>
+
+<section class="product-view-section">
+                <div class="product-view-section-heading">
+                    <span class="product-view-section-icon" aria-hidden="true">ℹ️</span>
+                    <div>
+                        <h3>Informations générales</h3>
+                        <p>Identification et caractéristiques principales.</p>
+                    </div>
+                </div>
+
+                <div class="product-details-grid">
+                    <div class="product-detail-item">
+                        <span>ID produit</span>
+                        <strong id="view-product-id">—</strong>
+                    </div>
+
+                    <div class="product-detail-item">
+                        <span>Fournisseur principal</span>
+                        <strong id="view-product-supplier">—</strong>
+                    </div>
+
+                    <div class="product-detail-item">
+                        <span>Garantie</span>
+                        <strong id="view-product-warranty">—</strong>
+                    </div>
+
+                    <div class="product-detail-item">
+                        <span>Seuil d'alerte</span>
+                        <strong id="view-product-alert-threshold">—</strong>
+                    </div>
+                </div>
+            </section>
+
+<section class="product-view-section">
+                <div class="product-view-section-heading">
+                    <span class="product-view-section-icon" aria-hidden="true">🕒</span>
+                    <div>
+                        <h3>Suivi et historique</h3>
+                        <p>Dates d'enregistrement et informations complémentaires.</p>
+                    </div>
+                </div>
+
+                <div class="product-details-grid">
+                    <div class="product-detail-item"><span>Date d'ajout</span><strong id="view-product-created-at">—</strong></div>
+                    <div class="product-detail-item"><span>Dernière modification</span><strong id="view-product-updated-at">—</strong></div>
+                    <div class="product-detail-item product-detail-full"><span>Commentaire</span><strong id="view-product-comment">—</strong></div>
+                </div>
+            </section>
+
+        <div class="modal-footer product-view-footer">
+            <button
+                type="button"
+                class="btn-secondary"
+                id="close-product-view-modal-footer"
+            >
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- =========================================================
+     CONFIRMATION DE SUPPRESSION D'UN PRODUIT
+========================================================== -->
+<div
+    class="modal-overlay"
+    id="delete-product-modal"
+    hidden
+>
+    <div
+        class="delete-product-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-product-modal-title"
+        aria-describedby="delete-product-modal-description"
+    >
+        <div class="delete-product-icon" aria-hidden="true">
+            <svg
+                width="34"
+                height="34"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <path d="M3 6h18"></path>
+                <path d="M8 6V4h8v2"></path>
+                <path d="M19 6l-1 14H6L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+            </svg>
+        </div>
+
+        <h2 id="delete-product-modal-title">
+            Supprimer ce produit ?
+        </h2>
+
+        <p id="delete-product-modal-description">
+            Cette action supprimera définitivement le produit de la base de données.
+        </p>
+
+        <div class="delete-product-summary">
+            <div class="delete-product-image-wrapper">
+                <img
+                    id="delete-product-image"
+                    alt="Image du produit à supprimer"
+                    hidden
+                >
+
+                <div
+                    class="delete-product-image-placeholder"
+                    id="delete-product-image-placeholder"
+                    aria-hidden="true"
+                >
+                    <svg
+                        width="30"
+                        height="30"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                    >
+                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <path d="M21 15l-5-5L5 21"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="delete-product-details">
+                <span id="delete-product-reference">—</span>
+                <strong id="delete-product-name">—</strong>
+            </div>
+        </div>
+
+        <div
+            class="delete-product-message"
+            id="delete-product-message"
+            hidden
+        ></div>
+
+        <div class="delete-product-actions">
+            <button
+                type="button"
+                class="btn-secondary"
+                id="cancel-delete-product-btn"
+            >
+                Annuler
+            </button>
+
+            <button
+                type="button"
+                class="btn-danger"
+                id="confirm-delete-product-btn"
+            >
+                Supprimer le produit
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- =========================================================
+     CONFIRMATION DE SUPPRESSION EN MASSE
+========================================================== -->
+<div
+    class="modal-overlay"
+    id="bulk-delete-products-modal"
+    hidden
+>
+    <div
+        class="bulk-delete-products-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bulk-delete-products-title"
+    >
+        <div class="bulk-delete-products-icon" aria-hidden="true">
+            🗑️
+        </div>
+
+        <h2 id="bulk-delete-products-title">
+            Supprimer les produits sélectionnés ?
+        </h2>
+
+        <p>
+            Cette action supprimera définitivement
+            <strong id="bulk-delete-products-total">0</strong>
+            produit(s) de la base de données.
+        </p>
+
+        <div
+            class="bulk-delete-products-message"
+            id="bulk-delete-products-message"
+            hidden
+        ></div>
+
+        <div class="bulk-delete-products-actions">
+            <button
+                type="button"
+                class="btn-secondary"
+                id="cancel-bulk-delete-products-btn"
+            >
+                Annuler
+            </button>
+
+            <button
+                type="button"
+                class="btn-danger"
+                id="confirm-bulk-delete-products-btn"
+            >
+                Supprimer définitivement
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================
+     FICHIERS JAVASCRIPT
+     L'ordre est important :
+     1. api.js contient l'URL de l'API
+     2. app.js gère l'interface générale
+     3. produits.js gère le module Produits
+========================================================== -->
+
+<!-- Conteneur des notifications -->
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/modules/produits.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,2595 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Paramètres</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/paramètres.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
+
+        <button id="sidebar-close" class="sidebar-close">
+            ✖
+        </button>
+
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo VISIBL">
+        </a>
+
+        <nav>
+
+            <ul>
+
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
+
+                <!-- ===== Menu Commercial ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+
+                        <span>
+                            🛒 Commercial
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="ventes.html" class="nav-link">
+                                Ventes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="commandes.html" class="nav-link">
+                                Commandes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="clients.html" class="nav-link">
+                                Clients
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livraisons.html" class="nav-link">
+                                Livraisons
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livreurs.html" class="nav-link">
+                                Livreurs
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <!-- ===== Menu Stock et approvisionnement ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+
+                        <span>
+                            📦 Stock & Approvisionnement
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="produits.html" class="nav-link">
+                                Produits
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="approvisionnements.html" class="nav-link">
+                                Approvisionnements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="fournisseurs.html" class="nav-link">
+                                Fournisseurs
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="transitaires.html" class="nav-link">
+                                Transitaires
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <!-- ===== Menu Finance ===== -->
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+
+                        <span>
+                            💰 Finance
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="caisse.html" class="nav-link">
+                                Caisse
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="paiements.html" class="nav-link">
+                                Paiements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="factures.html" class="nav-link">
+                                Factures
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="comptabilité.html" class="nav-link">
+                                Comptabilité
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="paramètres.html" class="nav-link active">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </aside>
+
+    <!-- ===== Contenu principal ===== -->
+    <main class="main-content">
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
+                </a>
+
+                <h2>
+                    Paramètres
+                </h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                <div class="header-icons">
+
+                    <button class="icon-btn notifications">
+
+                        🔔
+
+                        <span class="notification-badge">
+                            3
+                        </span>
+
+                    </button>
+
+                    <div class="profile-menu">
+
+                        <button class="icon-btn">
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="#">
+                                Mon profil
+                            </a>
+
+                            <a href="paramètres.html">
+                                Paramètres
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout">
+                                Déconnexion
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ===== Contenu de la page ===== -->
+        <section class="content">
+
+            <!-- ===== Présentation ===== -->
+            <div class="welcome-section">
+
+                <h2>
+                    Paramètres du système
+                </h2>
+
+                <p>
+                    Configurez les informations de l'entreprise, les utilisateurs,
+                    les préférences, les notifications et les paramètres de sécurité.
+                </p>
+
+            </div>
+
+            <!-- ===== Navigation des paramètres ===== -->
+            <div class="settings-layout">
+
+                <!-- ===== Menu latéral des paramètres ===== -->
+                <aside class="settings-sidebar">
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn active"
+                        data-settings-section="company-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🏢
+                        </span>
+
+                        <span>
+                            Entreprise
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="users-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            👥
+                        </span>
+
+                        <span>
+                            Utilisateurs
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="roles-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🔐
+                        </span>
+
+                        <span>
+                            Rôles et autorisations
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="sales-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🛒
+                        </span>
+
+                        <span>
+                            Ventes
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="stock-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            📦
+                        </span>
+
+                        <span>
+                            Stock
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="finance-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            💰
+                        </span>
+
+                        <span>
+                            Finance
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="notifications-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🔔
+                        </span>
+
+                        <span>
+                            Notifications
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="security-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            🛡️
+                        </span>
+
+                        <span>
+                            Sécurité
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="settings-nav-btn"
+                        data-settings-section="backup-settings"
+                    >
+                        <span class="settings-nav-icon">
+                            💾
+                        </span>
+
+                        <span>
+                            Sauvegarde
+                        </span>
+                    </button>
+
+                </aside>
+
+                <!-- ===== Contenu des paramètres ===== -->
+                <div class="settings-content">
+
+                    <!-- =====================================================
+                         PARAMÈTRES ENTREPRISE
+                    ====================================================== -->
+                    <div
+                        class="settings-section active"
+                        id="company-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Informations de l'entreprise
+                                </h3>
+
+                                <p>
+                                    Renseignez les informations générales qui apparaîtront
+                                    sur les documents commerciaux et comptables.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                🏢
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form" id="company-settings-form">
+
+                            <!-- Logo -->
+                            <div class="settings-logo-area">
+
+                                <div class="settings-logo-preview">
+
+                                    <img
+                                        src="../logo-vizibl.png"
+                                        alt="Logo de l'entreprise"
+                                        id="company-logo-preview"
+                                    >
+
+                                </div>
+
+                                <div class="settings-logo-content">
+
+                                    <h4>
+                                        Logo de l'entreprise
+                                    </h4>
+
+                                    <p>
+                                        Formats recommandés : PNG ou JPG.
+                                        Taille maximale : 2 Mo.
+                                    </p>
+
+                                    <div class="settings-logo-actions">
+
+                                        <label
+                                            for="company-logo-input"
+                                            class="btn-primary"
+                                        >
+                                            Modifier le logo
+                                        </label>
+
+                                        <input
+                                            type="file"
+                                            id="company-logo-input"
+                                            accept="image/png, image/jpeg"
+                                            hidden
+                                        >
+
+                                        <button
+                                            type="button"
+                                            class="btn-secondary"
+                                            id="remove-company-logo-btn"
+                                        >
+                                            Supprimer
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="company-name">
+                                        Nom de l'entreprise
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-name"
+                                        placeholder="Nom de l'entreprise"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-legal-name">
+                                        Raison sociale
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-legal-name"
+                                        placeholder="Raison sociale"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-activity">
+                                        Secteur d'activité
+                                    </label>
+
+                                    <select id="company-activity">
+
+                                        <option value="">
+                                            Sélectionner un secteur
+                                        </option>
+
+                                        <option value="commerce">
+                                            Commerce
+                                        </option>
+
+                                        <option value="services">
+                                            Services
+                                        </option>
+
+                                        <option value="telecom">
+                                            Télécommunications
+                                        </option>
+
+                                        <option value="construction">
+                                            Construction
+                                        </option>
+
+                                        <option value="transport">
+                                            Transport et livraison
+                                        </option>
+
+                                        <option value="autre">
+                                            Autre
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-tax-number">
+                                        Numéro contribuable
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-tax-number"
+                                        placeholder="Exemple : CC 1234567 A"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-register-number">
+                                        Numéro RCCM
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-register-number"
+                                        placeholder="Numéro RCCM"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-country">
+                                        Pays
+                                    </label>
+
+                                    <select id="company-country">
+
+                                        <option value="cote-ivoire" selected>
+                                            Côte d'Ivoire
+                                        </option>
+
+                                        <option value="mali">
+                                            Mali
+                                        </option>
+
+                                        <option value="senegal">
+                                            Sénégal
+                                        </option>
+
+                                        <option value="burkina-faso">
+                                            Burkina Faso
+                                        </option>
+
+                                        <option value="guinee">
+                                            Guinée
+                                        </option>
+
+                                        <option value="autre">
+                                            Autre
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-city">
+                                        Ville
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-city"
+                                        placeholder="Ville"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-address">
+                                        Adresse
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="company-address"
+                                        placeholder="Adresse de l'entreprise"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-phone">
+                                        Téléphone
+                                    </label>
+
+                                    <input
+                                        type="tel"
+                                        id="company-phone"
+                                        placeholder="+225 00 00 00 00 00"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-email">
+                                        Adresse e-mail
+                                    </label>
+
+                                    <input
+                                        type="email"
+                                        id="company-email"
+                                        placeholder="contact@entreprise.com"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-website">
+                                        Site internet
+                                    </label>
+
+                                    <input
+                                        type="url"
+                                        id="company-website"
+                                        placeholder="https://www.entreprise.com"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="company-currency">
+                                        Devise principale
+                                    </label>
+
+                                    <select id="company-currency">
+
+                                        <option value="XOF" selected>
+                                            Franc CFA — FCFA
+                                        </option>
+
+                                        <option value="EUR">
+                                            Euro — EUR
+                                        </option>
+
+                                        <option value="USD">
+                                            Dollar américain — USD
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="company-description">
+                                    Description de l'entreprise
+                                </label>
+
+                                <textarea
+                                    id="company-description"
+                                    rows="4"
+                                    placeholder="Présentez brièvement l'activité de l'entreprise..."
+                                ></textarea>
+
+                            </div>
+
+                            <div id="company-settings-message" class="settings-form-message" hidden></div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                    id="reset-company-settings-btn"
+                                >
+                                    Annuler les modifications
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                    id="save-company-settings-btn"
+                                >
+                                    💾 Enregistrer
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+                    <!-- =====================================================
+                         UTILISATEURS
+                    ====================================================== -->
+                    <div class="settings-section" id="users-settings">
+
+                        <div class="settings-section-header settings-users-header">
+                            <div>
+                                <h3>Gestion des utilisateurs</h3>
+                                <p>Ajoutez, modifiez ou désactivez les utilisateurs autorisés à accéder au système.</p>
+                            </div>
+
+                            <button type="button" class="btn-primary" id="add-user-btn">
+                                + Nouvel utilisateur
+                            </button>
+                        </div>
+
+                        <div id="users-settings-message" class="settings-form-message" hidden></div>
+
+                        <div class="settings-summary-grid">
+                            <div class="settings-summary-card">
+                                <span class="settings-summary-icon">👥</span>
+                                <div><span>Utilisateurs</span><strong id="users-total-count">0</strong></div>
+                            </div>
+                            <div class="settings-summary-card">
+                                <span class="settings-summary-icon">✅</span>
+                                <div><span>Utilisateurs actifs</span><strong id="users-active-count">0</strong></div>
+                            </div>
+                            <div class="settings-summary-card">
+                                <span class="settings-summary-icon">⛔</span>
+                                <div><span>Utilisateurs inactifs</span><strong id="users-inactive-count">0</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="settings-users-toolbar">
+                            <div class="settings-users-search">
+                                <span aria-hidden="true">🔎</span>
+                                <input type="search" id="users-search-input" placeholder="Rechercher un utilisateur..." autocomplete="off">
+                            </div>
+                            <span class="settings-users-result-count" id="users-result-count">0 utilisateur affiché</span>
+                        </div>
+
+                        <div class="sales-table-container settings-users-table-wrap">
+                            <table class="sales-table settings-users-table">
+                                <thead>
+                                    <tr>
+                                        <th>Utilisateur</th>
+                                        <th>E-mail</th>
+                                        <th>Rôle</th>
+                                        <th>Dernière connexion</th>
+                                        <th>Statut</th>
+                                        <th class="settings-users-actions-head">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <tr>
+                                        <td colspan="6" class="settings-users-empty">Chargement des utilisateurs...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ===== Modale création / modification utilisateur ===== -->
+                    <div class="settings-modal" id="user-form-modal" hidden aria-hidden="true">
+                        <div class="settings-modal-backdrop" data-user-modal-close></div>
+                        <div class="settings-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="user-form-modal-title">
+                            <div class="settings-modal-header">
+                                <div>
+                                    <span class="settings-modal-kicker">UTILISATEUR</span>
+                                    <h3 id="user-form-modal-title">Nouvel utilisateur</h3>
+                                    <p id="user-form-modal-subtitle">Créez un compte autorisé à accéder à VISIBL.</p>
+                                </div>
+                                <button type="button" class="settings-modal-close" data-user-modal-close aria-label="Fermer">×</button>
+                            </div>
+
+                            <form id="user-settings-form" class="settings-form settings-user-form">
+                                <input type="hidden" id="user-id">
+                                <div class="settings-form-grid">
+                                    <div class="form-group">
+                                        <label for="user-full-name">Nom et prénom *</label>
+                                        <input type="text" id="user-full-name" required maxlength="120" placeholder="Ex. Marie Kouassi">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="user-email">E-mail *</label>
+                                        <input type="email" id="user-email" required maxlength="180" placeholder="nom@entreprise.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="user-role">Rôle *</label>
+                                        <select id="user-role" required>
+                                            <option value="">Chargement des rôles...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="user-status">Statut *</label>
+                                        <select id="user-status" required>
+                                            <option value="Actif">Actif</option>
+                                            <option value="Inactif">Inactif</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group settings-user-password-group settings-user-password-wide">
+                                        <label for="user-password"><span id="user-password-label">Mot de passe initial *</span></label>
+                                        <div class="settings-password-field">
+                                            <input type="password" id="user-password" minlength="6" autocomplete="new-password" placeholder="6 caractères minimum">
+                                            <button type="button" class="settings-password-toggle" id="user-password-toggle" aria-label="Afficher le mot de passe">👁</button>
+                                        </div>
+                                        <small id="user-password-help">Obligatoire lors de la création du compte.</small>
+                                    </div>
+                                </div>
+
+                                <div id="user-form-message" class="settings-form-message" hidden></div>
+
+                                <div class="settings-form-actions settings-modal-actions">
+                                    <button type="button" class="btn-secondary" data-user-modal-close>Annuler</button>
+                                    <button type="submit" class="btn-primary" id="save-user-btn">💾 Enregistrer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ===== Modale réinitialisation mot de passe ===== -->
+                    <div class="settings-modal" id="user-password-reset-modal" hidden aria-hidden="true">
+                        <div class="settings-modal-backdrop" data-user-password-reset-close></div>
+                        <div class="settings-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="user-password-reset-title">
+                            <div class="settings-modal-header">
+                                <div>
+                                    <span class="settings-modal-kicker">SÉCURITÉ DU COMPTE</span>
+                                    <h3 id="user-password-reset-title">Réinitialiser le mot de passe</h3>
+                                    <p id="user-password-reset-subtitle">Définissez un nouveau mot de passe pour cet utilisateur.</p>
+                                </div>
+                                <button type="button" class="settings-modal-close" data-user-password-reset-close aria-label="Fermer">×</button>
+                            </div>
+
+                            <form id="user-password-reset-form" class="settings-form settings-user-form">
+                                <input type="hidden" id="user-password-reset-id">
+
+                                <div class="form-group">
+                                    <label for="user-password-reset-new">Nouveau mot de passe *</label>
+                                    <div class="settings-password-field">
+                                        <input type="password" id="user-password-reset-new" required minlength="6" autocomplete="new-password">
+                                        <button type="button" class="settings-password-toggle" id="user-password-reset-toggle" aria-label="Afficher ou masquer le mot de passe">👁</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="user-password-reset-confirm">Confirmer le mot de passe *</label>
+                                    <input type="password" id="user-password-reset-confirm" required minlength="6" autocomplete="new-password">
+                                </div>
+
+                                <div id="user-password-reset-message" class="settings-form-message" hidden></div>
+
+                                <div class="settings-form-actions settings-modal-actions">
+                                    <button type="button" class="btn-secondary" data-user-password-reset-close>Annuler</button>
+                                    <button type="submit" class="btn-primary" id="save-user-password-reset-btn">🔑 Réinitialiser</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ===== Modale consultation utilisateur ===== -->
+                    <div class="settings-modal" id="user-view-modal" hidden aria-hidden="true">
+                        <div class="settings-modal-backdrop" data-user-view-close></div>
+                        <div class="settings-modal-dialog settings-user-view-dialog" role="dialog" aria-modal="true" aria-labelledby="user-view-title">
+                            <div class="settings-modal-header">
+                                <div>
+                                    <span class="settings-modal-kicker">FICHE UTILISATEUR</span>
+                                    <h3 id="user-view-title">Utilisateur</h3>
+                                    <p>Informations du compte et état d'accès.</p>
+                                </div>
+                                <button type="button" class="settings-modal-close" data-user-view-close aria-label="Fermer">×</button>
+                            </div>
+                            <div class="settings-user-view-hero">
+                                <div class="settings-user-avatar settings-user-avatar-large" id="user-view-avatar">U</div>
+                                <div>
+                                    <strong id="user-view-name">—</strong>
+                                    <span id="user-view-email">—</span>
+                                </div>
+                                <span class="status-badge" id="user-view-status">—</span>
+                            </div>
+                            <div class="settings-user-view-grid">
+                                <div><span>Rôle</span><strong id="user-view-role">—</strong></div>
+                                <div><span>Dernière connexion</span><strong id="user-view-last-login">—</strong></div>
+                                <div><span>Date de création</span><strong id="user-view-created">—</strong></div>
+                                <div><span>Dernière modification</span><strong id="user-view-updated">—</strong></div>
+                            </div>
+                            <div class="settings-modal-actions settings-user-view-actions">
+                                <button type="button" class="btn-secondary" data-user-view-close>Fermer</button>
+                                <button type="button" class="btn-primary" id="user-view-edit-btn">✏️ Modifier</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- =====================================================
+                         RÔLES ET AUTORISATIONS
+                    ====================================================== -->
+                    <div class="settings-section" id="roles-settings">
+
+                        <div class="settings-section-header">
+                            <div>
+                                <h3>Rôles et autorisations</h3>
+                                <p>
+                                    Définissez les modules et les actions accessibles
+                                    à chaque type d'utilisateur.
+                                </p>
+                            </div>
+
+                            <button type="button" class="btn-primary" id="add-role-btn">
+                                + Nouveau rôle
+                            </button>
+                        </div>
+
+                        <div id="roles-settings-message" class="settings-form-message" hidden></div>
+
+                        <div class="settings-users-toolbar">
+                            <div>
+                                <strong id="roles-result-count">0 rôle</strong>
+                                <span> configuré</span>
+                            </div>
+                            <div class="settings-users-search">
+                                <input type="search" id="roles-search-input" placeholder="Rechercher un rôle...">
+                            </div>
+                        </div>
+
+                        <div class="role-settings-list" id="roles-settings-list">
+                            <div class="settings-users-empty">Chargement des rôles...</div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Modale création / modification rôle ===== -->
+                    <div class="settings-modal" id="role-form-modal" hidden aria-hidden="true">
+                        <div class="settings-modal-backdrop" data-role-modal-close></div>
+
+                        <div class="settings-modal-dialog role-form-dialog role-form-dialog-v4"
+                             role="dialog"
+                             aria-modal="true"
+                             aria-labelledby="role-form-title">
+
+                            <div class="settings-modal-header role-form-header role-form-header-v4">
+                                <div class="role-form-heading-v4">
+                                    <div class="role-form-heading-icon" aria-hidden="true">🔐</div>
+                                    <div>
+                                        <span class="settings-modal-kicker">RÔLE</span>
+                                        <h3 id="role-form-title">Nouveau rôle</h3>
+                                        <p id="role-form-subtitle">
+                                            Créez un rôle et définissez ses autorisations.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button type="button"
+                                        class="settings-modal-close"
+                                        data-role-modal-close
+                                        aria-label="Fermer">×</button>
+                            </div>
+
+                            <form id="role-settings-form"
+                                  class="settings-form role-form-content role-form-content-v4">
+
+                                <input type="hidden" id="role-id">
+
+                                <section class="role-form-card role-form-info-card-v4">
+                                    <div class="role-form-card-title">
+                                        <span class="role-form-card-icon">🛡️</span>
+                                        <div>
+                                            <h4>Informations du rôle</h4>
+                                            <p>Définissez l’identité et le niveau d’accès du rôle.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="settings-form-grid role-form-main-grid role-form-main-grid-v4">
+                                        <div class="form-group">
+                                            <label for="role-name">Nom du rôle *</label>
+                                            <input type="text"
+                                                   id="role-name"
+                                                   required
+                                                   maxlength="100"
+                                                   placeholder="Ex. Responsable commercial">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="role-level">Niveau d'accès</label>
+                                            <select id="role-level">
+                                                <option value="Complet">Complet</option>
+                                                <option value="Élevé">Élevé</option>
+                                                <option value="Intermédiaire" selected>Intermédiaire</option>
+                                                <option value="Restreint">Restreint</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="role-status">Statut</label>
+                                            <select id="role-status">
+                                                <option value="Actif">Actif</option>
+                                                <option value="Inactif">Inactif</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="role-description">Description</label>
+                                            <textarea id="role-description"
+                                                      rows="3"
+                                                      maxlength="300"
+                                                      placeholder="Décrivez le rôle et son périmètre."></textarea>
+                                        </div>
+
+                                        <div class="form-group role-form-comment-wide">
+                                            <label for="role-comment">Commentaire</label>
+                                            <textarea id="role-comment"
+                                                      rows="2"
+                                                      maxlength="300"
+                                                      placeholder="Commentaire interne facultatif."></textarea>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="role-form-card role-form-permissions-card-v4">
+                                    <div class="role-form-permissions-header-v4">
+                                        <div class="role-form-card-title">
+                                            <span class="role-form-card-icon">☷</span>
+                                            <div>
+                                                <h4>Autorisations par module</h4>
+                                                <p>Choisissez les actions autorisées pour chaque module.</p>
+                                            </div>
+                                        </div>
+
+                                        <button type="button"
+                                                class="btn-secondary"
+                                                id="role-permissions-all-btn">
+                                            ✓ Tout autoriser
+                                        </button>
+                                    </div>
+
+                                    <div class="role-form-table-wrap-v4">
+                                        <table class="role-form-permissions-table-v4">
+                                            <thead>
+                                                <tr>
+                                                    <th>Modules</th>
+                                                    <th><span>◉</span> Voir</th>
+                                                    <th><span>＋</span> Créer</th>
+                                                    <th><span>✎</span> Modifier</th>
+                                                    <th><span>⌫</span> Supprimer</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="role-permissions-body"></tbody>
+                                        </table>
+                                    </div>
+                                </section>
+
+                                <div id="role-form-message"
+                                     class="settings-form-message"
+                                     hidden></div>
+
+                                <div class="settings-form-actions settings-modal-actions role-form-actions-v4">
+                                    <button type="button"
+                                            class="btn-secondary"
+                                            data-role-modal-close>
+                                        Annuler
+                                    </button>
+
+                                    <button type="submit"
+                                            class="btn-primary"
+                                            id="save-role-btn">
+                                        💾 Enregistrer les modifications
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ===== Modale consultation rôle ===== -->
+                    <div class="settings-modal role-view-modal" id="role-view-modal" hidden aria-hidden="true">
+                        <div class="settings-modal-backdrop" data-role-view-close></div>
+
+                        <div class="settings-modal-dialog role-view-dialog" role="dialog" aria-modal="true" aria-labelledby="role-view-title">
+                            <div class="settings-modal-header role-view-header">
+                                <div class="role-view-heading">
+                                    <div class="role-view-icon" aria-hidden="true">🔐</div>
+                                    <div>
+                                        <span class="settings-modal-kicker">RÔLE & AUTORISATIONS</span>
+                                        <h3 id="role-view-title">Rôle</h3>
+                                        <p id="role-view-description">—</p>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="settings-modal-close" data-role-view-close aria-label="Fermer">×</button>
+                            </div>
+
+                            <div class="role-view-body">
+                                <div class="role-view-overview">
+                                    <div class="role-view-overview-main">
+                                        <span class="role-view-overview-label">Identifiant du rôle</span>
+                                        <strong id="role-view-id">—</strong>
+                                    </div>
+
+                                    <div class="role-view-status-card">
+                                        <span class="role-view-overview-label">Statut</span>
+                                        <strong id="role-view-status">—</strong>
+                                    </div>
+                                </div>
+
+                                <div class="role-view-info-grid">
+                                    <div class="role-view-info-card">
+                                        <span class="role-view-info-icon">🛡️</span>
+                                        <div>
+                                            <span>Niveau d'accès</span>
+                                            <strong id="role-view-level">—</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="role-view-info-card">
+                                        <span class="role-view-info-icon">👥</span>
+                                        <div>
+                                            <span>Utilisateurs affectés</span>
+                                            <strong id="role-view-users">—</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="role-view-info-card">
+                                        <span class="role-view-info-icon">📅</span>
+                                        <div>
+                                            <span>Date de création</span>
+                                            <strong id="role-view-created">—</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="role-view-info-card">
+                                        <span class="role-view-info-icon">👤</span>
+                                        <div>
+                                            <span>Créé par</span>
+                                            <strong id="role-view-creator">—</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <section class="role-view-permissions-section">
+                                    <div class="role-view-section-title">
+                                        <div>
+                                            <span class="role-view-section-kicker">MATRICE D'ACCÈS</span>
+                                            <h4>Autorisations du rôle</h4>
+                                            <p>Vue détaillée des actions autorisées pour chaque module.</p>
+                                        </div>
+
+                                        <div class="role-view-permission-summary">
+                                            <strong id="role-view-permission-count">0</strong>
+                                            <span>autorisations actives</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="role-view-table-wrap">
+                                        <table class="role-view-permissions-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Module</th>
+                                                    <th>Voir</th>
+                                                    <th>Créer</th>
+                                                    <th>Modifier</th>
+                                                    <th>Supprimer</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="role-view-permissions-body"></tbody>
+                                        </table>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <div class="settings-modal-actions role-view-actions">
+                                <button type="button" class="btn-secondary" data-role-view-close>Fermer</button>
+                                <button type="button" class="btn-primary" id="role-view-edit-btn">✏️ Modifier le rôle</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =====================================================
+                         PARAMÈTRES DES VENTES
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="sales-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Paramètres des ventes
+                                </h3>
+
+                                <p>
+                                    Configurez les règles de numérotation, de paiement
+                                    et de validation des ventes.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                🛒
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="sale-prefix">
+                                        Préfixe des ventes
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="sale-prefix"
+                                        value="VTE"
+                                        placeholder="Exemple : VTE"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="order-prefix">
+                                        Préfixe des commandes
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="order-prefix"
+                                        value="CMD"
+                                        placeholder="Exemple : CMD"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="default-payment-method">
+                                        Mode de paiement par défaut
+                                    </label>
+
+                                    <select id="default-payment-method">
+
+                                        <option value="especes">
+                                            Espèces
+                                        </option>
+
+                                        <option value="mobile-money" selected>
+                                            Mobile Money
+                                        </option>
+
+                                        <option value="virement">
+                                            Virement bancaire
+                                        </option>
+
+                                        <option value="cheque">
+                                            Chèque
+                                        </option>
+
+                                        <option value="carte">
+                                            Carte bancaire
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="default-payment-delay">
+                                        Délai de paiement par défaut
+                                    </label>
+
+                                    <select id="default-payment-delay">
+
+                                        <option value="immediat" selected>
+                                            Paiement immédiat
+                                        </option>
+
+                                        <option value="7">
+                                            7 jours
+                                        </option>
+
+                                        <option value="15">
+                                            15 jours
+                                        </option>
+
+                                        <option value="30">
+                                            30 jours
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Autoriser les paiements partiels
+                                        </strong>
+
+                                        <span>
+                                            Permettre l'enregistrement d'acomptes sur les ventes.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Autoriser les ventes à crédit
+                                        </strong>
+
+                                        <span>
+                                            Créer une vente même si le paiement n'est pas complet.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Mise à jour automatique du stock
+                                        </strong>
+
+                                        <span>
+                                            Déduire automatiquement les quantités après une vente.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Validation obligatoire des ventes
+                                        </strong>
+
+                                        <span>
+                                            Exiger la validation d'un responsable avant confirmation.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                >
+                                    Réinitialiser
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    💾 Enregistrer
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <!-- =====================================================
+                         PARAMÈTRES DU STOCK
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="stock-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Paramètres du stock
+                                </h3>
+
+                                <p>
+                                    Configurez les alertes, les seuils et les règles
+                                    de gestion des produits.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                📦
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="default-stock-threshold">
+                                        Seuil d'alerte par défaut
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="default-stock-threshold"
+                                        value="5"
+                                        min="0"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="stock-valuation-method">
+                                        Méthode de valorisation
+                                    </label>
+
+                                    <select id="stock-valuation-method">
+
+                                        <option value="cmp" selected>
+                                            Coût moyen pondéré
+                                        </option>
+
+                                        <option value="fifo">
+                                            FIFO
+                                        </option>
+
+                                        <option value="lifo">
+                                            LIFO
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="product-prefix">
+                                        Préfixe des produits
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="product-prefix"
+                                        value="PRD"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="supply-prefix">
+                                        Préfixe des approvisionnements
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="supply-prefix"
+                                        value="APP"
+                                    >
+
+                                </div>
+
+                            </div>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Activer les alertes de stock faible
+                                        </strong>
+
+                                        <span>
+                                            Avertir lorsque le stock atteint le seuil minimum.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Interdire les stocks négatifs
+                                        </strong>
+
+                                        <span>
+                                            Bloquer une vente si la quantité disponible est insuffisante.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Suivre les mouvements de stock
+                                        </strong>
+
+                                        <span>
+                                            Enregistrer chaque entrée, sortie et ajustement.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                >
+                                    Réinitialiser
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    💾 Enregistrer
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <!-- =====================================================
+                         PARAMÈTRES FINANCIERS
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="finance-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Paramètres financiers
+                                </h3>
+
+                                <p>
+                                    Configurez les factures, les taxes, la comptabilité
+                                    et les règles de paiement.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                💰
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="invoice-prefix">
+                                        Préfixe des factures
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="invoice-prefix"
+                                        value="FAC"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="payment-prefix">
+                                        Préfixe des paiements
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="payment-prefix"
+                                        value="PAY"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="default-tax-rate">
+                                        Taux de taxe par défaut
+                                    </label>
+
+                                    <div class="settings-input-suffix">
+
+                                        <input
+                                            type="number"
+                                            id="default-tax-rate"
+                                            value="18"
+                                            min="0"
+                                            step="0.01"
+                                        >
+
+                                        <span>
+                                            %
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="financial-year-start">
+                                        Début de l'exercice comptable
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="financial-year-start"
+                                        value="2026-01-01"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="invoice-payment-delay">
+                                        Délai de paiement des factures
+                                    </label>
+
+                                    <select id="invoice-payment-delay">
+
+                                        <option value="0">
+                                            Paiement immédiat
+                                        </option>
+
+                                        <option value="7">
+                                            7 jours
+                                        </option>
+
+                                        <option value="15" selected>
+                                            15 jours
+                                        </option>
+
+                                        <option value="30">
+                                            30 jours
+                                        </option>
+
+                                        <option value="45">
+                                            45 jours
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="accounting-method">
+                                        Méthode comptable
+                                    </label>
+
+                                    <select id="accounting-method">
+
+                                        <option value="cash">
+                                            Comptabilité de trésorerie
+                                        </option>
+
+                                        <option value="accrual" selected>
+                                            Comptabilité d'engagement
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="invoice-footer">
+                                    Mention de bas de facture
+                                </label>
+
+                                <textarea
+                                    id="invoice-footer"
+                                    rows="4"
+                                    placeholder="Merci pour votre confiance."
+                                >Merci pour votre confiance.</textarea>
+
+                            </div>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Appliquer automatiquement la taxe
+                                        </strong>
+
+                                        <span>
+                                            Ajouter le taux de taxe par défaut aux factures.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Générer automatiquement les écritures comptables
+                                        </strong>
+
+                                        <span>
+                                            Créer une écriture lors d'une vente ou d'un paiement.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                >
+                                    Réinitialiser
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    💾 Enregistrer
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <!-- =====================================================
+                         NOTIFICATIONS
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="notifications-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Notifications
+                                </h3>
+
+                                <p>
+                                    Choisissez les événements pour lesquels vous souhaitez
+                                    recevoir une alerte.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                🔔
+                            </div>
+
+                        </div>
+
+                        <div class="settings-options-list">
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Nouvelle commande
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une commande est enregistrée.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Stock faible
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'un produit atteint son seuil minimum.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Facture impayée
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une facture arrive à échéance.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Paiement reçu
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte après l'enregistrement d'un paiement.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Retard de livraison
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une livraison dépasse l'échéance.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Rapport hebdomadaire
+                                    </strong>
+
+                                    <span>
+                                        Recevoir un résumé automatique chaque semaine.
+                                    </span>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                        </div>
+
+                        <div class="settings-form-actions">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                            >
+                                Tout désactiver
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn-primary"
+                            >
+                                💾 Enregistrer
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- =====================================================
+                         SÉCURITÉ
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="security-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Sécurité du compte
+                                </h3>
+
+                                <p>
+                                    Modifiez votre mot de passe et contrôlez les paramètres
+                                    de sécurité du système.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                🛡️
+                            </div>
+
+                        </div>
+
+                        <form class="settings-form">
+
+                            <h4 class="settings-form-title">
+                                Modifier le mot de passe
+                            </h4>
+
+                            <div class="settings-form-grid">
+
+                                <div class="form-group">
+
+                                    <label for="current-password">
+                                        Mot de passe actuel
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        id="current-password"
+                                        placeholder="Saisissez votre mot de passe actuel"
+                                    >
+
+                                </div>
+
+                                <div></div>
+
+                                <div class="form-group">
+
+                                    <label for="new-password">
+                                        Nouveau mot de passe
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        id="new-password"
+                                        placeholder="Saisissez le nouveau mot de passe"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label for="confirm-password">
+                                        Confirmer le mot de passe
+                                    </label>
+
+                                    <input
+                                        type="password"
+                                        id="confirm-password"
+                                        placeholder="Confirmez le nouveau mot de passe"
+                                    >
+
+                                </div>
+
+                            </div>
+
+                            <div class="password-requirements">
+
+                                <h4>
+                                    Le mot de passe doit contenir :
+                                </h4>
+
+                                <ul>
+                                    <li>Au moins 8 caractères</li>
+                                    <li>Une lettre majuscule</li>
+                                    <li>Une lettre minuscule</li>
+                                    <li>Un chiffre</li>
+                                    <li>Un caractère spécial</li>
+                                </ul>
+
+                            </div>
+
+                            <div class="settings-form-actions">
+
+                                <button
+                                    type="reset"
+                                    class="btn-secondary"
+                                >
+                                    Annuler
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn-primary"
+                                >
+                                    🔐 Modifier le mot de passe
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                        <div class="security-settings-block">
+
+                            <h4>
+                                Options de sécurité
+                            </h4>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Authentification à deux facteurs
+                                        </strong>
+
+                                        <span>
+                                            Ajouter une étape de vérification lors de la connexion.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Déconnexion automatique
+                                        </strong>
+
+                                        <span>
+                                            Déconnecter l'utilisateur après une période d'inactivité.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <div class="settings-inline-option">
+
+                                    <div>
+
+                                        <strong>
+                                            Durée avant déconnexion
+                                        </strong>
+
+                                        <span>
+                                            Temps maximum d'inactivité autorisé.
+                                        </span>
+
+                                    </div>
+
+                                    <select id="session-timeout">
+
+                                        <option value="15">
+                                            15 minutes
+                                        </option>
+
+                                        <option value="30" selected>
+                                            30 minutes
+                                        </option>
+
+                                        <option value="60">
+                                            1 heure
+                                        </option>
+
+                                        <option value="120">
+                                            2 heures
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- =====================================================
+                         SAUVEGARDE
+                    ====================================================== -->
+                    <div
+                        class="settings-section"
+                        id="backup-settings"
+                    >
+
+                        <div class="settings-section-header">
+
+                            <div>
+
+                                <h3>
+                                    Sauvegarde et restauration
+                                </h3>
+
+                                <p>
+                                    Protégez les informations de l'entreprise et restaurez
+                                    les données en cas de besoin.
+                                </p>
+
+                            </div>
+
+                            <div class="settings-section-icon">
+                                💾
+                            </div>
+
+                        </div>
+
+                        <div class="backup-status-card">
+
+                            <div class="backup-status-icon">
+                                ✅
+                            </div>
+
+                            <div>
+
+                                <h4>
+                                    Dernière sauvegarde réussie
+                                </h4>
+
+                                <p>
+                                    21 juillet 2026 à 02:00
+                                </p>
+
+                            </div>
+
+                            <span class="status-badge status-paid">
+                                À jour
+                            </span>
+
+                        </div>
+
+                        <div class="settings-form-grid">
+
+                            <div class="backup-action-card">
+
+                                <div class="backup-action-icon">
+                                    ☁️
+                                </div>
+
+                                <h4>
+                                    Sauvegarde manuelle
+                                </h4>
+
+                                <p>
+                                    Créez immédiatement une copie des données du système.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="btn-primary"
+                                    id="manual-backup-btn"
+                                >
+                                    Sauvegarder maintenant
+                                </button>
+
+                            </div>
+
+                            <div class="backup-action-card">
+
+                                <div class="backup-action-icon">
+                                    📥
+                                </div>
+
+                                <h4>
+                                    Exporter les données
+                                </h4>
+
+                                <p>
+                                    Téléchargez une copie des données au format Excel.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="btn-secondary"
+                                    id="export-data-btn"
+                                >
+                                    Exporter les données
+                                </button>
+
+                            </div>
+
+                            <div class="backup-action-card">
+
+                                <div class="backup-action-icon">
+                                    🔄
+                                </div>
+
+                                <h4>
+                                    Restaurer les données
+                                </h4>
+
+                                <p>
+                                    Importez une sauvegarde précédente du système.
+                                </p>
+
+                                <label
+                                    for="restore-file-input"
+                                    class="btn-secondary"
+                                >
+                                    Choisir une sauvegarde
+                                </label>
+
+                                <input
+                                    type="file"
+                                    id="restore-file-input"
+                                    accept=".xlsx,.csv,.json"
+                                    hidden
+                                >
+
+                            </div>
+
+                            <div class="backup-action-card danger-card">
+
+                                <div class="backup-action-icon">
+                                    ⚠️
+                                </div>
+
+                                <h4>
+                                    Réinitialiser le système
+                                </h4>
+
+                                <p>
+                                    Supprimez toutes les données et restaurez les paramètres initiaux.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="btn-danger"
+                                    id="reset-system-btn"
+                                >
+                                    Réinitialiser
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="security-settings-block">
+
+                            <h4>
+                                Sauvegarde automatique
+                            </h4>
+
+                            <div class="settings-options-list">
+
+                                <label class="settings-switch-row">
+
+                                    <div>
+
+                                        <strong>
+                                            Activer les sauvegardes automatiques
+                                        </strong>
+
+                                        <span>
+                                            Créer automatiquement une copie des données.
+                                        </span>
+
+                                    </div>
+
+                                    <input
+                                        type="checkbox"
+                                        class="settings-switch-input"
+                                        checked
+                                    >
+
+                                    <span class="settings-switch"></span>
+
+                                </label>
+
+                                <div class="settings-inline-option">
+
+                                    <div>
+
+                                        <strong>
+                                            Fréquence de sauvegarde
+                                        </strong>
+
+                                        <span>
+                                            Choisissez la fréquence de création des sauvegardes.
+                                        </span>
+
+                                    </div>
+
+                                    <select id="backup-frequency">
+
+                                        <option value="daily" selected>
+                                            Tous les jours
+                                        </option>
+
+                                        <option value="weekly">
+                                            Toutes les semaines
+                                        </option>
+
+                                        <option value="monthly">
+                                            Tous les mois
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/modules/paramètres.js"></script>
+
+
+</body>
+
+</html>

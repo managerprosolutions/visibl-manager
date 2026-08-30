@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+<!-- Anti-flash d'authentification -->
+<style id="visibl-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-auth-guard-script">
+(function(){
+    document.documentElement.classList.add("visibl-auth-pending");
+    try{
+        const raw=localStorage.getItem("visibl_user");
+        if(!raw){window.location.replace("connexion.html");return;}
+        const user=JSON.parse(raw);
+        if(!user||typeof user!=="object"){
+            localStorage.removeItem("visibl_user");
+            window.location.replace("connexion.html");
+            return;
+        }
+        document.documentElement.classList.remove("visibl-auth-pending");
+    }catch(e){
+        localStorage.removeItem("visibl_user");
+        window.location.replace("connexion.html");
+    }
+})();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Clients</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/clients.css">
+
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
+
+<style>
+    .export-clients-menu { position: relative; display: inline-flex; }
+    .export-clients-trigger { display: inline-flex; align-items: center; gap: .45rem; }
+    .export-arrow { transition: transform .2s ease; }
+    .export-clients-menu.is-open .export-arrow { transform: rotate(180deg); }
+    .export-clients-dropdown {
+        position: absolute; top: calc(100% + 10px); left: 0; z-index: 1000;
+        width: 270px; padding: 8px; border: 1px solid rgba(15, 23, 42, .12);
+        border-radius: 14px; background: #fff; box-shadow: 0 18px 45px rgba(15, 23, 42, .16);
+    }
+    .export-clients-dropdown[hidden] { display: none; }
+    .export-option {
+        width: 100%; display: grid; grid-template-columns: 30px 1fr; gap: 10px;
+        align-items: center; padding: 11px 12px; border: 0; border-radius: 10px;
+        background: transparent; color: inherit; text-align: left; cursor: pointer;
+    }
+    .export-option:hover, .export-option:focus-visible { background: #f3f6fb; outline: none; }
+    .export-option span:last-child { display: flex; flex-direction: column; gap: 2px; }
+    .export-option small { color: #64748b; font-size: .75rem; }
+    @media (max-width: 640px) {
+        .export-clients-dropdown { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; }
+    }
+
+
+    /* ===== Étape 4 : tri, pagination, sélection et colonnes ===== */
+    .bulk-clients-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 14px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; }
+    .bulk-clients-bar[hidden] { display:none; }
+    .bulk-clients-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .bulk-clients-count { font-weight:700; }
+    .columns-clients-menu { position:relative; display:inline-flex; }
+    .columns-clients-dropdown { position:absolute; top:calc(100% + 10px); right:0; z-index:1000; min-width:245px; padding:10px; border:1px solid rgba(15,23,42,.12); border-radius:14px; background:#fff; box-shadow:0 18px 45px rgba(15,23,42,.16); }
+    .columns-clients-dropdown[hidden] { display:none; }
+    .column-option { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:8px; cursor:pointer; }
+    .column-option:hover { background:#f3f6fb; }
+    .clients-table th[data-sort-key] { cursor:pointer; user-select:none; white-space:nowrap; }
+    .sort-indicator { display:inline-block; min-width:14px; margin-left:5px; color:#64748b; font-size:.75rem; }
+    .clients-table tr.is-selected { background:#eff6ff; }
+    .pagination-controls { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+    .pagination-summary { margin:0 8px; color:#64748b; font-size:.88rem; }
+    .pagination-btn[hidden] { display:none; }
+    .btn-danger-soft { border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; }
+    .btn-danger-soft:hover { background:#ffe4e6; }
+    @media (max-width:760px) { .bulk-clients-bar { align-items:flex-start; flex-direction:column; } .columns-clients-dropdown { position:fixed; left:16px; right:16px; top:auto; bottom:16px; min-width:0; } }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
+
+        <button id="sidebar-close" class="sidebar-close">
+            ✖
+        </button>
+
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo">
+        </a>
+
+        <nav>
+            <ul>
+
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>🛒 Commercial</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="ventes.html" class="nav-link">
+                                Ventes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="commandes.html" class="nav-link">
+                                Commandes
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="clients.html" class="nav-link">
+                                Clients
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livraisons.html" class="nav-link">
+                                Livraisons
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="livreurs.html" class="nav-link">
+                                Livreurs
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>📦 Stock & Approvisionnement</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="produits.html" class="nav-link">
+                                Produits
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="stock.html" class="nav-link">
+                                Stock & Mouvements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="approvisionnements.html" class="nav-link">
+                                Approvisionnements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="fournisseurs.html" class="nav-link">
+                                Fournisseurs
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="transitaires.html" class="nav-link">
+                                Transitaires
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li class="menu-category">
+
+                    <a href="#" class="nav-link category-title">
+                        <span>💰 Finance</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+                            <a href="caisse.html" class="nav-link">
+                                Caisse
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="paiements.html" class="nav-link">
+                                Paiements
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="factures.html" class="nav-link">
+                                Factures
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="comptabilité.html" class="nav-link">
+                                Comptabilité
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="paramètres.html" class="nav-link">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </aside>
+
+    <!-- ===== Contenu principal ===== -->
+    <main class="main-content">
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
+                </a>
+
+                <h2>Clients</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            placeholder="Rechercher un client..."
+                        >
+
+                        <button class="search-btn">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
+
+        🔔
+        <span class="notification-badge" hidden>0</span>
+
+    </button>
+
+    <div
+        id="notification-panel"
+        class="notification-panel"
+        hidden>
+
+        <div class="notification-panel-header">
+            <h3>Notifications</h3>
+        </div>
+        <div class="notification-empty-state">
+            <span aria-hidden="true">🔔</span>
+            <p>Aucune notification pour le moment.</p>
+        </div>
+    </div>
+</div>
+                    <div class="profile-menu">
+
+                        <button class="icon-btn">
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ===== Contenu de la page ===== -->
+        <section class="content">
+
+    <!-- ===== Présentation du module ===== -->
+    <div class="welcome-section">
+
+        <div>
+            <h2>Gestion des clients</h2>
+
+            <p>
+                Enregistrez, consultez et gérez l’ensemble des clients
+                de votre entreprise.
+            </p>
+        </div>
+
+        <button class="btn-primary" id="new-client-btn">
+            ➕ Nouveau client
+        </button>
+
+    </div>
+
+
+    <!-- ===== KPI Clients ===== -->
+    <div class="kpi-grid clients-kpi-grid">
+
+        <article class="kpi-card">
+
+            <div class="kpi-card-header">
+                <span class="kpi-icon">👥</span>
+                <span class="kpi-title">Total clients</span>
+            </div>
+
+            <h3 class="kpi-value is-loading" id="total-clients-value">
+                —
+            </h3>
+
+            <p class="kpi-trend up" id="total-clients-description">
+                Chargement des données…
+            </p>
+
+        </article>
+
+        <article class="kpi-card">
+
+            <div class="kpi-card-header">
+                <span class="kpi-icon">✅</span>
+                <span class="kpi-title">Clients actifs</span>
+            </div>
+
+            <h3 class="kpi-value is-loading" id="active-clients-value">
+                —
+            </h3>
+
+            <p class="kpi-description" id="active-clients-description">
+                Chargement des données…
+            </p>
+
+        </article>
+
+        <article class="kpi-card">
+
+            <div class="kpi-card-header">
+                <span class="kpi-icon">🆕</span>
+                <span class="kpi-title">Nouveaux ce mois</span>
+            </div>
+
+            <h3 class="kpi-value is-loading" id="new-clients-value">
+                —
+            </h3>
+
+            <p class="kpi-trend up" id="new-clients-description">
+                Chargement des données…
+            </p>
+
+        </article>
+
+        <article class="kpi-card">
+
+            <div class="kpi-card-header">
+                <span class="kpi-icon">💰</span>
+                <span class="kpi-title">Achats cumulés</span>
+            </div>
+
+            <h3 class="kpi-value is-loading" id="client-revenue-value">
+                —
+            </h3>
+
+            <p class="kpi-trend up" id="client-revenue-description">
+                Chargement des données…
+            </p>
+
+        </article>
+
+    </div>
+
+
+    <!-- ===== Barre d’actions ===== -->
+    <div class="clients-toolbar clients-toolbar-refined">
+        <div class="toolbar-left clients-toolbar-summary">
+            <span class="client-count">
+                <strong id="filtered-client-count">0</strong>
+                client(s) affiché(s)
+            </span>
+        </div>
+
+        <div class="toolbar-right clients-toolbar-actions">
+
+            <div class="clients-actions-menu">
+                <button
+                    type="button"
+                    class="btn-secondary clients-actions-trigger"
+                    id="clients-actions-trigger"
+                    aria-expanded="false"
+                    aria-controls="clients-actions-dropdown"
+                >
+                    Actions <span aria-hidden="true">⌄</span>
+                </button>
+
+                <div class="clients-actions-dropdown" id="clients-actions-dropdown" hidden>
+                    <button type="button" id="clients-action-pdf">📄 <span>Exporter PDF</span></button>
+                    <button type="button" id="clients-action-xlsx">📊 <span>Exporter Excel</span></button>
+                    <button type="button" id="clients-action-csv">📑 <span>Exporter CSV</span></button>
+                    <button type="button" id="clients-action-print">🖨️ <span>Imprimer</span></button>
+                    <button type="button" id="clients-action-refresh">🔄 <span>Actualiser</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+<div class="bulk-clients-bar clients-selection-bar" id="bulk-clients-bar" hidden>
+        <span class="bulk-clients-count">
+            <strong id="selected-clients-count">0</strong> client(s) sélectionné(s)
+        </span>
+        <div class="bulk-clients-actions clients-selection-actions">
+            <button type="button" class="btn-secondary" id="select-visible-clients-btn">Tout sélectionner</button>
+            <button type="button" class="btn-secondary" id="bulk-clear-selection">Tout décocher</button>
+            <button type="button" class="btn-secondary btn-danger-soft" id="bulk-delete-clients">🗑️ Supprimer la sélection</button>
+            <button type="button" class="btn-secondary" id="close-clients-selection-btn">Quitter la sélection</button>
+        </div>
+    </div>
+
+    <!-- ===== Recherche et filtres ===== -->
+    <div class="clients-filters">
+
+        <select id="client-type-filter">
+
+            <option value="">
+                Tous les types
+            </option>
+
+            <option value="particulier">
+                Particulier
+            </option>
+
+            <option value="entreprise">
+                Entreprise
+            </option>
+
+        </select>
+
+
+        <select id="client-status-filter">
+
+            <option value="">
+                Tous les statuts
+            </option>
+
+            <option value="actif">
+                Actif
+            </option>
+
+            <option value="prospect">
+                Prospect
+            </option>
+
+            <option value="inactif">
+                Inactif
+            </option>
+
+            <option value="bloque">
+                Bloqué
+            </option>
+
+        </select>
+
+
+        <select id="client-commune-filter">
+
+            <option value="">
+                Toutes les communes
+            </option>
+
+            <option value="abobo">
+                Abobo
+            </option>
+
+            <option value="adjame">
+                Adjamé
+            </option>
+
+            <option value="attecoube">
+                Attécoubé
+            </option>
+
+            <option value="cocody">
+                Cocody
+            </option>
+
+            <option value="koumassi">
+                Koumassi
+            </option>
+
+            <option value="marcory">
+                Marcory
+            </option>
+
+            <option value="plateau">
+                Plateau
+            </option>
+
+            <option value="port-bouet">
+                Port-Bouët
+            </option>
+
+            <option value="treichville">
+                Treichville
+            </option>
+
+            <option value="yopougon">
+                Yopougon
+            </option>
+
+            <option value="autre">
+                Autre
+            </option>
+
+        </select>
+
+
+        <button class="btn-filter-reset" id="reset-client-filters">
+            Effacer les filtres
+        </button>
+
+    </div>
+
+
+    <!-- ===== Tableau des clients ===== -->
+    <div class="clients-table-container">
+
+        <div class="table-responsive">
+
+            <table class="clients-table">
+
+                <thead>
+
+                    <tr>
+                        <th data-column="selection" class="client-selection-column">
+                            <input
+                                type="checkbox"
+                                id="select-all-clients"
+                                aria-label="Sélectionner tous les clients"
+                            >
+                        </th>
+
+                        <th data-column="client" data-sort-key="nom">Client</th>
+                        <th data-column="contact" data-sort-key="telephone">Contact</th>
+                        <th data-column="commune" data-sort-key="commune">Commune</th>
+                        <th data-column="type" data-sort-key="typeClient">Type</th>
+                        <th data-column="date" data-sort-key="dateInscription">Date d’inscription</th>
+                        <th data-column="commandes" data-sort-key="nombreCommandes">Commandes</th>
+                        <th data-column="achats" data-sort-key="montantTotalAchats">Total achats</th>
+                        <th data-column="credit" data-sort-key="creditClient">Crédit client</th>
+                        <th data-column="quartier" data-sort-key="quartier">Quartier</th>
+                        <th data-column="statut" data-sort-key="statut">Statut</th>
+                        <th data-column="actions">Actions</th>
+                    </tr>
+
+                </thead>
+
+<tbody id="clients-table-body">
+
+    <tr class="empty-row">
+
+        <td colspan="12" class="empty-table">
+            Aucun client enregistré.
+        </td>
+
+    </tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<!-- ===== État vide ===== -->
+<div class="empty-state" id="clients-empty-state" hidden>
+
+            <div class="empty-state-icon">
+                👥
+            </div>
+
+            <h3>Aucun client trouvé</h3>
+
+            <p>
+                Aucun client ne correspond à votre recherche ou à vos filtres.
+            </p>
+
+            <button class="btn-primary" id="empty-new-client-btn">
+                Ajouter un client
+            </button>
+
+        </div>
+
+
+        <!-- ===== Pagination ===== -->
+        <div class="table-pagination">
+
+            <div class="pagination-info">
+
+                <span>Afficher</span>
+
+                <select id="clients-per-page">
+
+                    <option value="10">
+                        10
+                    </option>
+
+                    <option value="25">
+                        25
+                    </option>
+
+                    <option value="50">
+                        50
+                    </option>
+
+                    <option value="100">
+                        100
+                    </option>
+
+                </select>
+
+                <span>éléments par page</span>
+
+            </div>
+
+
+            <div class="pagination-controls" id="clients-pagination-controls">
+                <button type="button" class="pagination-btn" id="previous-page-btn" aria-label="Page précédente">‹</button>
+                <span id="clients-page-buttons" class="pagination-controls"></span>
+                <span class="pagination-summary" id="clients-pagination-summary"></span>
+                <button type="button" class="pagination-btn" id="next-page-btn" aria-label="Page suivante">›</button>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===== Fenêtre Nouveau client ===== -->
+    <div class="modal-overlay" id="client-modal" aria-hidden="true">
+
+        <div
+            class="modal client-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="client-modal-title"
+        >
+
+            <div class="modal-header">
+
+                <div>
+                    <h2 id="client-modal-title">Nouveau client</h2>
+                    <p>Renseignez les informations du client.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    id="close-client-modal"
+                    aria-label="Fermer la fenêtre"
+                >
+                    ✕
+                </button>
+
+            </div>
+
+            <form id="client-form">
+
+                <div class="modal-body">
+
+                    <!-- ===== Informations générales ===== -->
+                    <section class="form-section">
+
+                        <div class="form-section-header">
+
+                            <span class="form-section-icon">👤</span>
+
+                            <div>
+                                <h3>Informations générales</h3>
+                                <p>Identité, catégorie et statut du client</p>
+                            </div>
+
+                        </div>
+
+                        <div class="form-grid">
+
+                            <div class="form-group">
+
+                                <label for="client-type">
+                                    Type de client
+                                    <span class="required">*</span>
+                                </label>
+
+                                <select id="client-type" name="typeClient" required>
+                                    <option value="">Sélectionner un type</option>
+                                    <option value="particulier">Particulier</option>
+                                    <option value="entreprise">Entreprise</option>
+                                </select>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="client-status">
+                                    Statut
+                                    <span class="required">*</span>
+                                </label>
+
+                                <select id="client-status" name="statut" required>
+                                    <option value="actif">Actif</option>
+                                    <option value="prospect">Prospect</option>
+                                    <option value="inactif">Inactif</option>
+                                    <option value="bloque">Bloqué</option>
+                                </select>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="client-lastname">
+                                    Nom
+                                    <span class="required">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="client-lastname"
+                                    name="nom"
+                                    placeholder="Exemple : Traoré"
+                                    autocomplete="family-name"
+                                    required
+                                >
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="client-firstname">Prénom</label>
+
+                                <input
+                                    type="text"
+                                    id="client-firstname"
+                                    name="prenom"
+                                    placeholder="Exemple : Awa"
+                                    autocomplete="given-name"
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <!-- ===== Coordonnées ===== -->
+                    <section class="form-section">
+
+                        <div class="form-section-header">
+
+                            <span class="form-section-icon">📞</span>
+
+                            <div>
+                                <h3>Coordonnées</h3>
+                                <p>Téléphone et adresse email</p>
+                            </div>
+
+                        </div>
+
+                        <div class="form-grid">
+
+                            <div class="form-group">
+
+                                <label for="client-phone">
+                                    Téléphone
+                                    <span class="required">*</span>
+                                </label>
+
+                                <input
+                                    type="tel"
+                                    id="client-phone"
+                                    name="telephone"
+                                    placeholder="07 00 00 00 00"
+                                    autocomplete="tel"
+                                    required
+                                >
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="client-email">Email</label>
+
+                                <input
+                                    type="email"
+                                    id="client-email"
+                                    name="email"
+                                    placeholder="client@email.com"
+                                    autocomplete="email"
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <!-- ===== Adresse ===== -->
+                    <section class="form-section">
+
+                        <div class="form-section-header">
+
+                            <span class="form-section-icon">📍</span>
+
+                            <div>
+                                <h3>Adresse</h3>
+                                <p>Commune, quartier et adresse détaillée</p>
+                            </div>
+
+                        </div>
+
+                        <div class="form-grid">
+
+                            <div class="form-group">
+
+                                <label for="client-commune">Commune</label>
+
+                                <select id="client-commune" name="commune">
+                                    <option value="">Sélectionner une commune</option>
+                                    <option value="abobo">Abobo</option>
+                                    <option value="adjame">Adjamé</option>
+                                    <option value="attecoube">Attécoubé</option>
+                                    <option value="cocody">Cocody</option>
+                                    <option value="koumassi">Koumassi</option>
+                                    <option value="marcory">Marcory</option>
+                                    <option value="plateau">Plateau</option>
+                                    <option value="port-bouet">Port-Bouët</option>
+                                    <option value="treichville">Treichville</option>
+                                    <option value="yopougon">Yopougon</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="client-neighborhood">Quartier</label>
+
+                                <input
+                                    type="text"
+                                    id="client-neighborhood"
+                                    name="quartier"
+                                    placeholder="Exemple : Riviera Anono"
+                                    autocomplete="address-level3"
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <!-- ===== Commentaire ===== -->
+                    <section class="form-section">
+
+                        <div class="form-section-header">
+
+                            <span class="form-section-icon">📝</span>
+
+                            <div>
+                                <h3>Commentaire</h3>
+                                <p>Informations complémentaires sur le client</p>
+                            </div>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="client-comment">Commentaire</label>
+
+                            <textarea
+                                id="client-comment"
+                                name="commentaire"
+                                rows="4"
+                                placeholder="Ajoutez une information utile concernant ce client..."
+                            ></textarea>
+
+                        </div>
+
+
+                    </section>
+
+                    <!--
+                        Champs générés automatiquement par le système :
+                        ID Client
+                        Date d’inscription
+                        Nombre de commandes
+                        Montant total achats
+                        Crédit client / solde d’avoir
+                    -->
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="cancel-client-btn"
+                    >
+                        Annuler
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                        id="save-client-btn"
+                    >
+                        Enregistrer le client
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- ===== Fenêtre Voir client ===== -->
+    <div class="modal-overlay" id="view-client-modal" aria-hidden="true">
+        <div class="modal view-client-modal" role="dialog" aria-modal="true" aria-labelledby="view-client-modal-title">
+
+            <div class="view-client-hero">
+                <button type="button" class="modal-close view-client-close" id="close-view-client-modal" aria-label="Fermer la fenêtre">✕</button>
+
+                <div class="view-client-profile">
+                    <div class="view-client-avatar" id="view-client-avatar" aria-hidden="true">CL</div>
+
+                    <div class="view-client-profile-main">
+                        <div class="view-client-title-row">
+                            <div>
+                                <p class="view-client-eyebrow">Fiche client</p>
+                                <h2 id="view-client-modal-title">
+                                    <span id="view-client-name">—</span>
+                                </h2>
+                            </div>
+
+                            <span class="view-client-status status-inconnu" id="view-client-status">—</span>
+                        </div>
+
+                        <div class="view-client-meta">
+                            <span><i class="fa-solid fa-fingerprint"></i><strong id="view-client-id">—</strong></span>
+                            <span><i class="fa-solid fa-user-tag"></i><strong id="view-client-type">—</strong></span>
+                            <span><i class="fa-regular fa-calendar"></i>Inscrit le <strong id="view-client-date">—</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-body view-client-body">
+
+                <section class="view-client-stats">
+                    <article class="view-client-stat-card">
+                        <div class="view-client-stat-icon"><i class="fa-solid fa-bag-shopping"></i></div>
+                        <div>
+                            <span>Commandes</span>
+                            <strong id="view-client-orders">0</strong>
+                            <small>Nombre total enregistré</small>
+                        </div>
+                    </article>
+
+                    <article class="view-client-stat-card featured">
+                        <div class="view-client-stat-icon"><i class="fa-solid fa-coins"></i></div>
+                        <div>
+                            <span>Total des achats</span>
+                            <strong id="view-client-purchases">0 FCFA</strong>
+                            <small>Chiffre d’affaires généré</small>
+                        </div>
+                    </article>
+
+                    <article class="view-client-stat-card credit-card">
+                        <div class="view-client-stat-icon"><i class="fa-solid fa-wallet"></i></div>
+                        <div>
+                            <span>Crédit client</span>
+                            <strong id="view-client-credit">0 FCFA</strong>
+                            <small>Solde d’avoir disponible</small>
+                        </div>
+                    </article>
+                </section>
+
+                <div class="view-client-content-grid">
+
+                    <section class="view-client-card">
+                        <div class="view-client-card-header">
+                            <div class="view-client-card-icon"><i class="fa-solid fa-address-book"></i></div>
+                            <div>
+                                <h3>Coordonnées</h3>
+                                <p>Informations de contact du client</p>
+                            </div>
+                        </div>
+
+                        <div class="view-client-info-list">
+                            <div class="view-client-info-item">
+                                <span class="view-client-info-icon"><i class="fa-solid fa-phone"></i></span>
+                                <div><span>Téléphone</span><strong id="view-client-phone">—</strong></div>
+                            </div>
+
+                            <div class="view-client-info-item">
+                                <span class="view-client-info-icon"><i class="fa-solid fa-envelope"></i></span>
+                                <div><span>Email</span><strong id="view-client-email">—</strong></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="view-client-card">
+                        <div class="view-client-card-header">
+                            <div class="view-client-card-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div>
+                                <h3>Adresse</h3>
+                                <p>Localisation principale du client</p>
+                            </div>
+                        </div>
+
+                        <div class="view-client-info-list">
+                            <div class="view-client-info-item">
+                                <span class="view-client-info-icon"><i class="fa-solid fa-city"></i></span>
+                                <div><span>Commune</span><strong id="view-client-commune">—</strong></div>
+                            </div>
+
+                            <div class="view-client-info-item">
+                                <span class="view-client-info-icon"><i class="fa-solid fa-map-pin"></i></span>
+                                <div><span>Quartier</span><strong id="view-client-neighborhood">—</strong></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="view-client-note">
+                    <div class="view-client-note-header">
+                        <span><i class="fa-solid fa-note-sticky"></i></span>
+                        <div>
+                            <h3>Commentaire</h3>
+                            <p>Notes et informations complémentaires</p>
+                        </div>
+                    </div>
+                    <p id="view-client-comment">—</p>
+                </section>
+            </div>
+
+            <div class="modal-footer view-client-footer">
+                <span class="view-client-footer-hint">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Les informations affichées proviennent de la fiche client.
+                </span>
+
+                <button type="button" class="btn-primary" id="close-view-client-footer">
+                    <i class="fa-solid fa-check"></i>
+                    Fermer
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+<!-- ===========================
+     MODAL SUPPRESSION CLIENT
+=========================== -->
+
+
+    <div class="modal-overlay" id="bulk-delete-client-modal" aria-hidden="true">
+        <div class="modal delete-client-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-delete-client-title">
+            <div class="modal-header">
+                <div><h2 id="bulk-delete-client-title">Supprimer les clients sélectionnés</h2><p id="bulk-delete-client-message">Cette action est irréversible.</p></div>
+                <button type="button" class="modal-close" id="close-bulk-delete-client-btn" aria-label="Fermer">✕</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancel-bulk-delete-client-btn">Annuler</button>
+                <button type="button" class="btn-danger" id="confirm-bulk-delete-client-btn">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+<div
+    class="modal-overlay"
+    id="delete-client-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal delete-client-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-client-title"
+    >
+
+        <div class="delete-client-top">
+
+            <div class="delete-client-circle">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+
+            <h2 id="delete-client-title">
+                Supprimer ce client ?
+            </h2>
+
+            <p>
+
+                Vous êtes sur le point de supprimer définitivement
+
+                <strong id="delete-client-name">
+                    Nom du client
+                </strong>
+
+            </p>
+
+        </div>
+
+        <div class="delete-warning">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            <span>
+
+                Cette opération est irréversible.
+                Toutes les informations du client seront supprimées.
+
+            </span>
+
+        </div>
+
+        <div class="modal-footer delete-footer">
+
+            <button
+                type="button"
+                class="btn-secondary"
+                id="cancel-delete-client-btn"
+            >
+                Annuler
+            </button>
+
+            <button
+                type="button"
+                class="btn-danger"
+                id="confirm-delete-client-btn"
+            >
+                <i class="fa-solid fa-trash"></i>
+
+                Supprimer définitivement
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+            
+    </section>
+
+    </main>
+
+</div>
+
+<!-- Conteneur des notifications -->
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/modules/clients.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+<!-- VISIBL COMMON PATCH: anti-flash session -->
+<style id="visibl-common-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-common-auth-guard-script">
+(function(){
+  document.documentElement.classList.add("visibl-auth-pending");
+  try{
+    const raw=localStorage.getItem("visibl_user");
+    if(!raw){location.replace("connexion.html");return;}
+    const u=JSON.parse(raw);
+    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
+    document.documentElement.classList.remove("visibl-auth-pending");
+  }catch(e){
+    localStorage.removeItem("visibl_user");
+    location.replace("connexion.html");
+  }
+})();
+</script>
+
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Fournisseurs</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/fournisseurs.css"
+    >
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside
+        id="sidebar"
+        class="sidebar"
+    >
+
+        <button
+            id="sidebar-close"
+            class="sidebar-close"
+            type="button"
+            aria-label="Fermer le menu"
+        >
+            ✖
+        </button>
+
+        <a
+            href="dashboard.html"
+            class="logo"
+        >
+            <img
+                src="../logo-vizibl.png"
+                alt="Logo VISIBL"
+            >
+        </a>
+
+        <nav>
+
+            <ul>
+
+                <li>
+
+                    <a
+                        href="dashboard.html"
+                        class="nav-link"
+                    >
+                        📊 Tableau de bord
+                    </a>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU COMMERCIAL
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            🛒 Commercial
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="ventes.html"
+                                class="nav-link"
+                            >
+                                Ventes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="commandes.html"
+                                class="nav-link"
+                            >
+                                Commandes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="clients.html"
+                                class="nav-link"
+                            >
+                                Clients
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livraisons.html"
+                                class="nav-link"
+                            >
+                                Livraisons
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livreurs.html"
+                                class="nav-link"
+                            >
+                                Livreurs
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU STOCK ET APPROVISIONNEMENT
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            📦 Stock & Approvisionnement
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="produits.html"
+                                class="nav-link"
+                            >
+                                Produits
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <li>
+                            <a href="stock.html" class="nav-link">
+                                Stock & Mouvements
+                            </a>
+                        </li>
+
+                            <a
+                                href="approvisionnements.html"
+                                class="nav-link"
+                            >
+                                Approvisionnements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="fournisseurs.html"
+                                class="nav-link active"
+                                aria-current="page"
+                            >
+                                Fournisseurs
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="transitaires.html"
+                                class="nav-link"
+                            >
+                                Transitaires
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU FINANCE
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            💰 Finance
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="caisse.html"
+                                class="nav-link"
+                            >
+                                Caisse
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="paiements.html"
+                                class="nav-link"
+                            >
+                                Paiements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="factures.html"
+                                class="nav-link"
+                            >
+                                Factures
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="comptabilité.html"
+                                class="nav-link"
+                            >
+                                Comptabilité
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="rapports.html"
+                        class="nav-link"
+                    >
+                        📈 Rapports
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="parametres.html"
+                        class="nav-link"
+                    >
+                        ⚙️ Paramètres
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =====================================================
+         CONTENU PRINCIPAL
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
+                </a>
+
+                <h2>Fournisseurs</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="header-suppliers-search-input"
+                            placeholder="Rechercher un fournisseur..."
+                        >
+
+                        <button class="search-btn"
+                            id="header-suppliers-search-btn"
+                            type="button"
+                            aria-label="Rechercher">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
+
+        🔔
+        <span class="notification-badge" hidden>0</span>
+
+    </button>
+
+    <div
+        id="notification-panel"
+        class="notification-panel"
+        hidden>
+
+        <div class="notification-panel-header">
+            <h3>Notifications</h3>
+        </div>
+
+        <div class="notification-empty-state">
+            <span aria-hidden="true">🔔</span>
+            <p>Aucune nouvelle notification.</p>
+        </div>
+
+    </div>
+
+</div>
+
+                    <div class="profile-menu" id="supplier-profile-menu">
+
+                        <button
+                            class="icon-btn"
+                            id="profile-menu-button"
+                            type="button"
+                            aria-label="Afficher le menu du profil"
+                            aria-expanded="false">
+                            👤
+                        </button>
+
+                        <div
+                            class="dropdown-menu"
+                            id="profile-dropdown"
+                            hidden>
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout" id="logout-button">
+        Déconnexion
+    </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+
+        <!-- =================================================
+             CONTENU DE LA PAGE
+        ================================================== -->
+
+        <section class="content">
+
+            <div class="welcome-section suppliers-welcome-section">
+                <div>
+                    <h2>Fournisseurs</h2>
+                    <p>
+                        Gérez tous vos fournisseurs, leurs coordonnées,
+                        leurs conditions commerciales et leurs performances.
+                    </p>
+                </div>
+
+                <button type="button" class="btn-primary" id="new-supplier-btn">
+                    ➕ Nouveau fournisseur
+                </button>
+            </div>
+
+            <div class="kpi-grid" id="suppliers-kpi-grid">
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">🏢</div>
+                    <div class="kpi-content">
+                        <h3>Total fournisseurs</h3>
+                        <p class="kpi-value" id="kpi-total-suppliers" aria-live="polite">0</p>
+                        <small id="kpi-suppliers-month" aria-live="polite">+0 ce mois</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">🌍</div>
+                    <div class="kpi-content">
+                        <h3>Fournisseurs internationaux</h3>
+                        <p class="kpi-value" id="kpi-international-suppliers" aria-live="polite">0</p>
+                        <small id="kpi-international-percent" aria-live="polite">0 % du total</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">✅</div>
+                    <div class="kpi-content">
+                        <h3>Fournisseurs actifs</h3>
+                        <p class="kpi-value" id="kpi-active-suppliers" aria-live="polite">0</p>
+                        <small id="kpi-active-suppliers-percent" aria-live="polite">0 % du total</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">💳</div>
+                    <div class="kpi-content">
+                        <h3>Dette fournisseurs</h3>
+                        <p class="kpi-value" id="kpi-suppliers-debt" aria-live="polite">0 FCFA</p>
+                        <small id="kpi-suppliers-debt-detail" aria-live="polite">Reste total à payer</small>
+                    </div>
+                </article>
+
+            </div>
+
+            <div class="clients-toolbar suppliers-toolbar-refined">
+                <div class="toolbar-left suppliers-toolbar-summary">
+                    <span class="suppliers-visible-count">
+                        <strong id="filtered-supplier-count">0</strong>
+                        fournisseur(s) affiché(s)
+                    </span>
+                </div>
+
+                <div class="toolbar-right suppliers-toolbar-actions">
+
+                    <div class="suppliers-actions-menu">
+                        <button
+                            type="button"
+                            class="btn-secondary suppliers-actions-trigger"
+                            id="suppliers-actions-trigger"
+                            aria-expanded="false"
+                            aria-controls="suppliers-actions-dropdown"
+                        >
+                            Actions <span aria-hidden="true">⌄</span>
+                        </button>
+
+                        <div class="suppliers-actions-dropdown" id="suppliers-actions-dropdown" hidden>
+                            <button type="button" id="refresh-suppliers-btn">
+                                🔄 <span>Actualiser</span>
+                            </button>
+
+                            <div class="suppliers-export-menu" id="suppliers-export-menu">
+                                <button
+                                    type="button"
+                                    id="export-suppliers-btn"
+                                    class="supplier-export-trigger"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                >
+                                    📤 <span>Exporter</span>
+                                </button>
+
+                                <div class="suppliers-export-dropdown" id="suppliers-export-dropdown" hidden>
+                                    <button type="button" data-export-format="xlsx">
+                                        <span>📊</span>
+                                        <span><strong>Excel (.xlsx)</strong><small>Feuille modifiable</small></span>
+                                    </button>
+                                    <button type="button" data-export-format="pdf">
+                                        <span>📄</span>
+                                        <span><strong>PDF</strong><small>Document à partager</small></span>
+                                    </button>
+                                    <button type="button" data-export-format="csv">
+                                        <span>📑</span>
+                                        <span><strong>CSV</strong><small>Format universel UTF-8</small></span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="button" id="print-suppliers-btn">
+                                🖨️ <span>Imprimer</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="suppliers-bulk-bar" id="suppliers-bulk-bar" hidden>
+                <span>
+                    <strong id="selected-suppliers-count">0</strong>
+                    fournisseur(s) sélectionné(s)
+                </span>
+
+                <div class="suppliers-bulk-actions">
+                    <button type="button" class="btn-danger-soft" id="bulk-delete-suppliers-btn">
+                        🗑️ Supprimer la sélection
+                    </button>
+
+                    <button type="button" class="btn-secondary" id="clear-suppliers-selection-btn">
+                        ✕ Désélectionner
+                    </button>
+                </div>
+            </div>
+
+            <div class="sales-filters suppliers-simple-filters">
+                
+
+                <select
+                    id="supplier-country-filter"
+                    aria-label="Filtrer les fournisseurs par pays"
+                >
+                    <option value="">Tous les pays</option>
+                </select>
+
+                <select
+                    id="supplier-category-filter"
+                    aria-label="Filtrer les fournisseurs par catégorie"
+                >
+                    <option value="">Toutes les catégories</option>
+                </select>
+
+                <select
+                    id="supplier-status-filter"
+                    aria-label="Filtrer les fournisseurs par statut"
+                >
+                    <option value="">Tous les statuts</option>
+                    <option value="actif">Actif</option>
+                    <option value="inactif">Inactif</option>
+                    <option value="suspendu">Suspendu</option>
+                </select>
+            </div>
+
+            <div class="sales-table-container">
+                <table class="sales-table suppliers-advanced-table">
+                    <thead>
+                        <tr>
+                            <th class="selection-column">
+                                <input
+                                    type="checkbox"
+                                    id="select-all-suppliers"
+                                    aria-label="Sélectionner tous les fournisseurs de la page"
+                                >
+                            </th>
+                            <th>Code</th>
+                            <th>Fournisseur</th>
+                            <th>Téléphone</th>
+                            <th>Pays</th>
+                            <th>Ville</th>
+                            <th>Catégorie</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="suppliers-table-body">
+                        <tr>
+                            <td colspan="9" class="table-message">
+                                Chargement des fournisseurs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="suppliers-pagination">
+                    <div class="suppliers-pagination-size">
+                        <label for="suppliers-page-size">Afficher</label>
+                        <select id="suppliers-page-size">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>fournisseurs par page</span>
+                    </div>
+
+                    <div class="suppliers-pagination-summary" id="suppliers-pagination-summary">
+                        0 fournisseur
+                    </div>
+
+                    <div
+                        class="suppliers-pagination-controls"
+                        id="suppliers-pagination-controls"
+                        aria-label="Pagination des fournisseurs"
+                    ></div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+</div>
+
+<div class="modal-overlay" id="supplier-modal" aria-hidden="true">
+    <div
+        class="modal-container supplier-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="supplier-modal-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 id="supplier-modal-title">Nouveau fournisseur</h2>
+                <p>Enregistrez un nouveau fournisseur dans VISIBL.</p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-supplier-modal"
+                aria-label="Fermer le formulaire"
+            >
+                ✖
+            </button>
+        </div>
+
+        <form id="supplier-form">
+            <div class="modal-body">
+
+                <div
+                    id="supplier-form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+                <section class="form-section">
+                    <h3>Identification du fournisseur</h3>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="supplier-code">
+                                Code fournisseur <span class="required">*</span>
+                            </label>
+
+                            <div class="reference-auto-field">
+                                <input
+                                    type="text"
+                                    id="supplier-code"
+                                    name="codeFournisseur"
+                                    value="Génération automatique..."
+                                    readonly
+                                    required
+                                >
+                                <span class="reference-auto-badge">Automatique</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-name">
+                                Nom fournisseur <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="supplier-name"
+                                name="nomFournisseur"
+                                placeholder="Exemple : Canon Côte d'Ivoire"
+                                required
+                            >
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h3>Contact principal</h3>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="supplier-contact-name">Nom du Contact</label>
+                            <input
+                                type="text"
+                                id="supplier-contact-name"
+                                name="nomContact"
+                                placeholder="Nom et prénoms"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-contact-function">Fonction du Contact</label>
+                            <input
+                                type="text"
+                                id="supplier-contact-function"
+                                name="fonctionContact"
+                                placeholder="Exemple : Responsable commercial"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-phone">
+                                Téléphone <span class="required">*</span>
+                            </label>
+                            <input
+                                type="tel"
+                                id="supplier-phone"
+                                name="telephone"
+                                placeholder="+225 07 00 00 00 00"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-whatsapp">WhatsApp</label>
+                            <input
+                                type="tel"
+                                id="supplier-whatsapp"
+                                name="whatsapp"
+                                placeholder="Numéro WhatsApp"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-email">Email</label>
+                            <input
+                                type="email"
+                                id="supplier-email"
+                                name="email"
+                                placeholder="contact@fournisseur.com"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-website">Site Web</label>
+                            <input
+                                type="url"
+                                id="supplier-website"
+                                name="siteWeb"
+                                placeholder="https://..."
+                            >
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h3>Adresse</h3>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="supplier-country">
+                                Pays <span class="required">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="supplier-country"
+                                name="pays"
+                                placeholder="Exemple : Côte d'Ivoire"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-city">Ville</label>
+                            <input
+                                type="text"
+                                id="supplier-city"
+                                name="ville"
+                                placeholder="Exemple : Abidjan"
+                            >
+                        </div>
+
+                        <div class="form-group form-group-full">
+                            <label for="supplier-address">Adresse</label>
+                            <textarea
+                                id="supplier-address"
+                                name="adresse"
+                                rows="3"
+                                placeholder="Quartier, rue, repère..."
+                            ></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h3>Informations commerciales</h3>
+
+                    <div class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label for="supplier-product-category">Catégorie de Produits</label>
+                            <input
+                                type="text"
+                                id="supplier-product-category"
+                                name="categorieProduits"
+                                placeholder="Caméras, éclairage, audio..."
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-currency">Devise</label>
+                            <select id="supplier-currency" name="devise">
+                                <option value="">Sélectionner une devise</option>
+                                <option value="FCFA">FCFA</option>
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="CNY">CNY</option>
+                                <option value="GBP">GBP</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-payment-terms">Conditions de Paiement</label>
+                            <input
+                                type="text"
+                                id="supplier-payment-terms"
+                                name="conditionsPaiement"
+                                placeholder="Comptant, acompte..."
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-delivery-time">Délai Moyen de Livraison</label>
+                            <input
+                                type="number"
+                                id="supplier-delivery-time"
+                                name="delaiMoyenLivraison"
+                                min="0"
+                                step="1"
+                                placeholder="Nombre de jours"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supplier-warranty">Garantie Fournisseur</label>
+                            <input
+                                type="text"
+                                id="supplier-warranty"
+                                name="garantieFournisseur"
+                                placeholder="Exemple : 12 mois"
+                            >
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <h3>Statut et commentaire</h3>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="supplier-status">
+                                Statut <span class="required">*</span>
+                            </label>
+                            <select id="supplier-status" name="statut" required>
+                                <option value="Actif" selected>Actif</option>
+                                <option value="Inactif">Inactif</option>
+                                <option value="Suspendu">Suspendu</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group form-group-full">
+                            <label for="supplier-comment">Commentaire</label>
+                            <textarea
+                                id="supplier-comment"
+                                name="commentaire"
+                                rows="4"
+                                placeholder="Informations complémentaires"
+                            ></textarea>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancel-supplier-btn">
+                    Annuler
+                </button>
+
+                <button type="submit" class="btn-primary" id="save-supplier-btn">
+                    Enregistrer le fournisseur
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="supplier-view-modal" aria-hidden="true">
+    <div
+        class="modal-container supplier-view-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="supplier-view-modal-title"
+    >
+        <div class="modal-header supplier-view-header">
+            <div>
+                <span class="supplier-view-eyebrow">Fiche fournisseur</span>
+                <h2 id="supplier-view-modal-title">Détails du fournisseur</h2>
+                <p>Vue synthétique, financière et historique du fournisseur sélectionné.</p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-supplier-view-modal"
+                aria-label="Fermer les détails du fournisseur"
+            >
+                ✖
+            </button>
+        </div>
+
+        <div class="modal-body supplier-view-body">
+            <section class="supplier-view-hero" aria-label="Identité du fournisseur">
+                <div class="supplier-avatar" id="supplier-view-avatar">FR</div>
+
+                <div class="supplier-view-summary">
+                    <div class="supplier-view-title-row">
+                        <div>
+                            <span class="supplier-view-reference-label">Code fournisseur</span>
+                            <strong id="view-supplier-code" class="supplier-view-reference">—</strong>
+                        </div>
+
+                        <span id="supplier-view-status-badge" class="supplier-view-status-badge">
+                            <span id="view-supplier-status">—</span>
+                        </span>
+                    </div>
+
+                    <h3 id="view-supplier-name" class="supplier-view-supplier-name">—</h3>
+                    <p id="view-supplier-category" class="supplier-view-description">—</p>
+
+                    <div class="supplier-view-highlight-grid">
+                        <article class="supplier-view-highlight">
+                            <span>Contact principal</span>
+                            <strong id="view-supplier-contact">—</strong>
+                        </article>
+
+                        <article class="supplier-view-highlight">
+                            <span>Téléphone</span>
+                            <strong id="view-supplier-phone">—</strong>
+                        </article>
+
+                        <article class="supplier-view-highlight">
+                            <span>Délai moyen réel</span>
+                            <strong id="view-supplier-delivery-time">—</strong>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1. Analyse fournisseur -->
+            <section class="supplier-view-section supplier-analytics-section supplier-view-section-primary">
+                <div class="supplier-view-section-heading">
+                    <span class="supplier-view-section-icon" aria-hidden="true">📊</span>
+                    <div>
+                        <h3>Analyse fournisseur</h3>
+                        <p>Achats, paiements, dette et performance réelle.</p>
+                    </div>
+                </div>
+
+                <div class="supplier-analytics-grid">
+                    <article class="supplier-analytics-card">
+                        <span>Nombre d'approvisionnements</span>
+                        <strong id="view-supplier-supply-count">0</strong>
+                    </article>
+                    <article class="supplier-analytics-card">
+                        <span>Valeur totale des achats</span>
+                        <strong id="view-supplier-total-purchases">0 FCFA</strong>
+                    </article>
+                    <article class="supplier-analytics-card">
+                        <span>Total payé</span>
+                        <strong id="view-supplier-total-paid">0 FCFA</strong>
+                    </article>
+                    <article class="supplier-analytics-card supplier-analytics-card-debt">
+                        <span>Reste à payer</span>
+                        <strong id="view-supplier-balance">0 FCFA</strong>
+                    </article>
+                    <article class="supplier-analytics-card">
+                        <span>Dernier approvisionnement</span>
+                        <strong id="view-supplier-last-purchase">—</strong>
+                    </article>
+                    <article class="supplier-analytics-card">
+                        <span>Délai moyen réel</span>
+                        <strong id="view-supplier-real-delay">—</strong>
+                    </article>
+                </div>
+            </section>
+
+            <!-- 2. Historique des approvisionnements -->
+            <section class="supplier-view-section supplier-history-section">
+                <div class="supplier-view-section-heading">
+                    <span class="supplier-view-section-icon" aria-hidden="true">📦</span>
+                    <div>
+                        <h3>Historique des approvisionnements</h3>
+                        <p>Derniers achats et produits concernés.</p>
+                    </div>
+                </div>
+
+                <div class="supplier-products-summary" id="view-supplier-products-summary">
+                    Aucun produit approvisionné pour le moment.
+                </div>
+
+                <div class="supplier-history-table-wrapper" role="region" aria-label="Historique des approvisionnements" tabindex="0">
+                    <table class="supplier-history-table">
+                        <thead>
+                            <tr>
+                                <th>Référence</th>
+                                <th>Date</th>
+                                <th>Produits</th>
+                                <th>Total</th>
+                                <th>Payé</th>
+                                <th>Reste</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="view-supplier-history-body">
+                            <tr>
+                                <td colspan="7" class="supplier-history-empty">Aucun approvisionnement.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. Adresse -->
+            <section class="supplier-view-section supplier-address-section">
+                <div class="supplier-view-section-heading">
+                    <span class="supplier-view-section-icon" aria-hidden="true">📍</span>
+                    <div>
+                        <h3>Adresse</h3>
+                        <p>Localisation du fournisseur.</p>
+                    </div>
+                </div>
+
+                <div class="supplier-details-grid">
+                    <div class="supplier-detail-item"><span>Pays</span><strong id="view-supplier-country">—</strong></div>
+                    <div class="supplier-detail-item"><span>Ville</span><strong id="view-supplier-city">—</strong></div>
+                    <div class="supplier-detail-item supplier-detail-full"><span>Adresse</span><strong id="view-supplier-address">—</strong></div>
+                </div>
+            </section>
+
+            <!-- 4. Informations générales -->
+            <section class="supplier-view-section supplier-general-section">
+                <div class="supplier-view-section-heading">
+                    <span class="supplier-view-section-icon" aria-hidden="true">ℹ️</span>
+                    <div>
+                        <h3>Informations générales</h3>
+                        <p>Identification, contact et conditions commerciales.</p>
+                    </div>
+                </div>
+
+                <div class="supplier-view-subsection">
+                    <h4>Contact et identification</h4>
+                    <div class="supplier-details-grid">
+                        <div class="supplier-detail-item"><span>ID fournisseur</span><strong id="view-supplier-id">—</strong></div>
+                        <div class="supplier-detail-item"><span>Fonction du Contact</span><strong id="view-supplier-contact-function">—</strong></div>
+                        <div class="supplier-detail-item"><span>WhatsApp</span><strong id="view-supplier-whatsapp">—</strong></div>
+                        <div class="supplier-detail-item"><span>Email</span><strong id="view-supplier-email">—</strong></div>
+                        <div class="supplier-detail-item supplier-detail-full"><span>Site Web</span><strong id="view-supplier-website">—</strong></div>
+                    </div>
+                </div>
+
+                <div class="supplier-view-subsection">
+                    <h4>Conditions commerciales</h4>
+                    <div class="supplier-details-grid">
+                        <div class="supplier-detail-item"><span>Catégorie de Produits</span><strong id="view-supplier-product-category">—</strong></div>
+                        <div class="supplier-detail-item"><span>Devise</span><strong id="view-supplier-currency">—</strong></div>
+                        <div class="supplier-detail-item"><span>Conditions de Paiement</span><strong id="view-supplier-payment-terms">—</strong></div>
+                        <div class="supplier-detail-item"><span>Garantie Fournisseur</span><strong id="view-supplier-warranty">—</strong></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Suivi et historique -->
+            <section class="supplier-view-section supplier-tracking-section">
+                <div class="supplier-view-section-heading">
+                    <span class="supplier-view-section-icon" aria-hidden="true">🕒</span>
+                    <div>
+                        <h3>Suivi et historique</h3>
+                        <p>Dates d'enregistrement et informations complémentaires.</p>
+                    </div>
+                </div>
+
+                <div class="supplier-details-grid">
+                    <div class="supplier-detail-item"><span>Date d'Ajout</span><strong id="view-supplier-created-at">—</strong></div>
+                    <div class="supplier-detail-item"><span>Date de Modification</span><strong id="view-supplier-updated-at">—</strong></div>
+                    <div class="supplier-detail-item supplier-detail-full"><span>Commentaire</span><strong id="view-supplier-comment">—</strong></div>
+                </div>
+            </section>
+        </div>
+
+        <div class="modal-footer supplier-view-footer">
+            <button type="button" class="btn-secondary" id="close-supplier-view-modal-footer">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="delete-supplier-modal" hidden>
+    <div
+        class="delete-supplier-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-supplier-modal-title"
+        aria-describedby="delete-supplier-modal-description"
+    >
+        <div class="delete-supplier-icon" aria-hidden="true">🗑️</div>
+
+        <h2 id="delete-supplier-modal-title">Supprimer ce fournisseur ?</h2>
+
+        <p id="delete-supplier-modal-description">
+            Cette action supprimera définitivement le fournisseur de la base de données.
+        </p>
+
+        <div class="delete-supplier-summary">
+            <div class="delete-supplier-avatar" id="delete-supplier-avatar">FR</div>
+
+            <div class="delete-supplier-details">
+                <span id="delete-supplier-code">—</span>
+                <strong id="delete-supplier-name">—</strong>
+                <small id="delete-supplier-contact">—</small>
+                <small id="delete-supplier-country">—</small>
+            </div>
+        </div>
+
+        <div class="delete-supplier-message" id="delete-supplier-message" hidden></div>
+
+        <div class="delete-supplier-actions">
+            <button type="button" class="btn-secondary" id="cancel-delete-supplier-btn">
+                Annuler
+            </button>
+
+            <button type="button" class="btn-danger" id="confirm-delete-supplier-btn">
+                Supprimer le fournisseur
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="bulk-delete-suppliers-modal" hidden>
+    <div
+        class="bulk-delete-suppliers-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bulk-delete-suppliers-title"
+    >
+        <div class="bulk-delete-suppliers-icon" aria-hidden="true">🗑️</div>
+
+        <h2 id="bulk-delete-suppliers-title">
+            Supprimer les fournisseurs sélectionnés ?
+        </h2>
+
+        <p>
+            Cette action supprimera définitivement
+            <strong id="bulk-delete-suppliers-total">0</strong>
+            fournisseur(s) de la base de données.
+        </p>
+
+        <div
+            class="bulk-delete-suppliers-message"
+            id="bulk-delete-suppliers-message"
+            hidden
+        ></div>
+
+        <div class="bulk-delete-suppliers-actions">
+            <button type="button" class="btn-secondary" id="cancel-bulk-delete-suppliers-btn">
+                Annuler
+            </button>
+
+            <button type="button" class="btn-danger" id="confirm-bulk-delete-suppliers-btn">
+                Supprimer définitivement
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/modules/fournisseurs.js"></script>
+
+</body>
+</html>

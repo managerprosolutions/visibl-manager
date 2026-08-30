@@ -1,0 +1,5593 @@
+/* ===========================================================
+   VISIBL ERP
+   Module : Produits
+   Fichier : produits.js
+=========================================================== */
+
+const TVA = 18;
+
+/*
+   CONFIGURATION CLOUDINARY
+   Remplacez les deux valeurs ci-dessous par celles de votre compte.
+   Utilisez obligatoirement un Upload Preset non signé (Unsigned).
+*/
+const CLOUDINARY_CONFIG = {
+    cloudName: "yqfbfg84",
+    uploadPreset: "visibl_upload",
+    dossier: "visibl/produits"
+};
+
+const TAILLE_MAX_IMAGE = 20 * 1024 * 1024;
+const TYPES_IMAGE_AUTORISES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "image/heif"
+];
+
+const EXTENSIONS_IMAGE_AUTORISEES = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+    "heic",
+    "heif"
+];
+
+const TAILLE_CIBLE_COMPRESSION = 800 * 1024;
+const DIMENSION_MAX_IMAGE = 1280;
+const QUALITE_JPEG_MOBILE = 0.72;
+
+let produits = [];
+let imageProduitSelectionnee = null;
+let promesseUploadImageProduit = null;
+let urlImageProduitTeleversee = "";
+let versionImageProduit = 0;
+let idProduitEnModification = "";
+
+/* État des outils avancés du tableau. */
+let produitsFiltresCourants = [];
+let produitsSelectionnes = new Set();
+let pageProduitsCourante = 1;
+let produitsParPage = 10;
+let animationProduitSuivante = null;
+
+/* Fournisseurs disponibles dans le formulaire Produit. */
+let fournisseursProduits = [];
+let stockProduitsPourFiche = [];
+
+
+
+/* ===========================================================
+   AUTORISATIONS DU MODULE PRODUITS
+=========================================================== */
+
+function peutProduit(action) {
+    return (
+        typeof hasPermission === "function" &&
+        hasPermission("produits", action)
+    );
+}
+
+function appliquerAutorisationsProduits() {
+    const peutCreer = peutProduit("creer");
+    const peutModifier = peutProduit("modifier");
+    const peutSupprimer = peutProduit("supprimer");
+
+    const boutonNouveau =
+        document.getElementById("new-product-btn");
+
+    if (boutonNouveau) {
+        boutonNouveau.hidden = !peutCreer;
+    }
+
+    /*
+     * La sélection multiple sert actuellement à la suppression
+     * en masse : elle n'est donc utile que si Supprimer est autorisé.
+     */
+    const boutonSelection =
+        document.getElementById("selection-products-btn");
+
+    if (boutonSelection) {
+        boutonSelection.hidden = !peutSupprimer;
+    }
+
+    const enteteSelection =
+        document.querySelector(
+            ".products-advanced-table thead .selection-column"
+        );
+
+    if (enteteSelection) {
+        enteteSelection.hidden = !peutSupprimer;
+    }
+
+    document
+        .querySelectorAll(".product-row-checkbox")
+        .forEach(caseProduit => {
+            const cellule =
+                caseProduit.closest(".selection-column");
+
+            if (cellule) {
+                cellule.hidden = !peutSupprimer;
+            } else {
+                caseProduit.hidden = !peutSupprimer;
+            }
+        });
+
+    document
+        .querySelectorAll(".edit-product-btn")
+        .forEach(bouton => {
+            bouton.hidden = !peutModifier;
+        });
+
+    document
+        .querySelectorAll(".delete-product-btn")
+        .forEach(bouton => {
+            bouton.hidden = !peutSupprimer;
+        });
+
+    const barreSuppression =
+        document.getElementById("products-bulk-bar");
+
+    if (barreSuppression && !peutSupprimer) {
+        barreSuppression.hidden = true;
+        produitsSelectionnes.clear();
+    }
+}
+
+function refuserActionProduit(action) {
+    if (peutProduit(action)) {
+        return false;
+    }
+
+    console.warn(
+        `Action Produits refusée : ${action}`
+    );
+
+    if (typeof showToast === "function") {
+        showToast(
+            "Vous n'avez pas l'autorisation d'effectuer cette action.",
+            "error"
+        );
+    }
+
+    return true;
+}
+
+window.addEventListener(
+    "visibl:permissions-ready",
+    appliquerAutorisationsProduits
+);
+
+/* ===========================================================
+   INITIALISATION
+=========================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    if (typeof requireAuth === "function" && !requireAuth()) {
+        return;
+    }
+
+    console.log("Module Produits chargé.");
+
+    appliquerAutorisationsProduits();
+
+    initProduits();
+    initialiserModaleProduit();
+    initialiserCalculsProduit();
+    initialiserFormulaireProduit();
+    initialiserUploadImageProduit();
+    initialiserConsultationProduit();
+    initialiserModificationProduit();
+    initialiserSuppressionProduit();
+    initialiserFiltresProduits();
+    initialiserHeaderProduits();
+    initialiserOutilsAvancesProduits();
+
+    chargerFournisseursPourProduits();
+
+    const refreshButton =
+        document.getElementById("refresh-products-btn");
+
+    if (refreshButton) {
+
+        refreshButton.addEventListener("click", () => {
+
+            chargerProduitsDepuisAPI();
+            chargerFournisseursPourProduits();
+
+        });
+
+    }
+
+});
+
+
+/* ===========================================================
+   INITIALISATION DU MODULE
+=========================================================== */
+
+function initProduits() {
+
+    mettreAJourKPIs();
+
+    chargerProduitsDepuisAPI();
+
+}
+
+
+/* ===========================================================
+   MODALE PRODUIT
+=========================================================== */
+
+function initialiserModaleProduit() {
+
+    const boutonNouveauProduit =
+        document.getElementById("new-product-btn");
+
+    const boutonFermer =
+        document.getElementById("close-product-modal");
+
+    const boutonAnnuler =
+        document.getElementById("cancel-product-btn");
+
+    const modale =
+        document.getElementById("product-modal");
+
+    if (!modale) {
+
+        console.error(
+            "La modale #product-modal est introuvable."
+        );
+
+        return;
+
+    }
+
+    if (boutonNouveauProduit) {
+
+        boutonNouveauProduit.addEventListener(
+            "click",
+            ouvrirModaleProduit
+        );
+
+    }
+
+    if (boutonFermer) {
+
+        boutonFermer.addEventListener(
+            "click",
+            fermerModaleProduit
+        );
+
+    }
+
+    if (boutonAnnuler) {
+
+        boutonAnnuler.addEventListener(
+            "click",
+            fermerModaleProduit
+        );
+
+    }
+
+    modale.addEventListener("click", event => {
+
+        if (event.target === modale) {
+
+            fermerModaleProduit();
+
+        }
+
+    });
+
+    document.addEventListener("keydown", event => {
+
+        if (
+            event.key === "Escape" &&
+            modale.classList.contains("active")
+        ) {
+
+            fermerModaleProduit();
+
+        }
+
+    });
+
+}
+
+
+function ouvrirModaleProduit() {
+
+    if (refuserActionProduit("creer")) {
+        return;
+    }
+
+    const modale =
+        document.getElementById("product-modal");
+
+    const formulaire =
+        document.getElementById("product-form");
+
+    if (!modale) {
+
+        return;
+
+    }
+
+    idProduitEnModification = "";
+    configurerModaleProduit("creation");
+
+    if (formulaire) {
+
+        formulaire.reset();
+
+    }
+
+    remettreValeursParDefautProduit();
+    genererReferenceProduit();
+    reinitialiserImageProduit();
+
+    /* Récupère les fournisseurs les plus récents sans bloquer l'ouverture. */
+    chargerFournisseursPourProduits();
+    masquerMessageFormulaireProduit();
+
+    modale.classList.add("active");
+    modale.setAttribute("aria-hidden", "false");
+
+    document.body.classList.add("modal-open");
+
+    const designationProduit =
+        document.getElementById("product-name");
+
+    if (designationProduit) {
+
+        setTimeout(() => {
+
+            designationProduit.focus();
+
+        }, 100);
+
+    }
+
+}
+
+
+function configurerModaleProduit(mode = "creation") {
+
+    const titre = document.getElementById("product-modal-title");
+    const description = document.querySelector(
+        "#product-modal .modal-header p"
+    );
+    const boutonEnregistrer =
+        document.getElementById("save-product-btn");
+
+    const modification = mode === "modification";
+
+    if (titre) {
+        titre.textContent = modification
+            ? "Modifier le produit"
+            : "Nouveau produit";
+    }
+
+    if (description) {
+        description.textContent = modification
+            ? "Modifiez les informations du produit sélectionné."
+            : "Enregistrez un nouveau produit dans le catalogue.";
+    }
+
+    if (boutonEnregistrer) {
+        boutonEnregistrer.textContent = modification
+            ? "Enregistrer la modification"
+            : "Enregistrer le produit";
+    }
+}
+
+
+function fermerModaleProduit() {
+
+    const modale =
+        document.getElementById("product-modal");
+
+    if (!modale) {
+
+        return;
+
+    }
+
+    modale.classList.remove("active");
+    modale.setAttribute("aria-hidden", "true");
+
+    document.body.classList.remove("modal-open");
+
+    masquerMessageFormulaireProduit();
+
+}
+
+
+
+/* ===========================================================
+   RÉFÉRENCE AUTOMATIQUE
+=========================================================== */
+
+function genererReferenceProduit() {
+
+    const champReference =
+        document.getElementById("product-reference");
+
+    if (!champReference) {
+
+        return "";
+
+    }
+
+    let plusGrandNumero = 0;
+
+    produits.forEach(produit => {
+
+        const reference = String(
+            produit["Référence Produit"] ||
+            produit.referenceProduit ||
+            ""
+        ).trim();
+
+        const correspondance =
+            reference.match(/^PRO(\d+)$/i);
+
+        if (correspondance) {
+
+            plusGrandNumero = Math.max(
+                plusGrandNumero,
+                Number(correspondance[1]) || 0
+            );
+
+        }
+
+    });
+
+    const nouvelleReference =
+        "PRO" +
+        String(plusGrandNumero + 1).padStart(6, "0");
+
+    champReference.value = nouvelleReference;
+
+    return nouvelleReference;
+
+}
+
+
+/* ===========================================================
+   IMAGE PRODUIT
+=========================================================== */
+
+function initialiserUploadImageProduit() {
+
+    const zone =
+        document.getElementById("product-image-drop-zone");
+
+    const champFichier =
+        document.getElementById("product-image-file");
+
+    const boutonRetirer =
+        document.getElementById("remove-product-image-btn");
+
+    if (!zone || !champFichier) {
+
+        return;
+
+    }
+
+    zone.addEventListener("click", event => {
+
+        if (
+            event.target.closest("#remove-product-image-btn")
+        ) {
+
+            return;
+
+        }
+
+        champFichier.click();
+
+    });
+
+    zone.addEventListener("keydown", event => {
+
+        if (
+            event.key === "Enter" ||
+            event.key === " "
+        ) {
+
+            event.preventDefault();
+            champFichier.click();
+
+        }
+
+    });
+
+    champFichier.addEventListener("change", () => {
+
+        const fichier = champFichier.files?.[0];
+
+        if (fichier) {
+
+            traiterImageProduit(fichier);
+
+        }
+
+    });
+
+    ["dragenter", "dragover"].forEach(type => {
+
+        zone.addEventListener(type, event => {
+
+            event.preventDefault();
+            zone.classList.add("dragover");
+
+        });
+
+    });
+
+    ["dragleave", "drop"].forEach(type => {
+
+        zone.addEventListener(type, event => {
+
+            event.preventDefault();
+            zone.classList.remove("dragover");
+
+        });
+
+    });
+
+    zone.addEventListener("drop", event => {
+
+        const fichier =
+            event.dataTransfer?.files?.[0];
+
+        if (fichier) {
+
+            traiterImageProduit(fichier);
+
+        }
+
+    });
+
+    if (boutonRetirer) {
+
+        boutonRetirer.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
+                reinitialiserImageProduit();
+
+            }
+        );
+
+    }
+
+}
+
+
+function traiterImageProduit(fichier) {
+
+    if (!fichier || !estImageProduitAutorisee(fichier)) {
+
+        afficherMessageFormulaireProduit(
+            "Format d’image non autorisé. Utilisez JPG, PNG, WEBP, HEIC ou HEIF.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (fichier.size > TAILLE_MAX_IMAGE) {
+
+        afficherMessageFormulaireProduit(
+            "L’image dépasse la taille maximale de 20 Mo.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    imageProduitSelectionnee = fichier;
+
+    /*
+       Sur certains navigateurs mobiles, DataTransfer n'existe pas.
+       Le fichier est déjà conservé dans imageProduitSelectionnee :
+       il n'est donc pas nécessaire de forcer à nouveau champFichier.files.
+    */
+    const champFichier =
+        document.getElementById("product-image-file");
+
+    if (
+        champFichier &&
+        (!champFichier.files || champFichier.files[0] !== fichier) &&
+        typeof DataTransfer !== "undefined"
+    ) {
+
+        try {
+
+            const transfert = new DataTransfer();
+            transfert.items.add(fichier);
+            champFichier.files = transfert.files;
+
+        } catch (error) {
+
+            console.warn(
+                "Impossible de réaffecter le fichier sur ce navigateur mobile.",
+                error
+            );
+
+        }
+
+    }
+
+    afficherApercuImageProduit(fichier);
+
+    /*
+       L'image commence à être optimisée et envoyée dès sa sélection.
+       Pendant que l'utilisateur termine le formulaire, le téléversement
+       avance déjà en arrière-plan. Au clic sur Enregistrer, le code
+       réutilise le résultat au lieu de recommencer l'envoi.
+    */
+    lancerUploadImageProduitEnArrierePlan(fichier);
+
+}
+
+
+async function lancerUploadImageProduitEnArrierePlan(fichier) {
+
+    const versionCourante = ++versionImageProduit;
+
+    urlImageProduitTeleversee = "";
+
+    const champURL =
+        document.getElementById("product-image-url");
+
+    if (champURL) {
+        champURL.value = "";
+    }
+
+    afficherMessageFormulaireProduit(
+        "Optimisation et envoi de l’image en arrière-plan...",
+        "info"
+    );
+
+    promesseUploadImageProduit = (async () => {
+
+        try {
+
+            const url =
+                await envoyerImageVersCloudinary(fichier);
+
+            if (versionCourante !== versionImageProduit) {
+                /*
+                   La modale a pu être fermée ou réutilisée entre-temps.
+                   L'URL reste néanmoins exploitable par la synchronisation
+                   détachée du produit déjà créé.
+                */
+                return { success: true, url, obsolete: true };
+            }
+
+            urlImageProduitTeleversee = url;
+
+            if (champURL) {
+                champURL.value = url;
+            }
+
+            afficherMessageFormulaireProduit(
+                "Image prête. Vous pouvez enregistrer le produit.",
+                "success"
+            );
+
+            return { success: true, url };
+
+        } catch (error) {
+
+            if (versionCourante !== versionImageProduit) {
+                return { success: false, obsolete: true };
+            }
+
+            console.error(
+                "Erreur d’envoi anticipé de l’image :",
+                error
+            );
+
+            afficherMessageFormulaireProduit(
+                error.message ||
+                "Impossible d’envoyer l’image. Réessayez avec une autre photo.",
+                "error"
+            );
+
+            return { success: false, error };
+
+        }
+
+    })();
+
+    return promesseUploadImageProduit;
+
+}
+
+
+function estImageProduitAutorisee(fichier) {
+
+    const type = String(fichier?.type || "")
+        .trim()
+        .toLowerCase();
+
+    if (TYPES_IMAGE_AUTORISES.includes(type)) {
+
+        return true;
+
+    }
+
+    const nom = String(fichier?.name || "");
+    const extension = nom.includes(".")
+        ? nom.split(".").pop().toLowerCase()
+        : "";
+
+    return EXTENSIONS_IMAGE_AUTORISEES.includes(extension);
+
+}
+
+
+function afficherApercuImageProduit(fichier) {
+
+    const placeholder =
+        document.getElementById("product-image-placeholder");
+
+    const wrapper =
+        document.getElementById("product-image-preview-wrapper");
+
+    const image =
+        document.getElementById("product-image-preview");
+
+    const nom =
+        document.getElementById("product-image-name");
+
+    const taille =
+        document.getElementById("product-image-size");
+
+    if (!wrapper || !image) {
+
+        return;
+
+    }
+
+    const lecteur = new FileReader();
+
+    lecteur.onload = event => {
+
+        image.src = event.target.result;
+
+    };
+
+    lecteur.readAsDataURL(fichier);
+
+    if (placeholder) {
+
+        placeholder.hidden = true;
+
+    }
+
+    wrapper.hidden = false;
+
+    if (nom) {
+
+        nom.textContent = fichier.name;
+
+    }
+
+    if (taille) {
+
+        taille.textContent =
+            formaterTailleFichier(fichier.size);
+
+    }
+
+}
+
+
+function reinitialiserImageProduit() {
+
+    imageProduitSelectionnee = null;
+    versionImageProduit++;
+    promesseUploadImageProduit = null;
+    urlImageProduitTeleversee = "";
+
+    const champFichier =
+        document.getElementById("product-image-file");
+
+    const champURL =
+        document.getElementById("product-image-url");
+
+    const placeholder =
+        document.getElementById("product-image-placeholder");
+
+    const wrapper =
+        document.getElementById("product-image-preview-wrapper");
+
+    const image =
+        document.getElementById("product-image-preview");
+
+    if (champFichier) {
+
+        champFichier.value = "";
+
+    }
+
+    if (champURL) {
+
+        champURL.value = "";
+
+    }
+
+    if (image) {
+
+        image.removeAttribute("src");
+
+    }
+
+    if (placeholder) {
+
+        placeholder.hidden = false;
+
+    }
+
+    if (wrapper) {
+
+        wrapper.hidden = true;
+
+    }
+
+}
+
+
+function formaterTailleFichier(octets) {
+
+    if (octets < 1024) {
+
+        return octets + " octets";
+
+    }
+
+    if (octets < 1024 * 1024) {
+
+        return (octets / 1024).toFixed(1) + " Ko";
+
+    }
+
+    return (octets / (1024 * 1024)).toFixed(1) + " Mo";
+
+}
+
+
+function configurationCloudinaryValide() {
+
+    return (
+        CLOUDINARY_CONFIG.cloudName &&
+        CLOUDINARY_CONFIG.uploadPreset &&
+        !CLOUDINARY_CONFIG.cloudName.startsWith("VOTRE_") &&
+        !CLOUDINARY_CONFIG.uploadPreset.startsWith("VOTRE_")
+    );
+
+}
+
+
+async function envoyerImageVersCloudinary(fichier) {
+
+    if (!fichier) {
+
+        return "";
+
+    }
+
+    if (!configurationCloudinaryValide()) {
+
+        throw new Error(
+            "Cloudinary n’est pas encore configuré. Renseignez cloudName et uploadPreset dans produits.js."
+        );
+
+    }
+
+    const fichierAEnvoyer =
+        await preparerImageProduitPourUpload(fichier);
+
+    const donnees = new FormData();
+
+    donnees.append("file", fichierAEnvoyer);
+    donnees.append(
+        "upload_preset",
+        CLOUDINARY_CONFIG.uploadPreset
+    );
+
+    if (CLOUDINARY_CONFIG.dossier) {
+
+        donnees.append(
+            "folder",
+            CLOUDINARY_CONFIG.dossier
+        );
+
+    }
+
+    const url =
+        `https://api.cloudinary.com/v1_1/${encodeURIComponent(
+            CLOUDINARY_CONFIG.cloudName
+        )}/image/upload`;
+
+    const controleur =
+        typeof AbortController !== "undefined"
+            ? new AbortController()
+            : null;
+
+    const delaiMaximum = setTimeout(() => {
+
+        if (controleur) {
+            controleur.abort();
+        }
+
+    }, 90000);
+
+    try {
+
+        const reponse = await fetch(url, {
+            method: "POST",
+            body: donnees,
+            signal: controleur?.signal
+        });
+
+        const resultat = await reponse.json();
+
+        if (!reponse.ok || !resultat.secure_url) {
+
+            throw new Error(
+                resultat?.error?.message ||
+                "Échec de l’envoi de l’image vers Cloudinary."
+            );
+
+        }
+
+        return resultat.secure_url;
+
+    } catch (error) {
+
+        if (error?.name === "AbortError") {
+
+            throw new Error(
+                "L’envoi de l’image a pris trop de temps. Vérifiez votre connexion puis réessayez."
+            );
+
+        }
+
+        throw error;
+
+    } finally {
+
+        clearTimeout(delaiMaximum);
+
+    }
+
+}
+
+
+async function preparerImageProduitPourUpload(fichier) {
+
+    const type = String(fichier?.type || "").toLowerCase();
+    const nom = String(fichier?.name || "").toLowerCase();
+
+    const estHEIC =
+        type === "image/heic" ||
+        type === "image/heif" ||
+        nom.endsWith(".heic") ||
+        nom.endsWith(".heif");
+
+    /*
+       Les navigateurs ne savent pas tous décoder HEIC/HEIF dans un canvas.
+       Cloudinary peut recevoir le fichier original et effectuer le traitement.
+    */
+    if (estHEIC) {
+
+        return fichier;
+
+    }
+
+    const typeCompressible = [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    ].includes(type);
+
+    if (!typeCompressible) {
+
+        return fichier;
+
+    }
+
+    try {
+
+        const dimensions =
+            await lireDimensionsImageProduit(fichier);
+
+        const doitCompresser =
+            fichier.size > TAILLE_CIBLE_COMPRESSION ||
+            dimensions.largeur > DIMENSION_MAX_IMAGE ||
+            dimensions.hauteur > DIMENSION_MAX_IMAGE;
+
+        if (!doitCompresser) {
+
+            return fichier;
+
+        }
+
+        return await compresserImageProduitEnJPEG(
+            fichier,
+            dimensions
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Compression mobile impossible, envoi du fichier original.",
+            error
+        );
+
+        return fichier;
+
+    }
+
+}
+
+
+function lireDimensionsImageProduit(fichier) {
+
+    return new Promise((resolve, reject) => {
+
+        const urlLocale = URL.createObjectURL(fichier);
+        const image = new Image();
+
+        image.onload = () => {
+
+            const largeur =
+                image.naturalWidth || image.width;
+
+            const hauteur =
+                image.naturalHeight || image.height;
+
+            URL.revokeObjectURL(urlLocale);
+
+            resolve({
+                largeur,
+                hauteur,
+                image
+            });
+
+        };
+
+        image.onerror = () => {
+
+            URL.revokeObjectURL(urlLocale);
+            reject(new Error("Impossible de lire l’image sélectionnée."));
+
+        };
+
+        image.src = urlLocale;
+
+    });
+
+}
+
+
+function compresserImageProduitEnJPEG(fichier, dimensions) {
+
+    return new Promise((resolve, reject) => {
+
+        const urlLocale = URL.createObjectURL(fichier);
+        const image = new Image();
+
+        image.onload = () => {
+
+            try {
+
+                const ratio = Math.min(
+                    1,
+                    DIMENSION_MAX_IMAGE / image.naturalWidth,
+                    DIMENSION_MAX_IMAGE / image.naturalHeight
+                );
+
+                const largeur = Math.max(
+                    1,
+                    Math.round(image.naturalWidth * ratio)
+                );
+
+                const hauteur = Math.max(
+                    1,
+                    Math.round(image.naturalHeight * ratio)
+                );
+
+                const canvas = document.createElement("canvas");
+                canvas.width = largeur;
+                canvas.height = hauteur;
+
+                const contexte = canvas.getContext("2d");
+
+                if (!contexte) {
+                    throw new Error("Canvas indisponible sur ce navigateur.");
+                }
+
+                contexte.drawImage(
+                    image,
+                    0,
+                    0,
+                    largeur,
+                    hauteur
+                );
+
+                canvas.toBlob(blob => {
+
+                    URL.revokeObjectURL(urlLocale);
+
+                    if (!blob) {
+
+                        reject(
+                            new Error("La compression de l’image a échoué.")
+                        );
+                        return;
+
+                    }
+
+                    const nomSansExtension =
+                        String(fichier.name || "produit")
+                            .replace(/\.[^.]+$/, "");
+
+                    resolve(
+                        new File(
+                            [blob],
+                            nomSansExtension + ".jpg",
+                            {
+                                type: "image/jpeg",
+                                lastModified: Date.now()
+                            }
+                        )
+                    );
+
+                }, "image/jpeg", QUALITE_JPEG_MOBILE);
+
+            } catch (error) {
+
+                URL.revokeObjectURL(urlLocale);
+                reject(error);
+
+            }
+
+        };
+
+        image.onerror = () => {
+
+            URL.revokeObjectURL(urlLocale);
+            reject(new Error("Impossible de compresser cette image."));
+
+        };
+
+        image.src = urlLocale;
+
+    });
+
+}
+
+
+/* ===========================================================
+   CALCULS DU PRODUIT
+=========================================================== */
+
+function initialiserCalculsProduit() {
+
+    const champsCalcul = [
+        "product-purchase-price",
+        "product-transport-cost",
+        "product-customs-cost",
+        "product-other-costs",
+        "product-sale-price"
+    ];
+
+    champsCalcul.forEach(id => {
+
+        const champ =
+            document.getElementById(id);
+
+        if (champ) {
+
+            champ.addEventListener(
+                "input",
+                calculerValeursProduit
+            );
+
+        }
+
+    });
+
+    calculerValeursProduit();
+
+}
+
+
+function calculerValeursProduit() {
+
+    const prixAchat =
+        obtenirValeurNombre("product-purchase-price");
+
+    const fraisTransport =
+        obtenirValeurNombre("product-transport-cost");
+
+    const fraisDouane =
+        obtenirValeurNombre("product-customs-cost");
+
+    const autresFrais =
+        obtenirValeurNombre("product-other-costs");
+
+    const prixVente =
+        obtenirValeurNombre("product-sale-price");
+
+    const prixRevient =
+        prixAchat +
+        fraisTransport +
+        fraisDouane +
+        autresFrais;
+
+    const margeFCFA =
+        prixVente - prixRevient;
+
+    const tauxMarge =
+        prixRevient > 0
+            ? margeFCFA / prixRevient * 100
+            : 0;
+
+    definirValeurChamp(
+        "product-cost-price",
+        arrondirNombre(prixRevient)
+    );
+
+    definirValeurChamp(
+        "product-margin-amount",
+        arrondirNombre(margeFCFA)
+    );
+
+    definirValeurChamp(
+        "product-margin-rate",
+        arrondirNombre(tauxMarge, 2)
+    );
+
+}
+
+
+function obtenirValeurNombre(id) {
+
+    const champ =
+        document.getElementById(id);
+
+    if (!champ) {
+
+        return 0;
+
+    }
+
+    return convertirNombre(champ.value);
+
+}
+
+
+function definirValeurChamp(id, valeur) {
+
+    const champ =
+        document.getElementById(id);
+
+    if (champ) {
+
+        champ.value = valeur;
+
+    }
+
+}
+
+
+function arrondirNombre(nombre, decimales = 0) {
+
+    const facteur =
+        Math.pow(10, decimales);
+
+    return Math.round(nombre * facteur) / facteur;
+
+}
+
+
+/* ===========================================================
+   FORMULAIRE PRODUIT
+=========================================================== */
+
+function initialiserFormulaireProduit() {
+
+    const formulaire =
+        document.getElementById("product-form");
+
+    if (!formulaire) {
+
+        console.error(
+            "Le formulaire #product-form est introuvable."
+        );
+
+        return;
+
+    }
+
+    formulaire.addEventListener(
+        "submit",
+        enregistrerProduit
+    );
+
+}
+
+
+async function enregistrerProduit(event) {
+
+    event.preventDefault();
+
+    const actionRequise =
+        idProduitEnModification
+            ? "modifier"
+            : "creer";
+
+    if (refuserActionProduit(actionRequise)) {
+        return;
+    }
+
+    const formulaire =
+        document.getElementById("product-form");
+
+    const boutonEnregistrer =
+        document.getElementById("save-product-btn");
+
+    if (!formulaire) {
+        return;
+    }
+
+    const referenceChamp =
+        document.getElementById("product-reference");
+
+    const designationChamp =
+        document.getElementById("product-name");
+
+    const referenceProduit =
+        referenceChamp
+            ? referenceChamp.value.trim()
+            : "";
+
+    const designation =
+        designationChamp
+            ? designationChamp.value.trim()
+            : "";
+
+    if (!referenceProduit || !designation) {
+
+        afficherMessageFormulaireProduit(
+            "La référence automatique et la désignation sont obligatoires.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!formulaire.checkValidity()) {
+        formulaire.reportValidity();
+        return;
+    }
+
+    calculerValeursProduit();
+
+    /*
+       On capture l'état de l'image avant de fermer/réinitialiser la modale.
+       - Si l'URL Cloudinary est déjà prête, elle est enregistrée directement.
+       - Sinon, le produit est créé sans image et la promesse continue en fond.
+    */
+    const imageURLDejaPrete =
+        urlImageProduitTeleversee ||
+        obtenirValeurTexte("product-image-url");
+
+    const imageAEnvoyer = imageProduitSelectionnee;
+
+    if (imageAEnvoyer && !imageURLDejaPrete && !promesseUploadImageProduit) {
+        lancerUploadImageProduitEnArrierePlan(imageAEnvoyer);
+    }
+
+    const promesseImageAPoursuivre =
+        imageAEnvoyer && !imageURLDejaPrete
+            ? promesseUploadImageProduit
+            : null;
+
+    const produit = {
+        idProduit: idProduitEnModification || "",
+        "ID Produit": idProduitEnModification || "",
+        referenceProduit: referenceProduit,
+        reference: referenceProduit,
+        designation,
+
+        description:
+            obtenirValeurTexte("product-description"),
+
+        prixAchat:
+            obtenirValeurNombre("product-purchase-price"),
+
+        tauxTVA: 0,
+
+        montantTVA: 0,
+
+        fraisTransport:
+            obtenirValeurNombre("product-transport-cost"),
+
+        fraisDouane:
+            obtenirValeurNombre("product-customs-cost"),
+
+        autresFrais:
+            obtenirValeurNombre("product-other-costs"),
+
+        prixRevient:
+            obtenirValeurNombre("product-cost-price"),
+
+        prixVente:
+            obtenirValeurNombre("product-sale-price"),
+
+        prixMinimumVente:
+            obtenirValeurNombre("product-minimum-price"),
+
+        margeFCFA:
+            obtenirValeurNombre("product-margin-amount"),
+
+        tauxMarge:
+            obtenirValeurNombre("product-margin-rate"),
+
+        stockInitial:
+            obtenirValeurNombre("product-initial-stock"),
+
+        seuilAlerte:
+            obtenirValeurNombre("product-alert-threshold"),
+
+        idFournisseurPrincipal:
+            obtenirValeurTexte("product-main-supplier"),
+
+        garantieMois:
+            obtenirValeurNombre("product-warranty"),
+
+        /* Ne bloque jamais la création pour attendre l'image. */
+        imageURL: imageURLDejaPrete || "",
+
+        statut:
+            obtenirValeurTexte("product-status") || "Actif",
+
+        commentaire:
+            obtenirValeurTexte("product-comment")
+    };
+
+    try {
+
+        if (boutonEnregistrer) {
+            boutonEnregistrer.disabled = true;
+            boutonEnregistrer.textContent = "Enregistrement...";
+        }
+
+        const estModification = Boolean(idProduitEnModification);
+
+        afficherMessageFormulaireProduit(
+            estModification
+                ? "Enregistrement des modifications..."
+                : "Enregistrement du produit...",
+            "info"
+        );
+
+        const resultat =
+            await apiPost(
+                estModification
+                    ? "updateProduit"
+                    : "createProduit",
+                produit
+            );
+
+        if (!resultat || !resultat.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible d'enregistrer le produit."
+            );
+        }
+
+        const produitCree = resultat.data || {};
+
+        if (promesseImageAPoursuivre) {
+            produitCree._imageSyncPending = true;
+        }
+
+        /*
+           Affichage immédiat : aucune nouvelle lecture complète de Sheets
+           n'est nécessaire avant de fermer la fenêtre.
+        */
+        produits = estModification
+            ? produits.map(produitExistant =>
+                String(
+                    produitExistant["ID Produit"] ||
+                    produitExistant.idProduit ||
+                    ""
+                ) === String(
+                    produitCree["ID Produit"] ||
+                    produitCree.idProduit ||
+                    idProduitEnModification
+                )
+                    ? produitCree
+                    : produitExistant
+            )
+            : [
+                produitCree,
+                ...produits.filter(produitExistant =>
+                    String(produitExistant["ID Produit"] || "") !==
+                    String(produitCree["ID Produit"] || "")
+                )
+            ];
+
+        animationProduitSuivante = {
+            id: String(
+                produitCree["ID Produit"] ||
+                produitCree.idProduit ||
+                idProduitEnModification ||
+                ""
+            ),
+            type: estModification ? "updated" : "added"
+        };
+
+        mettreAJourKPIs();
+        appliquerFiltresProduits();
+
+        fermerModaleProduit();
+
+        idProduitEnModification = "";
+        configurerModaleProduit("creation");
+        formulaire.reset();
+        remettreValeursParDefautProduit();
+        reinitialiserImageProduit();
+        genererReferenceProduit();
+
+        /*
+           La synchronisation Cloudinary → Google Sheets continue après
+           la fermeture. On ne met volontairement pas "await" ici.
+        */
+        if (promesseImageAPoursuivre) {
+            synchroniserImageProduitEnArrierePlan(
+                produitCree,
+                promesseImageAPoursuivre
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erreur d'enregistrement du produit :",
+            error
+        );
+
+        afficherMessageFormulaireProduit(
+            error.message ||
+            "Une erreur est survenue.",
+            "error"
+        );
+
+    } finally {
+
+        if (boutonEnregistrer) {
+            boutonEnregistrer.disabled = false;
+            boutonEnregistrer.textContent =
+                idProduitEnModification
+                    ? "Enregistrer la modification"
+                    : "Enregistrer le produit";
+        }
+    }
+}
+
+
+async function synchroniserImageProduitEnArrierePlan(
+    produitCree,
+    promesseUpload
+) {
+
+    /*
+     * L'image peut être rattachée après une création autorisée.
+     * On refuse uniquement si le compte n'a ni Créer ni Modifier.
+     */
+    if (
+        !peutProduit("creer") &&
+        !peutProduit("modifier")
+    ) {
+        return;
+    }
+
+    const idProduit = String(
+        produitCree?.["ID Produit"] ||
+        produitCree?.idProduit ||
+        ""
+    ).trim();
+
+    if (!idProduit || !promesseUpload) {
+        return;
+    }
+
+    try {
+
+        const resultatUpload = await promesseUpload;
+
+        if (!resultatUpload?.success || !resultatUpload.url) {
+            throw resultatUpload?.error || new Error(
+                "L'image n'a pas pu être envoyée vers Cloudinary."
+            );
+        }
+
+        const resultatMiseAJour = await apiPost(
+            "updateProduitImage",
+            {
+                idProduit,
+                imageURL: resultatUpload.url
+            }
+        );
+
+        if (!resultatMiseAJour || !resultatMiseAJour.success) {
+            throw new Error(
+                resultatMiseAJour?.message ||
+                "L'image n'a pas pu être rattachée au produit."
+            );
+        }
+
+        const produitMisAJour =
+            resultatMiseAJour.data || {};
+
+        produits = produits.map(produit => {
+
+            if (
+                String(produit["ID Produit"] || "") !== idProduit
+            ) {
+                return produit;
+            }
+
+            return {
+                ...produit,
+                ...produitMisAJour,
+                "Image URL":
+                    lireValeurProduit(produitMisAJour, ["Image (Url)", "Image URL", "imageURL"]) ||
+                    resultatUpload.url,
+                _imageSyncPending: false,
+                _imageSyncError: false
+            };
+        });
+
+        appliquerFiltresProduits();
+
+        console.log(
+            "Image du produit synchronisée : " + idProduit
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Erreur de synchronisation de l'image du produit :",
+            error
+        );
+
+        produits = produits.map(produit => {
+
+            if (
+                String(produit["ID Produit"] || "") !== idProduit
+            ) {
+                return produit;
+            }
+
+            return {
+                ...produit,
+                _imageSyncPending: false,
+                _imageSyncError: true
+            };
+        });
+
+        appliquerFiltresProduits();
+    }
+}
+
+
+function obtenirValeurTexte(id) {
+
+    const champ =
+        document.getElementById(id);
+
+    return champ
+        ? String(champ.value || "").trim()
+        : "";
+
+}
+
+
+function afficherMessageFormulaireProduit(
+    message,
+    type = "info"
+) {
+
+    const zoneMessage =
+        document.getElementById(
+            "product-form-message"
+        );
+
+    if (!zoneMessage) {
+
+        return;
+
+    }
+
+    zoneMessage.textContent = message;
+    zoneMessage.className =
+        "form-message " + type;
+    zoneMessage.style.display = "block";
+
+}
+
+
+function masquerMessageFormulaireProduit() {
+
+    const zoneMessage =
+        document.getElementById(
+            "product-form-message"
+        );
+
+    if (!zoneMessage) {
+
+        return;
+
+    }
+
+    zoneMessage.textContent = "";
+    zoneMessage.className = "form-message";
+    zoneMessage.style.display = "none";
+
+}
+
+
+function remettreValeursParDefautProduit() {
+
+    definirValeurChamp("product-purchase-price", "");
+    definirValeurChamp("product-vat-rate", 18);
+    definirValeurChamp("product-vat-amount", 0);
+    definirValeurChamp("product-transport-cost", "");
+    definirValeurChamp("product-customs-cost", "");
+    definirValeurChamp("product-other-costs", "");
+    definirValeurChamp("product-cost-price", 0);
+    definirValeurChamp("product-sale-price", "");
+    definirValeurChamp("product-minimum-price", "");
+    definirValeurChamp("product-margin-amount", 0);
+    definirValeurChamp("product-margin-rate", 0);
+    definirValeurChamp("product-initial-stock", "");
+    definirValeurChamp("product-alert-threshold", "");
+    definirValeurChamp("product-warranty", "");
+    definirValeurChamp("product-main-supplier", "");
+
+    const statut =
+        document.getElementById("product-status");
+
+    if (statut) {
+
+        statut.value = "Actif";
+
+    }
+
+    calculerValeursProduit();
+
+}
+
+
+/* ===========================================================
+   CHARGEMENT DEPUIS L'API
+=========================================================== */
+
+async function chargerProduitsDepuisAPI() {
+
+    try {
+
+        afficherEtatChargement();
+
+        const resultat =
+            await apiGet("getProduits");
+
+        if (!resultat.success) {
+
+            throw new Error(
+                resultat.message ||
+                "Impossible de récupérer les produits."
+            );
+
+        }
+
+        chargerProduits(resultat.data);
+
+        console.log(
+            produits.length +
+            " produit(s) chargé(s) depuis Google Sheets."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Erreur lors du chargement des produits :",
+            error
+        );
+
+        afficherErreurChargement(
+            error.message
+        );
+
+    }
+
+}
+
+
+/* ===========================================================
+   CHARGEMENT DES PRODUITS
+=========================================================== */
+
+function chargerProduits(data) {
+
+    produits = Array.isArray(data)
+        ? data
+        : [];
+
+    mettreAJourKPIs();
+
+    /*
+        Ces fonctions seront activées dès que nous ajouterons
+        l'affichage du tableau et les filtres.
+    */
+
+    if (typeof afficherProduits === "function") {
+
+        appliquerFiltresProduits();
+
+    } else {
+
+        afficherMessageTableauVide();
+
+    }
+
+    if (typeof remplirFiltres === "function") {
+
+        remplirFiltres();
+
+    }
+
+    if (typeof pagination === "function") {
+
+        pagination();
+
+    }
+
+}
+
+
+
+/**
+ * Retourne le nom lisible du fournisseur à partir de son ID.
+ * L'ID reste enregistré dans Google Sheets.
+ */
+function obtenirNomFournisseurProduit(
+    idFournisseur,
+    nomDejaDisponible = ""
+) {
+
+    const nomDirect = String(
+        nomDejaDisponible || ""
+    ).trim();
+
+    if (nomDirect) {
+        return nomDirect;
+    }
+
+    const idRecherche = String(
+        idFournisseur || ""
+    ).trim();
+
+    if (!idRecherche) {
+        return "—";
+    }
+
+    const fournisseurTrouve =
+        fournisseursProduits.find(
+            fournisseur => {
+
+                const id = String(
+                    lireValeurFournisseurProduit(
+                        fournisseur,
+                        [
+                            "ID Fournisseur",
+                            "idFournisseur"
+                        ]
+                    ) || ""
+                ).trim();
+
+                return id === idRecherche;
+            }
+        );
+
+    if (!fournisseurTrouve) {
+        return idRecherche;
+    }
+
+    return String(
+        lireValeurFournisseurProduit(
+            fournisseurTrouve,
+            [
+                "Nom Fournisseur",
+                "nomFournisseur"
+            ]
+        ) || idRecherche
+    ).trim();
+}
+
+
+/* ===========================================================
+   AFFICHAGE DÉTAILLÉ DES PRODUITS
+=========================================================== */
+
+function afficherProduits(listeProduits) {
+
+    const tableBody = obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+        console.error(
+            "Le corps du tableau des produits est introuvable."
+        );
+        return;
+    }
+
+    produitsFiltresCourants =
+        Array.isArray(listeProduits) ? [...listeProduits] : [];
+
+    const total = produitsFiltresCourants.length;
+    const totalPages = Math.max(
+        1,
+        Math.ceil(total / produitsParPage)
+    );
+
+    if (pageProduitsCourante > totalPages) {
+        pageProduitsCourante = totalPages;
+    }
+
+    const debut =
+        (pageProduitsCourante - 1) * produitsParPage;
+    const fin = debut + produitsParPage;
+    const page = produitsFiltresCourants.slice(debut, fin);
+
+    mettreAJourCompteurProduits(total);
+    afficherPaginationProduits(total, totalPages);
+
+    if (page.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="table-message">
+                    Aucun produit ne correspond à votre recherche.
+                </td>
+            </tr>
+        `;
+        synchroniserSelectionProduits();
+        return;
+    }
+
+    tableBody.innerHTML = page.map(produit => {
+
+        const idProduitBrut = String(
+            lireValeurProduit(
+                produit,
+                ["ID Produit", "idProduit"]
+            ) || ""
+        ).trim();
+
+        const idProduit = echapperHTML(idProduitBrut);
+        const selectionne = produitsSelectionnes.has(idProduitBrut);
+
+        const reference = echapperHTML(
+            lireValeurProduit(
+                produit,
+                ["Référence Produit", "referenceProduit", "reference"]
+            ) || "—"
+        );
+
+        const designation = echapperHTML(
+            lireValeurProduit(
+                produit,
+                ["Désignation", "designation"]
+            ) || "—"
+        );
+
+        const prixRevient = formaterMontantProduit(
+            lireValeurProduit(
+                produit,
+                ["Prix de Revient", "prixRevient"]
+            )
+        );
+
+        const prixVente = formaterMontantProduit(
+            lireValeurProduit(
+                produit,
+                ["Prix de Vente", "prixVente"]
+            )
+        );
+
+        const margeFCFA = formaterMontantProduit(
+            lireValeurProduit(
+                produit,
+                ["Marge (FCFA)", "margeFCFA"]
+            )
+        );
+
+        const fournisseur = echapperHTML(
+            obtenirNomFournisseurProduit(
+                lireValeurProduit(
+                    produit,
+                    [
+                        "ID Fournisseur Principal",
+                        "idFournisseurPrincipal",
+                        "ID Fournisseur"
+                    ]
+                ),
+                lireValeurProduit(
+                    produit,
+                    [
+                        "Nom Fournisseur",
+                        "Fournisseur"
+                    ]
+                )
+            )
+        );
+
+        const statut = String(
+            lireValeurProduit(
+                produit,
+                ["Statut", "statut"]
+            ) || ""
+        ).trim();
+
+        const statutNormalise =
+            normaliserStatutFiltreProduit(statut);
+
+        const classeStatut =
+            statutNormalise === "actif"
+                ? "status-active"
+                : statutNormalise === "archive"
+                    ? "status-archived"
+                    : "status-inactive";
+
+        return `
+            <tr
+                data-product-id="${idProduit}"
+                class="${selectionne ? "product-row-selected" : ""}"
+            >
+                <td
+                    class="selection-column"
+                    ${peutProduit("supprimer") ? "" : "hidden"}
+                >
+                    ${
+                        peutProduit("supprimer")
+                            ? `
+                                <input
+                                    type="checkbox"
+                                    class="product-row-checkbox"
+                                    data-product-id="${idProduit}"
+                                    ${selectionne ? "checked" : ""}
+                                    aria-label="Sélectionner ${designation}"
+                                >
+                            `
+                            : ""
+                    }
+                </td>
+
+                <td><strong>${reference}</strong></td>
+
+                <td>
+                    <div class="product-table-name">
+                        <strong>${designation}</strong>
+                    </div>
+                </td>
+
+                <td>${prixRevient}</td>
+                <td>${prixVente}</td>
+
+                <td>
+                    <div class="product-table-margin">
+                        <strong>${margeFCFA}</strong>
+                    </div>
+                </td>
+
+                <td>${fournisseur}</td>
+
+                <td>
+                    <span class="product-status ${classeStatut}">
+                        ${echapperHTML(statut || "—")}
+                    </span>
+                </td>
+
+                <td>
+                    <div class="product-row-menu">
+                        <button type="button" class="product-row-menu-trigger" data-product-menu-toggle="${idProduit}" aria-label="Afficher les actions du produit" aria-expanded="false">⋮</button>
+                        <div class="product-row-menu-dropdown" data-product-menu="${idProduit}" hidden>
+                            <button type="button" class="view-product-btn" data-product-id="${idProduit}"><span>👁</span><span>Voir le produit</span></button>
+                            ${
+                                peutProduit("modifier")
+                                    ? `<button type="button" class="edit-product-btn" data-product-id="${idProduit}"><span>✏️</span><span>Modifier</span></button>`
+                                    : ""
+                            }
+                            ${
+                                peutProduit("supprimer")
+                                    ? `<button type="button" class="delete-product-btn" data-product-id="${idProduit}"><span>🗑️</span><span>Supprimer</span></button>`
+                                    : ""
+                            }
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join("");
+
+    synchroniserSelectionProduits();
+    appliquerAutorisationsProduits();
+    appliquerAnimationProduit();
+}
+
+function formaterMontantProduit(valeur) {
+
+    const montant = convertirNombre(valeur);
+
+    if (!Number.isFinite(montant)) {
+        return "—";
+    }
+
+    return montant.toLocaleString("fr-FR", {
+        maximumFractionDigits: 0
+    }) + " FCFA";
+}
+
+
+function formaterPourcentageProduit(valeur) {
+
+    const taux = convertirNombre(valeur);
+
+    if (!Number.isFinite(taux)) {
+        return "—";
+    }
+
+    /*
+       Dans Google Sheets, 2,0562 représente 205,62 %.
+    */
+    return (taux * 100).toLocaleString("fr-FR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + " %";
+}
+
+function lireValeurProduit(produit, cles) {
+
+    if (!produit || !Array.isArray(cles)) {
+        return "";
+    }
+
+    for (const cle of cles) {
+
+        if (
+            Object.prototype.hasOwnProperty.call(produit, cle) &&
+            produit[cle] !== null &&
+            produit[cle] !== undefined &&
+            produit[cle] !== ""
+        ) {
+            return produit[cle];
+        }
+    }
+
+    return "";
+}
+
+
+function formaterDateProduit(valeur) {
+
+    if (!valeur) {
+        return "—";
+    }
+
+    const date = new Date(valeur);
+
+    if (Number.isNaN(date.getTime())) {
+        return echapperHTML(valeur);
+    }
+
+    return date.toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+
+
+/* ===========================================================
+   MODIFICATION D'UN PRODUIT
+=========================================================== */
+
+function initialiserModificationProduit() {
+
+    const tableBody = obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.addEventListener("click", event => {
+
+        const boutonModifier =
+            event.target.closest(".edit-product-btn");
+
+        if (!boutonModifier) {
+            return;
+        }
+
+        const idProduit = String(
+            boutonModifier.dataset.productId || ""
+        ).trim();
+
+        ouvrirModificationProduit(idProduit);
+    });
+}
+
+
+function ouvrirModificationProduit(idProduit) {
+
+    if (refuserActionProduit("modifier")) {
+        return;
+    }
+
+    const produit = produits.find(element => {
+
+        const id = String(
+            lireValeurProduit(
+                element,
+                ["ID Produit", "idProduit"]
+            ) || ""
+        ).trim();
+
+        return id === String(idProduit).trim();
+    });
+
+    if (!produit) {
+        console.error("Produit introuvable :", idProduit);
+        return;
+    }
+
+    const modale = document.getElementById("product-modal");
+    const formulaire = document.getElementById("product-form");
+
+    if (!modale || !formulaire) {
+        return;
+    }
+
+    idProduitEnModification = String(idProduit).trim();
+    configurerModaleProduit("modification");
+    formulaire.reset();
+    reinitialiserImageProduit();
+    masquerMessageFormulaireProduit();
+
+    definirValeurChamp(
+        "product-reference",
+        lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        )
+    );
+    definirValeurChamp(
+        "product-name",
+        lireValeurProduit(produit, ["Désignation", "designation"])
+    );
+    definirValeurChamp(
+        "product-description",
+        lireValeurProduit(produit, ["Description", "description"])
+    );
+    definirValeurChamp(
+        "product-purchase-price",
+        lireValeurProduit(
+            produit,
+            [
+                "Prix d’Achat",
+                "Prix d'Achat",
+                "Prix Achat",
+                "prixAchat"
+            ]
+        )
+    );
+    definirValeurChamp("product-vat-rate", 18);
+    definirValeurChamp(
+        "product-transport-cost",
+        lireValeurProduit(
+            produit,
+            ["Frais de Transport", "fraisTransport"]
+        )
+    );
+    definirValeurChamp(
+        "product-customs-cost",
+        lireValeurProduit(
+            produit,
+            ["Frais de Douane", "fraisDouane"]
+        )
+    );
+    definirValeurChamp(
+        "product-other-costs",
+        lireValeurProduit(produit, ["Autres Frais", "autresFrais"])
+    );
+    definirValeurChamp(
+        "product-sale-price",
+        lireValeurProduit(produit, ["Prix de Vente", "prixVente"])
+    );
+    definirValeurChamp(
+        "product-minimum-price",
+        lireValeurProduit(
+            produit,
+            ["Prix Minimum de Vente", "prixMinimumVente"]
+        )
+    );
+    definirValeurChamp(
+        "product-initial-stock",
+        lireValeurProduit(produit, ["Stock Initial", "stockInitial"])
+    );
+    definirValeurChamp(
+        "product-alert-threshold",
+        lireValeurProduit(produit, ["Seuil d'Alerte", "seuilAlerte"])
+    );
+    definirValeurChamp(
+        "product-warranty",
+        lireValeurProduit(produit, ["Garantie (Mois)", "garantieMois"])
+    );
+    definirValeurChamp(
+        "product-status",
+        lireValeurProduit(produit, ["Statut", "statut"]) || "Actif"
+    );
+    definirValeurChamp(
+        "product-comment",
+        lireValeurProduit(produit, ["Commentaire", "commentaire"])
+    );
+
+    selectionnerFournisseurProduit(
+        lireValeurProduit(
+            produit,
+            ["ID Fournisseur Principal", "idFournisseurPrincipal"]
+        )
+    );
+
+    afficherImageExistanteFormulaireProduit(
+        lireValeurProduit(produit, ["Image URL", "imageURL"])
+    );
+
+    calculerValeursProduit();
+
+    modale.classList.add("active");
+    modale.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+
+    const designation = document.getElementById("product-name");
+    if (designation) {
+        setTimeout(() => designation.focus(), 100);
+    }
+}
+
+
+function selectionnerFournisseurProduit(valeur) {
+
+    const select = document.getElementById("product-main-supplier");
+    const idFournisseur = String(valeur || "").trim();
+
+    if (!select) {
+        return;
+    }
+
+    if (
+        idFournisseur &&
+        !Array.from(select.options).some(
+            option => option.value === idFournisseur
+        )
+    ) {
+        const option = document.createElement("option");
+        option.value = idFournisseur;
+        option.textContent = idFournisseur;
+        option.dataset.temporary = "true";
+        select.appendChild(option);
+    }
+
+    select.value = idFournisseur;
+}
+
+
+function afficherImageExistanteFormulaireProduit(url) {
+
+    const imageURL = String(url || "").trim();
+    const champURL = document.getElementById("product-image-url");
+    const placeholder = document.getElementById("product-image-placeholder");
+    const wrapper = document.getElementById("product-image-preview-wrapper");
+    const image = document.getElementById("product-image-preview");
+    const nom = document.getElementById("product-image-name");
+    const taille = document.getElementById("product-image-size");
+
+    urlImageProduitTeleversee = imageURL;
+
+    if (champURL) {
+        champURL.value = imageURL;
+    }
+
+    if (!imageURL || !wrapper || !image) {
+        return;
+    }
+
+    image.src = imageURL;
+    wrapper.hidden = false;
+
+    if (placeholder) {
+        placeholder.hidden = true;
+    }
+
+    if (nom) {
+        nom.textContent = "Image actuelle du produit";
+    }
+
+    if (taille) {
+        taille.textContent = "Conservée si aucune nouvelle image n'est choisie";
+    }
+}
+
+
+/* ===========================================================
+   CONSULTATION D'UN PRODUIT
+=========================================================== */
+
+function initialiserConsultationProduit() {
+
+    const tableBody = obtenirCorpsTableauProduits();
+    const boutonFermer = document.getElementById("close-product-view-modal");
+    const boutonFermerFooter =
+        document.getElementById("close-product-view-modal-footer");
+
+    if (tableBody) {
+
+        tableBody.addEventListener("click", event => {
+
+            const boutonVoir = event.target.closest(".view-product-btn");
+
+            if (!boutonVoir) {
+                return;
+            }
+
+            const idProduit = String(
+                boutonVoir.dataset.productId || ""
+            ).trim();
+
+            ouvrirConsultationProduit(idProduit);
+        });
+    }
+
+    /*
+       La fenêtre de consultation ne se ferme volontairement que :
+       - avec la croix en haut à droite ;
+       - avec le bouton Fermer en bas.
+
+       Un clic sur le fond de la modale ou la touche Échap ne la ferment pas.
+    */
+    [boutonFermer, boutonFermerFooter].forEach(bouton => {
+
+        if (bouton) {
+            bouton.addEventListener("click", fermerConsultationProduit);
+        }
+    });
+}
+
+
+async function ouvrirConsultationProduit(idProduit) {
+
+    const produit = produits.find(element => {
+
+        const id = String(
+            lireValeurProduit(element, ["ID Produit", "idProduit"]) || ""
+        ).trim();
+
+        return id === idProduit;
+    });
+
+    if (!produit) {
+        console.error("Produit introuvable :", idProduit);
+        return;
+    }
+
+    definirTexteElement(
+        "view-product-id",
+        lireValeurProduit(produit, ["ID Produit", "idProduit"]) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-reference",
+        lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        ) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-name",
+        lireValeurProduit(produit, ["Désignation", "designation"]) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-description",
+        lireValeurProduit(produit, ["Description", "description"]) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-purchase-price",
+        formatMoney(
+            lireValeurProduit(
+                produit,
+                ["Prix d’Achat", "Prix d'Achat", "prixAchat"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-vat-rate",
+        formatNumber(
+            lireValeurProduit(produit, ["TVA", "Taux TVA (%)", "tauxTVA"])
+        ) + " %"
+    );
+
+    definirTexteElement(
+        "view-product-vat-amount",
+        formatMoney(
+            lireValeurProduit(produit, ["Montant TVA", "montantTVA"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-transport-cost",
+        formatMoney(
+            lireValeurProduit(
+                produit,
+                ["Frais de Transport", "fraisTransport"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-customs-cost",
+        formatMoney(
+            lireValeurProduit(
+                produit,
+                ["Frais de Douane", "fraisDouane"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-other-costs",
+        formatMoney(
+            lireValeurProduit(produit, ["Autres Frais", "autresFrais"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-cost-price",
+        formatMoney(
+            lireValeurProduit(produit, ["Prix de Revient", "prixRevient"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-summary-cost-price",
+        formatMoney(
+            lireValeurProduit(produit, ["Prix de Revient", "prixRevient"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-minimum-price",
+        formatMoney(
+            lireValeurProduit(
+                produit,
+                ["Prix Minimum de Vente", "prixMinimumVente"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-sale-price",
+        formatMoney(
+            lireValeurProduit(produit, ["Prix de Vente", "prixVente"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-margin-amount",
+        formatMoney(
+            lireValeurProduit(produit, ["Marge (FCFA)", "margeFCFA"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-margin-rate",
+        formatNumber(
+            lireValeurProduit(
+                produit,
+                ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"]
+            )
+        ) + " %"
+    );
+
+    definirTexteElement(
+        "view-product-summary-margin-amount",
+        formatMoney(
+            lireValeurProduit(produit, ["Marge (FCFA)", "margeFCFA"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-stock",
+        formatNumber(
+            lireValeurProduit(produit, ["Stock Initial", "stockInitial"])
+        )
+    );
+
+    definirTexteElement(
+        "view-product-alert-threshold",
+        formatNumber(
+            lireValeurProduit(
+                produit,
+                ["Seuil d'Alerte", "Seuil d’alerte", "seuilAlerte"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-supplier",
+        lireValeurProduit(
+            produit,
+            [
+                "ID Fournisseur",
+                "ID Fournisseur Principal",
+                "idFournisseurPrincipal"
+            ]
+        ) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-warranty",
+        formatNumber(
+            lireValeurProduit(
+                produit,
+                ["Garantie", "Garantie (mois)", "garantieMois"]
+            )
+        ) + " mois"
+    );
+
+    definirTexteElement(
+        "view-product-created-at",
+        formaterDateProduit(
+            lireValeurProduit(
+                produit,
+                ["Date d'ajout", "Date d'Ajout", "dateAjout"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-updated-at",
+        formaterDateProduit(
+            lireValeurProduit(
+                produit,
+                ["Date de modification", "Date de Modification", "dateModification"]
+            )
+        )
+    );
+
+    definirTexteElement(
+        "view-product-status",
+        lireValeurProduit(produit, ["Statut", "statut"]) || "—"
+    );
+
+    mettreAJourBadgeStatutProduit(
+        lireValeurProduit(produit, ["Statut", "statut"]) || "—"
+    );
+
+    definirTexteElement(
+        "view-product-comment",
+        lireValeurProduit(produit, ["Commentaire", "commentaire"]) || "—"
+    );
+
+    afficherImageConsultationProduit(
+        lireValeurProduit(
+            produit,
+            ["Image (Url)", "Image URL", "imageURL"]
+        )
+    );
+
+    const modal = document.getElementById("product-view-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    /* La fiche s'ouvre immédiatement.
+       Le stock est ensuite chargé sans bloquer l'affichage. */
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+
+    chargerStockDansFicheProduit(idProduit);
+}
+
+
+
+
+async function chargerStockDansFicheProduit(idProduit) {
+    const sectionStock = document.querySelector("#product-view-modal .product-view-stock-section");
+    sectionStock?.classList.add("is-loading");
+
+    const ids=["view-product-stock-physical","view-product-stock-reserved","view-product-stock-unsellable","view-product-stock-sellable","view-product-stock-status","view-product-stock-threshold","view-product-stock-updated"];
+    ids.forEach(id=>definirTexteElement(id,"…"));
+    const msg=document.getElementById("view-product-stock-message");
+    if(msg){msg.hidden=true;msg.textContent="";}
+    try{
+        const resultat=await apiGet("getStock");
+        if(!resultat?.success) throw new Error(resultat?.message||"Impossible de charger le stock.");
+        const lignes=Array.isArray(resultat.data)?resultat.data:[];
+        stockProduitsPourFiche=lignes.map(normaliserStockPourFicheProduit).filter(x=>x.idProduit);
+        const stock=stockProduitsPourFiche.find(x=>x.idProduit===String(idProduit||"").trim());
+        afficherStockDansFicheProduit(stock);
+        sectionStock?.classList.remove("is-loading");
+    }catch(error){
+        console.error("Erreur stock fiche Produit :",error);
+        ids.forEach(id=>definirTexteElement(id,"—"));
+        definirTexteElement("view-product-stock-status","Indisponible");
+        if(msg){msg.hidden=false;msg.textContent=error?.message||"Situation du stock indisponible.";}
+        sectionStock?.classList.remove("is-loading");
+    }
+}
+function normaliserStockPourFicheProduit(p){
+    const entier=v=>{const n=Number(String(v??"0").replace(/\s/g,"").replace(",","."));return Number.isFinite(n)?Math.trunc(n):0};
+    return {
+        idProduit:String(p?.idProduit||"").trim(),
+        stockPhysique:entier(p?.stockPhysique),
+        stockReserve:entier(p?.stockReserve),
+        stockNonVendable:entier(p?.stockNonVendable),
+        stockVendable:entier(p?.stockVendable!==undefined?p.stockVendable:p?.stockDisponible),
+        seuilAlerte:Math.max(0,entier(p?.seuilAlerte)),
+        etat:String(p?.etat||"normal").trim().toLowerCase(),
+        derniereMiseAJour:String(p?.derniereMiseAJour||"—").trim()
+    };
+}
+function afficherStockDansFicheProduit(stock){
+    const msg=document.getElementById("view-product-stock-message");
+    const fmt=v=>Number(v||0).toLocaleString("fr-FR");
+    if(!stock){
+        ["view-product-stock-physical","view-product-stock-reserved","view-product-stock-unsellable","view-product-stock-sellable","view-product-stock-threshold","view-product-stock-updated"].forEach(id=>definirTexteElement(id,"—"));
+        definirTexteElement("view-product-stock-status","Non disponible");
+        if(msg){msg.hidden=false;msg.textContent="Aucune situation de stock n'est disponible pour ce produit.";}
+        return;
+    }
+    definirTexteElement("view-product-stock-physical",fmt(stock.stockPhysique));
+    definirTexteElement("view-product-stock-reserved",fmt(stock.stockReserve));
+    definirTexteElement("view-product-stock-unsellable",fmt(stock.stockNonVendable));
+    definirTexteElement("view-product-stock-sellable",fmt(stock.stockVendable));
+    definirTexteElement("view-product-stock-threshold",fmt(stock.seuilAlerte));
+    definirTexteElement("view-product-stock-updated",stock.derniereMiseAJour||"—");
+    const lib=stock.etat==="rupture"?"Rupture":stock.etat==="faible"?"Faible":"Normal";
+    definirTexteElement("view-product-stock-status",lib);
+    const el=document.getElementById("view-product-stock-status");
+    if(el){el.className="product-stock-status stock-status-"+(stock.etat||"normal");}
+    if(msg){msg.hidden=true;msg.textContent="";}
+}
+
+function mettreAJourBadgeStatutProduit(statut) {
+
+    const badge = document.getElementById("product-view-status-badge");
+
+    if (!badge) {
+        return;
+    }
+
+    const valeur = String(statut || "").trim().toLowerCase();
+
+    badge.classList.remove("is-active", "is-inactive", "is-warning");
+
+    if (
+        valeur.includes("actif") &&
+        !valeur.includes("inactif")
+    ) {
+        badge.classList.add("is-active");
+        return;
+    }
+
+    if (
+        valeur.includes("inactif") ||
+        valeur.includes("désactiv") ||
+        valeur.includes("desactiv")
+    ) {
+        badge.classList.add("is-inactive");
+        return;
+    }
+
+    if (
+        valeur.includes("rupture") ||
+        valeur.includes("alerte") ||
+        valeur.includes("attente")
+    ) {
+        badge.classList.add("is-warning");
+    }
+}
+
+function fermerConsultationProduit() {
+
+    const modal = document.getElementById("product-view-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+}
+
+
+function afficherImageConsultationProduit(urlImage) {
+
+    const image = document.getElementById("product-view-image");
+    const placeholder =
+        document.getElementById("product-view-image-placeholder");
+
+    if (!image || !placeholder) {
+        return;
+    }
+
+    const url = String(urlImage || "").trim();
+
+    image.onerror = null;
+    image.removeAttribute("src");
+    image.hidden = true;
+    placeholder.hidden = false;
+
+    if (!url) {
+        return;
+    }
+
+    /* Masquer immédiatement le placeholder lorsqu’une image est disponible. */
+    placeholder.hidden = true;
+
+    image.onload = () => {
+        image.hidden = false;
+        placeholder.hidden = true;
+    };
+
+    image.onerror = () => {
+        image.hidden = true;
+        placeholder.hidden = false;
+    };
+
+    image.src = url;
+}
+
+
+/* ===========================================================
+   ÉTAT DE CHARGEMENT DU TABLEAU
+=========================================================== */
+
+function afficherEtatChargement() {
+
+    const tableBody =
+        obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+
+        return;
+
+    }
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="9" class="table-message">
+                Chargement des produits...
+            </td>
+        </tr>
+    `;
+
+}
+
+
+/* ===========================================================
+   MESSAGE TABLEAU VIDE
+=========================================================== */
+
+function afficherMessageTableauVide() {
+
+    const tableBody =
+        obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+
+        return;
+
+    }
+
+    if (produits.length > 0) {
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="table-message">
+                    ${produits.length} produit(s) récupéré(s).
+                    L'affichage détaillé du tableau sera ajouté
+                    à l'étape suivante.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="9" class="table-message">
+                Aucun produit enregistré.
+            </td>
+        </tr>
+    `;
+
+}
+
+
+/* ===========================================================
+   ERREUR DE CHARGEMENT
+=========================================================== */
+
+function afficherErreurChargement(message) {
+
+    const tableBody =
+        obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+
+        return;
+
+    }
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="9" class="table-message table-error">
+                Impossible de charger les produits.
+                ${echapperHTML(message)}
+            </td>
+        </tr>
+    `;
+
+}
+
+
+/* ===========================================================
+   RÉCUPÉRER LE CORPS DU TABLEAU
+=========================================================== */
+
+function obtenirCorpsTableauProduits() {
+
+    return (
+        document.getElementById("products-table-body") ||
+        document.getElementById("produits-table-body") ||
+        document.querySelector(".sales-table tbody") ||
+        document.querySelector("table tbody")
+    );
+
+}
+
+
+/* ===========================================================
+   KPI
+=========================================================== */
+
+function mettreAJourKPIs() {
+
+    const totalProduits =
+        produits.length;
+
+    const produitsActifs =
+        produits.filter(produit => {
+
+            return String(produit.Statut || "")
+                .trim()
+                .toLowerCase() === "actif";
+
+        }).length;
+
+    let valeurStock = 0;
+    let sommeMarges = 0;
+    let nbMarges = 0;
+    let ajoutesCeMois = 0;
+
+    let sommeMargesMoisActuel = 0;
+    let nbMargesMoisActuel = 0;
+    let sommeMargesMoisPrecedent = 0;
+    let nbMargesMoisPrecedent = 0;
+
+    const maintenant = new Date();
+    const debutMoisActuel = new Date(
+        maintenant.getFullYear(),
+        maintenant.getMonth(),
+        1
+    );
+    const debutMoisSuivant = new Date(
+        maintenant.getFullYear(),
+        maintenant.getMonth() + 1,
+        1
+    );
+    const debutMoisPrecedent = new Date(
+        maintenant.getFullYear(),
+        maintenant.getMonth() - 1,
+        1
+    );
+
+    produits.forEach(produit => {
+
+        const prixRevient =
+            convertirNombre(
+                lireValeurProduit(
+                    produit,
+                    ["Prix de Revient", "prixRevient"]
+                )
+            );
+
+        const stockInitial =
+            convertirNombre(
+                lireValeurProduit(
+                    produit,
+                    ["Stock Initial", "stockInitial"]
+                )
+            );
+
+        valeurStock += prixRevient * stockInitial;
+
+        const marge =
+            convertirNombre(
+                lireValeurProduit(
+                    produit,
+                    [
+                        "Taux de Marge",
+                        "Taux de Marge (%)",
+                        "tauxMarge"
+                    ]
+                )
+            );
+
+        if (Number.isFinite(marge)) {
+            sommeMarges += marge;
+            nbMarges++;
+        }
+
+        const dateAjoutBrute =
+            lireValeurProduit(
+                produit,
+                [
+                    "Date d'ajout",
+                    "Date d’Ajout",
+                    "Date d'Ajout",
+                    "dateAjout"
+                ]
+            );
+
+        if (!dateAjoutBrute) {
+            return;
+        }
+
+        const dateAjout = new Date(dateAjoutBrute);
+
+        if (Number.isNaN(dateAjout.getTime())) {
+            return;
+        }
+
+        if (
+            dateAjout >= debutMoisActuel &&
+            dateAjout < debutMoisSuivant
+        ) {
+            ajoutesCeMois++;
+
+            if (Number.isFinite(marge)) {
+                sommeMargesMoisActuel += marge;
+                nbMargesMoisActuel++;
+            }
+        } else if (
+            dateAjout >= debutMoisPrecedent &&
+            dateAjout < debutMoisActuel
+        ) {
+            if (Number.isFinite(marge)) {
+                sommeMargesMoisPrecedent += marge;
+                nbMargesMoisPrecedent++;
+            }
+        }
+
+    });
+
+    const margeMoyenne =
+        nbMarges > 0
+            ? sommeMarges / nbMarges
+            : 0;
+
+    const margeMoyenneMoisActuel =
+        nbMargesMoisActuel > 0
+            ? sommeMargesMoisActuel / nbMargesMoisActuel
+            : 0;
+
+    const margeMoyenneMoisPrecedent =
+        nbMargesMoisPrecedent > 0
+            ? sommeMargesMoisPrecedent / nbMargesMoisPrecedent
+            : 0;
+
+    definirTexteElement(
+        "kpi-total-products",
+        totalProduits
+    );
+
+    definirTexteElement(
+        "kpi-products-month",
+        "+" + ajoutesCeMois + " ce mois"
+    );
+
+    definirTexteElement(
+        "kpi-stock-value",
+        formatMoney(valeurStock)
+    );
+
+    definirTexteElement(
+        "kpi-average-margin",
+        formatNumber(margeMoyenne) + " %"
+    );
+
+    mettreAJourTendanceMargeMoyenne(
+        margeMoyenneMoisActuel,
+        margeMoyenneMoisPrecedent,
+        nbMargesMoisActuel,
+        nbMargesMoisPrecedent
+    );
+
+    definirTexteElement(
+        "kpi-active-products",
+        produitsActifs
+    );
+
+    const pourcentageProduitsActifs =
+        totalProduits === 0
+            ? 0
+            : Math.round(
+                produitsActifs /
+                totalProduits *
+                100
+            );
+
+    definirTexteElement(
+        "kpi-active-percent",
+        pourcentageProduitsActifs +
+        " % du catalogue"
+    );
+
+}
+
+
+function mettreAJourTendanceMargeMoyenne(
+    margeActuelle,
+    margePrecedente,
+    nombreActuel,
+    nombrePrecedent
+) {
+
+    const element =
+        document.getElementById(
+            "kpi-average-margin-fcfa"
+        );
+
+    if (!element) {
+        return;
+    }
+
+    element.style.fontWeight = "600";
+
+    if (nombreActuel === 0) {
+        element.textContent =
+            "Aucun produit ajouté ce mois";
+        element.style.color = "#64748b";
+        return;
+    }
+
+    if (
+        nombrePrecedent === 0 ||
+        margePrecedente === 0
+    ) {
+        element.textContent =
+            "→ Aucune comparaison disponible";
+        element.style.color = "#64748b";
+        return;
+    }
+
+    const tendance =
+        ((margeActuelle - margePrecedente) /
+        Math.abs(margePrecedente)) * 100;
+
+    const valeurFormatee =
+        Math.abs(tendance).toLocaleString(
+            "fr-FR",
+            {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            }
+        );
+
+    if (tendance > 0.05) {
+        element.textContent =
+            `↑ ${valeurFormatee} % par rapport au mois dernier`;
+        element.style.color = "#16a34a";
+        return;
+    }
+
+    if (tendance < -0.05) {
+        element.textContent =
+            `↓ ${valeurFormatee} % par rapport au mois dernier`;
+        element.style.color = "#dc2626";
+        return;
+    }
+
+    element.textContent =
+        "→ Stable par rapport au mois dernier";
+    element.style.color = "#64748b";
+
+}
+
+/* ===========================================================
+   MODIFIER LE TEXTE D'UN ÉLÉMENT
+=========================================================== */
+
+function definirTexteElement(id, valeur) {
+
+    const element =
+        document.getElementById(id);
+
+    if (!element) {
+
+        console.warn(
+            "Élément HTML introuvable : #" + id
+        );
+
+        return;
+
+    }
+
+    element.textContent =
+        valeur;
+
+}
+
+
+/* ===========================================================
+   CONVERSION EN NOMBRE
+=========================================================== */
+
+function convertirNombre(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+
+        return 0;
+
+    }
+
+    const nombre =
+        Number(
+            String(value)
+                .replace(/\s/g, "")
+                .replace(",", ".")
+        );
+
+    return Number.isFinite(nombre)
+        ? nombre
+        : 0;
+
+}
+
+
+/* ===========================================================
+   FORMAT DES NOMBRES
+=========================================================== */
+
+function formatNumber(value) {
+
+    return convertirNombre(value)
+        .toLocaleString(
+            "fr-FR",
+            {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 1
+            }
+        );
+
+}
+
+
+/* ===========================================================
+   FORMAT FCFA
+=========================================================== */
+
+function formatMoney(value) {
+
+    return convertirNombre(value)
+        .toLocaleString(
+            "fr-FR",
+            {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }
+        ) + " FCFA";
+
+}
+
+
+/* ===========================================================
+   SÉCURISATION HTML
+=========================================================== */
+
+function echapperHTML(value) {
+
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+/* ===========================================================
+   LISTE DÉROULANTE DES FOURNISSEURS
+=========================================================== */
+
+/**
+ * Charge les fournisseurs enregistrés dans Google Sheets et
+ * alimente le champ #product-main-supplier.
+ *
+ * Seuls les fournisseurs actifs sont proposés pour une nouvelle
+ * sélection. Lors de la modification d'un ancien produit, son
+ * fournisseur reste sélectionnable même s'il est devenu inactif.
+ */
+async function chargerFournisseursPourProduits(
+    idFournisseurAConserver = ""
+) {
+
+    const select =
+        document.getElementById("product-main-supplier");
+
+    if (!select) {
+        return [];
+    }
+
+    const valeurAvantChargement = String(
+        idFournisseurAConserver ||
+        select.value ||
+        ""
+    ).trim();
+
+    select.disabled = true;
+
+    select.innerHTML = `
+        <option value="">
+            Chargement des fournisseurs...
+        </option>
+    `;
+
+    try {
+
+        const resultat =
+            await apiGet("getFournisseurs");
+
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de récupérer les fournisseurs."
+            );
+        }
+
+        fournisseursProduits =
+            Array.isArray(resultat.data)
+                ? resultat.data
+                : [];
+
+        remplirListeFournisseursProduits(
+            fournisseursProduits,
+            valeurAvantChargement
+        );
+
+        if (
+            Array.isArray(produits) &&
+            produits.length &&
+            typeof appliquerFiltresProduits === "function"
+        ) {
+            appliquerFiltresProduits();
+        }
+
+        return fournisseursProduits;
+
+    } catch (error) {
+
+        console.error(
+            "Erreur de chargement des fournisseurs du produit :",
+            error
+        );
+
+        select.innerHTML = `
+            <option value="">
+                Impossible de charger les fournisseurs
+            </option>
+        `;
+
+        return [];
+
+    } finally {
+
+        select.disabled = false;
+    }
+}
+
+
+/**
+ * Remplit la liste avec les fournisseurs actifs.
+ */
+function remplirListeFournisseursProduits(
+    listeFournisseurs = [],
+    valeurASelectionner = ""
+) {
+
+    const select =
+        document.getElementById("product-main-supplier");
+
+    if (!select) {
+        return;
+    }
+
+    const valeurSelectionnee = String(
+        valeurASelectionner ||
+        select.value ||
+        ""
+    ).trim();
+
+    const fournisseursTries = [...listeFournisseurs]
+        .filter(fournisseur => {
+
+            const id = String(
+                lireValeurFournisseurProduit(
+                    fournisseur,
+                    [
+                        "ID Fournisseur",
+                        "idFournisseur"
+                    ]
+                ) || ""
+            ).trim();
+
+            const statut = String(
+                lireValeurFournisseurProduit(
+                    fournisseur,
+                    ["Statut", "statut"]
+                ) || ""
+            )
+                .trim()
+                .toLowerCase();
+
+            /*
+               Les fournisseurs actifs sont proposés normalement.
+               Le fournisseur déjà rattaché au produit reste visible
+               même s'il a ensuite été rendu inactif ou suspendu.
+            */
+            return (
+                id &&
+                (
+                    statut === "actif" ||
+                    id === valeurSelectionnee
+                )
+            );
+        })
+        .sort((a, b) => {
+
+            const nomA = String(
+                lireValeurFournisseurProduit(
+                    a,
+                    [
+                        "Nom Fournisseur",
+                        "nomFournisseur"
+                    ]
+                ) || ""
+            );
+
+            const nomB = String(
+                lireValeurFournisseurProduit(
+                    b,
+                    [
+                        "Nom Fournisseur",
+                        "nomFournisseur"
+                    ]
+                ) || ""
+            );
+
+            return nomA.localeCompare(
+                nomB,
+                "fr",
+                { sensitivity: "base" }
+            );
+        });
+
+    select.innerHTML = `
+        <option value="">
+            Sélectionner un fournisseur
+        </option>
+    `;
+
+    fournisseursTries.forEach(fournisseur => {
+
+        const id = String(
+            lireValeurFournisseurProduit(
+                fournisseur,
+                [
+                    "ID Fournisseur",
+                    "idFournisseur"
+                ]
+            ) || ""
+        ).trim();
+
+        const code = String(
+            lireValeurFournisseurProduit(
+                fournisseur,
+                [
+                    "Code Fournisseur",
+                    "codeFournisseur"
+                ]
+            ) || ""
+        ).trim();
+
+        const nom = String(
+            lireValeurFournisseurProduit(
+                fournisseur,
+                [
+                    "Nom Fournisseur",
+                    "nomFournisseur"
+                ]
+            ) || id
+        ).trim();
+
+        const statut = String(
+            lireValeurFournisseurProduit(
+                fournisseur,
+                ["Statut", "statut"]
+            ) || ""
+        ).trim();
+
+        const option =
+            document.createElement("option");
+
+        option.value = id;
+
+        option.textContent = nom;
+
+        option.dataset.supplierCode = code;
+        option.dataset.supplierName = nom;
+        option.dataset.supplierStatus = statut;
+
+        if (
+            id === valeurSelectionnee &&
+            statut.toLowerCase() !== "actif"
+        ) {
+            option.textContent += ` (${statut || "Inactif"})`;
+        }
+
+        select.appendChild(option);
+    });
+
+    /*
+       Sécurité pour un ancien produit dont l'ID fournisseur
+       n'existerait plus dans Google Sheets.
+    */
+    if (
+        valeurSelectionnee &&
+        !Array.from(select.options).some(
+            option =>
+                option.value === valeurSelectionnee
+        )
+    ) {
+
+        const optionTemporaire =
+            document.createElement("option");
+
+        optionTemporaire.value =
+            valeurSelectionnee;
+
+        optionTemporaire.textContent =
+            `${valeurSelectionnee} (fournisseur introuvable)`;
+
+        optionTemporaire.dataset.temporary =
+            "true";
+
+        select.appendChild(optionTemporaire);
+    }
+
+    select.value = valeurSelectionnee;
+}
+
+
+/**
+ * Lit une propriété Fournisseur en acceptant les clés Google
+ * Sheets et les clés JavaScript du frontend.
+ */
+function lireValeurFournisseurProduit(
+    fournisseur,
+    cles
+) {
+
+    if (!fournisseur || !Array.isArray(cles)) {
+        return "";
+    }
+
+    for (const cle of cles) {
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                fournisseur,
+                cle
+            ) &&
+            fournisseur[cle] !== null &&
+            fournisseur[cle] !== undefined &&
+            fournisseur[cle] !== ""
+        ) {
+            return fournisseur[cle];
+        }
+    }
+
+    return "";
+}
+
+
+/**
+ * Sélectionne le fournisseur enregistré lors de l'ouverture
+ * du formulaire de modification.
+ */
+function selectionnerFournisseurProduit(valeur) {
+
+    const idFournisseur = String(
+        valeur || ""
+    ).trim();
+
+    const select =
+        document.getElementById(
+            "product-main-supplier"
+        );
+
+    if (!select) {
+        return;
+    }
+
+    const optionExiste =
+        Array.from(select.options).some(
+            option =>
+                option.value === idFournisseur
+        );
+
+    if (optionExiste || !idFournisseur) {
+        select.value = idFournisseur;
+        return;
+    }
+
+    /*
+       Si la liste n'est pas encore chargée, on conserve l'ID
+       immédiatement puis on recharge les fournisseurs.
+    */
+    const optionTemporaire =
+        document.createElement("option");
+
+    optionTemporaire.value =
+        idFournisseur;
+
+    optionTemporaire.textContent =
+        idFournisseur;
+
+    optionTemporaire.dataset.temporary =
+        "true";
+
+    select.appendChild(optionTemporaire);
+    select.value = idFournisseur;
+
+    chargerFournisseursPourProduits(
+        idFournisseur
+    );
+}
+
+
+/* TVA retirée de l'interface Produits : aucune initialisation nécessaire. */
+
+document.addEventListener("input", event => {
+    if (event.target?.id === "product-vat-rate") {
+        event.target.value = "18";
+    }
+});
+
+/* ===========================================================
+   ANNULATION DU FORMULAIRE PRODUIT
+   Le même bouton ferme le formulaire en création comme en
+   modification, sans enregistrer les changements.
+=========================================================== */
+
+function initialiserAnnulationFormulaireProduit() {
+    const boutonAnnuler = document.getElementById("cancel-product-btn");
+
+    if (!boutonAnnuler || boutonAnnuler.dataset.initialise === "true") {
+        return;
+    }
+
+    boutonAnnuler.dataset.initialise = "true";
+
+    boutonAnnuler.addEventListener("click", () => {
+        fermerModaleProduit();
+        idProduitEnModification = "";
+        configurerModaleProduit("creation");
+
+        const formulaire = document.getElementById("product-form");
+
+        if (formulaire) {
+            formulaire.reset();
+        }
+
+        remettreValeursParDefautProduit();
+        reinitialiserImageProduit();
+        masquerMessageFormulaireProduit();
+    });
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initialiserAnnulationFormulaireProduit
+);
+
+/* ===========================================================
+   SUPPRESSION D'UN PRODUIT
+=========================================================== */
+
+let idProduitASupprimer = "";
+
+
+function initialiserSuppressionProduit() {
+
+    const tableBody = obtenirCorpsTableauProduits();
+    const boutonAnnuler =
+        document.getElementById("cancel-delete-product-btn");
+    const boutonConfirmer =
+        document.getElementById("confirm-delete-product-btn");
+
+    if (tableBody && tableBody.dataset.deleteInitialise !== "true") {
+
+        tableBody.dataset.deleteInitialise = "true";
+
+        tableBody.addEventListener("click", event => {
+
+            const boutonSupprimer =
+                event.target.closest(".delete-product-btn");
+
+            if (!boutonSupprimer) {
+                return;
+            }
+
+            const idProduit = String(
+                boutonSupprimer.dataset.productId || ""
+            ).trim();
+
+            ouvrirConfirmationSuppressionProduit(idProduit);
+        });
+    }
+
+    if (
+        boutonAnnuler &&
+        boutonAnnuler.dataset.initialise !== "true"
+    ) {
+        boutonAnnuler.dataset.initialise = "true";
+        boutonAnnuler.addEventListener(
+            "click",
+            fermerConfirmationSuppressionProduit
+        );
+    }
+
+    if (
+        boutonConfirmer &&
+        boutonConfirmer.dataset.initialise !== "true"
+    ) {
+        boutonConfirmer.dataset.initialise = "true";
+        boutonConfirmer.addEventListener(
+            "click",
+            confirmerSuppressionProduit
+        );
+    }
+}
+
+
+function ouvrirConfirmationSuppressionProduit(idProduit) {
+
+    if (refuserActionProduit("supprimer")) {
+        return;
+    }
+
+    const produit = produits.find(element => {
+
+        const id = String(
+            lireValeurProduit(
+                element,
+                ["ID Produit", "idProduit"]
+            ) || ""
+        ).trim();
+
+        return id === String(idProduit).trim();
+    });
+
+    if (!produit) {
+        console.error("Produit introuvable :", idProduit);
+        return;
+    }
+
+    const modal =
+        document.getElementById("delete-product-modal");
+
+    if (!modal) {
+        return;
+    }
+
+    idProduitASupprimer = String(idProduit).trim();
+
+    definirTexteElement(
+        "delete-product-reference",
+        lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        ) || "Sans référence"
+    );
+
+    definirTexteElement(
+        "delete-product-name",
+        lireValeurProduit(
+            produit,
+            ["Désignation", "designation"]
+        ) || "Produit sans désignation"
+    );
+
+    afficherImageSuppressionProduit(
+        lireValeurProduit(
+            produit,
+            [
+                "Image (Url)",
+                "Image URL",
+                "Image",
+                "imageURL",
+                "imageUrl",
+                "urlImage"
+            ]
+        )
+    );
+
+    afficherMessageSuppressionProduit("", "info");
+
+    const boutonConfirmer =
+        document.getElementById("confirm-delete-product-btn");
+
+    if (boutonConfirmer) {
+        boutonConfirmer.disabled = false;
+        boutonConfirmer.textContent = "Supprimer le produit";
+    }
+
+    modal.hidden = false;
+
+    requestAnimationFrame(() => {
+        modal.classList.add("active");
+        document.body.classList.add("modal-open");
+        boutonConfirmer?.focus();
+    });
+}
+
+
+function afficherImageSuppressionProduit(urlImage) {
+
+    const image =
+        document.getElementById("delete-product-image");
+    const placeholder =
+        document.getElementById(
+            "delete-product-image-placeholder"
+        );
+
+    if (!image || !placeholder) {
+        return;
+    }
+
+    const url = String(urlImage || "").trim();
+
+    image.onload = null;
+    image.onerror = null;
+    image.removeAttribute("src");
+    image.hidden = true;
+    placeholder.hidden = false;
+
+    if (!url) {
+        return;
+    }
+
+    placeholder.hidden = true;
+
+    image.onload = () => {
+        image.hidden = false;
+        placeholder.hidden = true;
+    };
+
+    image.onerror = () => {
+        image.hidden = true;
+        image.removeAttribute("src");
+        placeholder.hidden = false;
+    };
+
+    image.src = url;
+}
+
+
+function fermerConfirmationSuppressionProduit() {
+
+    const modal =
+        document.getElementById("delete-product-modal");
+
+    if (modal) {
+        modal.classList.remove("active", "show");
+        modal.hidden = true;
+    }
+
+    idProduitASupprimer = "";
+    document.body.classList.remove("modal-open");
+    afficherMessageSuppressionProduit("", "info");
+    afficherImageSuppressionProduit("");
+}
+
+
+async function confirmerSuppressionProduit() {
+
+    if (refuserActionProduit("supprimer")) {
+        fermerConfirmationSuppressionProduit();
+        return;
+    }
+
+    if (!idProduitASupprimer) {
+        return;
+    }
+
+    const boutonConfirmer =
+        document.getElementById("confirm-delete-product-btn");
+    const boutonAnnuler =
+        document.getElementById("cancel-delete-product-btn");
+
+    const idProduit = idProduitASupprimer;
+
+    try {
+
+        if (boutonConfirmer) {
+            boutonConfirmer.disabled = true;
+            boutonConfirmer.textContent = "Suppression...";
+        }
+
+        if (boutonAnnuler) {
+            boutonAnnuler.disabled = true;
+        }
+
+        const resultat = await apiPost(
+            "deleteProduit",
+            { idProduit }
+        );
+
+        if (!resultat || !resultat.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de supprimer le produit."
+            );
+        }
+
+        produits = produits.filter(produit => {
+
+            const id = String(
+                lireValeurProduit(
+                    produit,
+                    ["ID Produit", "idProduit"]
+                ) || ""
+            ).trim();
+
+            return id !== idProduit;
+        });
+
+        mettreAJourKPIs();
+        appliquerFiltresProduits();
+        fermerConfirmationSuppressionProduit();
+
+    } catch (error) {
+
+        console.error(
+            "Erreur de suppression du produit :",
+            error
+        );
+
+        afficherMessageSuppressionProduit(
+            error.message ||
+            "Une erreur est survenue pendant la suppression.",
+            "error"
+        );
+
+    } finally {
+
+        if (boutonConfirmer) {
+            boutonConfirmer.disabled = false;
+            boutonConfirmer.textContent = "Supprimer le produit";
+        }
+
+        if (boutonAnnuler) {
+            boutonAnnuler.disabled = false;
+        }
+    }
+}
+
+
+function afficherMessageSuppressionProduit(
+    message,
+    type = "info"
+) {
+
+    const zone =
+        document.getElementById("delete-product-message");
+
+    if (!zone) {
+        return;
+    }
+
+    if (!message) {
+        zone.hidden = true;
+        zone.textContent = "";
+        zone.className = "delete-product-message";
+        return;
+    }
+
+    zone.hidden = false;
+    zone.textContent = message;
+    zone.className =
+        `delete-product-message delete-product-message-${type}`;
+}
+
+/* ===========================================================
+   RECHERCHE ET FILTRE PAR STATUT
+=========================================================== */
+
+function initialiserFiltresProduits() {
+
+    const recherche =
+        document.getElementById("header-products-search-input");
+
+    const filtreStatut =
+        document.getElementById("product-status-filter");
+
+    if (
+        recherche &&
+        recherche.dataset.initialise !== "true"
+    ) {
+        recherche.dataset.initialise = "true";
+
+        recherche.addEventListener(
+            "input",
+            appliquerFiltresProduits
+        );
+    }
+
+    if (
+        filtreStatut &&
+        filtreStatut.dataset.initialise !== "true"
+    ) {
+        filtreStatut.dataset.initialise = "true";
+
+        filtreStatut.addEventListener(
+            "change",
+            appliquerFiltresProduits
+        );
+    }
+}
+
+
+function appliquerFiltresProduits(event) {
+
+    if (event) {
+        pageProduitsCourante = 1;
+    }
+
+    const recherche = normaliserTexteFiltreProduit(
+        document.getElementById("header-products-search-input")?.value
+    );
+
+    const statutRecherche = normaliserStatutFiltreProduit(
+        document.getElementById("product-status-filter")?.value
+    );
+
+    const listeFiltree = produits.filter(produit => {
+
+        const reference = lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        );
+
+        const designation = lireValeurProduit(
+            produit,
+            ["Désignation", "designation"]
+        );
+
+        const description = lireValeurProduit(
+            produit,
+            ["Description", "description"]
+        );
+
+        const fournisseur = lireValeurProduit(
+            produit,
+            [
+                "Nom Fournisseur",
+                "Fournisseur",
+                "ID Fournisseur",
+                "ID Fournisseur Principal",
+                "idFournisseurPrincipal"
+            ]
+        );
+
+        const texteRecherche = normaliserTexteFiltreProduit(
+            [reference, designation, description, fournisseur].join(" ")
+        );
+
+        const statutProduit = normaliserStatutFiltreProduit(
+            lireValeurProduit(produit, ["Statut", "statut"])
+        );
+
+        return (
+            (!recherche || texteRecherche.includes(recherche)) &&
+            (!statutRecherche || statutProduit === statutRecherche)
+        );
+    });
+
+    afficherProduits(listeFiltree);
+}
+
+function normaliserTexteFiltreProduit(valeur) {
+
+    return String(valeur || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+
+function normaliserStatutFiltreProduit(valeur) {
+
+    const statut = normaliserTexteFiltreProduit(valeur);
+
+    if (statut === "archive" || statut === "archivee") {
+        return "archive";
+    }
+
+    return statut;
+}
+
+
+function afficherAucunResultatFiltreProduit() {
+
+    const tableBody = obtenirCorpsTableauProduits();
+
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="9" class="table-message">
+                Aucun produit ne correspond à votre recherche.
+            </td>
+        </tr>
+    `;
+}
+
+/* ===========================================================
+   HEADER PRODUITS
+   Recherche synchronisée, notifications, profil et déconnexion.
+=========================================================== */
+
+function initialiserHeaderProduits() {
+
+    initialiserRechercheHeaderProduits();
+    initialiserNotificationsProduits();
+    initialiserMenuProfilProduits();
+    initialiserDeconnexionProduits();
+}
+
+
+function initialiserRechercheHeaderProduits() {
+
+    const rechercheHeader =
+        document.getElementById("header-products-search-input");
+
+    const boutonRecherche =
+        document.getElementById("header-products-search-btn");
+
+    const rechercheModule =
+        document.getElementById("header-products-search-input");
+
+    const synchroniserRecherche = valeur => {
+
+        const texte = String(valeur || "");
+
+        if (rechercheHeader && rechercheHeader.value !== texte) {
+            rechercheHeader.value = texte;
+        }
+
+        if (rechercheModule && rechercheModule.value !== texte) {
+            rechercheModule.value = texte;
+        }
+
+        appliquerFiltresProduits();
+    };
+
+    rechercheHeader?.addEventListener("input", () => {
+        synchroniserRecherche(rechercheHeader.value);
+    });
+
+    boutonRecherche?.addEventListener("click", event => {
+        event.preventDefault();
+        synchroniserRecherche(rechercheHeader?.value || "");
+    });
+
+    rechercheHeader?.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            synchroniserRecherche(rechercheHeader.value);
+        }
+    });
+
+    rechercheModule?.addEventListener("input", () => {
+        if (
+            rechercheHeader &&
+            rechercheHeader.value !== rechercheModule.value
+        ) {
+            rechercheHeader.value = rechercheModule.value;
+        }
+    });
+}
+
+
+function initialiserNotificationsProduits() {
+
+    const bouton =
+        document.getElementById("notification-button");
+
+    const panneau =
+        document.getElementById("notification-panel");
+
+    if (!bouton || !panneau) {
+        return;
+    }
+
+    bouton.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        const ouvrir = panneau.hidden;
+
+        fermerMenusHeaderProduits();
+
+        panneau.hidden = !ouvrir;
+        bouton.setAttribute(
+            "aria-expanded",
+            ouvrir ? "true" : "false"
+        );
+    });
+
+    panneau.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+}
+
+
+function initialiserMenuProfilProduits() {
+
+    const bouton =
+        document.getElementById("profile-menu-button");
+
+    const menu =
+        document.getElementById("profile-dropdown");
+
+    if (!bouton || !menu) {
+        return;
+    }
+
+    bouton.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        const ouvrir = menu.hidden;
+
+        fermerMenusHeaderProduits();
+
+        menu.hidden = !ouvrir;
+        bouton.setAttribute(
+            "aria-expanded",
+            ouvrir ? "true" : "false"
+        );
+    });
+
+    menu.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+
+    document.addEventListener(
+        "click",
+        fermerMenusHeaderProduits
+    );
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            fermerMenusHeaderProduits();
+        }
+    });
+}
+
+
+function fermerMenusHeaderProduits() {
+
+    const panneau =
+        document.getElementById("notification-panel");
+
+    const boutonNotification =
+        document.getElementById("notification-button");
+
+    const menuProfil =
+        document.getElementById("profile-dropdown");
+
+    const boutonProfil =
+        document.getElementById("profile-menu-button");
+
+    if (panneau) {
+        panneau.hidden = true;
+    }
+
+    if (menuProfil) {
+        menuProfil.hidden = true;
+    }
+
+    boutonNotification?.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+
+    boutonProfil?.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+}
+
+
+function initialiserDeconnexionProduits() {
+
+    const bouton =
+        document.getElementById("logout-button");
+
+    if (!bouton) {
+        return;
+    }
+
+    bouton.addEventListener("click", event => {
+
+        event.preventDefault();
+
+        fermerMenusHeaderProduits();
+
+        try {
+            if (typeof logoutUser === "function") {
+                logoutUser();
+            } else {
+                sessionStorage.clear();
+
+                [
+                    "user",
+                    "utilisateur",
+                    "currentUser",
+                    "authUser",
+                    "isAuthenticated",
+                    "token",
+                    "authToken"
+                ].forEach(cle => localStorage.removeItem(cle));
+            }
+        } catch (error) {
+            console.warn("Erreur pendant la déconnexion :", error);
+        }
+
+        window.setTimeout(() => {
+            window.location.replace("connexion.html");
+        }, 50);
+    });
+}
+
+/* ===========================================================
+   NOTIFICATIONS DU HEADER
+=========================================================== */
+
+function initialiserNotificationsProduits() {
+    const boutonNotification =
+        document.getElementById("notification-button");
+
+    const panneauNotification =
+        document.getElementById("notification-panel");
+
+    if (!boutonNotification || !panneauNotification) {
+        return;
+    }
+
+    boutonNotification.addEventListener("click", function (event) {
+        event.stopPropagation();
+
+        const estFerme = panneauNotification.hidden;
+
+        panneauNotification.hidden = !estFerme;
+
+        boutonNotification.setAttribute(
+            "aria-expanded",
+            estFerme ? "true" : "false"
+        );
+    });
+
+    panneauNotification.addEventListener("click", function (event) {
+        event.stopPropagation();
+    });
+
+    document.addEventListener("click", function () {
+        panneauNotification.hidden = true;
+
+        boutonNotification.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            panneauNotification.hidden = true;
+
+            boutonNotification.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    });
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initialiserNotificationsProduits
+);
+
+/* ===========================================================
+   OUTILS AVANCÉS : PAGINATION, SÉLECTION, EXPORT ET IMPRESSION
+=========================================================== */
+
+function initialiserOutilsAvancesProduits() {
+
+    const taillePage =
+        document.getElementById("products-page-size");
+
+    taillePage?.addEventListener("change", () => {
+        produitsParPage = Number(taillePage.value) || 10;
+        pageProduitsCourante = 1;
+        appliquerFiltresProduits();
+    });
+
+    const tableBody = obtenirCorpsTableauProduits();
+
+    tableBody?.addEventListener("change", event => {
+
+        const caseProduit =
+            event.target.closest(".product-row-checkbox");
+
+        if (!caseProduit) {
+            return;
+        }
+
+        const id = String(
+            caseProduit.dataset.productId || ""
+        ).trim();
+
+        if (caseProduit.checked) {
+            produitsSelectionnes.add(id);
+        } else {
+            produitsSelectionnes.delete(id);
+        }
+
+        synchroniserSelectionProduits();
+    });
+
+    document
+        .getElementById("select-all-products")
+        ?.addEventListener("change", event => {
+
+            document
+                .querySelectorAll(".product-row-checkbox")
+                .forEach(caseProduit => {
+
+                    const id = String(
+                        caseProduit.dataset.productId || ""
+                    ).trim();
+
+                    caseProduit.checked = event.target.checked;
+
+                    if (event.target.checked) {
+                        produitsSelectionnes.add(id);
+                    } else {
+                        produitsSelectionnes.delete(id);
+                    }
+                });
+
+            synchroniserSelectionProduits();
+        });
+
+    document
+        .getElementById("clear-products-selection-btn")
+        ?.addEventListener("click", () => {
+            produitsSelectionnes.clear();
+            synchroniserSelectionProduits();
+        });
+
+    document
+        .getElementById("bulk-delete-products-btn")
+        ?.addEventListener(
+            "click",
+            ouvrirSuppressionEnMasseProduits
+        );
+
+    document
+        .getElementById("cancel-bulk-delete-products-btn")
+        ?.addEventListener(
+            "click",
+            fermerSuppressionEnMasseProduits
+        );
+
+    document
+        .getElementById("confirm-bulk-delete-products-btn")
+        ?.addEventListener(
+            "click",
+            confirmerSuppressionEnMasseProduits
+        );
+
+    initialiserExportsProduits();
+    initialiserImpressionProduits();
+    appliquerAutorisationsProduits();
+}
+
+
+function mettreAJourCompteurProduits(total) {
+
+    const compteur =
+        document.getElementById("filtered-product-count");
+
+    if (compteur) {
+        compteur.textContent =
+            Number(total || 0).toLocaleString("fr-FR");
+    }
+}
+
+
+function afficherPaginationProduits(total, totalPages) {
+
+    const resume =
+        document.getElementById("products-pagination-summary");
+
+    const controles =
+        document.getElementById("products-pagination-controls");
+
+    if (!resume || !controles) {
+        return;
+    }
+
+    if (total === 0) {
+        resume.textContent = "0 produit";
+        controles.innerHTML = "";
+        return;
+    }
+
+    const debut =
+        (pageProduitsCourante - 1) * produitsParPage + 1;
+    const fin = Math.min(
+        pageProduitsCourante * produitsParPage,
+        total
+    );
+
+    resume.textContent =
+        `${debut.toLocaleString("fr-FR")}–${fin.toLocaleString("fr-FR")} ` +
+        `sur ${total.toLocaleString("fr-FR")}`;
+
+    const boutons = [];
+
+    boutons.push(`
+        <button
+            type="button"
+            class="products-page-btn"
+            data-page="${pageProduitsCourante - 1}"
+            ${pageProduitsCourante === 1 ? "disabled" : ""}
+        >
+            ← Précédent
+        </button>
+    `);
+
+    const pages = construireListePagesProduits(
+        pageProduitsCourante,
+        totalPages
+    );
+
+    pages.forEach(page => {
+
+        if (page === "...") {
+            boutons.push(
+                `<span class="products-page-ellipsis">…</span>`
+            );
+            return;
+        }
+
+        boutons.push(`
+            <button
+                type="button"
+                class="products-page-btn ${
+                    page === pageProduitsCourante ? "active" : ""
+                }"
+                data-page="${page}"
+                aria-current="${
+                    page === pageProduitsCourante ? "page" : "false"
+                }"
+            >
+                ${page}
+            </button>
+        `);
+    });
+
+    boutons.push(`
+        <button
+            type="button"
+            class="products-page-btn"
+            data-page="${pageProduitsCourante + 1}"
+            ${pageProduitsCourante === totalPages ? "disabled" : ""}
+        >
+            Suivant →
+        </button>
+    `);
+
+    controles.innerHTML = boutons.join("");
+
+    controles
+        .querySelectorAll("[data-page]")
+        .forEach(bouton => {
+
+            bouton.addEventListener("click", () => {
+
+                const page = Number(bouton.dataset.page);
+
+                if (
+                    Number.isInteger(page) &&
+                    page >= 1 &&
+                    page <= totalPages
+                ) {
+                    pageProduitsCourante = page;
+                    afficherProduits(produitsFiltresCourants);
+
+                    document
+                        .querySelector(".sales-table-container")
+                        ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                }
+            });
+        });
+}
+
+
+function construireListePagesProduits(pageActuelle, totalPages) {
+
+    if (totalPages <= 7) {
+        return Array.from(
+            { length: totalPages },
+            (_, index) => index + 1
+        );
+    }
+
+    const pages = [1];
+
+    if (pageActuelle > 4) {
+        pages.push("...");
+    }
+
+    const debut = Math.max(2, pageActuelle - 1);
+    const fin = Math.min(totalPages - 1, pageActuelle + 1);
+
+    for (let page = debut; page <= fin; page++) {
+        pages.push(page);
+    }
+
+    if (pageActuelle < totalPages - 3) {
+        pages.push("...");
+    }
+
+    pages.push(totalPages);
+
+    return pages;
+}
+
+
+function synchroniserSelectionProduits() {
+
+    document
+        .querySelectorAll(".product-row-checkbox")
+        .forEach(caseProduit => {
+
+            const id = String(
+                caseProduit.dataset.productId || ""
+            ).trim();
+
+            const selectionne =
+                produitsSelectionnes.has(id);
+
+            caseProduit.checked = selectionne;
+
+            caseProduit
+                .closest("tr")
+                ?.classList.toggle(
+                    "product-row-selected",
+                    selectionne
+                );
+        });
+
+    const casesPage = [
+        ...document.querySelectorAll(
+            ".product-row-checkbox"
+        )
+    ];
+
+    const toutSelectionne =
+        casesPage.length > 0 &&
+        casesPage.every(caseProduit => caseProduit.checked);
+
+    const partiellementSelectionne =
+        casesPage.some(caseProduit => caseProduit.checked) &&
+        !toutSelectionne;
+
+    const tout =
+        document.getElementById("select-all-products");
+
+    if (tout) {
+        tout.checked = toutSelectionne;
+        tout.indeterminate = partiellementSelectionne;
+    }
+
+    const nombre = produitsSelectionnes.size;
+
+    const barre =
+        document.getElementById("products-bulk-bar");
+
+    const compteur =
+        document.getElementById("selected-products-count");
+
+    if (compteur) {
+        compteur.textContent =
+            nombre.toLocaleString("fr-FR");
+    }
+
+    if (barre) {
+        barre.hidden = nombre === 0;
+    }
+}
+
+
+function ouvrirSuppressionEnMasseProduits() {
+
+    if (refuserActionProduit("supprimer")) {
+        return;
+    }
+
+    if (produitsSelectionnes.size === 0) {
+        return;
+    }
+
+    const modal =
+        document.getElementById(
+            "bulk-delete-products-modal"
+        );
+
+    const total =
+        document.getElementById(
+            "bulk-delete-products-total"
+        );
+
+    if (total) {
+        total.textContent =
+            produitsSelectionnes.size.toLocaleString("fr-FR");
+    }
+
+    if (modal) {
+        modal.hidden = false;
+
+        requestAnimationFrame(() => {
+            modal.classList.add("active");
+            document.body.classList.add("modal-open");
+        });
+    }
+}
+
+
+function fermerSuppressionEnMasseProduits() {
+
+    const modal =
+        document.getElementById(
+            "bulk-delete-products-modal"
+        );
+
+    const bouton =
+        document.getElementById(
+            "confirm-bulk-delete-products-btn"
+        );
+
+    if (bouton?.disabled) {
+        return;
+    }
+
+    if (modal) {
+        modal.classList.remove("active");
+        modal.hidden = true;
+    }
+
+    document.body.classList.remove("modal-open");
+    afficherMessageSuppressionEnMasse("");
+}
+
+
+async function confirmerSuppressionEnMasseProduits() {
+
+    if (refuserActionProduit("supprimer")) {
+        fermerSuppressionEnMasseProduits();
+        return;
+    }
+
+    const ids = [...produitsSelectionnes];
+
+    if (ids.length === 0) {
+        return;
+    }
+
+    const bouton =
+        document.getElementById(
+            "confirm-bulk-delete-products-btn"
+        );
+
+    const boutonAnnuler =
+        document.getElementById(
+            "cancel-bulk-delete-products-btn"
+        );
+
+    const supprimes = [];
+    const erreurs = [];
+
+    try {
+
+        if (bouton) {
+            bouton.disabled = true;
+            bouton.textContent = "Suppression...";
+        }
+
+        if (boutonAnnuler) {
+            boutonAnnuler.disabled = true;
+        }
+
+        for (const idProduit of ids) {
+
+            try {
+
+                const resultat = await apiPost(
+                    "deleteProduit",
+                    { idProduit }
+                );
+
+                if (!resultat?.success) {
+                    throw new Error(
+                        resultat?.message ||
+                        "Suppression refusée."
+                    );
+                }
+
+                supprimes.push(idProduit);
+
+            } catch (error) {
+
+                erreurs.push({
+                    idProduit,
+                    message:
+                        error?.message ||
+                        "Erreur inconnue"
+                });
+            }
+        }
+
+        if (supprimes.length > 0) {
+
+            produits = produits.filter(produit => {
+
+                const id = String(
+                    lireValeurProduit(
+                        produit,
+                        ["ID Produit", "idProduit"]
+                    ) || ""
+                ).trim();
+
+                return !supprimes.includes(id);
+            });
+
+            supprimes.forEach(id =>
+                produitsSelectionnes.delete(id)
+            );
+
+            mettreAJourKPIs();
+            appliquerFiltresProduits();
+        }
+
+        if (erreurs.length > 0) {
+
+            afficherMessageSuppressionEnMasse(
+                `${supprimes.length} produit(s) supprimé(s), ` +
+                `${erreurs.length} échec(s).`
+            );
+
+            return;
+        }
+
+        fermerSuppressionEnMasseProduits();
+
+    } finally {
+
+        if (bouton) {
+            bouton.disabled = false;
+            bouton.textContent =
+                "Supprimer définitivement";
+        }
+
+        if (boutonAnnuler) {
+            boutonAnnuler.disabled = false;
+        }
+    }
+}
+
+
+function afficherMessageSuppressionEnMasse(message) {
+
+    const zone =
+        document.getElementById(
+            "bulk-delete-products-message"
+        );
+
+    if (!zone) {
+        return;
+    }
+
+    zone.hidden = !message;
+    zone.textContent = message || "";
+}
+
+
+function obtenirProduitsPourSortie() {
+
+    if (produitsSelectionnes.size > 0) {
+
+        return produits.filter(produit => {
+
+            const id = String(
+                lireValeurProduit(
+                    produit,
+                    ["ID Produit", "idProduit"]
+                ) || ""
+            ).trim();
+
+            return produitsSelectionnes.has(id);
+        });
+    }
+
+    return [...produitsFiltresCourants];
+}
+
+
+function transformerProduitsPourSortie(liste) {
+
+    return liste.map(produit => ({
+        "Référence": lireValeurProduit(
+            produit,
+            ["Référence Produit", "referenceProduit", "reference"]
+        ) || "",
+        "Désignation": lireValeurProduit(
+            produit,
+            ["Désignation", "designation"]
+        ) || "",
+        "Prix de revient": convertirNombre(
+            lireValeurProduit(
+                produit,
+                ["Prix de Revient", "prixRevient"]
+            )
+        ),
+        "Prix de vente": convertirNombre(
+            lireValeurProduit(
+                produit,
+                ["Prix de Vente", "prixVente"]
+            )
+        ),
+        "Marge FCFA": convertirNombre(
+            lireValeurProduit(
+                produit,
+                ["Marge (FCFA)", "margeFCFA"]
+            )
+        ),
+        "Taux de marge": formaterPourcentageProduit(
+            lireValeurProduit(
+                produit,
+                ["Taux de Marge", "Taux de Marge (%)", "tauxMarge"]
+            )
+        ),
+        "Fournisseur": lireValeurProduit(
+            produit,
+            [
+                "Nom Fournisseur",
+                "Fournisseur",
+                "ID Fournisseur",
+                "ID Fournisseur Principal",
+                "idFournisseurPrincipal"
+            ]
+        ) || "",
+        "Statut": lireValeurProduit(
+            produit,
+            ["Statut", "statut"]
+        ) || ""
+    }));
+}
+
+
+function initialiserExportsProduits() {
+
+    const bouton =
+        document.getElementById("export-products-btn");
+
+    const menu =
+        document.getElementById(
+            "products-export-dropdown"
+        );
+
+    bouton?.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        if (!menu) {
+            return;
+        }
+
+        menu.hidden = !menu.hidden;
+
+        bouton.setAttribute(
+            "aria-expanded",
+            menu.hidden ? "false" : "true"
+        );
+    });
+
+    menu?.addEventListener("click", event => {
+
+        const option =
+            event.target.closest("[data-export-format]");
+
+        if (!option) {
+            return;
+        }
+
+        const format =
+            option.dataset.exportFormat;
+
+        menu.hidden = true;
+        bouton?.setAttribute("aria-expanded", "false");
+
+        exporterProduits(format);
+    });
+
+    document.addEventListener("click", event => {
+
+        if (
+            !event.target.closest("#products-export-menu") &&
+            menu
+        ) {
+            menu.hidden = true;
+            bouton?.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    });
+}
+
+
+function exporterProduits(format) {
+
+    const liste =
+        obtenirProduitsPourSortie();
+
+    if (liste.length === 0) {
+        return;
+    }
+
+    const donnees =
+        transformerProduitsPourSortie(liste);
+
+    if (format === "xlsx") {
+        exporterProduitsExcel(donnees);
+        return;
+    }
+
+    if (format === "pdf") {
+        exporterProduitsPDF(donnees);
+        return;
+    }
+
+    if (format === "csv") {
+        exporterProduitsCSV(donnees);
+    }
+}
+
+
+function exporterProduitsExcel(donnees) {
+
+    if (typeof XLSX === "undefined") {
+        alert("La bibliothèque Excel n'est pas disponible.");
+        return;
+    }
+
+    const feuille = XLSX.utils.json_to_sheet(donnees);
+
+    feuille["!cols"] = [
+        { wch: 16 },
+        { wch: 28 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 22 },
+        { wch: 12 }
+    ];
+
+    const classeur = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        classeur,
+        feuille,
+        "Produits"
+    );
+
+    XLSX.writeFile(
+        classeur,
+        `produits_${dateFichierProduits()}.xlsx`
+    );
+}
+
+
+function exporterProduitsCSV(donnees) {
+
+    const colonnes = Object.keys(donnees[0]);
+
+    const echapperCSV = valeur => {
+        const texte = String(valeur ?? "");
+        return `"${texte.replace(/"/g, '""')}"`;
+    };
+
+    const contenu = [
+        colonnes.map(echapperCSV).join(";"),
+        ...donnees.map(ligne =>
+            colonnes
+                .map(colonne => echapperCSV(ligne[colonne]))
+                .join(";")
+        )
+    ].join("\n");
+
+    telechargerFichierProduits(
+        "\uFEFF" + contenu,
+        `produits_${dateFichierProduits()}.csv`,
+        "text/csv;charset=utf-8"
+    );
+}
+
+
+function exporterProduitsPDF(donnees) {
+
+    const jsPDF =
+        window.jspdf?.jsPDF;
+
+    if (!jsPDF) {
+        alert("La bibliothèque PDF n'est pas disponible.");
+        return;
+    }
+
+    const documentPDF =
+        new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4"
+        });
+
+    documentPDF.setFontSize(17);
+    documentPDF.text(
+        "VISIBL — Liste des produits",
+        14,
+        16
+    );
+
+    documentPDF.setFontSize(9);
+    documentPDF.text(
+        `Généré le ${new Date().toLocaleString("fr-FR")}`,
+        14,
+        22
+    );
+
+    const colonnes = Object.keys(donnees[0]);
+
+    documentPDF.autoTable({
+        startY: 28,
+        head: [colonnes],
+        body: donnees.map(ligne =>
+            colonnes.map(colonne => ligne[colonne])
+        ),
+        styles: {
+            fontSize: 7,
+            cellPadding: 2
+        },
+        headStyles: {
+            fillColor: [37, 99, 235]
+        }
+    });
+
+    documentPDF.save(
+        `produits_${dateFichierProduits()}.pdf`
+    );
+}
+
+
+function initialiserImpressionProduits() {
+
+    document
+        .getElementById("print-products-btn")
+        ?.addEventListener(
+            "click",
+            imprimerProduits
+        );
+}
+
+
+function imprimerProduits() {
+
+    const liste =
+        obtenirProduitsPourSortie();
+
+    if (liste.length === 0) {
+        return;
+    }
+
+    const donnees =
+        transformerProduitsPourSortie(liste);
+
+    const colonnes = Object.keys(donnees[0]);
+
+    const fenetre =
+        window.open(
+            "",
+            "_blank",
+            "width=1200,height=800"
+        );
+
+    if (!fenetre) {
+        alert(
+            "Autorisez les fenêtres contextuelles pour imprimer."
+        );
+        return;
+    }
+
+    const lignes = donnees.map(ligne => `
+        <tr>
+            ${colonnes.map(colonne =>
+                `<td>${echapperHTML(ligne[colonne])}</td>`
+            ).join("")}
+        </tr>
+    `).join("");
+
+    fenetre.document.write(`
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <title>Liste des produits</title>
+            <style>
+                @page { size: landscape; margin: 12mm; }
+                body {
+                    font-family: Arial, sans-serif;
+                    color: #0f172a;
+                }
+                h1 { margin: 0 0 6px; font-size: 22px; }
+                p { margin: 0 0 18px; color: #64748b; }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    padding: 7px;
+                    font-size: 9px;
+                    text-align: left;
+                    border: 1px solid #dbe2ea;
+                }
+                th {
+                    background: #e5e7eb;
+                }
+                tbody tr:nth-child(even) {
+                    background: #f8fafc;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>VISIBL — Liste des produits</h1>
+            <p>
+                ${donnees.length} produit(s) —
+                ${new Date().toLocaleString("fr-FR")}
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        ${colonnes.map(colonne =>
+                            `<th>${echapperHTML(colonne)}</th>`
+                        ).join("")}
+                    </tr>
+                </thead>
+                <tbody>${lignes}</tbody>
+            </table>
+            <script>
+                window.onload = () => {
+                    window.print();
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+
+    fenetre.document.close();
+}
+
+
+function telechargerFichierProduits(
+    contenu,
+    nom,
+    type
+) {
+
+    const blob = new Blob([contenu], { type });
+    const url = URL.createObjectURL(blob);
+    const lien = document.createElement("a");
+
+    lien.href = url;
+    lien.download = nom;
+    document.body.appendChild(lien);
+    lien.click();
+    lien.remove();
+
+    URL.revokeObjectURL(url);
+}
+
+
+function dateFichierProduits() {
+
+    const date = new Date();
+
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+}
+
+
+function appliquerAnimationProduit() {
+
+    if (!animationProduitSuivante?.id) {
+        return;
+    }
+
+    const ligne = document.querySelector(
+        `tr[data-product-id="${CSS.escape(
+            animationProduitSuivante.id
+        )}"]`
+    );
+
+    if (!ligne) {
+        return;
+    }
+
+    ligne.classList.add(
+        animationProduitSuivante.type === "updated"
+            ? "product-row-updated"
+            : "product-row-added"
+    );
+
+    animationProduitSuivante = null;
+}
+
+
+
+
+
+/* ===== Recherche Produits : le header devient la recherche principale ===== */
+function valeurRechercheProduitsHeader(){
+    return String(document.getElementById("header-products-search-input")?.value || "").trim();
+}
+/* ===========================================================
+   CORRECTIFS UI PRODUITS — RÉFÉRENCE VENTES
+=========================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+    const q=(s,r=document)=>r.querySelector(s);
+    const qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+
+    /* Recherche principale uniquement dans le header. */
+    const headerSearchInput=q("#header-products-search-input");
+    const headerSearchBtn=q("#header-products-search-btn");
+    headerSearchInput?.addEventListener("input",()=>{
+        try{
+            if(typeof appliquerFiltresProduits==="function") appliquerFiltresProduits();
+            else if(typeof afficherProduits==="function") afficherProduits();
+        }catch(_){}
+    });
+    headerSearchBtn?.addEventListener("click",()=>{
+        try{
+            if(typeof appliquerFiltresProduits==="function") appliquerFiltresProduits();
+            else if(typeof afficherProduits==="function") afficherProduits();
+        }catch(_){}
+    });
+
+    /* Notifications : même comportement que Ventes. */
+    const search=q(".header .search-container");
+    const mobileSearch=q("#mobile-search-btn");
+    const notifBtn=q("#notification-button");
+    const notif=q("#notification-panel");
+    const closeSearch=()=>search?.classList.remove("active");
+    const closeNotif=()=>{if(notif)notif.hidden=true;notifBtn?.setAttribute("aria-expanded","false")};
+    mobileSearch?.addEventListener("click",()=>closeNotif());
+    notifBtn?.addEventListener("click",()=>closeSearch());
+    document.addEventListener("click",e=>{
+        if(!e.target.closest(".header .search-box")&&!e.target.closest(".header .notification-menu")){closeSearch();closeNotif();}
+    });
+
+    /* Déconnexion : efface aussi visibl_user, puis replace pour empêcher le retour par URL. */
+    q("#logout-button")?.addEventListener("click",e=>{
+        e.preventDefault(); e.stopImmediatePropagation();
+        try{if(typeof logoutUser==="function") logoutUser();}catch(_){}
+        try{
+            sessionStorage.clear();
+            ["visibl_user","user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"].forEach(k=>localStorage.removeItem(k));
+        }catch(_){}
+        location.replace("connexion.html");
+    },true);
+
+    /* Actions globales : reprend les boutons existants sans changer leurs handlers. */
+    const menu=q("#products-main-actions-dropdown");
+    const trigger=q("#products-main-actions-trigger");
+    const selection=q("#selection-products-btn");
+    [q("#refresh-products-btn"),q("#export-products-btn")?.closest(".products-export-menu"),q("#print-products-btn")].filter(Boolean).forEach(old=>{
+        const source=old.matches?.("button")?old:q("button",old);
+        if(!source||!menu)return;
+        const b=document.createElement("button"); b.type="button"; b.innerHTML=source.innerHTML;
+        b.addEventListener("click",()=>{source.click();menu.hidden=true;trigger?.setAttribute("aria-expanded","false")});
+        menu.appendChild(b); old.style.display="none";
+    });
+    const closeMainActions=()=>{if(menu)menu.hidden=true;trigger?.setAttribute("aria-expanded","false")};
+    trigger?.addEventListener("click",e=>{
+        e.stopPropagation(); const open=!!menu?.hidden;
+        if(open&&document.body.classList.contains("visibl-selection-mode")){
+            document.body.classList.remove("visibl-selection-mode"); selection?.setAttribute("aria-pressed","false");
+        }
+        if(menu)menu.hidden=!open; trigger.setAttribute("aria-expanded",String(open));
+    });
+    selection?.addEventListener("click",()=>{
+        closeMainActions();
+        const on=!document.body.classList.contains("visibl-selection-mode");
+        document.body.classList.toggle("visibl-selection-mode",on); selection.setAttribute("aria-pressed",String(on));
+    });
+    document.addEventListener("click",e=>{if(!e.target.closest(".products-main-actions-menu"))closeMainActions()});
+
+    /* Menus ⋮ de chaque ligne — positionnement robuste desktop/mobile. */
+    const tbody=q("#products-table-body");
+    const closeRowMenus=(except=null)=>qa(".product-row-menu-dropdown",tbody||document).forEach(m=>{
+        if(m!==except){
+            m.hidden=true;
+            m.style.removeProperty("position");
+            m.style.removeProperty("top");
+            m.style.removeProperty("right");
+            m.style.removeProperty("bottom");
+            m.style.removeProperty("left");
+            m.style.removeProperty("width");
+            m.previousElementSibling?.setAttribute("aria-expanded","false");
+        }
+    });
+
+    const placerMenuLigne=(trigger,menu)=>{
+        if(window.matchMedia("(max-width: 900px)").matches){
+            menu.style.position="fixed";
+            menu.style.top="auto";
+            menu.style.right="12px";
+            menu.style.bottom="12px";
+            menu.style.left="12px";
+            menu.style.width="auto";
+            return;
+        }
+
+        const r=trigger.getBoundingClientRect();
+        const largeur=220;
+        const marge=10;
+        let left=Math.min(window.innerWidth-largeur-marge,Math.max(marge,r.right-largeur));
+        let top=r.bottom+8;
+
+        menu.style.position="fixed";
+        menu.style.width=largeur+"px";
+        menu.style.left=left+"px";
+        menu.style.right="auto";
+        menu.style.bottom="auto";
+        menu.style.top=top+"px";
+
+        requestAnimationFrame(()=>{
+            const mr=menu.getBoundingClientRect();
+            if(mr.bottom>window.innerHeight-marge){
+                const topAbove=r.top-mr.height-8;
+                menu.style.top=Math.max(marge,topAbove)+"px";
+            }
+        });
+    };
+
+    tbody?.addEventListener("click",e=>{
+        const t=e.target.closest(".product-row-menu-trigger");
+        if(t){
+            e.stopPropagation();
+            const m=t.nextElementSibling;
+            const open=!!m.hidden;
+            closeRowMenus(m);
+            m.hidden=!open;
+            t.setAttribute("aria-expanded",String(open));
+            if(open)placerMenuLigne(t,m);
+            return;
+        }
+        if(e.target.closest(".product-row-menu-dropdown button")) closeRowMenus();
+    });
+
+    window.addEventListener("resize",()=>closeRowMenus());
+    window.addEventListener("scroll",()=>closeRowMenus(),true);
+    document.addEventListener("click",e=>{if(!e.target.closest(".product-row-menu"))closeRowMenus()});
+});

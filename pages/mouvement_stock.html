@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+<!-- VISIBL COMMON PATCH: anti-flash session -->
+<style id="visibl-common-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-common-auth-guard-script">
+(function(){
+  document.documentElement.classList.add("visibl-auth-pending");
+  try{
+    const raw=localStorage.getItem("visibl_user");
+    if(!raw){location.replace("connexion.html");return;}
+    const u=JSON.parse(raw);
+    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
+    document.documentElement.classList.remove("visibl-auth-pending");
+  }catch(e){
+    localStorage.removeItem("visibl_user");
+    location.replace("connexion.html");
+  }
+})();
+</script>
+
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Mouvements de stock</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/mouvement_stock.css"
+    >
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside
+        id="sidebar"
+        class="sidebar"
+    >
+
+        <button
+            id="sidebar-close"
+            class="sidebar-close"
+            type="button"
+            aria-label="Fermer le menu"
+        >
+            ✖
+        </button>
+
+        <a
+            href="dashboard.html"
+            class="logo"
+        >
+            <img
+                src="../logo-vizibl.png"
+                alt="Logo VISIBL"
+            >
+        </a>
+
+        <nav>
+
+            <ul>
+
+                <li>
+
+                    <a
+                        href="dashboard.html"
+                        class="nav-link"
+                    >
+                        📊 Tableau de bord
+                    </a>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU COMMERCIAL
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            🛒 Commercial
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="ventes.html"
+                                class="nav-link"
+                            >
+                                Ventes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="commandes.html"
+                                class="nav-link"
+                            >
+                                Commandes
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="clients.html"
+                                class="nav-link"
+                            >
+                                Clients
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livraisons.html"
+                                class="nav-link"
+                            >
+                                Livraisons
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="livreurs.html"
+                                class="nav-link"
+                            >
+                                Livreurs
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU STOCK ET APPROVISIONNEMENT
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            📦 Stock & Approvisionnement
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="produits.html"
+                                class="nav-link"
+                            >
+                                Produits
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="stock.html"
+                                class="nav-link"
+                            >
+                                Stock
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="approvisionnements.html"
+                                class="nav-link"
+                            >
+                                Approvisionnements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="fournisseurs.html"
+                                class="nav-link"
+                            >
+                                Fournisseurs
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="transitaires.html"
+                                class="nav-link"
+                            >
+                                Transitaires
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+
+                <!-- =========================================
+                     MENU FINANCE
+                ========================================== -->
+
+                <li class="menu-category">
+
+                    <a
+                        href="#"
+                        class="nav-link category-title"
+                    >
+
+                        <span>
+                            💰 Finance
+                        </span>
+
+                        <span class="arrow">
+                            ▼
+                        </span>
+
+                    </a>
+
+                    <ul class="submenu">
+
+                        <li>
+
+                            <a
+                                href="caisse.html"
+                                class="nav-link"
+                            >
+                                Caisse
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="paiements.html"
+                                class="nav-link"
+                            >
+                                Paiements
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="factures.html"
+                                class="nav-link"
+                            >
+                                Factures
+                            </a>
+
+                        </li>
+
+                        <li>
+
+                            <a
+                                href="comptabilité.html"
+                                class="nav-link"
+                            >
+                                Comptabilité
+                            </a>
+
+                        </li>
+
+                    </ul>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="rapports.html"
+                        class="nav-link"
+                    >
+                        📈 Rapports
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a
+                        href="parametres.html"
+                        class="nav-link"
+                    >
+                        ⚙️ Paramètres
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =====================================================
+         CONTENU PRINCIPAL
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo">
+                </a>
+
+                <h2>Mouvements de stock</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <!-- Icône visible sur mobile -->
+                    <button class="icon-btn" id="mobile-search-btn">
+                        🔍
+                    </button>
+
+                    <!-- Barre de recherche -->
+                    <div class="search-container">
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="header-stock-movements-search-input"
+                            placeholder="Rechercher un mouvement..."
+                        >
+
+                        <button class="search-btn"
+                            id="header-stock-movements-search-btn"
+                            type="button"
+                            aria-label="Rechercher">
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+    <button
+        id="notification-button"
+        class="icon-btn notifications"
+        type="button"
+        aria-label="Afficher les notifications"
+        aria-expanded="false">
+
+        🔔
+        <span class="notification-badge" hidden>0</span>
+
+    </button>
+
+    <div
+        id="notification-panel"
+        class="notification-panel"
+        hidden>
+
+        <div class="notification-panel-header">
+            <h3>Notifications</h3>
+        </div>
+        <div class="notification-empty-state">
+            <span aria-hidden="true">🔔</span><p>Aucune notification pour le moment.</p>
+        </div>
+    </div>
+
+</div>
+
+                    <div class="profile-menu">
+
+                        <button
+                            class="icon-btn"
+                            type="button"
+                            aria-label="Afficher le menu du profil"
+                        >
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+
+                            <a href="moncompte.html">
+                                Mon compte
+                            </a>
+
+                            <hr>
+
+                            <a href="#" class="logout" id="logout-button">
+                                Déconnexion
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             CONTENU DE LA PAGE
+        ================================================== -->
+
+        <section class="content">
+
+            <div class="welcome-section">
+                <h2>Mouvements de stock</h2>
+                <p>
+                    Consultez l’historique complet des entrées, sorties,
+                    ajustements et autres opérations affectant les stocks.
+                </p>
+            </div>
+
+            <div class="kpi-grid" id="stock-movements-kpi-grid">
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">🔄</div>
+                    <div class="kpi-content">
+                        <h3>Total des mouvements</h3>
+                        <p class="kpi-value" id="kpi-total-stock-movements">0</p>
+                        <small>Toutes les opérations enregistrées</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📥</div>
+                    <div class="kpi-content">
+                        <h3>Entrées</h3>
+                        <p class="kpi-value" id="kpi-stock-entries">0</p>
+                        <small>Quantités ajoutées au stock</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">📤</div>
+                    <div class="kpi-content">
+                        <h3>Sorties</h3>
+                        <p class="kpi-value" id="kpi-stock-exits">0</p>
+                        <small>Quantités retirées du stock</small>
+                    </div>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-icon" aria-hidden="true">🛠️</div>
+                    <div class="kpi-content">
+                        <h3>Ajustements</h3>
+                        <p class="kpi-value" id="kpi-stock-adjustments">0</p>
+                        <small>Corrections manuelles du stock</small>
+                    </div>
+                </article>
+
+            </div>
+
+            <div class="sales-toolbar stock-movements-toolbar">
+  <div class="stock-movements-toolbar-left stock-movements-toolbar-summary"><span class="stock-movements-visible-count"><strong id="filtered-stock-movements-count">0</strong> mouvement(s) affiché(s)</span></div>
+  <div class="stock-movements-toolbar-right stock-movements-toolbar-actions">
+    <a href="stock.html" class="btn-secondary movements-back-stock-link" id="back-to-stock-btn">← <span>Retour au stock</span></a>
+    <div class="stock-movements-actions-menu">
+      <button class="btn-secondary movement-actions-trigger" id="stock-movements-actions-trigger" type="button" aria-expanded="false" aria-controls="stock-movements-actions-dropdown">Actions <span aria-hidden="true">⌄</span></button>
+      <div class="stock-movements-actions-dropdown" id="stock-movements-actions-dropdown" hidden>
+        <button type="button" id="new-stock-movement-btn">➕ <span>Ajustement manuel</span></button>
+        <button type="button" id="refresh-stock-movements-btn">🔄 <span>Actualiser</span></button>
+        <button type="button" id="export-stock-movements-btn">📤 <span>Exporter</span></button>
+        <button type="button" id="print-stock-movements-btn">🖨️ <span>Imprimer</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sales-filters stock-movements-filters">
+
+                <select id="stock-movement-type-filter" aria-label="Filtrer par type de mouvement">
+                    <option value="">Tous les types</option>
+                    <option value="stock initial">Stock initial</option>
+                    <option value="approvisionnement">Approvisionnement</option>
+                    <option value="vente">Vente</option>
+                    <option value="retour client">Retour client</option>
+                    <option value="retour fournisseur">Retour fournisseur</option>
+                    <option value="ajustement positif">Ajustement positif</option>
+                    <option value="ajustement négatif">Ajustement négatif</option>
+                    <option value="perte">Perte</option>
+                    <option value="casse">Casse</option>
+                    <option value="reservation commande">Réservation commande</option>
+                    <option value="liberation reservation">Libération réservation</option>
+                    <option value="sortie livraison">Sortie livraison</option>
+                    <option value="retour livraison vendable">Retour livraison vendable</option>
+                    <option value="retour livraison non vendable">Retour livraison non vendable</option>
+                    <option value="mise en non vendable">Mise en non vendable</option>
+                    <option value="remise en vendable">Remise en vendable</option>
+                </select>
+
+                <div class="movement-date-filter"><input type="date" id="stock-movement-date-from" aria-label="Filtrer par date"><span class="movement-date-placeholder" aria-hidden="true">jj/mm/aaaa</span></div>
+
+                <button type="button" class="btn-filter-reset" id="reset-stock-movements-filters">
+                    Effacer les filtres
+                </button>
+
+            </div>
+
+            <div class="sales-table-container">
+
+                <table class="sales-table stock-movements-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Heure</th>
+                            <th>Produit</th>
+                            <th>Type de mouvement</th>
+                            <th>Quantité</th>
+                            <th>Stock avant</th>
+                            <th>Stock après</th>
+                            <th>Référence</th>
+                            <th>Module d’origine</th>
+                            <th>Utilisateur</th>
+                            <th>Commentaire</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-movements-table-body">
+                        <tr>
+                            <td colspan="11" class="table-message">
+                                Chargement des mouvements de stock...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="stock-movements-pagination">
+                    <div class="stock-movements-pagination-size">
+                        <label for="stock-movements-page-size">Afficher</label>
+                        <select id="stock-movements-page-size">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>mouvements par page</span>
+                    </div>
+
+                    <div class="stock-movements-pagination-summary" id="stock-movements-pagination-summary">0 mouvement</div>
+
+                    <div class="stock-movements-pagination-controls" id="stock-movements-pagination-controls" aria-label="Pagination des mouvements de stock"></div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     MODALE : AJUSTEMENT MANUEL DU STOCK
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="manual-adjustment-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal-container manual-adjustment-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manual-adjustment-modal-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 id="manual-adjustment-modal-title">
+                    Nouvel ajustement manuel
+                </h2>
+                <p>
+                    Corrigez exceptionnellement le stock d’un produit.
+                    Toutes les informations techniques seront générées automatiquement.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-manual-adjustment-modal"
+                aria-label="Fermer le formulaire"
+            >
+                ✖
+            </button>
+        </div>
+
+        <form id="manual-adjustment-form">
+            <div class="modal-body">
+                <div
+                    id="manual-adjustment-form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+                <section class="form-section">
+                    <h3>Informations de l’ajustement</h3>
+
+                    <div class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label for="manual-adjustment-product">
+                                Produit <span class="required">*</span>
+                            </label>
+                            <select
+                                id="manual-adjustment-product"
+                                name="idProduit"
+                                required
+                            >
+                                <option value="">Sélectionner un produit</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-adjustment-type">
+                                Type d’ajustement <span class="required">*</span>
+                            </label>
+                            <select
+                                id="manual-adjustment-type"
+                                name="typeMouvement"
+                                required
+                            >
+                                <option value="">Sélectionner un type</option>
+                                <option value="Ajustement positif">Ajustement positif</option>
+                                <option value="Ajustement négatif">Ajustement négatif</option>
+                                <option value="Perte">Perte</option>
+                                <option value="Casse">Casse</option>
+                                <option value="Vol">Vol</option>
+                                <option value="Don">Don</option>
+                                <option value="Mise en non vendable">Mise en non vendable</option>
+                                <option value="Remise en vendable">Remise en vendable</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-adjustment-quantity">
+                                Quantité <span class="required">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                id="manual-adjustment-quantity"
+                                name="quantite"
+                                min="1"
+                                step="1"
+                                placeholder="Exemple : 5"
+                                required
+                            >
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section stock-calculation-section">
+                    <h3>Calcul automatique du stock</h3>
+
+                    <div class="stock-calculation-grid">
+                        <article class="stock-calculation-card">
+                            <span>Stock physique actuel</span>
+                            <strong id="manual-adjustment-stock-before">—</strong>
+                        </article>
+
+                        <div class="stock-calculation-arrow" aria-hidden="true">→</div>
+
+                        <article class="stock-calculation-card stock-calculation-result">
+                            <span>Nouveau stock</span>
+                            <strong id="manual-adjustment-stock-after">—</strong>
+                        </article>
+                    </div>
+
+                    <input
+                        type="hidden"
+                        id="manual-adjustment-stock-before-value"
+                        name="stockAvant"
+                    >
+                    <input
+                        type="hidden"
+                        id="manual-adjustment-stock-after-value"
+                        name="stockApres"
+                    >
+                </section>
+
+                <section class="form-section">
+                    <h3>Justification</h3>
+
+                    <div class="form-group form-group-full">
+                        <label for="manual-adjustment-comment">
+                            Motif de l’ajustement <span class="required">*</span>
+                        </label>
+                        <textarea
+                            id="manual-adjustment-comment"
+                            name="commentaire"
+                            rows="4"
+                            placeholder="Expliquez clairement la raison de cette correction..."
+                            required
+                        ></textarea>
+                        <small class="form-help">
+                            Cette justification sera conservée dans l’historique du stock.
+                        </small>
+                    </div>
+                </section>
+
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-manual-adjustment-btn"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-manual-adjustment-btn"
+                >
+                    Enregistrer l’ajustement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/modules/mouvement_stock.js"></script>
+
+</body>
+</html>

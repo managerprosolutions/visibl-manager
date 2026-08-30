@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Rapports</title>
+
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/rapports.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- ===== Sidebar ===== -->
+<aside id="sidebar" class="sidebar">
+
+    <button id="sidebar-close" class="sidebar-close">
+        ✖
+    </button>
+
+    <a href="dashboard.html" class="logo">
+        <img src="../logo-vizibl.png" alt="Logo VISIBL">
+    </a>
+
+    <nav>
+        <ul>
+
+            <li>
+                <a href="dashboard.html" class="nav-link">
+                    📊 Tableau de bord
+                </a>
+            </li>
+
+            <!-- ===== Menu Commercial ===== -->
+            <li class="menu-category">
+
+                <a href="#" class="nav-link category-title">
+                    <span>🛒 Commercial</span>
+                    <span class="arrow">▼</span>
+                </a>
+
+                <ul class="submenu">
+
+                    <li>
+                        <a href="ventes.html" class="nav-link">
+                            Ventes
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="commandes.html" class="nav-link">
+                            Commandes
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="clients.html" class="nav-link">
+                            Clients
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="livraisons.html" class="nav-link">
+                            Livraisons
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="livreurs.html" class="nav-link">
+                            Livreurs
+                        </a>
+                    </li>
+
+                </ul>
+
+            </li>
+
+            <!-- ===== Menu Stock et approvisionnement ===== -->
+            <li class="menu-category">
+
+                <a href="#" class="nav-link category-title">
+                    <span>📦 Stock & Approvisionnement</span>
+                    <span class="arrow">▼</span>
+                </a>
+
+                <ul class="submenu">
+
+                    <li>
+                        <a href="produits.html" class="nav-link">
+                            Produits
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="approvisionnements.html" class="nav-link">
+                            Approvisionnements
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="fournisseurs.html" class="nav-link">
+                            Fournisseurs
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="transitaires.html" class="nav-link">
+                            Transitaires
+                        </a>
+                    </li>
+
+                </ul>
+
+            </li>
+
+            <!-- ===== Menu Finance ===== -->
+            <li class="menu-category">
+
+                <a href="#" class="nav-link category-title">
+                    <span>💰 Finance</span>
+                    <span class="arrow">▼</span>
+                </a>
+
+                <ul class="submenu">
+
+                    <li>
+                        <a href="caisse.html" class="nav-link">
+                            Caisse
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="paiements.html" class="nav-link">
+                            Paiements
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="factures.html" class="nav-link">
+                            Factures
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="comptabilité.html" class="nav-link">
+                            Comptabilité
+                        </a>
+                    </li>
+
+                </ul>
+
+            </li>
+
+            <li>
+                <a href="rapports.html" class="nav-link">
+                    📈 Rapports
+                </a>
+            </li>
+
+            <li>
+                <a href="paramètres.html" class="nav-link">
+                    ⚙️ Paramètres
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+
+</aside>
+
+<!-- ===== Contenu principal ===== -->
+<main class="main-content">
+
+    <!-- ===== Header ===== -->
+    <header class="header">
+
+        <div class="header-left">
+
+            <button id="sidebar-toggle" class="sidebar-toggle">
+                ☰
+            </button>
+
+            <a href="dashboard.html" class="logo">
+                <img src="../logo-vizibl.png" alt="Logo VISIBL">
+            </a>
+
+            <h2>Rapports</h2>
+
+        </div>
+
+        <div class="header-right">
+
+            <div class="search-box">
+
+                <!-- Icône de recherche visible sur mobile -->
+                <button class="icon-btn" id="mobile-search-btn">
+                    🔍
+                </button>
+
+                <!-- Barre de recherche du header -->
+                <div class="search-container">
+
+                    <input
+                        type="text"
+                        class="search-input"
+                        placeholder="Rechercher dans les rapports..."
+                    >
+
+                    <button class="search-btn">
+                        🔍
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="header-icons">
+
+                <div class="notification-menu">
+                    <button class="icon-btn notifications" id="notification-button" type="button"
+                        aria-label="Afficher les notifications" aria-expanded="false">
+                        🔔 <span class="notification-badge" hidden>0</span>
+                    </button>
+
+                    <div id="notification-panel" class="notification-panel" hidden>
+                        <div class="notification-panel-header">
+                            <h3>Notifications</h3>
+                        </div>
+                        <div class="notification-empty-state">
+                            <span aria-hidden="true">🔔</span>
+                            <p>Aucune nouvelle notification.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-menu">
+
+                    <button class="icon-btn">
+                        👤
+                    </button>
+
+                    <div class="dropdown-menu">
+
+                        <a href="#">
+                            Mon profil
+                        </a>
+
+                        <a href="#">
+                            Paramètres
+                        </a>
+
+                        <hr>
+
+                        <a href="#" class="logout">
+                            Déconnexion
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- ===== Contenu de la page ===== -->
+    <section class="content">
+
+        <!-- ===== Présentation ===== -->
+        <div class="welcome-section report-page-intro">
+
+            <span class="report-eyebrow">CENTRE D’ANALYSE</span>
+            <h2>Rapports et analyses</h2>
+
+            <p>
+                Analysez les performances commerciales, financières,
+                logistiques et opérationnelles de votre entreprise.
+            </p>
+
+        </div>
+
+        <!-- ===== Filtres principaux ===== -->
+        <div class="report-control-panel">
+            <div class="report-control-main">
+                <div class="report-field">
+                    <label for="report-type-filter">Type de rapport</label>
+            <!-- Type de rapport -->
+            <select id="report-type-filter">
+
+                <option value="ventes">
+                    Rapport des ventes
+                </option>
+
+                <option value="commandes">
+                    Rapport des commandes
+                </option>
+
+                <option value="clients">
+                    Rapport des clients
+                </option>
+
+                <option value="stock">
+                    Rapport de stock
+                </option>
+
+                <option value="mouvementsStock">
+                    Rapport des mouvements de stock
+                </option>
+
+                <option value="approvisionnements">
+                    Rapport des approvisionnements
+                </option>
+
+                <option value="caisse">
+                    Rapport de caisse
+                </option>
+
+                <option value="paiements">
+                    Rapport des paiements
+                </option>
+
+                <option value="comptabilite">
+                    Rapport comptable
+                </option>
+
+                <option value="livraisons">
+                    Rapport des livraisons
+                </option>
+
+                <option value="livreurs">
+                    Performance des livreurs
+                </option>
+
+            </select>
+                </div>
+
+                <div class="report-field">
+                    <label for="report-period-filter">Période</label>
+            <!-- Période -->
+            <select id="report-period-filter">
+
+                <option value="aujourdhui">
+                    Aujourd'hui
+                </option>
+
+                <option value="semaine">
+                    Cette semaine
+                </option>
+
+                <option value="mois" selected>
+                    Ce mois
+                </option>
+
+                <option value="trimestre">
+                    Ce trimestre
+                </option>
+
+                <option value="annee">
+                    Cette année
+                </option>
+
+                <option value="personnalisee">
+                    Période personnalisée
+                </option>
+
+            </select>
+                </div>
+
+            <!-- Date de début -->
+            <input
+                type="date"
+                id="report-start-date"
+                title="Date de début"
+            >
+
+            <!-- Date de fin -->
+            <input
+                type="date"
+                id="report-end-date"
+                title="Date de fin"
+            >
+
+            <!-- Bouton générer -->
+            <button class="btn-primary report-generate-btn" id="generate-report-btn">
+                <span>📊</span> Générer le rapport
+            </button>
+            </div>
+        </div>
+
+        <!-- ===== Actions d'export ===== -->
+        <div class="sales-toolbar report-export-toolbar">
+            <div class="report-export-label"><strong>Actions du rapport</strong><span>Exporter ou imprimer la vue actuelle</span></div>
+            <div class="report-export-actions">
+
+                <button class="btn-primary" id="export-pdf-btn">
+                    📄 Exporter en PDF
+                </button>
+
+                <button class="btn-primary" id="export-excel-btn">
+                    📊 Exporter en Excel
+                </button>
+
+                <button class="btn-primary" id="print-report-btn">
+                    🖨️ Imprimer
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- ===== Cartes KPI ===== -->
+        <div class="report-section-heading"><div><span class="report-section-kicker">Vue d’ensemble</span><h3>Indicateurs clés</h3></div><span class="report-live-pill">● Données réelles</span></div>
+        <div class="report-kpi-grid">
+            <div class="report-kpi-card">
+                <div class="report-kpi-top"><div class="report-kpi-icon income-icon">💰</div><span class="report-kpi-badge neutral" id="report-kpi-1-badge">—</span></div>
+                <div class="report-kpi-content"><p class="report-kpi-title" id="report-kpi-1-title">Indicateur</p><h3 class="report-kpi-value" id="report-kpi-1-value">—</h3><p class="report-kpi-description" id="report-kpi-1-description">Données réelles de la période</p></div>
+            </div>
+            <div class="report-kpi-card">
+                <div class="report-kpi-top"><div class="report-kpi-icon sales-icon">📊</div><span class="report-kpi-badge neutral" id="report-kpi-2-badge">—</span></div>
+                <div class="report-kpi-content"><p class="report-kpi-title" id="report-kpi-2-title">Indicateur</p><h3 class="report-kpi-value" id="report-kpi-2-value">—</h3><p class="report-kpi-description" id="report-kpi-2-description">Données réelles de la période</p></div>
+            </div>
+            <div class="report-kpi-card">
+                <div class="report-kpi-top"><div class="report-kpi-icon average-icon">🧾</div><span class="report-kpi-badge neutral" id="report-kpi-3-badge">—</span></div>
+                <div class="report-kpi-content"><p class="report-kpi-title" id="report-kpi-3-title">Indicateur</p><h3 class="report-kpi-value" id="report-kpi-3-value">—</h3><p class="report-kpi-description" id="report-kpi-3-description">Données réelles de la période</p></div>
+            </div>
+            <div class="report-kpi-card">
+                <div class="report-kpi-top"><div class="report-kpi-icon collected-icon">✅</div><span class="report-kpi-badge neutral" id="report-kpi-4-badge">—</span></div>
+                <div class="report-kpi-content"><p class="report-kpi-title" id="report-kpi-4-title">Indicateur</p><h3 class="report-kpi-value" id="report-kpi-4-value">—</h3><p class="report-kpi-description" id="report-kpi-4-description">Données réelles de la période</p></div>
+            </div>
+            <div class="report-kpi-card">
+                <div class="report-kpi-top"><div class="report-kpi-icon pending-icon">⏳</div><span class="report-kpi-badge neutral" id="report-kpi-5-badge">—</span></div>
+                <div class="report-kpi-content"><p class="report-kpi-title" id="report-kpi-5-title">Indicateur</p><h3 class="report-kpi-value" id="report-kpi-5-value">—</h3><p class="report-kpi-description" id="report-kpi-5-description">Données réelles de la période</p></div>
+            </div>
+            <div class="report-kpi-card">
+                <div class="report-kpi-top"><div class="report-kpi-icon product-icon">🏆</div><span class="report-kpi-badge neutral" id="report-kpi-6-badge">—</span></div>
+                <div class="report-kpi-content"><p class="report-kpi-title" id="report-kpi-6-title">Indicateur</p><h3 class="report-kpi-value product-name" id="report-kpi-6-value">—</h3><p class="report-kpi-description" id="report-kpi-6-description">Données réelles de la période</p></div>
+            </div>
+        </div>
+
+        <!-- ===== Zone Analyse ===== -->
+        <div class="report-section-heading report-analysis-heading">
+            <div><span class="report-section-kicker">Analyse</span><h3>Performance sur la période</h3></div>
+            <span class="report-period-chip" id="report-period-chip">Période sélectionnée</span>
+        </div>
+        <div class="report-analysis-layout">
+            <div class="report-analysis-main">
+        <div class="report-main-chart">
+
+            <div class="report-chart-header">
+                <div class="report-chart-title">
+                    <div class="report-chart-icon">📈</div>
+                    <div>
+                        <h3>Évolution du chiffre d'affaires</h3>
+                        <p>Comparaison des ventes réalisées sur la période sélectionnée</p>
+                    </div>
+                </div>
+
+                <div class="report-chart-actions">
+                    <div class="report-chart-period">
+                        <button type="button" class="chart-period-btn active">Jour</button>
+                        <button type="button" class="chart-period-btn">Semaine</button>
+                        <button type="button" class="chart-period-btn">Mois</button>
+                    </div>
+                    <button type="button" class="chart-options-btn" title="Plus d'options">⋮</button>
+                </div>
+            </div>
+
+            <div class="report-chart-summary">
+                <div>
+                    <span class="chart-summary-label">Total de la période</span>
+                    <strong id="report-chart-total">—</strong>
+                </div>
+                <div class="chart-summary-growth">
+                    <span id="report-chart-evolution">—</span>
+                    <small id="report-chart-evolution-label">Comparaison avec la période précédente</small>
+                </div>
+            </div>
+
+            <div class="report-chart-area" id="report-main-chart-area">
+                <div class="report-chart-empty">Aucune donnée à afficher.</div>
+            </div>
+        </div>
+
+            </div>
+            <aside class="report-analysis-side">
+        <div class="charts-grid">
+
+            <!-- Répartition par produit -->
+            <div class="chart-container">
+
+                <div class="chart-header">
+
+                    <div>
+
+                        <h3>
+                            Ventes par produit
+                        </h3>
+
+                        <p>
+                            Répartition du chiffre d'affaires
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="chart-placeholder">
+
+                    <div id="products-report-chart" class="report-breakdown-list"><p class="chart-empty-message">Aucune donnée.</p></div>
+
+                </div>
+
+            </div>
+
+            <!-- Modes de paiement -->
+            <div class="chart-container">
+
+                <div class="chart-header">
+
+                    <div>
+
+                        <h3>
+                            Modes de paiement
+                        </h3>
+
+                        <p>
+                            Répartition des encaissements
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="chart-placeholder">
+
+                    <div id="payment-methods-chart" class="report-breakdown-list"><p class="chart-empty-message">Aucune donnée.</p></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+            </aside>
+        </div>
+
+        <!-- ===== Titre du tableau détaillé ===== -->
+        <div class="welcome-section report-details-intro">
+
+            <span class="report-section-kicker">Exploration</span>
+            <h2 id="report-details-title">Détail du rapport</h2>
+
+            <p>
+                Consultez les opérations correspondant au rapport sélectionné.
+            </p>
+
+        </div>
+
+        <!-- ===== Recherche du tableau ===== -->
+        <div class="sales-filters">
+
+            <div class="sales-search">
+
+                <input
+                    type="text"
+                    id="report-details-search-input"
+                    placeholder="Rechercher par référence, client ou produit..."
+                >
+
+            </div>
+
+            <!-- Filtre statut -->
+            <select id="report-status-filter">
+
+                <option value="">
+                    Tous les statuts
+                </option>
+
+                <option value="payee">
+                    Payée
+                </option>
+
+                <option value="partielle">
+                    Partiellement payée
+                </option>
+
+                <option value="impayee">
+                    Impayée
+                </option>
+
+                <option value="annulee">
+                    Annulée
+                </option>
+
+            </select>
+
+            <!-- Filtre mode de paiement -->
+            <select id="report-payment-filter">
+
+                <option value="">
+                    Tous les modes de paiement
+                </option>
+
+                <option value="especes">
+                    Espèces
+                </option>
+
+                <option value="mobile-money">
+                    Mobile Money
+                </option>
+
+                <option value="virement">
+                    Virement bancaire
+                </option>
+
+                <option value="cheque">
+                    Chèque
+                </option>
+
+                <option value="carte">
+                    Carte bancaire
+                </option>
+
+            </select>
+
+        </div>
+
+        <!-- ===== Tableau détaillé ===== -->
+        <div class="sales-table-container">
+            <div class="table-responsive">
+                <table class="sales-table">
+                    <thead id="report-details-table-head">
+                        <tr><th>Données</th></tr>
+                    </thead>
+                    <tbody id="report-details-table-body">
+                        <tr><td class="report-empty-cell">Aucune donnée à afficher.</td></tr>
+                    </tbody>
+                    <tfoot id="report-details-table-foot">
+                        <tr><th>0 opération affichée</th></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+    </section>
+
+</main>
+
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="../js/modules/rapports.js"></script>
+
+</body>
+
+</html>  

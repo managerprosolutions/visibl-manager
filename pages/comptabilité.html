@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+
+<!-- VISIBL COMMON PATCH: anti-flash session -->
+<style id="visibl-common-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-common-auth-guard-script">
+(function(){
+  document.documentElement.classList.add("visibl-auth-pending");
+  try{
+    const raw=localStorage.getItem("visibl_user");
+    if(!raw){location.replace("connexion.html");return;}
+    const u=JSON.parse(raw);
+    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
+    document.documentElement.classList.remove("visibl-auth-pending");
+  }catch(e){
+    localStorage.removeItem("visibl_user");
+    location.replace("connexion.html");
+  }
+})();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comptabilité</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/comptabilité.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+<div class="container">
+
+    <aside id="sidebar" class="sidebar">
+        <button id="sidebar-close" class="sidebar-close">✖</button>
+        <a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
+        <nav>
+            <ul>
+                <li><a href="dashboard.html" class="nav-link">📊 Tableau de bord</a></li>
+                <li class="menu-category">
+                    <a href="#" class="nav-link category-title"><span>🛒 Commercial</span><span class="arrow">▼</span></a>
+                    <ul class="submenu">
+                        <li><a href="ventes.html" class="nav-link">Ventes</a></li>
+                        <li><a href="commandes.html" class="nav-link">Commandes</a></li>
+                        <li><a href="clients.html" class="nav-link">Clients</a></li>
+                        <li><a href="livraisons.html" class="nav-link">Livraisons</a></li>
+                        <li><a href="livreurs.html" class="nav-link">Livreurs</a></li>
+                    </ul>
+                </li>
+                <li class="menu-category">
+                    <a href="#" class="nav-link category-title"><span>📦 Stock & Approvisionnement</span><span class="arrow">▼</span></a>
+                    <ul class="submenu">
+                        <li><a href="produits.html" class="nav-link">Produits</a></li>
+                        <li><a href="stock.html" class="nav-link">Stock & Mouvements</a></li>
+                        <li><a href="approvisionnements.html" class="nav-link">Approvisionnements</a></li>
+                        <li><a href="fournisseurs.html" class="nav-link">Fournisseurs</a></li>
+                        <li><a href="transitaires.html" class="nav-link">Transitaires</a></li>
+                    </ul>
+                </li>
+                <li class="menu-category">
+                    <a href="#" class="nav-link category-title"><span>💰 Finance</span><span class="arrow">▼</span></a>
+                    <ul class="submenu">
+                        <li><a href="caisse.html" class="nav-link">Caisse</a></li><li><a href="paiements.html" class="nav-link">Paiements</a></li><li><a href="factures.html" class="nav-link">Factures</a></li><li><a href="comptabilité.html" class="nav-link active" aria-current="page">Comptabilité</a></li>
+                    </ul>
+                </li>
+                <li><a href="rapports.html" class="nav-link">📈 Rapports</a></li>
+                <li><a href="paramètres.html" class="nav-link">⚙️ Paramètres</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+                <a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
+                <h2>Comptabilité</h2>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <button class="icon-btn" id="mobile-search-btn" type="button" aria-label="Rechercher">🔍</button>
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Rechercher une écriture...">
+                        <button class="search-btn" type="button" aria-label="Lancer la recherche">🔍</button>
+                    </div>
+                </div>
+                <div class="header-icons">
+                    <div class="notification-menu">
+                        <button id="notification-button" class="icon-btn notifications" type="button" aria-label="Afficher les notifications" aria-expanded="false">🔔 <span class="notification-badge" hidden>0</span></button>
+                        <div id="notification-panel" class="notification-panel" hidden>
+                            <div class="notification-panel-header"><h3>Notifications</h3></div><div class="notification-empty-state"><span aria-hidden="true">🔔</span><p>Aucune notification pour le moment.</p></div></div>
+                    </div>
+                    <div class="profile-menu">
+                        <button class="icon-btn" type="button" aria-label="Profil">👤</button>
+                        <div class="dropdown-menu">
+                            <a href="moncompte.html">Mon compte</a>
+                            <hr>
+                            <a href="#" class="logout" id="logout-button">Déconnexion</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <section class="content">
+
+<div class="welcome-section finance-welcome"><div><h2>Comptabilité</h2><p>Consultez les écritures générées automatiquement par les ventes, paiements, mouvements de caisse et pièces justificatives. La saisie manuelle reste exceptionnelle.</p></div></div>
+<div class="finance-kpi-grid"><article class="finance-kpi-card"><div class="finance-kpi-head"><span class="finance-kpi-icon">📈</span><span>Produits</span></div><h3 id="accounting-income-value">0 FCFA</h3><p>Total des produits comptabilisés</p></article><article class="finance-kpi-card"><div class="finance-kpi-head"><span class="finance-kpi-icon">📉</span><span>Charges</span></div><h3 id="accounting-expense-value">0 FCFA</h3><p>Total des charges comptabilisées</p></article><article class="finance-kpi-card"><div class="finance-kpi-head"><span class="finance-kpi-icon">💹</span><span>Résultat</span></div><h3 id="accounting-result-value">0 FCFA</h3><p>Produits moins charges</p></article><article class="finance-kpi-card"><div class="finance-kpi-head"><span class="finance-kpi-icon">📚</span><span>Écritures</span></div><h3 id="accounting-entries-value">0 FCFA</h3><p>Nombre d’écritures générées</p></article></div>
+<div class="finance-toolbar">
+  <div class="toolbar-left"><span><strong id="filtered-accounting-count">0</strong> écriture(s)</span></div>
+  <div class="toolbar-right">
+    <div class="accounting-actions-menu">
+      <button class="btn-secondary accounting-actions-trigger" id="accounting-actions-trigger" type="button" aria-expanded="false">Actions <span>⌄</span></button>
+      <div class="accounting-actions-dropdown" id="accounting-actions-dropdown" hidden>
+        <button type="button" id="export-accounting-btn">📤 Exporter</button>
+        <button type="button" id="print-accounting-btn">🖨️ Imprimer</button>
+        <button type="button" id="refresh-accounting-btn">🔄 Actualiser</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="finance-filters">
+  <select id="accounting-journal-filter"><option value="">Tous les journaux</option><option value="ventes">Ventes</option><option value="caisse">Caisse</option><option value="banque">Banque</option><option value="achats">Achats</option><option value="operations-diverses">Opérations diverses</option></select>
+  <select id="accounting-source-filter"><option value="">Toutes les sources</option><option value="vente">Vente</option><option value="paiement">Paiement</option><option value="caisse">Caisse</option><option value="depense">Dépense</option><option value="approvisionnement">Approvisionnement</option></select>
+  <label class="accounting-date-filter"><span>Date</span><input id="accounting-date-from" type="date" aria-label="Date"></label>
+  <button class="btn-filter-reset" id="reset-accounting-filters">Effacer</button>
+</div>
+<div class="finance-table-container"><div class="table-responsive"><table class="finance-table accounting-table">
+<thead><tr><th>Date</th><th>Journal</th><th>Référence</th><th>Compte</th><th>Libellé</th><th>Débit</th><th>Crédit</th><th>Source</th><th>Pièce</th><th>Utilisateur</th></tr></thead>
+<tbody id="accounting-table-body"><tr><td colspan="10" class="empty-table">Aucune écriture comptable.</td></tr></tbody>
+</table></div></div>
+
+        </section>
+    </main>
+</div>
+<div id="toast-container"></div>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/modules/comptabilité.js"></script>
+</body>
+</html>

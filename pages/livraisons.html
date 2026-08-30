@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+
+<!-- VISIBL COMMON PATCH: anti-flash session -->
+<style id="visibl-common-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-common-auth-guard-script">
+(function(){
+  document.documentElement.classList.add("visibl-auth-pending");
+  try{
+    const raw=localStorage.getItem("visibl_user");
+    if(!raw){location.replace("connexion.html");return;}
+    const u=JSON.parse(raw);
+    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
+    document.documentElement.classList.remove("visibl-auth-pending");
+  }catch(e){
+    localStorage.removeItem("visibl_user");
+    location.replace("connexion.html");
+  }
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livraisons</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/livraisons.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+<div class="container">
+<aside id="sidebar" class="sidebar">
+<button id="sidebar-close" class="sidebar-close">✖</button>
+<a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
+<nav><ul>
+<li><a href="dashboard.html" class="nav-link">📊 Tableau de bord</a></li>
+<li class="menu-category">
+<a href="#" class="nav-link category-title"><span>🛒 Commercial</span><span class="arrow">▼</span></a>
+<ul class="submenu">
+<li><a href="ventes.html" class="nav-link">Ventes</a></li>
+<li><a href="commandes.html" class="nav-link">Commandes</a></li>
+<li><a href="clients.html" class="nav-link">Clients</a></li>
+<li><a href="livraisons.html" class="nav-link active" aria-current="page">Livraisons</a></li>
+<li><a href="livreurs.html" class="nav-link">Livreurs</a></li>
+</ul>
+</li>
+<li class="menu-category">
+<a href="#" class="nav-link category-title"><span>📦 Stock & Approvisionnement</span><span class="arrow">▼</span></a>
+<ul class="submenu">
+<li><a href="produits.html" class="nav-link">Produits</a></li>
+<li><a href="stock.html" class="nav-link">Stock & Mouvements</a></li>
+<li><a href="approvisionnements.html" class="nav-link">Approvisionnements</a></li>
+<li><a href="fournisseurs.html" class="nav-link">Fournisseurs</a></li>
+<li><a href="transitaires.html" class="nav-link">Transitaires</a></li>
+</ul>
+</li>
+<li class="menu-category">
+<a href="#" class="nav-link category-title"><span>💰 Finance</span><span class="arrow">▼</span></a>
+<ul class="submenu">
+<li><a href="caisse.html" class="nav-link">Caisse</a></li>
+<li><a href="paiements.html" class="nav-link">Paiements</a></li>
+<li><a href="factures.html" class="nav-link">Factures</a></li>
+<li><a href="comptabilité.html" class="nav-link">Comptabilité</a></li>
+</ul>
+</li>
+<li><a href="rapports.html" class="nav-link">📈 Rapports</a></li>
+<li><a href="paramètres.html" class="nav-link">⚙️ Paramètres</a></li>
+</ul></nav>
+</aside>
+
+<main class="main-content">
+<header class="header">
+<div class="header-left">
+<button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+<a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
+<h2>Livraisons</h2>
+</div>
+<div class="header-right">
+<div class="search-box">
+<button class="icon-btn" id="mobile-search-btn">🔍</button>
+<div class="search-container">
+<input type="text" class="search-input" placeholder="Rechercher une livraison...">
+<button class="search-btn">🔍</button>
+</div>
+</div>
+<div class="header-icons">
+<div class="notification-menu">
+<button id="notification-button" class="icon-btn notifications" type="button" aria-label="Afficher les notifications" aria-expanded="false">🔔<span class="notification-badge">3</span></button>
+<div id="notification-panel" class="notification-panel" hidden>
+<div class="notification-panel-header"><h3>Notifications</h3></div>
+<div class="notification-item"><span class="notification-item-icon">📦</span><div><strong>Nouvelle commande</strong><p>Une nouvelle commande a été enregistrée.</p><small>Il y a quelques minutes</small></div></div>
+<div class="notification-item"><span class="notification-item-icon">⚠️</span><div><strong>Stock faible</strong><p>Un produit approche du seuil de rupture.</p><small>Aujourd’hui</small></div></div>
+<div class="notification-item"><span class="notification-item-icon">💳</span><div><strong>Paiement reçu</strong><p>Un nouveau paiement a été enregistré.</p><small>Aujourd’hui</small></div></div>
+</div>
+</div>
+<div class="profile-menu">
+<button class="icon-btn">👤</button>
+<div class="dropdown-menu"><a href="moncompte.html">Mon compte</a><hr><a href="#" class="logout" id="logout-button">Déconnexion</a></div>
+</div>
+</div>
+</div>
+</header>
+
+<section class="content">
+<div class="welcome-section">
+<div><h2>Suivi des livraisons</h2><p>Suivez les colis depuis la préparation jusqu'au retour du livreur et contrôlez les encaissements liés.</p></div>
+</div>
+
+<div class="kpi-grid deliveries-kpi-grid">
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">🚚</span><span class="kpi-title">Total livraisons</span></div><h3 class="kpi-value is-loading" id="total-deliveries-value">—</h3><p class="kpi-description">Toutes les livraisons</p></article>
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">📦</span><span class="kpi-title">À préparer</span></div><h3 class="kpi-value is-loading" id="deliveries-to-prepare-value">—</h3><p class="kpi-description">En attente de validation</p></article>
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">🛵</span><span class="kpi-title">En livraison</span></div><h3 class="kpi-value is-loading" id="deliveries-in-progress-value">—</h3><p class="kpi-description">Colis chez le livreur</p></article>
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">✅</span><span class="kpi-title">Livraisons réalisées</span></div><h3 class="kpi-value is-loading" id="deliveries-completed-value">—</h3><p class="kpi-description">Clôturées et livrées</p></article>
+</div>
+
+<div class="deliveries-toolbar deliveries-toolbar-refined">
+<div class="toolbar-left deliveries-toolbar-summary">
+<span class="delivery-count"><strong id="filtered-delivery-count">0</strong> livraison(s) affichée(s)</span>
+</div>
+<div class="toolbar-right deliveries-toolbar-actions">
+<button class="btn-secondary deliveries-alert-trigger" id="deliveries-alert-btn" type="button">🔔 Alerte</button>
+<div class="deliveries-actions-menu">
+<button class="btn-secondary deliveries-actions-trigger" id="deliveries-actions-trigger" type="button" aria-expanded="false" aria-controls="deliveries-actions-dropdown">
+Actions <span aria-hidden="true">⌄</span>
+</button>
+<div class="deliveries-actions-dropdown" id="deliveries-actions-dropdown" hidden>
+<button type="button" id="export-deliveries-btn">📤 <span>Exporter</span></button>
+<button type="button" id="print-deliveries-btn">🖨️ <span>Imprimer</span></button>
+<button type="button" id="refresh-deliveries-btn">🔄 <span>Actualiser</span></button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="deliveries-filters">
+<div class="deliveries-search"><span class="search-icon">🔍</span><input type="search" id="deliveries-search-input" placeholder="Livraison, commande, vente, client, livreur..."></div>
+<select id="delivery-status-filter">
+<option value="">Tous les statuts</option>
+<option value="a-preparer">À préparer</option>
+<option value="prete-pour-depart">Prête pour départ</option>
+<option value="en-livraison">En livraison</option>
+<option value="cloturee">Clôturée</option>
+<option value="annulee">Annulée</option>
+</select>
+<select id="delivery-result-filter">
+<option value="">Tous les résultats</option>
+<option value="livree">Livrée</option>
+<option value="non-livree">Non livrée</option>
+<option value="reportee">Reportée</option>
+</select>
+<select id="delivery-payment-filter">
+<option value="">Tous les encaissements</option>
+<option value="non-encaisse">Non encaissé</option>
+<option value="partiel">Partiel</option>
+<option value="solde">Soldé</option>
+<option value="excedent">Excédent</option>
+</select>
+<button class="btn-filter-reset" id="reset-delivery-filters">Effacer les filtres</button>
+</div>
+
+<div class="deliveries-table-container">
+<div class="table-responsive">
+<table class="deliveries-table">
+<thead><tr>
+<th>Livraison</th><th>Client</th><th>Destination</th><th>Livreur</th><th>Date prévue</th><th>Statut</th><th>Résultat</th><th>À encaisser</th><th>Encaissé</th><th>Reste</th><th>Tentative</th><th>Actions</th>
+</tr></thead>
+<tbody id="deliveries-table-body"><tr><td colspan="12" class="empty-table">Aucune livraison enregistrée.</td></tr></tbody>
+</table>
+</div>
+<div class="table-pagination">
+<div class="pagination-info"><span>Afficher</span><select id="deliveries-per-page"><option>10</option><option>25</option><option>50</option><option>100</option></select><span>éléments par page</span></div>
+<div class="pagination-controls"><button class="pagination-btn" id="previous-delivery-page-btn">‹</button><span id="deliveries-page-buttons"></span><span id="deliveries-pagination-summary" class="pagination-summary"></span><button class="pagination-btn" id="next-delivery-page-btn">›</button></div>
+</div>
+</div>
+</section>
+</main>
+</div>
+
+
+<div class="modal-overlay" id="delivery-alert-settings-modal" aria-hidden="true">
+<div class="modal small-modal delivery-alert-settings-modal">
+<div class="modal-header">
+<div><h2>Alertes de livraison</h2><p>Choisissez quand vous rappeler de préparer les livraisons prévues.</p></div>
+<button class="modal-close" data-close-modal="delivery-alert-settings-modal">✕</button>
+</div>
+<div class="modal-body">
+<div id="delivery-alert-settings-message" class="form-message"></div>
+<div class="form-grid">
+<div class="form-group">
+<label for="delivery-alert-days">Rappel avant la livraison</label>
+<select id="delivery-alert-days">
+<option value="0">Le jour même</option>
+<option value="1">La veille</option>
+<option value="2">2 jours avant</option>
+<option value="7">1 semaine avant</option>
+</select>
+</div>
+<div class="form-group">
+<label for="delivery-alert-time">Heure du rappel</label>
+<input type="time" id="delivery-alert-time" value="09:00">
+</div>
+</div>
+<p class="delivery-alert-help">Par défaut : la veille à 09:00. Les rappels apparaissent dans la cloche de notification.</p>
+</div>
+<div class="modal-footer">
+<button class="btn-secondary" data-close-modal="delivery-alert-settings-modal">Annuler</button>
+<button class="btn-primary" id="save-delivery-alert-settings-btn">Enregistrer</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="delivery-view-modal" aria-hidden="true">
+<div class="modal delivery-view-modal">
+<div class="modal-header delivery-view-header">
+<div><span class="delivery-view-eyebrow">Suivi logistique</span><h2 id="delivery-view-title">Fiche livraison</h2><p id="delivery-view-subtitle">Suivi, mission et encaissements</p></div>
+<button class="modal-close" id="close-delivery-view-modal">✕</button>
+</div>
+<div class="modal-body delivery-view-body">
+<section class="delivery-view-hero">
+<div class="delivery-view-hero-icon">🚚</div>
+<div class="delivery-view-hero-main"><strong id="delivery-view-hero-client">—</strong><span id="delivery-view-hero-route">—</span></div>
+<div id="delivery-view-hero-status"></div>
+</section>
+<div class="delivery-process" id="delivery-process"></div>
+
+<section class="detail-card delivery-mission-card">
+<div class="section-row"><div><h3>🛵 Mission du livreur</h3><p>Impact opérationnel et prise en charge des frais.</p></div></div>
+<div class="mission-summary-grid" id="delivery-mission-summary"></div>
+</section>
+
+<section class="detail-card delivery-finance-card">
+<div class="section-row"><div><h3>💰 Situation financière</h3><p>Montants liés à cette livraison.</p></div></div>
+<div class="payment-summary-grid delivery-view-finance-grid">
+<div><span>À encaisser en argent</span><strong id="view-amount-expected">0 FCFA</strong></div>
+<div><span>Encaissé en argent</span><strong id="view-amount-received">0 FCFA</strong></div>
+<div><span>Avoir client utilisé</span><strong id="view-credit-used">0 FCFA</strong></div>
+<div><span>Reste à encaisser</span><strong id="view-amount-balance">0 FCFA</strong></div>
+<div><span>Statut</span><strong id="view-payment-status">—</strong></div>
+</div>
+</section>
+
+<section class="detail-card">
+<div class="section-row"><div><h3>📦 Informations de livraison</h3><p>Références, destination et affectation.</p></div></div>
+<div class="delivery-detail-grid" id="delivery-detail-grid"></div>
+</section>
+
+<section class="detail-card delivery-history-card">
+<div class="section-row delivery-history-heading"><div><h3>🕘 Historique de la livraison</h3><p>Chronologie des étapes et tentatives enregistrées.</p></div></div>
+<div id="delivery-history-list" class="delivery-history-list"><div class="delivery-history-empty">Chargement de l’historique…</div></div>
+</section>
+</div>
+<div class="modal-footer" id="delivery-view-actions"><button class="btn-secondary" id="close-delivery-view-footer">Fermer</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="delivery-prepare-modal" aria-hidden="true">
+<div class="modal small-modal"><div class="modal-header"><div><h2>Valider la préparation</h2><p>Le colis est-il prêt ?</p></div><button class="modal-close" data-close-modal="delivery-prepare-modal">✕</button></div>
+<div class="modal-body"><input type="hidden" id="prepare-delivery-id"><div class="confirm-box"><span>📦</span><div><strong id="prepare-delivery-number">—</strong><p>Le statut deviendra Prête pour départ.</p></div></div></div>
+<div class="modal-footer"><button class="btn-secondary" data-close-modal="delivery-prepare-modal">Annuler</button><button class="btn-primary" id="confirm-delivery-preparation-btn">Valider</button></div></div>
+</div>
+
+<div class="modal-overlay" id="delivery-departure-modal" aria-hidden="true">
+<div class="modal small-modal"><div class="modal-header"><div><h2>Confirmer le départ</h2><p>Le colis est remis au livreur.</p></div><button class="modal-close" data-close-modal="delivery-departure-modal">✕</button></div>
+<div class="modal-body"><input type="hidden" id="departure-delivery-id"><div class="confirm-box"><span>🛵</span><div><strong id="departure-delivery-number">—</strong><p>L'heure de départ sera enregistrée automatiquement.</p></div></div></div>
+<div class="modal-footer"><button class="btn-secondary" data-close-modal="delivery-departure-modal">Annuler</button><button class="btn-primary" id="confirm-delivery-departure-btn">Confirmer le départ</button></div></div>
+</div>
+
+<div class="modal-overlay" id="delivery-return-modal" aria-hidden="true">
+<div class="modal">
+<div class="modal-header"><div><h2>Retour du livreur</h2><p>Enregistrez le résultat de la tentative.</p></div><button class="modal-close" data-close-modal="delivery-return-modal">✕</button></div>
+<div class="modal-body">
+<input type="hidden" id="return-delivery-id"><div id="delivery-return-message" class="form-message"></div>
+<div class="form-grid">
+<div class="form-group"><label>Résultat *</label><select id="delivery-return-result"><option value="">Sélectionner</option><option value="livree">Livrée</option><option value="non-livree">Non livrée</option><option value="reportee">Reportée</option></select></div>
+</div>
+
+<div id="delivery-return-failure-fields" hidden>
+<div class="form-grid">
+<div class="form-group" id="delivery-failure-reason-group" hidden><label>Motif *</label><select id="delivery-failure-reason"><option value="">Sélectionner</option><option value="client-absent">Client absent</option><option value="client-injoignable">Client injoignable</option><option value="refus-client">Refus du client</option><option value="adresse-introuvable">Adresse introuvable</option><option value="probleme-livreur">Problème livreur / transport</option><option value="autre">Autre</option></select></div>
+</div>
+<div id="delivery-failure-action-group" class="form-group" hidden><label>Que faire du colis ? *</label><div class="choice-grid">
+<label><input type="radio" name="delivery-failure-action" value="reprogrammer"><span><strong>Reprogrammer</strong><small>Après contrôle, les produits vendables seront remis en réserve.</small></span></label>
+<label><input type="radio" name="delivery-failure-action" value="abandonner"><span><strong>Abandonner</strong><small>Clôture définitive de cette livraison.</small></span></label>
+</div></div>
+
+<div id="delivery-product-state-group" class="form-group" hidden>
+<label>État des produits retournés *</label>
+<select id="delivery-return-product-state">
+<option value="">Sélectionner</option>
+<option value="vendable">Vendable — retour au stock normal</option>
+<option value="non-vendable">Non vendable — isoler du stock de vente</option>
+</select>
+<small>Le contrôle est effectué lorsque le colis revient physiquement.</small>
+</div>
+
+<div id="delivery-product-state-reason-group" class="form-group" hidden>
+<label>Motif du non vendable *</label>
+<select id="delivery-return-product-state-reason">
+<option value="">Sélectionner</option>
+<option value="casse">Cassé</option>
+<option value="defectueux">Défectueux</option>
+<option value="endommage">Endommagé</option>
+<option value="incomplet">Incomplet</option>
+<option value="emballage-deteriore">Emballage détérioré</option>
+<option value="a-controler">À contrôler</option>
+<option value="autre">Autre</option>
+</select>
+</div>
+
+<div id="delivery-reschedule-group" class="form-group" hidden><label>Nouvelle date prévue *</label><input type="date" id="delivery-reschedule-date"></div>
+<div class="form-group"><label>Commentaire</label><textarea id="delivery-return-comment" rows="3"></textarea></div>
+</div>
+
+<section id="delivery-return-payment-section" class="delivery-return-payment-section" hidden>
+<div class="delivery-return-payment-heading">
+<div class="delivery-return-payment-title">
+<span class="delivery-return-payment-icon">💰</span>
+<div>
+<h3>Encaissement — Retour du livreur</h3>
+<p>Enregistrez le règlement reçu après la livraison.</p>
+</div>
+</div>
+</div>
+
+<div class="payment-context delivery-return-context">
+<div>
+<span>Livraison</span>
+<strong id="return-payment-delivery-number">—</strong>
+</div>
+<div>
+<span>Reste à encaisser</span>
+<strong id="return-payment-delivery-balance">0 FCFA</strong>
+</div>
+</div>
+
+<div id="delivery-return-payment-message" class="form-message"></div>
+
+<div class="delivery-return-credit-card" id="return-delivery-credit-panel">
+<div class="delivery-return-credit-header">
+<div class="delivery-return-credit-title">
+<span class="delivery-return-credit-icon">💳</span>
+<div>
+<strong>Crédit client disponible</strong>
+<small>Issu des factures d’avoir encore utilisables.</small>
+</div>
+</div>
+<strong class="delivery-return-credit-amount" id="return-delivery-credit-available">0 FCFA</strong>
+</div>
+
+<div class="delivery-return-credit-content">
+<div class="delivery-return-credit-field">
+<label for="return-delivery-credit-used">Avoir à utiliser maintenant</label>
+<div class="delivery-return-credit-input-wrap">
+<input type="number" id="return-delivery-credit-used" min="0" step="1" value="0">
+<span>FCFA</span>
+</div>
+<small>Saisissez le montant d’avoir à déduire.</small>
+</div>
+
+<div class="delivery-return-credit-action">
+<button type="button" class="btn-secondary btn-small" id="return-use-max-credit-btn">
+↗ Utiliser le maximum
+</button>
+</div>
+
+<div class="delivery-return-credit-result">
+<span>Reste à encaisser après avoir</span>
+<strong id="return-delivery-after-credit">0 FCFA</strong>
+<small>Montant à remettre en argent</small>
+</div>
+</div>
+</div>
+
+<div class="delivery-return-cash-card">
+<div class="delivery-return-cash-heading">
+<span class="delivery-return-cash-icon">💵</span>
+<div>
+<h4>Informations d’encaissement</h4>
+<p>Renseignez uniquement l’argent réellement reçu.</p>
+</div>
+</div>
+
+<div class="form-grid delivery-return-cash-grid">
+<div class="form-group">
+<label>Provenance *</label>
+<select id="return-payment-source">
+<option value="">Sélectionner la provenance</option>
+<option value="livreur">Livreur</option>
+<option value="client-direct">Client direct</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Mode de paiement *</label>
+<select id="return-payment-method">
+<option value="">Sélectionner le mode de paiement</option>
+<option value="especes">Espèces</option>
+<option value="wave">Wave</option>
+<option value="orange-money">Orange Money</option>
+<option value="mtn-money">MTN Money</option>
+<option value="moov-money">Moov Money</option>
+<option value="virement">Virement</option>
+<option value="autre">Autre</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Montant encaissé en argent</label>
+<div class="delivery-return-money-input">
+<input type="number" id="return-payment-amount" min="0" step="1" placeholder="Saisir le montant encaissé">
+<span>FCFA</span>
+</div>
+</div>
+
+<div class="form-group">
+<label>Référence / N° reçu</label>
+<input type="text" id="return-payment-reference" placeholder="Saisir la référence ou N° reçu">
+</div>
+
+<div class="form-group full">
+<label>Commentaire (facultatif)</label>
+<textarea id="return-payment-comment" rows="3" placeholder="Ajouter un commentaire..."></textarea>
+</div>
+</div>
+</div>
+</section>
+</div>
+<div class="modal-footer"><button class="btn-secondary" data-close-modal="delivery-return-modal">Annuler</button><button class="btn-primary" id="confirm-delivery-return-btn">Enregistrer le retour</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="delivery-payment-modal" aria-hidden="true">
+<div class="modal payment-modal">
+<div class="modal-header"><div><h2>Ajouter un encaissement</h2><p>Somme réellement reçue par l'entreprise.</p></div><button class="modal-close" data-close-modal="delivery-payment-modal">✕</button></div>
+<div class="modal-body">
+<input type="hidden" id="payment-delivery-id"><div id="delivery-payment-message" class="form-message"></div>
+<div class="payment-context"><div><span>Livraison</span><strong id="payment-delivery-number">—</strong></div><div><span>Reste</span><strong id="payment-delivery-balance">0 FCFA</strong></div></div>
+<div class="form-grid">
+<div class="form-group"><label>Provenance *</label><select id="delivery-payment-source"><option value="">Sélectionner</option><option value="livreur">Livreur</option><option value="client-direct">Client direct</option></select></div>
+<div class="form-group"><label>Mode *</label><select id="delivery-payment-method"><option value="">Sélectionner</option><option value="especes">Espèces</option><option value="wave">Wave</option><option value="orange-money">Orange Money</option><option value="mtn-money">MTN Money</option><option value="moov-money">Moov Money</option><option value="virement">Virement</option><option value="autre">Autre</option></select></div>
+<div class="form-group"><label>Montant encaissé en argent</label><input type="number" id="delivery-payment-amount" min="0" step="1"></div>
+<div class="form-group full delivery-credit-panel" id="delivery-credit-panel">
+<div class="delivery-credit-head"><div><strong>💳 Crédit client disponible</strong><small>Issu des factures d’avoir encore utilisables.</small></div><strong id="delivery-credit-available">0 FCFA</strong></div>
+<div class="delivery-credit-use-row">
+<div><label for="delivery-credit-used">Avoir à utiliser maintenant</label><input type="number" id="delivery-credit-used" min="0" step="1" value="0"></div>
+<button type="button" class="btn-secondary btn-small" id="delivery-use-max-credit-btn">Utiliser le maximum</button>
+</div>
+<div class="delivery-credit-result"><span>Reste à encaisser après avoir</span><strong id="delivery-after-credit">0 FCFA</strong></div>
+</div>
+<div class="form-group"><label>Référence</label><input type="text" id="delivery-payment-reference"></div>
+<div class="form-group full"><label>Commentaire</label><textarea id="delivery-payment-comment" rows="3"></textarea></div>
+</div>
+</div>
+<div class="modal-footer"><button class="btn-secondary" data-close-modal="delivery-payment-modal">Annuler</button><button class="btn-primary" id="save-delivery-payment-btn">Enregistrer</button></div>
+</div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/modules/livraisons.js"></script>
+</body>
+</html>

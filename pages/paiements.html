@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+
+<!-- VISIBL COMMON PATCH: anti-flash session -->
+<style id="visibl-common-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-common-auth-guard-script">
+(function(){
+  document.documentElement.classList.add("visibl-auth-pending");
+  try{
+    const raw=localStorage.getItem("visibl_user");
+    if(!raw){location.replace("connexion.html");return;}
+    const u=JSON.parse(raw);
+    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
+    document.documentElement.classList.remove("visibl-auth-pending");
+  }catch(e){
+    localStorage.removeItem("visibl_user");
+    location.replace("connexion.html");
+  }
+})();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiements</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/paiements.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <aside id="sidebar" class="sidebar">
+        <button id="sidebar-close" class="sidebar-close" type="button">✖</button>
+        <a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
+        <nav><ul>
+            <li><a href="dashboard.html" class="nav-link">📊 Tableau de bord</a></li>
+            <li class="menu-category"><a href="#" class="nav-link category-title"><span>🛒 Commercial</span><span class="arrow">▼</span></a><ul class="submenu">
+                <li><a href="ventes.html" class="nav-link">Ventes</a></li><li><a href="commandes.html" class="nav-link">Commandes</a></li><li><a href="clients.html" class="nav-link">Clients</a></li><li><a href="livraisons.html" class="nav-link">Livraisons</a></li><li><a href="livreurs.html" class="nav-link">Livreurs</a></li>
+            </ul></li>
+            <li class="menu-category"><a href="#" class="nav-link category-title"><span>📦 Stock & Approvisionnement</span><span class="arrow">▼</span></a><ul class="submenu">
+                <li><a href="produits.html" class="nav-link">Produits</a></li><li><a href="stock.html" class="nav-link">Stock & Mouvements</a></li><li><a href="approvisionnements.html" class="nav-link">Approvisionnements</a></li><li><a href="fournisseurs.html" class="nav-link">Fournisseurs</a></li><li><a href="transitaires.html" class="nav-link">Transitaires</a></li>
+            </ul></li>
+            <li class="menu-category"><a href="#" class="nav-link category-title"><span>💰 Finance</span><span class="arrow">▼</span></a><ul class="submenu">
+                <li><a href="caisse.html" class="nav-link">Caisse</a></li><li><a href="paiements.html" class="nav-link active" aria-current="page">Paiements</a></li><li><a href="factures.html" class="nav-link">Factures</a></li><li><a href="comptabilité.html" class="nav-link">Comptabilité</a></li>
+            </ul></li>
+            <li><a href="rapports.html" class="nav-link">📈 Rapports</a></li><li><a href="paramètres.html" class="nav-link">⚙️ Paramètres</a></li>
+        </ul></nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <button id="sidebar-toggle" class="sidebar-toggle" type="button">☰</button>
+                <a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
+                <h2>Paiements</h2>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <button class="icon-btn" id="mobile-search-btn" type="button" aria-label="Rechercher">🔍</button>
+                    <div class="search-container">
+                        <input type="text" class="search-input" id="header-payment-search" placeholder="Rechercher un paiement...">
+                        <button class="search-btn" id="header-payment-search-btn" type="button" aria-label="Lancer la recherche">🔍</button>
+                    </div>
+                </div>
+                <div class="header-icons">
+                    <div class="notification-menu">
+                        <button id="notification-button" class="icon-btn notifications" type="button" aria-label="Afficher les notifications" aria-expanded="false">🔔</button>
+                        <div id="notification-panel" class="notification-panel" hidden>
+                            <div class="notification-panel-header"><h3>Notifications</h3></div>
+                            <div class="notification-empty">Aucune notification.</div>
+                        </div>
+                    </div>
+                    <div class="profile-menu">
+                        <button class="icon-btn" type="button" aria-label="Profil">👤</button>
+                        <div class="dropdown-menu"><a href="moncompte.html">Mon compte</a><hr><a href="#" class="logout" id="logout-button">Déconnexion</a></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="content">
+            <div class="welcome-section"><div><h2>Suivi des paiements clients</h2><p>Consultez l’ensemble des encaissements commerciaux provenant des ventes et des livraisons, sans double saisie.</p></div></div>
+
+            <div class="payments-kpi-grid">
+                <article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">💰</span><span class="kpi-title">Total encaissé</span></div><h3 class="kpi-value" id="payments-total-value">0 FCFA</h3><p class="kpi-description">Tous les paiements clients enregistrés</p></article>
+                <article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">🛒</span><span class="kpi-title">Via Ventes</span></div><h3 class="kpi-value" id="payments-sales-value">0 FCFA</h3><p class="kpi-description">Paiements rattachés directement aux ventes</p></article>
+                <article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">🛵</span><span class="kpi-title">Via Livraisons</span></div><h3 class="kpi-value" id="payments-deliveries-value">0 FCFA</h3><p class="kpi-description">Encaissements enregistrés à la livraison</p></article>
+                <article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">🧾</span><span class="kpi-title">Paiements</span></div><h3 class="kpi-value" id="payments-count-value">0</h3><p class="kpi-description" id="payments-month-description">0 FCFA encaissé ce mois</p></article>
+            </div>
+
+            <div class="payments-toolbar"><div class="toolbar-left">
+                <button class="btn-secondary" id="export-payments-btn" type="button">📤 Exporter</button>
+                <button class="btn-secondary" id="print-payments-btn" type="button">🖨️ Imprimer</button>
+                <button class="btn-secondary" id="refresh-payments-btn" type="button">🔄 Actualiser</button>
+            </div><div class="toolbar-right"><span class="payment-count"><strong id="filtered-payment-count">0</strong> paiement(s)</span></div></div>
+
+            <div class="payments-filters">
+                <div class="payments-search"><span class="search-icon">🔍</span><input id="payments-search-input" type="search" placeholder="Référence, vente, livraison, utilisateur..."></div>
+                <select id="payment-origin-filter"><option value="">Toutes les origines</option><option value="vente">Vente</option><option value="livraison">Livraison</option></select>
+                <select id="payment-method-filter"><option value="">Tous les modes</option><option value="especes">Espèces</option><option value="mobile-money">Mobile Money</option><option value="virement">Virement</option><option value="cheque">Chèque</option></select>
+                <select id="payment-nature-filter"><option value="">Toutes les natures</option><option value="paiement initial">Paiement initial</option><option value="paiement complémentaire">Paiement complémentaire</option><option value="encaissement livraison">Encaissement livraison</option></select>
+                <select id="payment-status-filter"><option value="">Tous les statuts</option><option value="encaisse">Encaissé</option><option value="annule">Annulé</option><option value="rejete">Rejeté</option></select>
+                <button class="btn-filter-reset" id="reset-payment-filters" type="button">Effacer</button>
+            </div>
+
+            <div class="payments-table-container"><div class="table-responsive"><table class="payments-table">
+                <thead><tr><th>Date / Heure</th><th>ID Paiement</th><th>Origine</th><th>Vente</th><th>Livraison</th><th>Montant</th><th>Mode</th><th>Référence</th><th>Nature</th><th>Statut</th><th>Utilisateur</th><th>Actions</th></tr></thead>
+                <tbody id="payments-table-body"><tr><td colspan="12" class="empty-table">Aucun paiement enregistré.</td></tr></tbody>
+            </table></div></div>
+
+            <div class="table-pagination">
+                <div class="pagination-info"><span>Afficher</span><select id="payments-per-page"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select><span>éléments par page</span></div>
+                <div class="pagination-controls"><button type="button" class="pagination-btn" id="previous-payment-page-btn" aria-label="Page précédente">‹</button><span id="payments-page-buttons" class="pagination-controls"></span><span class="pagination-summary" id="payments-pagination-summary"></span><button type="button" class="pagination-btn" id="next-payment-page-btn" aria-label="Page suivante">›</button></div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div class="modal-overlay" id="payment-detail-modal" aria-hidden="true">
+    <div class="modal payment-detail-modal payment-detail-beautified" role="dialog" aria-modal="true" aria-labelledby="payment-detail-title">
+        <div class="modal-header payment-modal-header">
+            <div class="payment-modal-heading">
+                <span class="payment-modal-icon payment-modal-icon-detail" aria-hidden="true"><i class="fa-regular fa-file-lines"></i></span>
+                <div>
+                    <h2 id="payment-detail-title">Détails du paiement</h2>
+                    <p id="payment-detail-subtitle">Informations complètes sur ce paiement.</p>
+                </div>
+            </div>
+            <button type="button" class="modal-close" id="close-payment-detail-modal" aria-label="Fermer">✕</button>
+        </div>
+        <div class="modal-body payment-modal-body">
+            <section class="payment-hero-card payment-hero-detail">
+                <div>
+                    <span class="payment-hero-label">Référence du paiement</span>
+                    <strong class="payment-hero-reference" id="payment-hero-reference">—</strong>
+                    <span class="payment-hero-status" id="payment-hero-status">—</span>
+                </div>
+                <div class="payment-hero-amount-block">
+                    <span class="payment-hero-label">Montant payé</span>
+                    <strong class="payment-hero-amount" id="payment-hero-amount">0 FCFA</strong>
+                </div>
+            </section>
+            <section class="payment-modal-section">
+                <div class="payment-section-title"><span>▣</span><h3>Informations du paiement</h3></div>
+                <div class="payment-detail-grid" id="payment-detail-grid"></div>
+            </section>
+        </div>
+        <div class="modal-footer payment-modal-footer">
+            <div class="payment-footer-left">
+                <button type="button" class="btn-secondary payment-soft-action" id="copy-payment-reference-btn">📋 Copier la référence</button>
+                <button type="button" class="btn-secondary payment-soft-action" id="open-payment-origin-btn">🔗 Voir l’origine</button>
+            </div>
+            <button type="button" class="btn-primary payment-close-action" id="close-payment-detail-footer">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="payment-origin-modal" aria-hidden="true">
+    <div class="modal payment-detail-modal payment-origin-modal payment-origin-beautified" role="dialog" aria-modal="true" aria-labelledby="payment-origin-title">
+        <div class="modal-header payment-modal-header">
+            <div class="payment-modal-heading">
+                <span class="payment-modal-icon payment-modal-icon-origin" aria-hidden="true"><i class="fa-solid fa-link"></i></span>
+                <div>
+                    <h2 id="payment-origin-title">Origine du paiement</h2>
+                    <p id="payment-origin-subtitle">Détails de la transaction d’origine.</p>
+                </div>
+            </div>
+            <button type="button" class="modal-close" id="close-payment-origin-modal" aria-label="Fermer">✕</button>
+        </div>
+        <div class="modal-body payment-modal-body">
+            <section class="payment-hero-card payment-hero-origin">
+                <div>
+                    <span class="payment-hero-label">Origine</span>
+                    <strong class="payment-hero-reference" id="payment-origin-hero-type">—</strong>
+                    <span class="payment-origin-chip" id="payment-origin-hero-id">—</span>
+                </div>
+                <div class="payment-hero-amount-block">
+                    <span class="payment-hero-label">Montant encaissé</span>
+                    <strong class="payment-hero-amount" id="payment-origin-hero-amount">0 FCFA</strong>
+                </div>
+            </section>
+            <section class="payment-modal-section">
+                <div class="payment-section-title"><span>↗</span><h3>Informations de l’origine</h3></div>
+                <div class="payment-detail-grid payment-origin-grid" id="payment-origin-grid"></div>
+            </section>
+            <div class="payment-origin-note">
+                <span aria-hidden="true">✓</span>
+                <p>Ce paiement est lié à cette transaction et participe à son encaissement.</p>
+            </div>
+        </div>
+        <div class="modal-footer payment-modal-footer">
+            <button type="button" class="btn-primary payment-close-action payment-close-origin" id="close-payment-origin-footer">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/modules/paiements.js"></script>
+</body>
+</html>

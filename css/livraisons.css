@@ -1,0 +1,832 @@
+/* VISIBL — Livraisons */
+.content{width:100%;max-width:1450px;margin:0 auto;padding:24px;overflow-x:hidden}
+.welcome-section{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:24px}
+.welcome-section h2{margin-bottom:6px}.welcome-section p{max-width:760px;line-height:1.6}
+.auto-note{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;color:#1e40af}
+.auto-note div{display:flex;flex-direction:column}.auto-note small{color:#64748b}
+.deliveries-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:24px}
+.kpi-card{padding:20px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 14px rgba(15,23,42,.05)}
+.kpi-card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}.kpi-icon{display:grid;place-items:center;width:38px;height:38px;background:#eff6ff;border-radius:10px}.kpi-title{color:#64748b;font-size:13px;font-weight:700}.kpi-value{margin-bottom:8px;color:#0f172a;font-size:clamp(22px,2vw,29px)}.kpi-description{color:#64748b;font-size:12px}
+.deliveries-toolbar{display:flex;justify-content:space-between;gap:18px;margin-bottom:16px;padding:14px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:12px}.toolbar-left{display:flex;flex-wrap:wrap;gap:10px}.delivery-count{color:#64748b;font-size:13px}
+.deliveries-filters{display:grid;grid-template-columns:minmax(260px,1.8fr) repeat(3,minmax(145px,.75fr)) auto;gap:12px;margin-bottom:18px;padding:16px;background:#fff;border:1px solid #e5e7eb;border-radius:12px}
+.deliveries-search{position:relative}.deliveries-search .search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8}.deliveries-search input,.deliveries-filters select{width:100%;height:42px;padding:0 12px;border:1px solid #dbe2ea;border-radius:9px;background:#fff}.deliveries-search input{padding-left:40px}.btn-filter-reset{min-height:42px;padding:0 15px;border:1px solid #dbe2ea;border-radius:9px;background:#f8fafc;color:#64748b;font-weight:700;cursor:pointer}
+.deliveries-table-container{background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}.table-responsive{width:100%;overflow-x:auto}.deliveries-table,.payment-table{width:100%;min-width:1300px;border-collapse:collapse}.payment-table{min-width:720px}.deliveries-table th,.deliveries-table td,.payment-table th,.payment-table td{padding:12px;border-bottom:1px solid #eef2f7;text-align:left}.deliveries-table th,.payment-table th{font-size:11px;text-transform:uppercase;color:#475569;background:#f8fafc;white-space:nowrap}.deliveries-table td,.payment-table td{font-size:12.5px;color:#334155}.empty-table{text-align:center!important;color:#94a3b8!important;padding:28px!important}
+.status-badge,.result-badge,.payment-badge,.origin-badge{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:10.5px;font-weight:800;white-space:nowrap}.status-a-preparer{background:#fef3c7;color:#92400e}.status-prete-pour-depart{background:#dbeafe;color:#1d4ed8}.status-en-livraison{background:#ede9fe;color:#6d28d9}.status-cloturee{background:#dcfce7;color:#166534}.status-annulee{background:#fee2e2;color:#991b1b}.result-livree{background:#dcfce7;color:#166534}.result-non-livree{background:#fee2e2;color:#991b1b}.result-reportee{background:#fef3c7;color:#92400e}.origin-commande{background:#dbeafe;color:#1d4ed8}.origin-vente{background:#f3e8ff;color:#7e22ce}
+.table-actions{display:flex;gap:6px}.table-action-btn{width:34px;height:34px;border:0;border-radius:8px;cursor:pointer}.view-btn{background:#dbeafe}.prepare-btn{background:#fef3c7}.departure-btn{background:#ede9fe}.return-btn{background:#d1fae5}
+.table-pagination{display:flex;justify-content:space-between;gap:18px;padding:14px 16px}.pagination-info,.pagination-controls{display:flex;align-items:center;gap:8px}.pagination-btn{min-width:34px;height:34px;border:1px solid #dbe2ea;border-radius:8px;background:#fff}.pagination-btn.active{background:#2563eb;color:#fff}
+.modal-overlay{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(15,23,42,.58);backdrop-filter:blur(4px)}.modal-overlay.active,.modal-overlay[aria-hidden="false"]{display:flex}.modal{width:min(920px,100%);max-height:calc(100vh - 48px);overflow:hidden;background:#fff;border-radius:16px}.small-modal{width:min(560px,100%)}.payment-modal{width:min(700px,100%)}.delivery-view-modal{width:min(1080px,100%)}.modal-header{display:flex;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #e5e7eb}.modal-close{width:36px;height:36px;border:1px solid #e5e7eb;border-radius:9px;background:#f8fafc;cursor:pointer}.modal-body{max-height:calc(100vh - 170px);overflow-y:auto;padding:22px 24px;background:#f8fafc}.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid #e5e7eb}
+.detail-card{padding:20px;margin-bottom:16px;background:#fff;border:1px solid #e5e7eb;border-radius:13px}.section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.delivery-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.detail-item{padding:12px;background:#f8fafc;border-radius:10px}.detail-item span,.payment-summary-grid span,.payment-context span{display:block;color:#94a3b8;font-size:10.5px;margin-bottom:5px}.payment-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}.payment-summary-grid>div,.payment-context>div{padding:12px;background:#f8fafc;border-radius:10px}.payment-context{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}.delivery-process{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}.process-step{padding:10px;text-align:center;background:#fff;border:1px solid #e5e7eb;border-radius:9px;font-size:10.5px;font-weight:800;color:#64748b}.process-step.is-done{background:#ecfdf5;color:#166534;border-color:#bbf7d0}.process-step.is-current{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.form-group{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}.form-group.full{grid-column:1/-1}.form-group label{font-size:12px;font-weight:700}.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 12px;border:1px solid #dbe2ea;border-radius:9px;background:#fff}.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice-grid label{display:flex;gap:8px;padding:14px;border:2px solid #e2e8f0;border-radius:11px;background:#fff;cursor:pointer}.choice-grid label:has(input:checked){border-color:#2563eb;background:#eff6ff}.choice-grid span{display:flex;flex-direction:column}.choice-grid small{color:#64748b}.confirm-box{display:flex;gap:14px;padding:16px;background:#fff;border:1px solid #e5e7eb;border-radius:12px}.form-message{display:none;padding:10px 12px;margin-bottom:12px;border-radius:9px}.form-message.error{display:block;background:#fee2e2;color:#991b1b}
+.btn-small{padding:8px 12px;font-size:11.5px}
+#toast-container{position:fixed;top:20px;right:20px;z-index:99999}.toast{margin-bottom:8px;padding:14px 18px;border-radius:10px;color:#fff}.toast.success{background:#22c55e}.toast.error{background:#ef4444}.toast.info{background:#3b82f6}
+@media(max-width:1180px){.deliveries-kpi-grid{grid-template-columns:repeat(2,1fr)}.deliveries-filters{grid-template-columns:repeat(2,1fr)}.deliveries-search{grid-column:1/-1}.delivery-detail-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.content{padding:18px 14px}.welcome-section,.deliveries-toolbar{flex-direction:column;align-items:flex-start}.deliveries-kpi-grid,.deliveries-filters,.form-grid,.delivery-detail-grid,.payment-context{grid-template-columns:1fr}.payment-summary-grid{grid-template-columns:repeat(2,1fr)}.choice-grid{grid-template-columns:1fr}.delivery-process{grid-template-columns:repeat(2,1fr)}.modal-overlay{padding:12px}.modal-header,.modal-body,.modal-footer{padding-left:16px;padding-right:16px}}
+@media(max-width:480px){.content{padding:14px 10px}.deliveries-kpi-grid,.payment-summary-grid,.delivery-process{grid-template-columns:1fr}.modal-overlay{align-items:flex-end;padding:0}.modal{width:100%;max-height:96vh;border-radius:16px 16px 0 0}.modal-footer{flex-direction:column-reverse}.modal-footer button{width:100%}}
+@media print{.sidebar,.header,.welcome-section,.deliveries-toolbar,.deliveries-filters,.table-pagination,.table-actions,.modal-overlay{display:none!important}.main-content{margin-left:0!important}.content{max-width:none;padding:0}.deliveries-table{min-width:0}}
+
+
+/* ==========================================================
+   CORRECTIONS UX MODALES
+========================================================== */
+
+body.modal-open {
+    overflow: hidden;
+}
+
+.modal-overlay {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.modal-header {
+    flex: 0 0 auto;
+    background: #ffffff;
+}
+
+.modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+}
+
+.modal-footer {
+    flex: 0 0 auto;
+    background: #ffffff;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 9px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+    border: 2px solid #f8fafc;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.btn-loading,
+.btn-primary:disabled,
+.btn-secondary:disabled {
+    opacity: .68;
+    cursor: wait !important;
+    pointer-events: none;
+}
+
+.btn-loading::before {
+    content: "";
+    width: 13px;
+    height: 13px;
+    display: inline-block;
+    margin-right: 7px;
+    vertical-align: -2px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: deliveryButtonSpin .65s linear infinite;
+}
+
+@keyframes deliveryButtonSpin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .modal-overlay {
+        align-items: flex-start;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .modal {
+        margin: auto 0;
+        max-height: calc(100dvh - 24px);
+    }
+
+    .modal-body {
+        max-height: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal {
+        margin: 0;
+        max-height: 96dvh;
+    }
+
+    .modal-body {
+        max-height: none;
+    }
+}
+
+/* ===== VISIBL COMMON HARMONISATION — référence Ventes/Commandes ===== */
+.kpi-card,.finance-kpi-card{
+  position:relative;overflow:hidden;border-radius:18px!important;
+  border:1px solid #e8edf5!important;box-shadow:0 8px 26px rgba(15,23,42,.06)!important
+}
+.kpi-card::before,.finance-kpi-card::before{
+  content:"";position:absolute;inset:0 auto 0 0;width:4px;background:#2563eb
+}
+.kpi-card:nth-child(4n+2)::before,.finance-kpi-card:nth-child(4n+2)::before{background:#059669}
+.kpi-card:nth-child(4n+3)::before,.finance-kpi-card:nth-child(4n+3)::before{background:#7c3aed}
+.kpi-card:nth-child(4n+4)::before,.finance-kpi-card:nth-child(4n+4)::before{background:#d97706}
+
+/* Les cases de sélection restent invisibles hors du mode Sélection. */
+body:not(.visibl-selection-mode) th.selection-column,
+body:not(.visibl-selection-mode) td.selection-column,
+body:not(.visibl-selection-mode) [class*="selection-column"],
+body:not(.visibl-selection-mode) th:has(input[type="checkbox"][id*="select-all"]),
+body:not(.visibl-selection-mode) td:has(input[type="checkbox"][data-select]),
+body:not(.visibl-selection-mode) td:has(input[type="checkbox"][class*="select"]){display:none!important}
+
+/* Barre commune Sélection / Actions */
+.visibl-common-toolbar-actions{display:flex;align-items:center;gap:10px;margin-left:auto}
+.visibl-common-actions{position:relative}
+.visibl-common-actions-menu{
+ position:absolute;right:0;top:calc(100% + 8px);z-index:1200;min-width:190px;
+ padding:8px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;
+ box-shadow:0 16px 35px rgba(15,23,42,.16)
+}
+.visibl-common-actions-menu button{display:flex;width:100%;gap:8px;align-items:center;padding:10px 12px;border:0;background:transparent;border-radius:8px;cursor:pointer;text-align:left}
+.visibl-common-actions-menu button:hover{background:#f8fafc}
+
+/* Fenêtres du header : mêmes dimensions/positionnement que la référence. */
+.header .notification-panel{width:min(360px,calc(100vw - 24px));max-height:min(460px,70vh);overflow:auto}
+@media(max-width:900px){
+ .header .search-container.active{width:min(360px,calc(100vw - 24px))}
+ .header .notification-panel{position:fixed!important;top:70px!important;right:12px!important;left:auto!important}
+}
+
+
+/* ==========================================================
+   LIVRAISONS — correctifs ciblés, référence module Ventes
+========================================================== */
+
+/* KPI : squelette pendant le chargement */
+.deliveries-kpi-grid .kpi-value.is-loading{
+    color:transparent;
+    position:relative;
+    min-height:1.2em;
+}
+.deliveries-kpi-grid .kpi-value.is-loading::after{
+    content:"";
+    position:absolute;
+    left:0;
+    top:50%;
+    width:min(92px,70%);
+    height:16px;
+    transform:translateY(-50%);
+    border-radius:999px;
+    background:linear-gradient(90deg,#e9eef5 25%,#f8fafc 50%,#e9eef5 75%);
+    background-size:200% 100%;
+    animation:delivery-kpi-loading 1.15s linear infinite;
+}
+@keyframes delivery-kpi-loading{
+    from{background-position:200% 0}
+    to{background-position:-200% 0}
+}
+
+/* Toolbar : même emplacement que Ventes, uniquement Actions */
+.deliveries-toolbar-refined{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    min-height:58px;
+    margin-bottom:16px;
+    padding:10px 12px 10px 16px;
+    background:#fff;
+    border:1px solid #e7ecf3;
+    border-radius:12px;
+    box-shadow:0 3px 12px rgba(15,23,42,.035);
+}
+.deliveries-toolbar-summary{min-width:0;flex:1}
+.deliveries-toolbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-shrink:0}
+.deliveries-actions-menu{position:relative}
+.deliveries-actions-trigger{min-height:38px;padding:0 13px}
+.deliveries-actions-dropdown{
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    z-index:1200;
+    width:210px;
+    padding:7px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    box-shadow:0 18px 42px rgba(15,23,42,.15);
+}
+.deliveries-actions-dropdown[hidden]{display:none}
+.deliveries-actions-dropdown button{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    width:100%;
+    padding:10px 11px;
+    color:#334155;
+    font:inherit;
+    font-size:13px;
+    font-weight:650;
+    text-align:left;
+    background:transparent;
+    border:0;
+    border-radius:9px;
+    cursor:pointer;
+}
+.deliveries-actions-dropdown button:hover{color:#0f172a;background:#f1f5f9}
+
+/* Actions de ligne : trois points verticaux */
+.delivery-actions-cell{position:relative;width:58px;min-width:58px;text-align:center!important}
+.delivery-row-menu{position:relative;display:inline-flex}
+.delivery-row-menu-trigger{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:34px;height:34px;padding:0;
+    color:#475569;font-size:22px;line-height:1;
+    background:#fff;border:1px solid #dbe2ea;border-radius:9px;cursor:pointer
+}
+.delivery-row-menu-trigger:hover,
+.delivery-row-menu-trigger[aria-expanded="true"]{
+    color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe
+}
+.delivery-row-menu-dropdown{
+    position:absolute;top:calc(100% + 7px);right:0;z-index:1300;
+    width:230px;padding:7px;text-align:left;background:#fff;
+    border:1px solid #e2e8f0;border-radius:12px;
+    box-shadow:0 18px 42px rgba(15,23,42,.15)
+}
+.delivery-row-menu-dropdown[hidden]{display:none}
+.delivery-row-menu-dropdown button{
+    display:flex;align-items:center;gap:9px;width:100%;
+    padding:10px 11px;color:#334155;font:inherit;font-size:13px;
+    text-align:left;background:transparent;border:0;border-radius:9px;cursor:pointer
+}
+.delivery-row-menu-dropdown button:hover{background:#f1f5f9}
+
+/* Notifications : dimensions et emplacement identiques à Ventes */
+.header .notification-panel{
+    width:min(330px,calc(100vw - 28px));
+    max-height:min(420px,calc(100vh - 110px));
+    overflow-y:auto;
+}
+@media(max-width:768px){
+    .header .notification-panel{
+        position:fixed!important;
+        top:66px!important;
+        right:max(12px,env(safe-area-inset-right))!important;
+        left:auto!important;
+        bottom:auto!important;
+        width:min(310px,calc(100vw - 24px))!important;
+        max-width:calc(100vw - 24px)!important;
+        max-height:min(340px,calc(100dvh - 90px))!important;
+        overflow-y:auto!important;
+        transform:none!important;
+        z-index:10001!important;
+        -webkit-overflow-scrolling:touch!important;
+    }
+    .header .notification-panel-header{padding:10px 13px!important}
+    .header .notification-empty-state{padding:15px 13px!important}
+
+    .deliveries-toolbar-refined{
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) auto!important;
+        align-items:center!important;
+        gap:10px!important;
+        width:100%!important;
+        overflow:visible!important;
+    }
+    .deliveries-toolbar-actions{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:flex-end!important;
+        gap:8px!important;
+        min-width:0!important;
+        position:relative!important;
+        z-index:30!important;
+    }
+    .deliveries-actions-trigger{
+        display:inline-flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        width:auto!important;
+        min-width:44px!important;
+        min-height:44px!important;
+        padding:0 12px!important;
+        font-size:13px!important;
+        touch-action:manipulation!important;
+        cursor:pointer!important;
+    }
+    .deliveries-actions-dropdown,
+    .delivery-row-menu-dropdown{
+        position:fixed!important;
+        top:auto!important;
+        right:max(12px,env(safe-area-inset-right))!important;
+        bottom:max(12px,env(safe-area-inset-bottom))!important;
+        left:max(12px,env(safe-area-inset-left))!important;
+        width:auto!important;
+        max-height:min(70dvh,520px)!important;
+        overflow-y:auto!important;
+        z-index:10000!important;
+    }
+}
+@media(max-width:420px){
+    .deliveries-toolbar-refined{grid-template-columns:1fr!important}
+    .deliveries-toolbar-actions{justify-content:stretch!important;width:100%!important}
+    .deliveries-actions-menu,.deliveries-actions-trigger{flex:1 1 0!important;width:100%!important}
+    .header .notification-panel{
+        top:62px!important;
+        right:10px!important;
+        width:min(290px,calc(100vw - 20px))!important;
+        max-width:calc(100vw - 20px)!important;
+        max-height:min(320px,calc(100dvh - 82px))!important;
+    }
+}
+
+
+/* ===== Retour livreur : encaissement affiché uniquement pour "Livrée" ===== */
+#delivery-return-failure-fields[hidden],
+#delivery-return-payment-section[hidden]{display:none!important}
+
+.delivery-return-payment-section{
+    margin-top:4px;
+    padding:18px;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:13px;
+}
+.delivery-return-payment-heading{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:16px;
+}
+.delivery-return-payment-heading h3{margin:0 0 5px}
+.delivery-return-payment-heading p{
+    margin:0;
+    color:#64748b;
+    font-size:12px;
+    line-height:1.5;
+}
+@media(max-width:480px){
+    .delivery-return-payment-section{padding:14px}
+}
+
+/* Alertes Livraison */
+.deliveries-alert-trigger{min-height:38px;padding:0 13px}
+.delivery-alert-settings-modal{width:min(620px,100%)}
+.delivery-alert-help{margin:2px 0 0;color:#64748b;font-size:12px;line-height:1.55}
+.delivery-alert-notification{cursor:default}
+@media(max-width:768px){
+ .deliveries-toolbar-actions{display:flex!important}
+ .deliveries-alert-trigger,.deliveries-actions-trigger{min-height:44px!important;padding:0 12px!important}
+}
+@media(max-width:420px){
+ .deliveries-alert-trigger,.deliveries-actions-menu{flex:1 1 0!important}
+ .deliveries-alert-trigger{width:100%!important}
+}
+
+/* PRIORITÉ DATE + HISTORIQUE LIVRAISON */
+.delivery-date-cell{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.delivery-date-priority{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800;line-height:1;white-space:nowrap}
+.delivery-date-priority.is-today{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.delivery-date-priority.is-tomorrow{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.delivery-date-priority.is-overdue{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.delivery-history-heading{margin-bottom:14px}.delivery-history-heading h3{margin:0 0 4px}.delivery-history-heading p{margin:0;color:#64748b;font-size:12px}
+.delivery-history-list{position:relative;padding-left:7px}.delivery-history-item{position:relative;display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;padding-bottom:18px}.delivery-history-item:last-child{padding-bottom:0}
+.delivery-history-item:not(:last-child)::after{content:"";position:absolute;left:8px;top:18px;bottom:0;width:2px;background:#e2e8f0}
+.delivery-history-dot{position:relative;z-index:1;width:18px;height:18px;border:4px solid #dbeafe;border-radius:50%;background:#2563eb}
+.delivery-history-item.is-success .delivery-history-dot{background:#16a34a;border-color:#dcfce7}.delivery-history-item.is-warning .delivery-history-dot{background:#d97706;border-color:#fef3c7}.delivery-history-item.is-danger .delivery-history-dot{background:#dc2626;border-color:#fee2e2}
+.delivery-history-content{min-width:0}.delivery-history-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.delivery-history-title{font-size:13px;color:#0f172a}.delivery-history-date{flex:0 0 auto;color:#64748b;font-size:10.5px;white-space:nowrap}
+.delivery-history-detail{margin:4px 0 0;color:#64748b;font-size:11.5px;line-height:1.5}.delivery-history-meta{display:block;margin-top:5px;color:#94a3b8;font-size:10px}
+.delivery-history-empty{padding:16px;border:1px dashed #cbd5e1;border-radius:10px;color:#64748b;font-size:12px;text-align:center;background:#f8fafc}
+@media(max-width:600px){.delivery-history-top{flex-direction:column;gap:3px}.delivery-history-date{white-space:normal}}
+
+.delivery-date-relative{font-size:11.5px;font-weight:800;color:#334155;white-space:nowrap}
+
+
+/* ===== Fiche livraison enrichie ===== */
+.delivery-view-modal{width:min(1120px,100%);border-radius:20px;box-shadow:0 28px 80px rgba(15,23,42,.28)}
+.delivery-view-header{background:linear-gradient(135deg,#fff,#f8fbff)}
+.delivery-view-eyebrow{display:block;margin-bottom:5px;color:#2563eb;font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+.delivery-view-body{padding-top:18px}
+.delivery-view-hero{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:16px 18px;background:linear-gradient(135deg,#eff6ff,#fff);border:1px solid #dbeafe;border-radius:16px}
+.delivery-view-hero-icon{display:grid;place-items:center;width:52px;height:52px;flex:0 0 52px;background:#fff;border:1px solid #dbeafe;border-radius:15px;font-size:24px;box-shadow:0 6px 18px rgba(37,99,235,.08)}
+.delivery-view-hero-main{display:flex;min-width:0;flex:1;flex-direction:column;gap:4px}.delivery-view-hero-main strong{color:#0f172a;font-size:16px}.delivery-view-hero-main span{overflow:hidden;color:#64748b;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+#delivery-view-hero-status{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.detail-card{border-radius:16px;box-shadow:0 4px 14px rgba(15,23,42,.035)}.section-row h3{margin:0 0 4px;color:#0f172a}.section-row p{margin:0;color:#64748b;font-size:11.5px}
+.mission-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.mission-stat{min-width:0;padding:14px;background:#f8fafc;border:1px solid #eef2f7;border-radius:12px}.mission-stat span{display:block;margin-bottom:6px;color:#94a3b8;font-size:10.5px}.mission-stat strong{display:block;color:#0f172a;font-size:12.5px;line-height:1.35}.mission-stat.success{background:#f0fdf4;border-color:#bbf7d0}.mission-stat.success strong{color:#166534}.mission-stat.danger{background:#fff1f2;border-color:#fecaca}.mission-stat.danger strong{color:#b91c1c}.mission-stat.warning{background:#fffbeb;border-color:#fde68a}.mission-stat.warning strong{color:#92400e}.mission-stat.progress,.mission-stat.info{background:#eff6ff;border-color:#bfdbfe}.mission-stat.progress strong,.mission-stat.info strong{color:#1d4ed8}
+.delivery-view-finance-grid>div{border:1px solid #eef2f7}.delivery-view-finance-grid strong{color:#0f172a;font-size:13px}.delivery-detail-grid .detail-item{border:1px solid #eef2f7}
+.delivery-history-item{position:relative;display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px;padding:0 0 18px}.delivery-history-item:last-child{padding-bottom:0}.delivery-history-item:not(:last-child)::before{content:"";position:absolute;top:12px;bottom:0;left:5px;width:2px;background:#e2e8f0}.delivery-history-dot{position:relative;z-index:1;width:12px;height:12px;margin-top:3px;background:#fff;border:3px solid #94a3b8;border-radius:50%}.delivery-history-content{padding:11px 13px;background:#f8fafc;border:1px solid #eef2f7;border-radius:11px}.delivery-history-top{display:flex;justify-content:space-between;gap:12px}.delivery-history-title{color:#0f172a;font-size:12.5px}.delivery-history-date{color:#94a3b8;font-size:10.5px;white-space:nowrap}.delivery-history-detail{margin:5px 0 0;color:#64748b;font-size:11.5px;line-height:1.5}
+@media(max-width:850px){.mission-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.delivery-view-hero{align-items:flex-start}#delivery-view-hero-status{max-width:42%}}
+@media(max-width:520px){.mission-summary-grid{grid-template-columns:1fr}.delivery-view-hero{flex-wrap:wrap}.delivery-view-hero-main{min-width:calc(100% - 70px)}#delivery-view-hero-status{width:100%;max-width:none;justify-content:flex-start}.delivery-history-top{flex-direction:column;gap:4px}.delivery-history-date{white-space:normal}}
+
+/* ===== AVOIR CLIENT — ENCAISSEMENT LIVRAISON ===== */
+.delivery-credit-panel{padding:14px;border:1px solid #bfdbfe;border-radius:12px;background:#eff6ff}
+.delivery-credit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}
+.delivery-credit-head>div{display:flex;flex-direction:column;gap:3px}
+.delivery-credit-head small{color:#64748b;font-size:11px}
+.delivery-credit-head>strong{color:#1d4ed8;white-space:nowrap}
+.delivery-credit-use-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px}
+.delivery-credit-use-row>div{display:flex;flex-direction:column;gap:7px}
+.delivery-credit-use-row input{width:100%;padding:11px 12px;border:1px solid #bfdbfe;border-radius:9px;background:#fff}
+.delivery-credit-result{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:10px;border-top:1px dashed #bfdbfe;color:#475569;font-size:12px}
+.delivery-credit-result strong{color:#0f172a}
+.delivery-credit-panel.is-zero{border-color:#e2e8f0;background:#f8fafc}
+.delivery-credit-panel.is-zero .delivery-credit-head>strong{color:#64748b}
+.delivery-view-finance-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:900px){.delivery-view-finance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.delivery-credit-head,.delivery-credit-result{align-items:flex-start;flex-direction:column}.delivery-credit-use-row{grid-template-columns:1fr}.delivery-credit-use-row button{width:100%}.delivery-view-finance-grid{grid-template-columns:1fr}}
+
+
+/* ==========================================================
+   RETOUR LIVREUR — ENCAISSEMENT
+   Refonte visuelle ciblée, sans impact sur la logique JS.
+========================================================== */
+#delivery-return-payment-section.delivery-return-payment-section{
+    margin-top:10px;
+    padding:0;
+    background:transparent;
+    border:0;
+    border-radius:0;
+}
+
+#delivery-return-payment-section .delivery-return-payment-heading{
+    margin:0 0 14px;
+    padding:0;
+}
+
+#delivery-return-payment-section .delivery-return-payment-title{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+#delivery-return-payment-section .delivery-return-payment-icon,
+#delivery-return-payment-section .delivery-return-credit-icon,
+#delivery-return-payment-section .delivery-return-cash-icon{
+    display:grid;
+    place-items:center;
+    flex:0 0 auto;
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    font-size:19px;
+}
+
+#delivery-return-payment-section .delivery-return-payment-icon{
+    background:#eff6ff;
+    color:#2563eb;
+}
+
+#delivery-return-payment-section .delivery-return-payment-heading h3{
+    margin:0 0 4px;
+    color:#0f172a;
+    font-size:17px;
+}
+
+#delivery-return-payment-section .delivery-return-payment-heading p{
+    margin:0;
+    color:#64748b;
+    font-size:12px;
+    line-height:1.5;
+}
+
+#delivery-return-payment-section .delivery-return-context{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+    margin:0 0 16px;
+}
+
+#delivery-return-payment-section .delivery-return-context>div{
+    padding:14px 16px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:13px;
+    box-shadow:0 3px 10px rgba(15,23,42,.03);
+}
+
+#delivery-return-payment-section .delivery-return-context span{
+    margin-bottom:6px;
+    color:#94a3b8;
+    font-size:10.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+}
+
+#delivery-return-payment-section .delivery-return-context strong{
+    display:block;
+    color:#0f172a;
+    font-size:17px;
+}
+
+#delivery-return-payment-section .delivery-return-context>div:last-child strong{
+    color:#1d4ed8;
+}
+
+#delivery-return-payment-section .delivery-return-credit-card{
+    margin-bottom:16px;
+    padding:18px;
+    background:linear-gradient(135deg,#eff6ff 0%,#f8fbff 58%,#eefbf5 100%);
+    border:1px solid #93c5fd;
+    border-radius:16px;
+    box-shadow:0 8px 22px rgba(37,99,235,.06);
+}
+
+#delivery-return-payment-section .delivery-return-credit-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:16px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-title{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    min-width:0;
+}
+
+#delivery-return-payment-section .delivery-return-credit-icon{
+    width:40px;
+    height:40px;
+    background:#dcfce7;
+    color:#16a34a;
+}
+
+#delivery-return-payment-section .delivery-return-credit-title>div{
+    display:flex;
+    min-width:0;
+    flex-direction:column;
+    gap:3px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-title strong{
+    color:#0f172a;
+    font-size:14px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-title small{
+    color:#64748b;
+    font-size:11px;
+    line-height:1.4;
+}
+
+#delivery-return-payment-section .delivery-return-credit-amount{
+    flex:0 0 auto;
+    padding:8px 12px;
+    color:#15803d;
+    font-size:18px;
+    line-height:1;
+    background:rgba(220,252,231,.72);
+    border:1px solid #bbf7d0;
+    border-radius:10px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-content{
+    display:grid;
+    grid-template-columns:minmax(0,1.35fr) minmax(170px,.65fr) minmax(220px,.9fr);
+    align-items:end;
+    gap:16px;
+    padding-top:15px;
+    border-top:1px solid rgba(147,197,253,.55);
+}
+
+#delivery-return-payment-section .delivery-return-credit-field{
+    min-width:0;
+}
+
+#delivery-return-payment-section .delivery-return-credit-field label,
+#delivery-return-payment-section .delivery-return-credit-result span{
+    display:block;
+    margin-bottom:7px;
+    color:#334155;
+    font-size:11.5px;
+    font-weight:800;
+}
+
+#delivery-return-payment-section .delivery-return-credit-input-wrap,
+#delivery-return-payment-section .delivery-return-money-input{
+    display:flex;
+    align-items:stretch;
+    overflow:hidden;
+    background:#fff;
+    border:1px solid #bfdbfe;
+    border-radius:10px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-input-wrap input,
+#delivery-return-payment-section .delivery-return-money-input input{
+    min-width:0;
+    flex:1;
+    width:100%;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    outline:0;
+}
+
+#delivery-return-payment-section .delivery-return-credit-input-wrap span,
+#delivery-return-payment-section .delivery-return-money-input span{
+    display:flex;
+    align-items:center;
+    padding:0 12px;
+    color:#475569;
+    font-size:11.5px;
+    font-weight:800;
+    background:#f8fafc;
+    border-left:1px solid #e2e8f0;
+}
+
+#delivery-return-payment-section .delivery-return-credit-field>small{
+    display:block;
+    margin-top:7px;
+    color:#64748b;
+    font-size:10.5px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-action{
+    display:flex;
+    align-items:flex-end;
+}
+
+#delivery-return-payment-section #return-use-max-credit-btn{
+    width:100%;
+    min-height:42px;
+    color:#1d4ed8;
+    background:#fff;
+    border:1px solid #93c5fd;
+    border-radius:10px;
+    font-weight:800;
+}
+
+#delivery-return-payment-section #return-use-max-credit-btn:hover{
+    background:#eff6ff;
+}
+
+#delivery-return-payment-section .delivery-return-credit-result{
+    padding:12px 14px;
+    background:rgba(255,255,255,.76);
+    border:1px solid #dbeafe;
+    border-radius:12px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-result span{
+    margin-bottom:5px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-result strong{
+    display:block;
+    margin-bottom:4px;
+    color:#0f172a;
+    font-size:16px;
+}
+
+#delivery-return-payment-section .delivery-return-credit-result small{
+    color:#64748b;
+    font-size:10.5px;
+}
+
+#delivery-return-payment-section .delivery-return-cash-card{
+    padding:18px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    box-shadow:0 5px 16px rgba(15,23,42,.035);
+}
+
+#delivery-return-payment-section .delivery-return-cash-heading{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    margin-bottom:16px;
+}
+
+#delivery-return-payment-section .delivery-return-cash-icon{
+    width:40px;
+    height:40px;
+    background:#dcfce7;
+    color:#15803d;
+}
+
+#delivery-return-payment-section .delivery-return-cash-heading h4{
+    margin:0 0 3px;
+    color:#166534;
+    font-size:14px;
+}
+
+#delivery-return-payment-section .delivery-return-cash-heading p{
+    margin:0;
+    color:#64748b;
+    font-size:11px;
+}
+
+#delivery-return-payment-section .delivery-return-cash-grid{
+    gap:14px 16px;
+}
+
+#delivery-return-payment-section .delivery-return-cash-grid .form-group{
+    margin-bottom:0;
+}
+
+#delivery-return-payment-section .delivery-return-cash-grid label{
+    color:#334155;
+    font-size:11.5px;
+}
+
+#delivery-return-payment-section .delivery-return-cash-grid input,
+#delivery-return-payment-section .delivery-return-cash-grid select,
+#delivery-return-payment-section .delivery-return-cash-grid textarea{
+    min-height:42px;
+    border-color:#dbe2ea;
+    border-radius:10px;
+}
+
+#delivery-return-payment-section .delivery-return-cash-grid textarea{
+    min-height:78px;
+    resize:vertical;
+}
+
+@media(max-width:860px){
+    #delivery-return-payment-section .delivery-return-credit-content{
+        grid-template-columns:1fr 1fr;
+    }
+    #delivery-return-payment-section .delivery-return-credit-result{
+        grid-column:1/-1;
+    }
+}
+
+@media(max-width:620px){
+    #delivery-return-payment-section .delivery-return-context{
+        grid-template-columns:1fr;
+    }
+
+    #delivery-return-payment-section .delivery-return-credit-card,
+    #delivery-return-payment-section .delivery-return-cash-card{
+        padding:14px;
+        border-radius:14px;
+    }
+
+    #delivery-return-payment-section .delivery-return-credit-header{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:11px;
+    }
+
+    #delivery-return-payment-section .delivery-return-credit-amount{
+        align-self:stretch;
+        text-align:center;
+    }
+
+    #delivery-return-payment-section .delivery-return-credit-content{
+        grid-template-columns:1fr;
+        gap:12px;
+    }
+
+    #delivery-return-payment-section .delivery-return-credit-result{
+        grid-column:auto;
+    }
+
+    #delivery-return-payment-section .delivery-return-cash-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:420px){
+    #delivery-return-payment-section .delivery-return-payment-title{
+        align-items:flex-start;
+    }
+
+    #delivery-return-payment-section .delivery-return-payment-icon,
+    #delivery-return-payment-section .delivery-return-credit-icon,
+    #delivery-return-payment-section .delivery-return-cash-icon{
+        width:36px;
+        height:36px;
+        font-size:16px;
+    }
+
+    #delivery-return-payment-section .delivery-return-credit-amount{
+        font-size:16px;
+    }
+}

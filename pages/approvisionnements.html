@@ -1,0 +1,3255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+
+<!-- VISIBL COMMON PATCH: anti-flash session -->
+<style id="visibl-common-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-common-auth-guard-script">
+(function(){
+  document.documentElement.classList.add("visibl-auth-pending");
+  try{
+    const raw=localStorage.getItem("visibl_user");
+    if(!raw){location.replace("connexion.html");return;}
+    const u=JSON.parse(raw);
+    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
+    document.documentElement.classList.remove("visibl-auth-pending");
+  }catch(e){
+    localStorage.removeItem("visibl_user");
+    location.replace("connexion.html");
+  }
+})();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Approvisionnements</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/approvisionnements.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar" class="sidebar">
+
+        <button
+            id="sidebar-close"
+            class="sidebar-close"
+            type="button"
+            aria-label="Fermer le menu"
+        >
+            ✖
+        </button>
+
+        <a href="dashboard.html" class="logo">
+            <img src="../logo-vizibl.png" alt="Logo VISIBL">
+        </a>
+
+        <nav>
+            <ul>
+
+                <li>
+                    <a href="dashboard.html" class="nav-link">
+                        📊 Tableau de bord
+                    </a>
+                </li>
+
+                <li class="menu-category">
+                    <a href="#" class="nav-link category-title">
+                        <span>🛒 Commercial</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+                        <li><a href="ventes.html" class="nav-link">Ventes</a></li>
+                        <li><a href="commandes.html" class="nav-link">Commandes</a></li>
+                        <li><a href="clients.html" class="nav-link">Clients</a></li>
+                        <li><a href="livraisons.html" class="nav-link">Livraisons</a></li>
+                        <li><a href="livreurs.html" class="nav-link">Livreurs</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-category">
+                    <a href="#" class="nav-link category-title">
+                        <span>📦 Stock & Approvisionnement</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+                        <li><a href="produits.html" class="nav-link">Produits</a></li>
+                        <li><a href="stock.html" class="nav-link">Stock & Mouvements</a></li>
+                        <li>
+                            <a
+                                href="approvisionnements.html"
+                                class="nav-link active"
+                                aria-current="page"
+                            >
+                                Approvisionnements
+                            </a>
+                        </li>
+                        <li><a href="fournisseurs.html" class="nav-link">Fournisseurs</a></li>
+                        <li><a href="transitaires.html" class="nav-link">Transitaires</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-category">
+                    <a href="#" class="nav-link category-title">
+                        <span>💰 Finance</span>
+                        <span class="arrow">▼</span>
+                    </a>
+
+                    <ul class="submenu">
+                        <li><a href="caisse.html" class="nav-link">Caisse</a></li>
+                        <li><a href="paiements.html" class="nav-link">Paiements</a></li>
+                        <li><a href="factures.html" class="nav-link">Factures</a></li>
+                        <li><a href="comptabilité.html" class="nav-link">Comptabilité</a></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <a href="rapports.html" class="nav-link">
+                        📈 Rapports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="paramètres.html" class="nav-link">
+                        ⚙️ Paramètres
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </aside>
+
+
+    <!-- ===== Contenu principal ===== -->
+    <main class="main-content">
+
+        <!-- ===== Header ===== -->
+        <header class="header">
+
+            <div class="header-left">
+
+                <button
+                    id="sidebar-toggle"
+                    class="sidebar-toggle"
+                    type="button"
+                    aria-label="Ouvrir le menu"
+                >
+                    ☰
+                </button>
+
+                <a href="dashboard.html" class="logo">
+                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
+                </a>
+
+                <h2>Approvisionnements</h2>
+
+            </div>
+
+            <div class="header-right">
+
+                <div class="search-box">
+
+                    <button
+                        class="icon-btn"
+                        id="mobile-search-btn"
+                        type="button"
+                        aria-label="Afficher la recherche"
+                    >
+                        🔍
+                    </button>
+
+                    <div class="search-container">
+
+                        <input
+                            type="search"
+                            class="search-input"
+                            id="header-approvisionnements-search-input"
+                            placeholder="Rechercher un approvisionnement..."
+                        >
+
+                        <button
+                            class="search-btn"
+                            id="header-approvisionnements-search-btn"
+                            type="button"
+                            aria-label="Lancer la recherche"
+                        >
+                            🔍
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="header-icons">
+
+                    <div class="notification-menu">
+
+                        <button
+                            id="notification-button"
+                            class="icon-btn notifications"
+                            type="button"
+                            aria-label="Afficher les notifications"
+                            aria-expanded="false"
+                        >
+                            🔔
+                            <span class="notification-badge">3</span>
+                        </button>
+
+                        <div
+                            id="notification-panel"
+                            class="notification-panel"
+                            hidden
+                        >
+                            <div class="notification-panel-header">
+                                <h3>Notifications</h3>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">📦</span>
+                                <div>
+                                    <strong>Nouvel approvisionnement</strong>
+                                    <p>Un nouvel approvisionnement a été enregistré.</p>
+                                    <small>Il y a quelques minutes</small>
+                                </div>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">🚢</span>
+                                <div>
+                                    <strong>Approvisionnement en transit</strong>
+                                    <p>Une réception est attendue prochainement.</p>
+                                    <small>Aujourd’hui</small>
+                                </div>
+                            </div>
+
+                            <div class="notification-item">
+                                <span class="notification-item-icon">⚠️</span>
+                                <div>
+                                    <strong>Réception en retard</strong>
+                                    <p>Une date de réception prévue a été dépassée.</p>
+                                    <small>Aujourd’hui</small>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="profile-menu">
+
+                        <button
+                            class="icon-btn"
+                            type="button"
+                            aria-label="Afficher le menu du profil"
+                        >
+                            👤
+                        </button>
+
+                        <div class="dropdown-menu">
+                            <a href="moncompte.html">Mon compte</a>
+                            <hr>
+                            <a href="#" class="logout" id="logout-button">
+                                Déconnexion
+                            </a>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ===== Contenu de la page ===== -->
+        <section class="content">
+
+            <!-- ===== Présentation du module ===== -->
+            <div class="welcome-section">
+
+                <div>
+                    <h2>Approvisionnement</h2>
+
+                    <p>
+                        Enregistrez les achats fournisseurs, suivez le transit,
+                        la réception et les produits approvisionnés.
+                    </p>
+                </div>
+
+                <button
+                    class="btn-primary"
+                    id="new-approvisionnement-btn"
+                    type="button"
+                >
+                    ➕ Nouvel approvisionnement
+                </button>
+
+            </div>
+
+
+            <!-- ===== KPI ===== -->
+            <div class="kpi-grid approvisionnements-kpi-grid">
+
+                <article class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-icon">📦</span>
+                        <span class="kpi-title">Total approvisionnements</span>
+                    </div>
+
+                    <h3
+                        class="kpi-value"
+                        id="total-approvisionnements-value"
+                    >
+                        0
+                    </h3>
+
+                    <p
+                        class="kpi-description"
+                        id="total-approvisionnements-description"
+                    >
+                        Approvisionnements enregistrés
+                    </p>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-icon">🚢</span>
+                        <span class="kpi-title">En transit</span>
+                    </div>
+
+                    <h3
+                        class="kpi-value"
+                        id="in-transit-approvisionnements-value"
+                    >
+                        0
+                    </h3>
+
+                    <p
+                        class="kpi-description"
+                        id="in-transit-approvisionnements-description"
+                    >
+                        Réceptions en cours
+                    </p>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-icon">✅</span>
+                        <span class="kpi-title">Réceptionnés</span>
+                    </div>
+
+                    <h3
+                        class="kpi-value"
+                        id="received-approvisionnements-value"
+                    >
+                        0
+                    </h3>
+
+                    <p
+                        class="kpi-description"
+                        id="received-approvisionnements-description"
+                    >
+                        Approvisionnements reçus
+                    </p>
+                </article>
+
+                <article class="kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-icon">💰</span>
+                        <span class="kpi-title">Montant global</span>
+                    </div>
+
+                    <h3
+                        class="kpi-value"
+                        id="total-approvisionnements-amount-value"
+                    >
+                        0 FCFA
+                    </h3>
+
+                    <p
+                        class="kpi-description"
+                        id="total-approvisionnements-amount-description"
+                    >
+                        Valeur cumulée des approvisionnements confirmés
+                    </p>
+                </article>
+
+            </div>
+
+
+            <!-- ===== Barre d’actions ===== -->
+            <div class="approvisionnements-toolbar">
+
+                <div class="toolbar-left approvisionnements-toolbar-summary">
+                    <span class="approvisionnement-count">
+                        <strong id="filtered-approvisionnement-count">0</strong>
+                        approvisionnement(s) affiché(s)
+                    </span>
+                </div>
+
+                <div class="toolbar-right approvisionnements-toolbar-actions">
+
+                    <button
+                        class="btn-secondary selection-approvisionnements-trigger"
+                        id="selection-approvisionnements-btn"
+                        type="button"
+                        aria-pressed="false"
+                    >
+                        ☑️ Sélection
+                    </button>
+
+                    <div class="approvisionnements-actions-menu">
+
+                        <button
+                            class="btn-secondary approvisionnements-actions-trigger"
+                            id="approvisionnements-actions-trigger"
+                            type="button"
+                            aria-expanded="false"
+                            aria-controls="approvisionnements-actions-dropdown"
+                        >
+                            Actions <span aria-hidden="true">⌄</span>
+                        </button>
+
+                        <div
+                            class="approvisionnements-actions-dropdown"
+                            id="approvisionnements-actions-dropdown"
+                            hidden
+                        >
+                            <button type="button" id="export-approvisionnements-btn">
+                                📤 <span>Exporter</span>
+                            </button>
+
+                            <button type="button" id="print-approvisionnements-btn">
+                                🖨️ <span>Imprimer</span>
+                            </button>
+
+                            <button type="button" id="refresh-approvisionnements-btn">
+                                🔄 <span>Actualiser</span>
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div
+                class="approvisionnements-selection-bar"
+                id="approvisionnements-selection-bar"
+                hidden
+            >
+                <div class="approvisionnements-selection-summary">
+                    <strong id="selected-approvisionnements-count">0</strong>
+                    brouillon(s) sélectionné(s)
+                </div>
+
+                <div class="approvisionnements-selection-actions">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="select-visible-approvisionnements-btn"
+                    >
+                        Tout sélectionner
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="clear-approvisionnements-selection-btn"
+                    >
+                        Tout décocher
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secondary btn-danger-soft"
+                        id="delete-selected-approvisionnements-btn"
+                    >
+                        🗑️ Supprimer la sélection
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="close-approvisionnements-selection-btn"
+                    >
+                        Quitter la sélection
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- ===== Recherche et filtres ===== -->
+            <div class="approvisionnements-filters">
+
+                <div class="approvisionnements-search">
+
+                    <span class="search-icon">🔍</span>
+
+                    <input
+                        type="search"
+                        id="approvisionnements-search-input"
+                        placeholder="Rechercher par ID, fournisseur, transitaire..."
+                    >
+
+                </div>
+
+                <select id="approvisionnement-status-filter">
+                    <option value="">Tous les statuts</option>
+                    <option value="brouillon">Brouillon</option>
+                    <option value="commande">Commandé</option>
+                    <option value="en-transit">En transit</option>
+                    <option value="partiellement-recu">Partiellement reçu</option>
+                    <option value="recu">Reçu</option>
+                    <option value="annule">Annulé</option>
+                </select>
+
+                <select id="approvisionnement-payment-filter">
+                    <option value="">Tous les paiements</option>
+                    <option value="especes">Espèces</option>
+                    <option value="virement">Virement bancaire</option>
+                    <option value="mobile-money">Mobile Money</option>
+                    <option value="cheque">Chèque</option>
+                    <option value="carte">Carte bancaire</option>
+                    <option value="credit">Crédit fournisseur</option>
+                </select>
+
+                <select id="approvisionnement-currency-filter">
+                    <option value="">Toutes les devises</option>
+                    <option value="FCFA">FCFA</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="CNY">CNY</option>
+                </select>
+
+                <button
+                    class="btn-filter-reset"
+                    id="reset-approvisionnement-filters"
+                    type="button"
+                >
+                    Effacer les filtres
+                </button>
+
+            </div>
+
+
+            <!-- ===== Tableau ===== -->
+            <div class="approvisionnements-table-container">
+
+                <div class="table-responsive">
+
+                    <table class="approvisionnements-table">
+
+                        <thead>
+                            <tr>
+                                <th class="approvisionnement-selection-column">
+                                    <input
+                                        type="checkbox"
+                                        id="select-all-approvisionnements"
+                                        aria-label="Sélectionner tous les brouillons visibles"
+                                    >
+                                </th>
+                                <th>ID Approvisionnement</th>
+                                <th>Fournisseur</th>
+                                <th>Transitaire</th>
+                                <th>Date d’Achat</th>
+                                <th>Réception prévue</th>
+                                <th>Montant global</th>
+                                <th>Mode de paiement</th>
+                                <th>Devise</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="approvisionnements-table-body">
+                            <tr class="empty-row">
+                                <td colspan="11" class="empty-table">
+                                    Aucun approvisionnement enregistré.
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- ===== État vide ===== -->
+                <div
+                    class="empty-state"
+                    id="approvisionnements-empty-state"
+                    hidden
+                >
+                    <div class="empty-state-icon">
+                        📦
+                    </div>
+
+                    <h3>Aucun approvisionnement trouvé</h3>
+
+                    <p>
+                        Aucun approvisionnement ne correspond à votre recherche
+                        ou aux filtres sélectionnés.
+                    </p>
+
+                    <button
+                        class="btn-primary"
+                        id="empty-new-approvisionnement-btn"
+                        type="button"
+                    >
+                        Ajouter un approvisionnement
+                    </button>
+                </div>
+
+
+                <!-- ===== Pagination ===== -->
+                <div class="table-pagination">
+
+                    <div class="pagination-info">
+
+                        <span>Afficher</span>
+
+                        <select id="approvisionnements-per-page">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+
+                        <span>éléments par page</span>
+
+                    </div>
+
+                    <div class="pagination-controls">
+
+                        <button
+                            type="button"
+                            class="pagination-btn"
+                            id="previous-approvisionnement-page-btn"
+                            aria-label="Page précédente"
+                        >
+                            ‹
+                        </button>
+
+                        <span
+                            id="approvisionnements-page-buttons"
+                            class="pagination-controls"
+                        ></span>
+
+                        <span
+                            id="approvisionnements-pagination-summary"
+                            class="pagination-summary"
+                        ></span>
+
+                        <button
+                            type="button"
+                            class="pagination-btn"
+                            id="next-approvisionnement-page-btn"
+                            aria-label="Page suivante"
+                        >
+                            ›
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     MODALE CRÉATION / MODIFICATION
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="approvisionnement-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal approvisionnement-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="approvisionnement-modal-title"
+    >
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="approvisionnement-modal-title">
+                    Nouvel approvisionnement
+                </h2>
+
+                <p>
+                    Renseignez les informations générales et les produits achetés.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-approvisionnement-modal"
+                aria-label="Fermer la fenêtre"
+            >
+                ✕
+            </button>
+
+        </div>
+
+        <form id="approvisionnement-form">
+
+            <div class="modal-body">
+
+                <div
+                    id="approvisionnement-form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+                <input
+                    type="hidden"
+                    id="approvisionnement-id"
+                    name="idApprovisionnement"
+                >
+
+
+                <!-- ===== Partenaires ===== -->
+                <section class="form-section">
+
+                    <div class="form-section-header">
+                        <span class="form-section-icon">🏢</span>
+
+                        <div>
+                            <h3>Partenaires de l’approvisionnement</h3>
+                            <p>Fournisseur et transitaire associés à l’achat</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="approvisionnement-fournisseur">
+                                Fournisseur
+                                <span class="required">*</span>
+                            </label>
+
+                            <div class="linked-select-row">
+                                <select
+                                    id="approvisionnement-fournisseur"
+                                    name="idFournisseur"
+                                    required
+                                >
+                                    <option value="">
+                                        Sélectionner un fournisseur
+                                    </option>
+                                </select>
+
+                                <button
+                                    type="button"
+                                    class="btn-inline-add"
+                                    id="quick-add-fournisseur-btn"
+                                    title="Ajouter un nouveau fournisseur"
+                                >
+                                    <i class="fa-solid fa-plus"></i>
+                                    Nouveau
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-transitaire">
+                                Transitaire
+                            </label>
+
+                            <div class="linked-select-row">
+                                <select
+                                    id="approvisionnement-transitaire"
+                                    name="idTransitaire"
+                                >
+                                    <option value="">
+                                        Aucun transitaire
+                                    </option>
+                                </select>
+
+                                <button
+                                    type="button"
+                                    class="btn-inline-add"
+                                    id="quick-add-transitaire-btn"
+                                    title="Ajouter un nouveau transitaire"
+                                >
+                                    <i class="fa-solid fa-plus"></i>
+                                    Nouveau
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ===== Dates et statut ===== -->
+                <section class="form-section">
+
+                    <div class="form-section-header">
+                        <span class="form-section-icon">📅</span>
+
+                        <div>
+                            <h3>Dates et suivi</h3>
+                            <p>Date de création, réception prévue et statut</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="approvisionnement-date-achat">Date de création <span class="required">*</span></label>
+
+                            <input
+                                type="date"
+                                id="approvisionnement-date-achat"
+                                name="dateAchat"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-heure-achat">Heure de création <span class="required">*</span></label>
+
+                            <input
+                                type="time"
+                                id="approvisionnement-heure-achat"
+                                name="heureAchat"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-date-reception-prevue">
+                                Date de Réception Prévue
+                            </label>
+
+                            <input
+                                type="date"
+                                id="approvisionnement-date-reception-prevue"
+                                name="dateReceptionPrevue"
+                            >
+                        </div>
+
+                        
+
+                        <div class="form-group">
+                            <label for="approvisionnement-status">
+                                Statut
+                            </label>
+
+                            <input
+                                type="text"
+                                id="approvisionnement-status"
+                                name="statut"
+                                value="Brouillon"
+                                readonly
+                                aria-describedby="approvisionnement-status-help"
+                            >
+
+                            <small
+                                class="field-help"
+                                id="approvisionnement-status-help"
+                            >
+                                Le statut évolue automatiquement depuis le menu Actions.
+                            </small>
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ===== Produits ===== -->
+                <section class="form-section">
+
+                    <div class="form-section-header approvisionnement-products-header">
+
+                        <div class="form-section-header-main">
+                            <span class="form-section-icon">📦</span>
+
+                            <div>
+                                <h3>Produits de l’approvisionnement</h3>
+                                <p>Ajoutez les produits, quantités et prix d’achat</p>
+                            </div>
+                        </div>
+
+                        <div class="products-header-actions">
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                id="quick-add-produit-btn"
+                            >
+                                <i class="fa-solid fa-plus"></i>
+                                Nouveau produit
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                id="add-approvisionnement-product-btn"
+                            >
+                                ➕ Ajouter un produit
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="approvisionnement-products-table-wrapper">
+
+                        <table class="approvisionnement-products-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Qté commandée</th>
+                                    <th>Prix d’achat unitaire (FCFA)</th>
+                                    <th>Remise (FCFA)</th>
+                                    <th>Sous-total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="approvisionnement-products-body">
+                                <tr class="empty-product-row">
+                                    <td colspan="6">
+                                        Aucun produit ajouté.
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ===== Montants et paiement ===== -->
+                <section class="form-section">
+
+                    <div class="form-section-header">
+                        <span class="form-section-icon">💰</span>
+
+                        <div>
+                            <h3>Montants et paiement</h3>
+                            <p>Frais, devise et calcul du montant global</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="approvisionnement-montant-total">
+                                Montant Total
+                            </label>
+
+                            <input
+                                type="number"
+                                id="approvisionnement-montant-total"
+                                name="montantTotal"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                                readonly
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-frais-transport">
+                                Frais de Transport (FCFA)
+                            </label>
+
+                            <input
+                                type="text"
+                                id="approvisionnement-frais-transport"
+                                name="fraisTransport"
+                                
+                                
+                             inputmode="numeric" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-transport-gestionnaire">
+                                Transport géré par
+                                <span class="conditional-required" id="transport-gestionnaire-required" hidden>*</span>
+                            </label>
+                            <select id="approvisionnement-transport-gestionnaire" name="transportGerePar">
+                                <option value="">Sélectionner</option>
+                                <option value="Fournisseur">Fournisseur</option>
+                                <option value="Transitaire">Transitaire</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                            <small class="field-help">Obligatoire si les frais de transport sont supérieurs à 0.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-frais-divers">
+                                Frais Divers (FCFA)
+                            </label>
+
+                            <input
+                                type="text"
+                                id="approvisionnement-frais-divers"
+                                name="fraisDivers"
+                                
+                                
+                             inputmode="numeric" autocomplete="off">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-frais-divers-paye-a">
+                                Frais divers payés à
+                                <span class="conditional-required" id="frais-divers-paye-a-required" hidden>*</span>
+                            </label>
+                            <select id="approvisionnement-frais-divers-paye-a" name="fraisDiversPayeA">
+                                <option value="">Sélectionner</option>
+                                <option value="Fournisseur">Fournisseur</option>
+                                <option value="Transitaire">Transitaire</option>
+                                <option value="Douane">Douane</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                            <small class="field-help">Obligatoire si les frais divers sont supérieurs à 0.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-montant-global">
+                                Montant Global
+                            </label>
+
+                            <input
+                                type="number"
+                                id="approvisionnement-montant-global"
+                                name="montantGlobal"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                                readonly
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-payment-method">
+                                Mode de Paiement
+                                
+                            <span class="optional-label">Facultatif en brouillon</span></label>
+
+                            <select
+                                id="approvisionnement-payment-method"
+                                name="modePaiement"
+                               
+                            >
+                                <option value="">Sélectionner</option>
+                                <option value="Espèces">Espèces</option>
+                                <option value="Virement bancaire">Virement bancaire</option>
+                                <option value="Mobile Money">Mobile Money</option>
+                                <option value="Chèque">Chèque</option>
+                                <option value="Carte bancaire">Carte bancaire</option>
+                                <option value="Crédit fournisseur">Crédit fournisseur</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="approvisionnement-currency">
+                                Devise de l’Achat
+                                
+                            <span class="optional-label">Facultatif en brouillon</span></label>
+
+                            <small class="field-help">
+                                Information uniquement : tous les montants restent saisis et comptabilisés en FCFA, sans conversion.
+                            </small>
+
+                            <select
+                                id="approvisionnement-currency"
+                                name="deviseAchat"
+                               
+                            >
+                                <option value="">Sélectionner</option>
+                                <option value="FCFA">FCFA</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="CNY">CNY</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ===== Commentaire ===== -->
+                <section class="form-section">
+
+                    <div class="form-section-header">
+                        <span class="form-section-icon">📝</span>
+
+                        <div>
+                            <h3>Commentaire</h3>
+                            <p>Informations complémentaires sur l’approvisionnement</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="approvisionnement-comment">
+                            Commentaire
+                        </label>
+
+                        <textarea
+                            id="approvisionnement-comment"
+                            name="commentaire"
+                            rows="4"
+                            placeholder="Ajoutez une information utile concernant cet approvisionnement..."
+                        ></textarea>
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-approvisionnement-btn"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-approvisionnement-btn"
+                >
+                    Enregistrer l’approvisionnement
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+<!-- =========================================================
+     MODALE VOIR APPROVISIONNEMENT
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="view-approvisionnement-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal view-approvisionnement-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="view-approvisionnement-modal-title"
+    >
+
+        <div class="view-approvisionnement-hero">
+
+            <button
+                type="button"
+                class="modal-close view-approvisionnement-close"
+                id="close-view-approvisionnement-modal"
+                aria-label="Fermer la fenêtre"
+            >
+                ✕
+            </button>
+
+            <div class="view-approvisionnement-profile">
+
+                <div
+                    class="view-approvisionnement-avatar"
+                    id="view-approvisionnement-avatar"
+                    aria-hidden="true"
+                >
+                    AP
+                </div>
+
+                <div class="view-approvisionnement-profile-main">
+
+                    <div class="view-approvisionnement-title-row">
+
+                        <div>
+                            <p class="view-approvisionnement-eyebrow">
+                                Fiche approvisionnement
+                            </p>
+
+                            <h2 id="view-approvisionnement-modal-title">
+                                <span id="view-approvisionnement-id">—</span>
+                            </h2>
+                        </div>
+
+                        <span
+                            class="view-approvisionnement-status status-inconnu"
+                            id="view-approvisionnement-status"
+                        >
+                            —
+                        </span>
+
+                    </div>
+
+                    <div class="view-approvisionnement-meta">
+
+                        <span>
+                            <i class="fa-solid fa-building"></i>
+                            <strong id="view-approvisionnement-fournisseur">—</strong>
+                        </span>
+
+                        <span>
+                            <i class="fa-solid fa-ship"></i>
+                            <strong id="view-approvisionnement-transitaire">—</strong>
+                        </span>
+
+                        <span>
+                            <i class="fa-regular fa-calendar"></i>
+                            <strong id="view-approvisionnement-date-achat">—</strong>
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-body view-approvisionnement-body">
+
+            <section class="view-approvisionnement-stats">
+
+                <article class="view-approvisionnement-stat-card">
+
+                    <div class="view-approvisionnement-stat-icon">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+
+                    <div>
+                        <span>Produits</span>
+                        <strong id="view-approvisionnement-products-count">0</strong>
+                        <small>Nombre de lignes enregistrées</small>
+                    </div>
+
+                </article>
+
+                <article class="view-approvisionnement-stat-card featured">
+
+                    <div class="view-approvisionnement-stat-icon">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+
+                    <div>
+                        <span>Montant global</span>
+                        <strong id="view-approvisionnement-global-amount">0</strong>
+                        <small>Frais inclus</small>
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <div class="view-approvisionnement-content-grid">
+
+                <section class="view-approvisionnement-card">
+
+                    <div class="view-approvisionnement-card-header">
+
+                        <div class="view-approvisionnement-card-icon">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+
+                        <div>
+                            <h3>Dates et réception</h3>
+                            <p>Suivi chronologique de l’approvisionnement</p>
+                        </div>
+
+                    </div>
+
+                    <div class="view-approvisionnement-info-list">
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon">
+                                <i class="fa-solid fa-clock"></i>
+                            </span>
+
+                            <div>
+                                <span>Heure d’Achat</span>
+                                <strong id="view-approvisionnement-time">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon">
+                                <i class="fa-regular fa-calendar-check"></i>
+                            </span>
+
+                            <div>
+                                <span>Réception prévue</span>
+                                <strong id="view-approvisionnement-expected-date">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </span>
+
+                            <div>
+                                <span>Réception réelle</span>
+                                <strong id="view-approvisionnement-actual-date">—</strong>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <section class="view-approvisionnement-card">
+
+                    <div class="view-approvisionnement-card-header">
+
+                        <div class="view-approvisionnement-card-icon">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+
+                        <div>
+                            <h3>Paiement et devise</h3>
+                            <p>Conditions financières de l’achat</p>
+                        </div>
+
+                    </div>
+
+                    <div class="view-approvisionnement-info-list">
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon">
+                                <i class="fa-solid fa-money-bill-transfer"></i>
+                            </span>
+
+                            <div>
+                                <span>Mode de Paiement</span>
+                                <strong id="view-approvisionnement-payment-method">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon">
+                                <i class="fa-solid fa-coins"></i>
+                            </span>
+
+                            <div>
+                                <span>Devise</span>
+                                <strong id="view-approvisionnement-currency">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon">
+                                <i class="fa-solid fa-truck-fast"></i>
+                            </span>
+
+                            <div>
+                                <span>Frais de Transport</span>
+                                <strong id="view-approvisionnement-transport-fees">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon"><i class="fa-solid fa-user-tag"></i></span>
+                            <div>
+                                <span>Transport géré par</span>
+                                <strong id="view-approvisionnement-transport-manager">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon">
+                                <i class="fa-solid fa-receipt"></i>
+                            </span>
+
+                            <div>
+                                <span>Frais Divers</span>
+                                <strong id="view-approvisionnement-other-fees">—</strong>
+                            </div>
+                        </div>
+
+                        <div class="view-approvisionnement-info-item">
+                            <span class="view-approvisionnement-info-icon"><i class="fa-solid fa-hand-holding-dollar"></i></span>
+                            <div>
+                                <span>Frais divers payés à</span>
+                                <strong id="view-approvisionnement-other-fees-payee">—</strong>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <section class="view-approvisionnement-products-card">
+
+                <div class="view-approvisionnement-card-header">
+
+                    <div class="view-approvisionnement-card-icon">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+
+                    <div>
+                        <h3>Produits approvisionnés</h3>
+                        <p>Détails des quantités, prix et réceptions</p>
+                    </div>
+
+                </div>
+
+                <div class="table-responsive">
+
+                    <table class="view-approvisionnement-products-table">
+
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Qté commandée</th>
+                                <th>Qté reçue</th>
+                                <th>Prix unitaire</th>
+                                <th>Remise</th>
+                                <th>Sous-total</th>
+                                <th>Réception</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="view-approvisionnement-products-body">
+                            <tr>
+                                <td colspan="7" class="empty-table">
+                                    Aucun produit enregistré.
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <section class="view-approvisionnement-note">
+
+                <div class="view-approvisionnement-note-header">
+
+                    <span>
+                        <i class="fa-solid fa-note-sticky"></i>
+                    </span>
+
+                    <div>
+                        <h3>Commentaire</h3>
+                        <p>Notes et informations complémentaires</p>
+                    </div>
+
+                </div>
+
+                <p id="view-approvisionnement-comment">—</p>
+
+            </section>
+
+        </div>
+
+
+        <div class="modal-footer view-approvisionnement-footer">
+
+            <span class="view-approvisionnement-footer-hint">
+                <i class="fa-solid fa-circle-info"></i>
+                Les informations affichées proviennent de l’approvisionnement.
+            </span>
+
+            <button
+                type="button"
+                class="btn-primary"
+                id="close-view-approvisionnement-footer"
+            >
+                <i class="fa-solid fa-check"></i>
+                Fermer
+            </button>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =========================================================
+     MODALE SUPPRESSION
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="delete-approvisionnement-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal delete-approvisionnement-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-approvisionnement-title"
+    >
+
+        <div class="delete-approvisionnement-top">
+
+            <div class="delete-approvisionnement-circle">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+
+            <h2 id="delete-approvisionnement-title">
+                Supprimer cet approvisionnement ?
+            </h2>
+
+            <p>
+                Vous êtes sur le point de supprimer définitivement
+
+                <strong id="delete-approvisionnement-name">
+                    cet approvisionnement
+                </strong>.
+            </p>
+
+        </div>
+
+        <div class="delete-warning">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            <span>
+                Cette opération est irréversible.
+                Les détails liés à cet approvisionnement seront également supprimés.
+            </span>
+
+        </div>
+
+        <div class="modal-footer delete-footer">
+
+            <button
+                type="button"
+                class="btn-secondary"
+                id="cancel-delete-approvisionnement-btn"
+            >
+                Annuler
+            </button>
+
+            <button
+                type="button"
+                class="btn-danger"
+                id="confirm-delete-approvisionnement-btn"
+            >
+                <i class="fa-solid fa-trash"></i>
+                Supprimer définitivement
+            </button>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+
+
+<!-- =========================================================
+     VALIDATION COMMANDE
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="confirm-order-approvisionnement-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal workflow-approvisionnement-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-order-approvisionnement-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 id="confirm-order-approvisionnement-title">
+                    Confirmer la commande
+                </h2>
+                <p>
+                    Complétez les informations de montant et de paiement
+                    avant de passer l’approvisionnement au statut Commandé.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-confirm-order-approvisionnement-btn"
+                aria-label="Fermer"
+            >
+                ✕
+            </button>
+        </div>
+
+        <form id="confirm-order-approvisionnement-form">
+            <div class="modal-body workflow-scroll-body">
+                <div class="workflow-summary-card">
+                    <span>Approvisionnement</span>
+                    <strong id="confirm-order-approvisionnement-id">—</strong>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Montant produits</label>
+                        <input
+                            type="number"
+                            id="confirm-order-montant-total"
+                            readonly
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-order-frais-transport">
+                            Frais de transport
+                        </label>
+                        <input
+                            type="number"
+                            id="confirm-order-frais-transport"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-order-transport-gestionnaire">
+                            Transport géré par
+                            <span class="conditional-required" id="confirm-order-transport-required" hidden>*</span>
+                        </label>
+                        <select id="confirm-order-transport-gestionnaire">
+                            <option value="">Sélectionner</option>
+                            <option value="Fournisseur">Fournisseur</option>
+                            <option value="Transitaire">Transitaire</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                        <small class="field-help">Obligatoire si les frais de transport sont supérieurs à 0.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-order-frais-divers">
+                            Frais divers
+                        </label>
+                        <input
+                            type="number"
+                            id="confirm-order-frais-divers"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-order-frais-divers-paye-a">
+                            Frais divers payés à
+                            <span class="conditional-required" id="confirm-order-divers-required" hidden>*</span>
+                        </label>
+                        <select id="confirm-order-frais-divers-paye-a">
+                            <option value="">Sélectionner</option>
+                            <option value="Fournisseur">Fournisseur</option>
+                            <option value="Transitaire">Transitaire</option>
+                            <option value="Douane">Douane</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                        <small class="field-help">Obligatoire si les frais divers sont supérieurs à 0.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Montant global</label>
+                        <input
+                            type="number"
+                            id="confirm-order-montant-global"
+                            readonly
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-order-payment-method">
+                            Mode de paiement
+                            <span class="required">*</span>
+                        </label>
+                        <select
+                            id="confirm-order-payment-method"
+                            required
+                        >
+                            <option value="">Sélectionner</option>
+                            <option value="Espèces">Espèces</option>
+                            <option value="Virement bancaire">Virement bancaire</option>
+                            <option value="Mobile Money">Mobile Money</option>
+                            <option value="Chèque">Chèque</option>
+                            <option value="Carte bancaire">Carte bancaire</option>
+                            <option value="Crédit fournisseur">Crédit fournisseur</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-order-currency">
+                            Devise d’achat
+                            <span class="required">*</span>
+                        </label>
+                        <select
+                            id="confirm-order-currency"
+                            required
+                        >
+                            <option value="">Sélectionner</option>
+                            <option value="FCFA">FCFA</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                            <option value="CNY">CNY</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-order-montant-paye">
+                            Montant payé maintenant
+                        </label>
+                        <div class="money-input-wrap">
+                            <input
+                                type="number"
+                                id="confirm-order-montant-paye"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                            >
+                            <span>FCFA</span>
+                        </div>
+                        <small class="field-help">
+                            Vous pouvez payer 0, une partie ou la totalité.
+                        </small>
+                    </div>
+
+
+                    <div class="form-group form-group-full payment-allocation-block" id="confirm-order-allocation-block">
+                        <div class="payment-allocation-heading">
+                            <div>
+                                <label>Répartition du décaissement</label>
+                                <small id="confirm-order-allocation-help">
+                                    La répartition sera déterminée selon le montant payé.
+                                </small>
+                            </div>
+                            <span class="payment-allocation-mode" id="confirm-order-allocation-mode">—</span>
+                        </div>
+
+                        <div class="payment-allocation-auto" id="confirm-order-allocation-auto" hidden>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>
+                                Paiement total : VISIBL répartira automatiquement le décaissement
+                                entre les bénéficiaires concernés.
+                            </span>
+                        </div>
+
+                        <div class="payment-allocation-manual" id="confirm-order-allocation-manual" hidden>
+                            <p>
+                                Paiement partiel : indiquez le montant versé à chaque bénéficiaire.
+                                La somme doit être exactement égale au montant payé maintenant.
+                            </p>
+
+                            <div class="payment-allocation-grid">
+                                <label class="payment-allocation-row" data-allocation-row="Fournisseur">
+                                    <span>Fournisseur</span>
+                                    <div class="money-input-wrap">
+                                        <input type="number" min="0" step="0.01" id="confirm-order-allocation-fournisseur" value="0">
+                                        <span>FCFA</span>
+                                    </div>
+                                </label>
+
+                                <label class="payment-allocation-row" data-allocation-row="Transitaire">
+                                    <span>Transitaire</span>
+                                    <div class="money-input-wrap">
+                                        <input type="number" min="0" step="0.01" id="confirm-order-allocation-transitaire" value="0">
+                                        <span>FCFA</span>
+                                    </div>
+                                </label>
+
+                                <label class="payment-allocation-row" data-allocation-row="Douane">
+                                    <span>Douane</span>
+                                    <div class="money-input-wrap">
+                                        <input type="number" min="0" step="0.01" id="confirm-order-allocation-douane" value="0">
+                                        <span>FCFA</span>
+                                    </div>
+                                </label>
+
+                                <label class="payment-allocation-row" data-allocation-row="Autre">
+                                    <span>Autre</span>
+                                    <div class="money-input-wrap">
+                                        <input type="number" min="0" step="0.01" id="confirm-order-allocation-autre" value="0">
+                                        <span>FCFA</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="payment-allocation-total">
+                                <span>Total réparti</span>
+                                <strong id="confirm-order-allocation-total">0 FCFA</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-order-caisse-account">
+                            Compte à débiter
+                        </label>
+                        <select id="confirm-order-caisse-account">
+                            <option value="">Sélectionner un compte</option>
+                        </select>
+                        <small class="field-help caisse-balance-help" id="confirm-order-caisse-balance">
+                            Aucun débit si le montant payé maintenant est égal à 0.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reste à payer</label>
+                        <div class="money-input-wrap is-readonly">
+                            <input
+                                type="number"
+                                id="confirm-order-reste-a-payer"
+                                readonly
+                            >
+                            <span>FCFA</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label>Statut du paiement</label>
+                        <div
+                            class="payment-status-preview payment-status-unpaid"
+                            id="confirm-order-payment-status"
+                        >
+                            Non payé
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="form-message"
+                    id="confirm-order-approvisionnement-message"
+                    hidden
+                ></div>
+            </div>
+
+            <div class="modal-footer workflow-sticky-footer">
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-confirm-order-approvisionnement-btn"
+                >
+                    Retour
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-confirm-order-approvisionnement-btn"
+                >
+                    Confirmer la commande
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<!-- =========================================================
+     ENREGISTREMENT D'UN PAIEMENT APPROVISIONNEMENT
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="payment-approvisionnement-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal workflow-approvisionnement-modal payment-approvisionnement-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="payment-approvisionnement-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 id="payment-approvisionnement-title">
+                    Enregistrer un paiement
+                </h2>
+                <p>
+                    Ajoutez un règlement. Le montant payé cumulé, le reste à payer
+                    et le statut seront recalculés automatiquement.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-payment-approvisionnement-btn"
+                aria-label="Fermer"
+            >
+                ✕
+            </button>
+        </div>
+
+        <form id="payment-approvisionnement-form">
+            <div class="modal-body workflow-scroll-body">
+                <div class="workflow-summary-card">
+                    <span>Approvisionnement</span>
+                    <strong id="payment-approvisionnement-id">—</strong>
+                </div>
+
+                <div class="payment-overview-grid">
+                    <div class="payment-overview-item">
+                        <span>Montant global</span>
+                        <strong id="payment-montant-global">0 FCFA</strong>
+                    </div>
+                    <div class="payment-overview-item">
+                        <span>Déjà payé</span>
+                        <strong id="payment-montant-deja-paye">0 FCFA</strong>
+                    </div>
+                    <div class="payment-overview-item">
+                        <span>Reste à payer</span>
+                        <strong id="payment-reste-actuel">0 FCFA</strong>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="payment-nouveau-montant">
+                            Nouveau paiement
+                            <span class="required">*</span>
+                        </label>
+                        <div class="money-input-wrap">
+                            <input
+                                type="number"
+                                id="payment-nouveau-montant"
+                                min="0.01"
+                                step="0.01"
+                                required
+                            >
+                            <span>FCFA</span>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group form-group-full payment-allocation-block" id="payment-allocation-block">
+                        <div class="payment-allocation-heading">
+                            <div>
+                                <label>Répartition du décaissement</label>
+                                <small id="payment-allocation-help">
+                                    La répartition sera déterminée selon le montant du paiement.
+                                </small>
+                            </div>
+                            <span class="payment-allocation-mode" id="payment-allocation-mode">—</span>
+                        </div>
+
+                        <div class="payment-allocation-auto" id="payment-allocation-auto" hidden>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>
+                                Paiement du solde complet : VISIBL répartira automatiquement
+                                le montant restant entre les bénéficiaires.
+                            </span>
+                        </div>
+
+                        <div class="payment-allocation-manual" id="payment-allocation-manual" hidden>
+                            <p>
+                                Paiement partiel : indiquez le montant versé à chaque bénéficiaire.
+                                La somme doit correspondre exactement au nouveau paiement.
+                            </p>
+
+                            <div class="payment-allocation-grid">
+                                <label class="payment-allocation-row" data-payment-allocation-row="Fournisseur">
+                                    <span>Fournisseur</span>
+                                    <div class="money-input-wrap">
+                                        <input type="number" min="0" step="0.01" id="payment-allocation-fournisseur" value="0">
+                                        <span>FCFA</span>
+                                    </div>
+                                </label>
+
+                                <label class="payment-allocation-row" data-payment-allocation-row="Transitaire">
+                                    <span>Transitaire</span>
+                                    <div class="money-input-wrap">
+                                        <input type="number" min="0" step="0.01" id="payment-allocation-transitaire" value="0">
+                                        <span>FCFA</span>
+                                    </div>
+                                </label>
+
+                                <label class="payment-allocation-row" data-payment-allocation-row="Douane">
+                                    <span>Douane</span>
+                                    <div class="money-input-wrap">
+                                        <input type="number" min="0" step="0.01" id="payment-allocation-douane" value="0">
+                                        <span>FCFA</span>
+                                    </div>
+                                </label>
+
+                                <label class="payment-allocation-row" data-payment-allocation-row="Autre">
+                                    <span>Autre</span>
+                                    <div class="money-input-wrap">
+                                        <input type="number" min="0" step="0.01" id="payment-allocation-autre" value="0">
+                                        <span>FCFA</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="payment-allocation-total">
+                                <span>Total réparti</span>
+                                <strong id="payment-allocation-total">0 FCFA</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="payment-caisse-account">
+                            Compte à débiter
+                            <span class="required">*</span>
+                        </label>
+                        <select id="payment-caisse-account" required>
+                            <option value="">Sélectionner un compte</option>
+                        </select>
+                        <small class="field-help caisse-balance-help" id="payment-caisse-balance">
+                            Sélectionnez un compte pour afficher son solde disponible.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Après ce paiement</label>
+                        <div
+                            class="payment-status-preview"
+                            id="payment-status-apres"
+                        >
+                            —
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer workflow-sticky-footer">
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-payment-approvisionnement-btn"
+                >
+                    Retour
+                </button>
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-payment-approvisionnement-btn"
+                >
+                    Enregistrer le paiement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- =========================================================
+     CONFIRMATION TRANSIT
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="confirm-transit-approvisionnement-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal workflow-approvisionnement-modal workflow-confirmation-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-transit-approvisionnement-title"
+    >
+        <div class="workflow-confirmation-content">
+            <span class="workflow-confirmation-icon">🚚</span>
+
+            <h2 id="confirm-transit-approvisionnement-title">
+                Confirmer le passage en transit ?
+            </h2>
+
+            <p>
+                L’approvisionnement
+                <strong id="confirm-transit-approvisionnement-id">—</strong>
+                passera au statut <strong>En transit</strong>.
+            </p>
+        </div>
+
+        <div class="modal-footer">
+            <button
+                type="button"
+                class="btn-secondary"
+                id="cancel-confirm-transit-approvisionnement-btn"
+            >
+                Retour
+            </button>
+
+            <button
+                type="button"
+                class="btn-primary"
+                id="save-confirm-transit-approvisionnement-btn"
+            >
+                Confirmer le transit
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- =========================================================
+     RÉCEPTION PARTIELLE / TOTALE
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="confirm-reception-approvisionnement-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal workflow-approvisionnement-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-reception-approvisionnement-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 id="confirm-reception-approvisionnement-title">
+                    Confirmer la réception
+                </h2>
+                <p id="confirm-reception-approvisionnement-description">
+                    Enregistrez la date et l’heure réelles de réception.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-confirm-reception-approvisionnement-btn"
+                aria-label="Fermer"
+            >
+                ✕
+            </button>
+        </div>
+
+        <form id="confirm-reception-approvisionnement-form">
+            <div class="modal-body">
+                <div class="workflow-summary-card">
+                    <span>Approvisionnement</span>
+                    <strong id="confirm-reception-approvisionnement-id">—</strong>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="confirm-reception-date">
+                            Date de réception réelle
+                            <span class="required">*</span>
+                        </label>
+                        <input
+                            type="date"
+                            id="confirm-reception-date"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-reception-time">
+                            Heure de réception réelle
+                            <span class="required">*</span>
+                        </label>
+                        <input
+                            type="time"
+                            id="confirm-reception-time"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <section class="reception-products-section">
+                    <div class="reception-products-heading">
+                        <div>
+                            <h3>Produits réceptionnés</h3>
+                            <p>
+                                Indiquez uniquement les quantités reçues maintenant.
+                                Le stock sera mis à jour automatiquement.
+                            </p>
+                        </div>
+
+                        <span class="reception-products-badge">
+                            Stock automatique
+                        </span>
+                    </div>
+
+                    <div
+                        class="reception-products-list"
+                        id="confirm-reception-products-list"
+                    ></div>
+                </section>
+
+                <div
+                    class="form-message"
+                    id="confirm-reception-approvisionnement-message"
+                    hidden
+                ></div>
+            </div>
+
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-confirm-reception-approvisionnement-btn"
+                >
+                    Retour
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-confirm-reception-approvisionnement-btn"
+                >
+                    Confirmer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- =========================================================
+     MODALE ANNULATION — conserve la trace de l'approvisionnement
+========================================================= -->
+<div
+    class="modal-overlay"
+    id="cancel-approvisionnement-modal"
+    aria-hidden="true"
+>
+    <div
+        class="modal cancel-approvisionnement-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cancel-approvisionnement-title"
+    >
+        <div class="cancel-approvisionnement-top">
+            <div class="cancel-approvisionnement-circle">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+            </div>
+
+            <h2 id="cancel-approvisionnement-title">
+                Annuler cet approvisionnement ?
+            </h2>
+
+            <p>
+                L’approvisionnement
+                <strong id="cancel-approvisionnement-name">—</strong>
+                restera dans l’historique avec le statut
+                <strong>Annulé</strong>.
+            </p>
+        </div>
+
+        <div class="cancel-warning">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>
+                Cette action ne supprime aucune trace. Elle marque
+                l’approvisionnement comme annulé.
+            </span>
+        </div>
+
+        <div class="modal-footer cancel-footer">
+            <button
+                type="button"
+                class="btn-secondary"
+                id="close-cancel-approvisionnement-btn"
+            >
+                Retour
+            </button>
+
+            <button
+                type="button"
+                class="btn-danger-soft"
+                id="confirm-cancel-approvisionnement-btn"
+            >
+                <i class="fa-solid fa-ban"></i>
+                Confirmer l’annulation
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Conteneur des notifications -->
+<div id="toast-container" class="toast-container"></div>
+
+
+<!-- ===== Scripts ===== -->
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/app.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script src="../js/modules/approvisionnements.js"></script>
+
+
+
+
+<!-- =========================================================
+     MODALE : NOUVEAU PRODUIT
+========================================================== -->
+
+<div
+    class="modal-overlay"
+    id="product-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-container product-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-modal-title"
+    >
+
+        <div class="modal-header">
+
+            <div>
+                <h2 id="product-modal-title">
+                    Nouveau produit
+                </h2>
+
+                <p>
+                    Enregistrez un nouveau produit dans le catalogue.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-product-modal"
+                aria-label="Fermer le formulaire"
+            >
+                ✖
+            </button>
+
+        </div>
+
+
+        <!--
+             Formulaire unique :
+             - mode création : champs vides ;
+             - mode modification : mêmes champs préremplis.
+        -->
+        <form id="product-form">
+            <div class="approvisionnement-product-context" id="approvisionnement-product-context">
+                <i class="fa-solid fa-box-open"></i>
+                <span>
+                    Produit créé depuis un approvisionnement :
+                    le stock initial reste à 0 et l'entrée en stock se fera lors de la réception.
+                </span>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Message du formulaire -->
+
+                <div
+                    id="product-form-message"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+
+                <!-- =========================================
+                     INFORMATIONS GÉNÉRALES
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Informations générales
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-reference">
+                                Référence produit
+                                <span class="required">*</span>
+                            </label>
+
+                            <div class="reference-auto-field">
+                                <input
+                                    type="text"
+                                    id="product-reference"
+                                    name="referenceProduit"
+                                    value="Génération automatique..."
+                                    readonly
+                                    required
+                                    aria-describedby="product-reference-help"
+                                >
+                                <span class="reference-auto-badge">
+                                    Automatique
+                                </span>
+                            </div>
+
+                            <small
+                                class="form-help"
+                                id="product-reference-help"
+                            >
+                                La référence est créée automatiquement par VISIBL.
+                            </small>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-name">
+                                Désignation
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="product-name"
+                                name="designation"
+                                placeholder="Nom du produit"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-description">
+                                Description
+                            </label>
+
+                            <textarea
+                                id="product-description"
+                                name="description"
+                                rows="3"
+                                placeholder="Description du produit"
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     COÛTS ET PRIX
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Coûts et prix
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-purchase-price">
+                                Prix d’achat (FCFA)
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-purchase-price"
+                                name="prixAchat"
+                                min="0"
+                                step="1"
+                                required
+                                placeholder="Exemple : 8500"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-transport-cost">
+                                Frais de transport (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-transport-cost"
+                                name="fraisTransport"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 1000"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-customs-cost">
+                                Frais de douane (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-customs-cost"
+                                name="fraisDouane"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 500"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-other-costs">
+                                Autres frais (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-other-costs"
+                                name="autresFrais"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 250"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-cost-price">
+                                Prix de revient (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-cost-price"
+                                name="prixRevient"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-sale-price">
+                                Prix de vente (FCFA)
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-sale-price"
+                                name="prixVente"
+                                min="0"
+                                step="1"
+                                required
+                                placeholder="Exemple : 15000"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-minimum-price">
+                                Prix minimum de vente (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-minimum-price"
+                                name="prixMinimumVente"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 12000"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-margin-amount">
+                                Marge (FCFA)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-margin-amount"
+                                name="margeFCFA"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-margin-rate">
+                                Taux de marge (%)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-margin-rate"
+                                name="tauxMarge"
+                                value="0"
+                                readonly
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     STOCK
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Stock
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-initial-stock">
+                                Stock initial
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-initial-stock"
+                                name="stockInitial"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 100"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-alert-threshold">
+                                Seuil d’alerte
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-alert-threshold"
+                                name="seuilAlerte"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 10"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     FOURNISSEUR ET GARANTIE
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Fournisseur et garantie
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-main-supplier">
+                                ID fournisseur principal
+                            </label>
+
+                            <select
+                                id="product-main-supplier"
+                                name="idFournisseurPrincipal"
+                            >
+                                <option value="">
+                                    Sélectionner un fournisseur
+                                </option>
+                            </select>
+
+                            <small class="form-help">
+                                La liste sera alimentée depuis le module Fournisseurs.
+                            </small>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="product-warranty">
+                                Garantie (mois)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="product-warranty"
+                                name="garantieMois"
+                                min="0"
+                                step="1"
+                                placeholder="Exemple : 12"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-image-file">
+                                Image du produit
+                            </label>
+
+                            <div
+                                class="image-upload-zone"
+                                id="product-image-drop-zone"
+                                tabindex="0"
+                                role="button"
+                                aria-describedby="product-image-help"
+                            >
+                                <input
+                                    type="file"
+                                    id="product-image-file"
+                                    name="imageFichier"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    hidden
+                                >
+
+                                <input
+                                    type="hidden"
+                                    id="product-image-url"
+                                    name="imageURL"
+                                >
+
+                                <div
+                                    class="image-upload-placeholder"
+                                    id="product-image-placeholder"
+                                >
+                                    <span
+                                        class="image-upload-icon"
+                                        aria-hidden="true"
+                                    >
+                                        📷
+                                    </span>
+
+                                    <strong>
+                                        Cliquez pour ajouter une image
+                                    </strong>
+
+                                    <span>
+                                        ou glissez-déposez votre fichier ici
+                                    </span>
+
+                                    <small id="product-image-help">
+                                        JPG, PNG ou WEBP — 5 Mo maximum
+                                    </small>
+                                </div>
+
+                                <div
+                                    class="image-preview-wrapper"
+                                    id="product-image-preview-wrapper"
+                                    hidden
+                                >
+                                    <img
+                                        id="product-image-preview"
+                                        alt="Aperçu de l’image du produit"
+                                    >
+
+                                    <div class="image-preview-info">
+                                        <strong id="product-image-name">
+                                            Image sélectionnée
+                                        </strong>
+
+                                        <span id="product-image-size"></span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="remove-image-btn"
+                                        id="remove-product-image-btn"
+                                    >
+                                        Retirer l’image
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =========================================
+                     STATUT ET COMMENTAIRE
+                ========================================== -->
+
+                <section class="form-section">
+
+                    <h3>
+                        Statut et commentaire
+                    </h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="product-status">
+                                Statut
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="product-status"
+                                name="statut"
+                                required
+                            >
+
+                                <option value="Actif" selected>
+                                    Actif
+                                </option>
+
+                                <option value="Inactif">
+                                    Inactif
+                                </option>
+
+                                <option value="Archivé">
+                                    Archivé
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group form-group-full">
+
+                            <label for="product-comment">
+                                Commentaire
+                            </label>
+
+                            <textarea
+                                id="product-comment"
+                                name="commentaire"
+                                rows="3"
+                                placeholder="Informations complémentaires"
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =============================================
+                 BOUTONS DU FORMULAIRE
+            ============================================== -->
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-product-btn"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-product-btn"
+                >
+                    Enregistrer le produit
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODALE AJOUT RAPIDE FOURNISSEUR
+========================================================= -->
+<div class="modal-overlay" id="quick-fournisseur-modal" aria-hidden="true">
+    <div class="modal quick-create-modal" role="dialog" aria-modal="true" aria-labelledby="quick-fournisseur-title">
+        <div class="modal-header">
+            <div>
+                <h2 id="quick-fournisseur-title">Nouveau fournisseur</h2>
+                <p>Créez un fournisseur sans quitter l’approvisionnement.</p>
+            </div>
+            <button type="button" class="modal-close" id="close-quick-fournisseur-modal">✕</button>
+        </div>
+
+        <form id="quick-fournisseur-form">
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="quick-fournisseur-nom">Nom du fournisseur <span class="required">*</span></label>
+                        <input type="text" id="quick-fournisseur-nom" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-fournisseur-telephone">Téléphone <span class="required">*</span></label>
+                        <input type="tel" id="quick-fournisseur-telephone" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-fournisseur-pays">Pays <span class="required">*</span></label>
+                        <input type="text" id="quick-fournisseur-pays" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-fournisseur-ville">Ville</label>
+                        <input type="text" id="quick-fournisseur-ville">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-fournisseur-contact">Nom du contact</label>
+                        <input type="text" id="quick-fournisseur-contact">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-fournisseur-devise">Devise</label>
+                        <select id="quick-fournisseur-devise">
+                            <option value="FCFA">FCFA</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="CNY">CNY</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancel-quick-fournisseur-btn">Annuler</button>
+                <button type="submit" class="btn-primary" id="save-quick-fournisseur-btn">Enregistrer le fournisseur</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =========================================================
+     MODALE AJOUT RAPIDE PRODUIT
+========================================================= -->
+<div class="modal-overlay" id="quick-produit-modal" aria-hidden="true">
+    <div class="modal quick-create-modal" role="dialog" aria-modal="true" aria-labelledby="quick-produit-title">
+        <div class="modal-header">
+            <div>
+                <h2 id="quick-produit-title">Nouveau produit</h2>
+                <p>Créez un produit et sélectionnez-le immédiatement.</p>
+            </div>
+            <button type="button" class="modal-close" id="close-quick-produit-modal">✕</button>
+        </div>
+
+        <form id="quick-produit-form">
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="quick-produit-reference">Référence <span class="required">*</span></label>
+                        <input type="text" id="quick-produit-reference" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-produit-designation">Désignation <span class="required">*</span></label>
+                        <input type="text" id="quick-produit-designation" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-produit-prix-achat">Prix d’achat (FCFA)</label>
+                        <input type="text" id="quick-produit-prix-achat" inputmode="numeric" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-produit-prix-vente">Prix de vente (FCFA)</label>
+                        <input type="text" id="quick-produit-prix-vente" inputmode="numeric" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-produit-stock-initial">Stock initial</label>
+                        <input type="text" id="quick-produit-stock-initial" inputmode="numeric" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-produit-seuil">Seuil d’alerte</label>
+                        <input type="text" id="quick-produit-seuil" inputmode="numeric" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancel-quick-produit-btn">Annuler</button>
+                <button type="submit" class="btn-primary" id="save-quick-produit-btn">Enregistrer le produit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- =========================================================
+     MODALE AJOUT RAPIDE TRANSITAIRE
+========================================================= -->
+<div class="modal-overlay" id="quick-transitaire-modal" aria-hidden="true">
+    <div
+        class="modal quick-create-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-transitaire-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 id="quick-transitaire-title">Nouveau transitaire</h2>
+                <p>Créez un transitaire sans quitter l’approvisionnement.</p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="close-quick-transitaire-modal"
+                aria-label="Fermer"
+            >
+                ✕
+            </button>
+        </div>
+
+        <form id="quick-transitaire-form">
+            <div class="modal-body">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-nom">
+                            Nom du transitaire
+                            <span class="required">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="quick-transitaire-nom"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-contact">
+                            Nom du contact
+                        </label>
+                        <input
+                            type="text"
+                            id="quick-transitaire-contact"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-telephone">
+                            Téléphone
+                        </label>
+                        <input
+                            type="tel"
+                            id="quick-transitaire-telephone"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-whatsapp">
+                            WhatsApp
+                        </label>
+                        <input
+                            type="tel"
+                            id="quick-transitaire-whatsapp"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-email">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            id="quick-transitaire-email"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-pays">
+                            Pays
+                        </label>
+                        <input
+                            type="text"
+                            id="quick-transitaire-pays"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-ville">
+                            Ville
+                        </label>
+                        <input
+                            type="text"
+                            id="quick-transitaire-ville"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-adresse">
+                            Adresse
+                        </label>
+                        <input
+                            type="text"
+                            id="quick-transitaire-adresse"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-transport">
+                            Type de transport
+                        </label>
+                        <select id="quick-transitaire-transport">
+                            <option value="">Sélectionner</option>
+                            <option value="Maritime">Maritime</option>
+                            <option value="Aérien">Aérien</option>
+                            <option value="Routier">Routier</option>
+                            <option value="Ferroviaire">Ferroviaire</option>
+                            <option value="Multimodal">Multimodal</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-delai">
+                            Délai moyen
+                        </label>
+                        <input
+                            type="text"
+                            id="quick-transitaire-delai"
+                            placeholder="Ex. 30 jours"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-devise">
+                            Devise
+                        </label>
+                        <select id="quick-transitaire-devise">
+                            <option value="FCFA">FCFA</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="CNY">CNY</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quick-transitaire-statut">
+                            Statut
+                        </label>
+                        <select id="quick-transitaire-statut">
+                            <option value="Actif">Actif</option>
+                            <option value="Inactif">Inactif</option>
+                            <option value="Suspendu">Suspendu</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label for="quick-transitaire-commentaire">
+                            Commentaire
+                        </label>
+                        <textarea
+                            id="quick-transitaire-commentaire"
+                            rows="3"
+                        ></textarea>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancel-quick-transitaire-btn"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-quick-transitaire-btn"
+                >
+                    Enregistrer le transitaire
+                </button>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

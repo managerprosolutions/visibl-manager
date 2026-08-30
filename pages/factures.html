@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+
+<!-- VISIBL COMMON PATCH: anti-flash session -->
+<style id="visibl-common-auth-guard">
+html.visibl-auth-pending body{visibility:hidden!important}
+</style>
+<script id="visibl-common-auth-guard-script">
+(function(){
+  document.documentElement.classList.add("visibl-auth-pending");
+  try{
+    const raw=localStorage.getItem("visibl_user");
+    if(!raw){location.replace("connexion.html");return;}
+    const u=JSON.parse(raw);
+    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
+    document.documentElement.classList.remove("visibl-auth-pending");
+  }catch(e){
+    localStorage.removeItem("visibl_user");
+    location.replace("connexion.html");
+  }
+})();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factures</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/factures.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+<div class="container">
+<aside id="sidebar" class="sidebar">
+<button id="sidebar-close" class="sidebar-close" type="button">✖</button>
+<a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
+<nav><ul>
+<li><a href="dashboard.html" class="nav-link">📊 Tableau de bord</a></li>
+<li class="menu-category"><a href="#" class="nav-link category-title"><span>🛒 Commercial</span><span class="arrow">▼</span></a>
+<ul class="submenu"><li><a href="ventes.html" class="nav-link">Ventes</a></li><li><a href="commandes.html" class="nav-link">Commandes</a></li><li><a href="clients.html" class="nav-link">Clients</a></li><li><a href="livraisons.html" class="nav-link">Livraisons</a></li><li><a href="livreurs.html" class="nav-link">Livreurs</a></li></ul></li>
+<li class="menu-category"><a href="#" class="nav-link category-title"><span>📦 Stock & Approvisionnement</span><span class="arrow">▼</span></a>
+<ul class="submenu"><li><a href="produits.html" class="nav-link">Produits</a></li><li><a href="stock.html" class="nav-link">Stock & Mouvements</a></li><li><a href="approvisionnements.html" class="nav-link">Approvisionnements</a></li><li><a href="fournisseurs.html" class="nav-link">Fournisseurs</a></li><li><a href="transitaires.html" class="nav-link">Transitaires</a></li></ul></li>
+<li class="menu-category"><a href="#" class="nav-link category-title"><span>💰 Finance</span><span class="arrow">▼</span></a>
+<ul class="submenu"><li><a href="caisse.html" class="nav-link">Caisse</a></li><li><a href="paiements.html" class="nav-link">Paiements</a></li><li><a href="factures.html" class="nav-link active">Factures</a></li><li><a href="comptabilité.html" class="nav-link">Comptabilité</a></li></ul></li>
+<li><a href="rapports.html" class="nav-link">📈 Rapports</a></li><li><a href="paramètres.html" class="nav-link">⚙️ Paramètres</a></li>
+</ul></nav>
+</aside>
+
+<main class="main-content">
+<header class="header">
+<div class="header-left">
+<button id="sidebar-toggle" class="sidebar-toggle" type="button">☰</button>
+<a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a><h2>Factures</h2>
+</div>
+<div class="header-right">
+<div class="search-box">
+<button class="icon-btn" id="mobile-search-btn" type="button">🔍</button>
+<div class="search-container"><input type="text" class="search-input" id="invoice-header-search" placeholder="Rechercher une facture..."><button class="search-btn" id="invoice-header-search-btn" type="button">🔍</button></div>
+</div>
+<div class="header-icons">
+<div class="notification-menu">
+<button id="notification-button" class="icon-btn notifications" type="button" aria-label="Afficher les notifications" aria-expanded="false">🔔<span class="notification-badge">3</span></button>
+<div id="notification-panel" class="notification-panel" hidden>
+<div class="notification-panel-header"><h3>Notifications</h3></div>
+<div class="notification-item"><span class="notification-item-icon">📦</span><div><strong>Nouvelle commande</strong><p>Une nouvelle commande a été enregistrée.</p><small>Récemment</small></div></div>
+<div class="notification-item"><span class="notification-item-icon">⚠️</span><div><strong>Stock faible</strong><p>Un produit approche du seuil de rupture.</p><small>Aujourd’hui</small></div></div>
+<div class="notification-item"><span class="notification-item-icon">💳</span><div><strong>Paiement reçu</strong><p>Un nouveau paiement a été enregistré.</p><small>Aujourd’hui</small></div></div>
+</div></div>
+<div class="profile-menu">
+<button class="icon-btn" id="invoice-profile-button" type="button" aria-expanded="false">👤</button>
+<div class="dropdown-menu" id="invoice-profile-dropdown"><a href="moncompte.html">Mon compte</a><hr><a href="#" class="logout" id="logout-button">Déconnexion</a></div>
+</div></div></div>
+</header>
+
+<section class="content">
+<div class="welcome-section"><div><h2>Facturation clients</h2><p>Consultez les factures générées automatiquement depuis les ventes et les factures d’avoir issues des retours clients.</p></div></div>
+
+<div class="kpi-grid invoices-kpi-grid">
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">🧾</span><span class="kpi-title">Factures émises</span></div><h3 class="kpi-value" id="total-invoices-value">0</h3><p class="kpi-description">Factures clients</p></article>
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">💰</span><span class="kpi-title">Montant facturé</span></div><h3 class="kpi-value" id="invoiced-amount-value">0 FCFA</h3><p class="kpi-description">Total TTC</p></article>
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">✅</span><span class="kpi-title">Montant encaissé</span></div><h3 class="kpi-value" id="invoice-paid-value">0 FCFA</h3><p class="kpi-description">Paiements des clients</p></article>
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">⏳</span><span class="kpi-title">Reste à encaisser</span></div><h3 class="kpi-value" id="invoice-balance-value">0 FCFA</h3><p class="kpi-description">Créances restantes</p></article>
+<article class="kpi-card"><div class="kpi-card-header"><span class="kpi-icon">↩️</span><span class="kpi-title">Avoirs</span></div><h3 class="kpi-value" id="credit-notes-value">0</h3><p class="kpi-description" id="credit-notes-description">0 FCFA en avoirs</p></article>
+</div>
+
+<div class="invoices-toolbar"><div class="toolbar-left">
+<button class="btn-secondary" id="export-invoices-btn" type="button">📤 Exporter</button>
+<button class="btn-secondary" id="print-invoices-btn" type="button">🖨️ Imprimer</button>
+<button class="btn-secondary" id="refresh-invoices-btn" type="button">🔄 Actualiser</button>
+</div><div class="toolbar-right"><span class="invoice-count"><strong id="filtered-invoice-count">0</strong> facture(s) affichée(s)</span></div></div>
+
+<div class="invoice-quick-filters" id="invoice-quick-filters">
+<button type="button" class="invoice-quick-filter active" data-invoice-quick="">Toutes</button>
+<button type="button" class="invoice-quick-filter" data-invoice-quick="impayee">Impayées</button>
+<button type="button" class="invoice-quick-filter" data-invoice-quick="partiellement-payee">Partiellement payées</button>
+<button type="button" class="invoice-quick-filter" data-invoice-quick="payee">Payées</button>
+<button type="button" class="invoice-quick-filter" data-invoice-quick="avoir">Avoirs</button>
+</div><div class="invoices-filters">
+<div class="invoices-search"><span class="search-icon">🔍</span><input type="text" id="invoices-search-input" placeholder="Numéro, client, vente, facture origine..."></div>
+<select id="invoice-type-filter"><option value="">Tous les types</option><option value="facture">Facture</option><option value="avoir">Avoir</option></select>
+<select id="invoice-status-filter"><option value="">Tous les statuts</option><option value="emise">Émise</option><option value="partiellement-payee">Partiellement payée</option><option value="payee">Payée</option><option value="annule">Annulée</option></select>
+<button class="btn-filter-reset" id="reset-invoice-filters" type="button">Effacer les filtres</button>
+</div>
+
+<div class="invoices-table-container"><div class="table-responsive">
+<table class="invoices-table"><thead><tr><th>N° Facture</th><th>Date</th><th>Type</th><th>Client</th><th>Vente</th><th>Articles</th><th>Montant TTC</th><th>Payé</th><th>Reste</th><th>Statut</th><th>Actions</th></tr></thead>
+<tbody id="invoices-table-body"><tr><td colspan="11" class="empty-table">Aucune facture enregistrée.</td></tr></tbody></table>
+</div>
+<div class="table-pagination"><div class="pagination-info"><span>Afficher</span><select id="invoices-per-page"><option>10</option><option>25</option><option>50</option><option>100</option></select><span>éléments par page</span></div>
+<div class="pagination-controls"><button class="pagination-btn" id="previous-invoice-page-btn" type="button">‹</button><span id="invoices-page-buttons" class="pagination-controls"></span><span id="invoices-pagination-summary" class="pagination-summary"></span><button class="pagination-btn" id="next-invoice-page-btn" type="button">›</button></div></div>
+</div>
+</section>
+</main>
+</div>
+
+<div class="modal-overlay" id="invoice-modal" aria-hidden="true">
+<div class="modal invoice-modal" role="dialog" aria-modal="true">
+<div class="modal-header"><div><h2 id="invoice-modal-title">Facture</h2><p id="invoice-modal-subtitle">Document client</p></div><button type="button" class="modal-close" id="close-invoice-modal">✕</button></div>
+<div class="modal-body">
+<article class="invoice-document" id="invoice-document">
+<div class="invoice-document-header"><div class="invoice-brand"><img src="../logo-vizibl.png" alt="VISIBL"><div><strong>VISIBL</strong><span>Document commercial</span></div></div><div class="invoice-document-title"><span id="invoice-document-type">FACTURE</span><strong id="invoice-document-number">—</strong></div></div>
+<div class="invoice-parties"><div class="invoice-box"><span class="invoice-label">Client</span><strong id="invoice-client-name">—</strong><small id="invoice-client-contact">—</small></div><div class="invoice-box"><span class="invoice-label">Informations</span><div><strong>Date :</strong> <span id="invoice-date">—</span></div><div><strong>Vente :</strong> <span id="invoice-sale-id">—</span></div><div id="invoice-origin-row" hidden><strong>Facture origine :</strong> <span id="invoice-origin-number">—</span></div></div></div>
+<div class="invoice-credit-reason" id="invoice-credit-reason" hidden><strong>Motif de l’avoir :</strong> <span id="invoice-credit-reason-text"></span></div>
+<div class="invoice-lines-wrapper"><table class="invoice-lines-table"><thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire TTC</th><th>Remise</th><th>Sous-total TTC</th></tr></thead><tbody id="invoice-lines-body"></tbody></table></div>
+<div class="invoice-summary"><div class="invoice-note"><span class="invoice-label">Statut</span><strong id="invoice-status-display">—</strong></div><div class="invoice-totals"><div><span>Montant TTC</span><strong id="invoice-total-display">0 FCFA</strong></div><div id="invoice-paid-row"><span>Paiement encaissé</span><strong id="invoice-paid-display">0 FCFA</strong></div><div id="invoice-credit-used-row" hidden style="display:none;"><span>Avoir client utilisé</span><strong id="invoice-credit-used-display">0 FCFA</strong></div><div id="invoice-settled-row"><span>Total réglé</span><strong id="invoice-settled-display">0 FCFA</strong></div><div id="invoice-balance-row"><span>Reste à payer</span><strong id="invoice-balance-display">0 FCFA</strong></div></div></div>
+<div class="invoice-trace-section"><div class="invoice-trace-heading"><div><span class="invoice-label">Traçabilité</span><h3>Historique de la facture</h3></div><span class="invoice-trace-count" id="invoice-history-count">0 événement</span></div><div class="invoice-history" id="invoice-history"><div class="invoice-history-loading">Chargement de l’historique…</div></div></div><div class="invoice-comment" id="invoice-comment-box" hidden><span class="invoice-label">Commentaire</span><p id="invoice-comment-text"></p></div>
+</article>
+</div>
+<div class="modal-footer"><button class="btn-secondary" id="copy-invoice-number-btn" type="button">📋 Copier le numéro</button><button class="btn-secondary" id="open-invoice-sale-btn" type="button">🔗 Voir la vente</button><button class="btn-secondary" id="open-invoice-payments-btn" type="button" hidden>💳 Voir le paiement</button><button class="btn-secondary" id="open-invoice-return-btn" type="button" hidden>↩️ Voir le retour</button><button class="btn-secondary" id="print-current-invoice-btn" type="button">🖨️ Imprimer / PDF</button><button class="btn-primary" id="close-invoice-footer-btn" type="button">Fermer</button></div>
+</div>
+</div>
+<div class="modal-overlay" id="invoice-sale-modal" aria-hidden="true">
+  <div class="modal invoice-sale-modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div class="invoice-sale-modal-heading"><span class="invoice-sale-modal-kicker">VENTE LIÉE</span><h2>Voir la vente</h2><p id="invoice-sale-subtitle">Vente liée à la facture</p></div>
+      <button type="button" class="modal-close" id="close-invoice-sale-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="invoice-sale-view">
+        <div class="invoice-sale-hero">
+          <div><span class="invoice-sale-label">Vente</span><strong id="invoice-sale-id">—</strong></div>
+          <span class="invoice-status-badge" id="invoice-sale-status">—</span>
+        </div>
+        <div class="invoice-sale-grid">
+          <article class="invoice-sale-card"><span class="invoice-sale-label">Client</span><strong id="invoice-sale-client">—</strong><small id="invoice-sale-client-contact">—</small></article>
+          <article class="invoice-sale-card"><span class="invoice-sale-label">Date</span><strong id="invoice-sale-date">—</strong><small id="invoice-sale-order">—</small></article>
+        </div>
+        <article class="invoice-sale-card">
+          <span class="invoice-sale-label">Produits vendus</span>
+          <div class="invoice-sale-lines-wrapper">
+            <table class="invoice-sale-lines"><thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Sous-total</th></tr></thead><tbody id="invoice-sale-lines-body"></tbody></table>
+          </div>
+        </article>
+        <article class="invoice-sale-card">
+          <span class="invoice-sale-label">Situation financière</span>
+          <div class="invoice-sale-finance">
+            <div><span>Montant TTC</span><strong id="invoice-sale-total">0 FCFA</strong></div>
+            <div><span>Paiement encaissé</span><strong id="invoice-sale-paid">0 FCFA</strong></div>
+            <div id="invoice-sale-credit-row" hidden><span>Avoir client utilisé</span><strong id="invoice-sale-credit">0 FCFA</strong></div>
+            <div><span>Total réglé</span><strong id="invoice-sale-settled">0 FCFA</strong></div>
+            <div><span>Reste à payer</span><strong id="invoice-sale-balance">0 FCFA</strong></div>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-primary" id="close-invoice-sale-footer-btn" type="button">Fermer</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="invoice-payments-modal" aria-hidden="true"><div class="modal invoice-mini-modal" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="invoice-modal-kicker">RÈGLEMENTS</span><h2>Paiements de la facture</h2><p id="invoice-payments-subtitle">—</p></div><button type="button" class="modal-close" id="close-invoice-payments-modal">✕</button></div><div class="modal-body"><div class="invoice-payment-summary"><div><span>Total encaissé</span><strong id="invoice-payments-total">0 FCFA</strong></div><div><span>Nombre de paiements</span><strong id="invoice-payments-count">0</strong></div></div><div id="invoice-payments-list" class="invoice-payments-list"></div></div><div class="modal-footer"><button class="btn-primary" id="close-invoice-payments-footer-btn" type="button">Fermer</button></div></div></div>
+<div class="modal-overlay" id="invoice-return-modal" aria-hidden="true"><div class="modal invoice-mini-modal" role="dialog" aria-modal="true"><div class="modal-header"><div><span class="invoice-modal-kicker">RETOUR CLIENT</span><h2>Détail du retour</h2><p id="invoice-return-subtitle">Origine de la facture d’avoir</p></div><button type="button" class="modal-close" id="close-invoice-return-modal">✕</button></div><div class="modal-body"><div class="invoice-return-hero"><div><span>Retour</span><strong id="invoice-return-id">—</strong></div><span id="invoice-return-status" class="invoice-status-badge">—</span></div><div class="invoice-return-grid"><article><span>Date du retour</span><strong id="invoice-return-date">—</strong></article><article><span>Vente concernée</span><strong id="invoice-return-sale">—</strong></article></div><article class="invoice-return-reason"><span>Motif</span><p id="invoice-return-reason-text">—</p></article><div class="invoice-return-lines-wrapper"><table class="invoice-return-lines"><thead><tr><th>Produit</th><th>Qté</th><th>Montant</th></tr></thead><tbody id="invoice-return-lines-body"></tbody></table></div></div><div class="modal-footer"><button class="btn-primary" id="close-invoice-return-footer-btn" type="button">Fermer</button></div></div></div><div id="toast-container"></div>
+<script src="../js/api.js"></script><script src="../js/auth.js"></script><script src="../js/app.js"></script><script src="../js/modules/factures.js"></script>
+</body></html>
