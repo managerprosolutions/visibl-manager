@@ -111,12 +111,6 @@
                         </li>
 
                         <li>
-                            <a href="stock.html" class="nav-link">
-                            Stock & Mouvements
-                            </a>
-                        </li>
-
-                        <li>
                             <a href="approvisionnements.html" class="nav-link">
                                 Approvisionnements
                             </a>
@@ -229,30 +223,15 @@
 
                 <div class="header-icons">
 
-                    <div class="notification-menu">
-                        <button
-                            id="notification-button"
-                            class="icon-btn notifications"
-                            type="button"
-                            aria-label="Afficher les notifications"
-                            aria-expanded="false">
-                            🔔
-                            <span class="notification-badge" hidden>0</span>
-                        </button>
+                    <button class="icon-btn notifications">
 
-                        <div
-                            id="notification-panel"
-                            class="notification-panel"
-                            hidden>
-                            <div class="notification-panel-header">
-                                <h3>Notifications</h3>
-                            </div>
-                            <div class="notification-empty-state">
-                                <span aria-hidden="true">🔔</span>
-                                <p>Chargement des notifications...</p>
-                            </div>
-                        </div>
-                    </div>
+                        🔔
+
+                        <span class="notification-badge">
+                            3
+                        </span>
+
+                    </button>
 
                     <div class="profile-menu">
 
@@ -1544,87 +1523,197 @@
                     <!-- =====================================================
                          NOTIFICATIONS
                     ====================================================== -->
-                    <div class="settings-section" id="notifications-settings">
+                    <div
+                        class="settings-section"
+                        id="notifications-settings"
+                    >
+
                         <div class="settings-section-header">
+
                             <div>
-                                <h3>Notifications</h3>
-                                <p>Activez les alertes internes VISIBL que vous souhaitez recevoir.</p>
+
+                                <h3>
+                                    Notifications
+                                </h3>
+
+                                <p>
+                                    Choisissez les événements pour lesquels vous souhaitez
+                                    recevoir une alerte.
+                                </p>
+
                             </div>
-                            <div class="settings-section-icon">🔔</div>
+
+                            <div class="settings-section-icon">
+                                🔔
+                            </div>
+
                         </div>
 
-                        <form class="settings-form" id="notifications-settings-form">
-                            <div class="notification-settings-card">
-                                <div class="notification-settings-card-header">
-                                    <div>
-                                        <h4>Alertes métier</h4>
-                                        <p>Les utilisateurs reçoivent automatiquement les alertes des modules auxquels ils ont accès.</p>
-                                    </div>
+                        <div class="settings-options-list">
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Nouvelle commande
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une commande est enregistrée.
+                                    </span>
+
                                 </div>
 
-                                <div class="settings-options-list notification-options-grid">
-                                    <label class="settings-switch-row"><div><strong>Nouvelle commande</strong><span>Alerte après l'enregistrement réussi d'une commande.</span></div><input id="notification-new-order" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Commande confirmée</strong><span>Alerte lorsqu'une commande passe au statut Confirmée.</span></div><input id="notification-order-confirmed" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Commande annulée</strong><span>Alerte lorsqu'une commande passe au statut Annulée.</span></div><input id="notification-order-cancelled" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Paiement reçu</strong><span>Alerte après l'enregistrement réussi d'un paiement client.</span></div><input id="notification-payment-received" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Stock faible</strong><span>Alerte lorsqu'un produit passe sous son seuil minimum.</span></div><input id="notification-low-stock" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Rupture de stock</strong><span>Alerte lorsqu'un produit atteint zéro unité vendable.</span></div><input id="notification-out-stock" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Retard de livraison</strong><span>Alerte lorsqu'une livraison dépasse sa date prévue sans être clôturée.</span></div><input id="notification-delivery-late" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Livraison à préparer</strong><span>Alerte lorsqu'une nouvelle livraison entre dans la file de préparation.</span></div><input id="notification-delivery-to-prepare" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Livraison prête pour départ</strong><span>Alerte lorsque la préparation est validée et que le colis est prêt.</span></div><input id="notification-delivery-ready" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>En livraison</strong><span>Alerte lorsque le départ du livreur est confirmé.</span></div><input id="notification-delivery-in-progress" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Livraison clôturée — Livrée</strong><span>Alerte lorsqu'une livraison est clôturée avec le résultat Livrée.</span></div><input id="notification-delivery-done" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Livraison clôturée — Non livrée</strong><span>Alerte lorsqu'une livraison est clôturée après un échec définitif.</span></div><input id="notification-delivery-not-delivered" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Livraison reportée</strong><span>Alerte lorsqu'une livraison est reprogrammée pour une nouvelle tentative.</span></div><input id="notification-delivery-postponed" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Retour produit</strong><span>Alerte après l'enregistrement d'un retour de vente.</span></div><input id="notification-product-return" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Mouvement de caisse important</strong><span>Alerte pour toute entrée ou sortie atteignant le seuil défini ci-dessous.</span></div><input id="notification-cash-important" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Solde de caisse faible</strong><span>Alerte lorsqu'un compte financier franchit son seuil minimum.</span></div><input id="notification-cash-low" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                </div>
-                            </div>
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
 
-                            <div class="notification-settings-card">
-                                <div class="notification-settings-card-header">
-                                    <div>
-                                        <h4>Seuils de caisse</h4>
-                                        <p>Les seuils de solde suivent automatiquement les comptes financiers configurés dans Finance.</p>
-                                    </div>
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Stock faible
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'un produit atteint son seuil minimum.
+                                    </span>
+
                                 </div>
 
-                                <div class="settings-form-grid">
-                                    <div class="settings-field">
-                                        <label for="notification-important-cash-threshold">Mouvement important à partir de</label>
-                                        <div class="settings-money-input"><input id="notification-important-cash-threshold" type="number" min="0" step="1"><span>FCFA</span></div>
-                                    </div>
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Facture impayée
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une facture arrive à échéance.
+                                    </span>
+
                                 </div>
 
-                                <div class="notification-account-thresholds" id="notification-account-thresholds">
-                                    <p class="notification-threshold-loading">Chargement des comptes financiers...</p>
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Paiement reçu
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte après l'enregistrement d'un paiement.
+                                    </span>
+
                                 </div>
-                            </div>
 
-                            <div class="notification-settings-card">
-                                <div class="notification-settings-card-header">
-                                    <div>
-                                        <h4>Rapports automatiques</h4>
-                                        <p>Ces résumés globaux sont réservés à l'administrateur.</p>
-                                    </div>
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Retard de livraison
+                                    </strong>
+
+                                    <span>
+                                        Recevoir une alerte lorsqu'une livraison dépasse l'échéance.
+                                    </span>
+
                                 </div>
 
-                                <div class="settings-options-list notification-options-grid">
-                                    <label class="settings-switch-row"><div><strong>Rapport journalier</strong><span>Résumé automatique de l'activité de la journée.</span></div><input id="notification-daily-report" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Rapport hebdomadaire</strong><span>Résumé automatique de l'activité de la semaine.</span></div><input id="notification-weekly-report" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
-                                    <label class="settings-switch-row"><div><strong>Rapport mensuel</strong><span>Résumé automatique de l'activité du mois.</span></div><input id="notification-monthly-report" type="checkbox" class="settings-switch-input"><span class="settings-switch"></span></label>
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                    checked
+                                >
+
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                            <label class="settings-switch-row">
+
+                                <div>
+
+                                    <strong>
+                                        Rapport hebdomadaire
+                                    </strong>
+
+                                    <span>
+                                        Recevoir un résumé automatique chaque semaine.
+                                    </span>
+
                                 </div>
-                            </div>
 
-                            <div id="notifications-settings-message" class="settings-form-message" hidden></div>
+                                <input
+                                    type="checkbox"
+                                    class="settings-switch-input"
+                                >
 
-                            <div class="settings-form-actions">
-                                <button type="button" class="btn-secondary" id="disable-all-notifications-btn">Tout désactiver</button>
-                                <button type="button" class="btn-secondary" id="reset-notifications-settings-btn">Annuler les modifications</button>
-                                <button type="submit" class="btn-primary" id="save-notifications-settings-btn">💾 Enregistrer</button>
-                            </div>
-                        </form>
+                                <span class="settings-switch"></span>
+
+                            </label>
+
+                        </div>
+
+                        <div class="settings-form-actions">
+
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                            >
+                                Tout désactiver
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn-primary"
+                            >
+                                💾 Enregistrer
+                            </button>
+
+                        </div>
+
                     </div>
 
                     <!-- =====================================================

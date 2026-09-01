@@ -14,6 +14,10 @@ function initialiserParametres() {
     initialiserParametresEntreprise();
     initialiserParametresUtilisateurs();
     initialiserParametresRolesAutorisations();
+    initialiserParametresVentes();
+    initialiserParametresStock();
+    initialiserParametresFinance();
+    initialiserParametresNotifications();
     neutraliserFormulairesParametresNonConnectes();
 }
 
@@ -1328,6 +1332,277 @@ function masquerMessageRoleForm() {
     zone.className = "settings-form-message";
 }
 
+
+/* ===========================================================
+   PARAMÈTRES > VENTES
+   Le workflow métier est volontairement verrouillé.
+   Seule la mention de facture est configurable ici.
+=========================================================== */
+
+let parametresVentesCharges = null;
+
+function initialiserParametresVentes() {
+    document.getElementById("sales-settings-form")?.addEventListener("submit", enregistrerParametresVentes);
+    document.getElementById("reset-sales-settings-btn")?.addEventListener("click", restaurerParametresVentesCharges);
+    chargerParametresVentes();
+}
+
+async function chargerParametresVentes() {
+    definirChargementVentes(true);
+    afficherMessageVentes("Chargement des paramètres des ventes...", "info");
+    try {
+        const resultat = await apiGet("getParametresVentes");
+        if (!resultat?.success) throw new Error(resultat?.message || "Impossible de charger les paramètres des ventes.");
+        parametresVentesCharges = normaliserParametresVentes(resultat.data || resultat.parametres || {});
+        appliquerParametresVentes(parametresVentesCharges);
+        masquerMessageVentes();
+    } catch (error) {
+        console.error("Paramètres ventes — chargement :", error);
+        afficherMessageVentes(error.message || "Impossible de charger les paramètres des ventes.", "error");
+    } finally { definirChargementVentes(false); }
+}
+
+async function enregistrerParametresVentes(event) {
+    event.preventDefault();
+    const bouton = document.getElementById("save-sales-settings-btn");
+    const payload = { mentionFacture: valeurParametre("sale-invoice-message") };
+    if (payload.mentionFacture.length > 500) { afficherMessageVentes("La mention ne doit pas dépasser 500 caractères.", "error"); return; }
+    definirChargementVentes(true);
+    if (bouton) { bouton.dataset.originalText = bouton.textContent; bouton.textContent = "Enregistrement..."; }
+    afficherMessageVentes("Enregistrement en cours...", "info");
+    try {
+        const resultat = await apiPost("saveParametresVentes", payload);
+        if (!resultat?.success) throw new Error(resultat?.message || "Impossible d'enregistrer les paramètres des ventes.");
+        parametresVentesCharges = normaliserParametresVentes(resultat.data || resultat.parametres || payload);
+        appliquerParametresVentes(parametresVentesCharges);
+        afficherMessageVentes(resultat.message || "Les paramètres des ventes ont été enregistrés.", "success");
+        afficherToastParametres("Paramètres des ventes enregistrés.", "success");
+    } catch (error) {
+        console.error("Paramètres ventes — enregistrement :", error);
+        afficherMessageVentes(error.message || "Impossible d'enregistrer les paramètres des ventes.", "error");
+    } finally {
+        definirChargementVentes(false);
+        if (bouton) bouton.textContent = bouton.dataset.originalText || "💾 Enregistrer";
+    }
+}
+
+function appliquerParametresVentes(data) {
+    definirValeurParametre("sale-invoice-message", normaliserParametresVentes(data).mentionFacture);
+}
+
+function restaurerParametresVentesCharges() {
+    if (!parametresVentesCharges) { chargerParametresVentes(); return; }
+    appliquerParametresVentes(parametresVentesCharges);
+    masquerMessageVentes();
+    afficherToastParametres("Modifications annulées.", "info");
+}
+
+function normaliserParametresVentes(data) {
+    return { mentionFacture: texteParametre(data?.mentionFacture), derniereModification: texteParametre(data?.derniereModification) };
+}
+
+function caseParametreCochee(id) {
+    return document.getElementById(id)?.checked === true;
+}
+
+function definirCaseParametre(id, valeur) {
+    const element = document.getElementById(id);
+    if (element) element.checked = valeur === true;
+}
+
+function booleenParametreVentes(valeur, defaut) {
+    if (valeur === true || valeur === false) return valeur;
+    const texte = String(valeur ?? "").trim().toLowerCase();
+    if (["true", "1", "oui", "yes", "x"].includes(texte)) return true;
+    if (["false", "0", "non", "no"].includes(texte)) return false;
+    return defaut === true;
+}
+
+function nombreParametreVentes(valeur, defaut) {
+    const nombre = Number(valeur);
+    return Number.isFinite(nombre) ? nombre : defaut;
+}
+
+function actualiserEtatRemiseParametresVentes() {
+    const autorisee = caseParametreCochee("sale-allow-discount");
+    const groupe = document.getElementById("sale-max-discount-group");
+    const champ = document.getElementById("sale-max-discount");
+
+    if (groupe) groupe.classList.toggle("is-disabled", !autorisee);
+    if (champ) champ.disabled = !autorisee;
+}
+
+function definirChargementVentes(actif) {
+    const formulaire = document.getElementById("sales-settings-form");
+    if (!formulaire) return;
+
+    formulaire.classList.toggle("is-loading", Boolean(actif));
+    formulaire.setAttribute("aria-busy", String(Boolean(actif)));
+
+    formulaire.querySelectorAll("button, input, textarea").forEach((element) => {
+        if (actif) {
+            element.dataset.ventesEtatDesactive = element.disabled ? "1" : "0";
+            element.disabled = true;
+        } else {
+            const etaitDesactive = element.dataset.ventesEtatDesactive === "1";
+            delete element.dataset.ventesEtatDesactive;
+            if (!etaitDesactive) element.disabled = false;
+        }
+    });
+
+    if (!actif) actualiserEtatRemiseParametresVentes();
+}
+
+function afficherMessageVentes(message, type) {
+    const zone = document.getElementById("sales-settings-message");
+    if (!zone) return;
+
+    zone.hidden = false;
+    zone.textContent = message || "";
+    zone.className = `settings-form-message ${type === "error" ? "is-error" : type === "success" ? "is-success" : "is-info"}`;
+}
+
+function masquerMessageVentes() {
+    const zone = document.getElementById("sales-settings-message");
+    if (!zone) return;
+    zone.hidden = true;
+    zone.textContent = "";
+    zone.className = "settings-form-message";
+}
+
+/* ===========================================================
+   PARAMÈTRES > STOCK
+=========================================================== */
+let parametresStockCharges = null;
+
+function initialiserParametresStock() {
+    document.getElementById("stock-settings-form")?.addEventListener("submit", enregistrerParametresStock);
+    document.getElementById("reset-stock-settings-btn")?.addEventListener("click", restaurerParametresStockCharges);
+    chargerParametresStock();
+}
+
+async function chargerParametresStock() {
+    definirChargementStock(true);
+    afficherMessageStock("Chargement des paramètres du stock...", "info");
+    try {
+        const resultat = await apiGet("getParametresStock");
+        if (!resultat?.success) throw new Error(resultat?.message || "Impossible de charger les paramètres du stock.");
+        parametresStockCharges = normaliserParametresStock(resultat.data || resultat.parametres || {});
+        appliquerParametresStock(parametresStockCharges);
+        masquerMessageStock();
+    } catch (error) {
+        console.error("Paramètres stock — chargement :", error);
+        afficherMessageStock(error.message || "Impossible de charger les paramètres du stock.", "error");
+    } finally { definirChargementStock(false); }
+}
+
+async function enregistrerParametresStock(event) {
+    event.preventDefault();
+    const bouton = document.getElementById("save-stock-settings-btn");
+    const payload = {
+        alertesStockFaible: caseParametreCochee("stock-low-alert-enabled"),
+        seuilAlerteDefaut: Math.max(0, Math.trunc(Number(valeurParametre("default-stock-threshold")) || 0)),
+        alerteRupture: caseParametreCochee("stock-out-alert-enabled"),
+        autoriserCommandeStockInsuffisant: caseParametreCochee("stock-allow-pending-insufficient"),
+        exigerMotifAjustement: caseParametreCochee("stock-require-adjustment-reason")
+    };
+    definirChargementStock(true);
+    if (bouton) { bouton.dataset.originalText = bouton.textContent; bouton.textContent = "Enregistrement..."; }
+    afficherMessageStock("Enregistrement en cours...", "info");
+    try {
+        const resultat = await apiPost("saveParametresStock", payload);
+        if (!resultat?.success) throw new Error(resultat?.message || "Impossible d'enregistrer les paramètres du stock.");
+        parametresStockCharges = normaliserParametresStock(resultat.data || resultat.parametres || payload);
+        appliquerParametresStock(parametresStockCharges);
+        afficherMessageStock(resultat.message || "Les paramètres du stock ont été enregistrés.", "success");
+        afficherToastParametres("Paramètres du stock enregistrés.", "success");
+    } catch (error) {
+        console.error("Paramètres stock — enregistrement :", error);
+        afficherMessageStock(error.message || "Impossible d'enregistrer les paramètres du stock.", "error");
+    } finally {
+        definirChargementStock(false);
+        if (bouton) bouton.textContent = bouton.dataset.originalText || "💾 Enregistrer";
+    }
+}
+
+function normaliserParametresStock(data) {
+    return {
+        alertesStockFaible: booleenParametreVentes(data?.alertesStockFaible, true),
+        seuilAlerteDefaut: Math.max(0, Math.trunc(nombreParametreVentes(data?.seuilAlerteDefaut, 5))),
+        alerteRupture: booleenParametreVentes(data?.alerteRupture, true),
+        autoriserCommandeStockInsuffisant: booleenParametreVentes(data?.autoriserCommandeStockInsuffisant, false),
+        exigerMotifAjustement: booleenParametreVentes(data?.exigerMotifAjustement, true),
+        derniereModification: texteParametre(data?.derniereModification)
+    };
+}
+function appliquerParametresStock(data) {
+    const p = normaliserParametresStock(data);
+    definirValeurParametre("default-stock-threshold", p.seuilAlerteDefaut);
+    definirCaseParametre("stock-low-alert-enabled", p.alertesStockFaible);
+    definirCaseParametre("stock-out-alert-enabled", p.alerteRupture);
+    definirCaseParametre("stock-allow-pending-insufficient", p.autoriserCommandeStockInsuffisant);
+    definirCaseParametre("stock-require-adjustment-reason", p.exigerMotifAjustement);
+}
+function restaurerParametresStockCharges() {
+    if (!parametresStockCharges) { chargerParametresStock(); return; }
+    appliquerParametresStock(parametresStockCharges); masquerMessageStock(); afficherToastParametres("Modifications annulées.", "info");
+}
+function definirChargementStock(actif) {
+    const formulaire=document.getElementById("stock-settings-form"); if(!formulaire)return;
+    formulaire.classList.toggle("is-loading",Boolean(actif)); formulaire.setAttribute("aria-busy",String(Boolean(actif)));
+    formulaire.querySelectorAll("button, input").forEach(el=>{ if(el.readOnly)return; if(actif){el.dataset.stockEtatDesactive=el.disabled?"1":"0";el.disabled=true;}else{const d=el.dataset.stockEtatDesactive==="1";delete el.dataset.stockEtatDesactive;if(!d)el.disabled=false;} });
+}
+function afficherMessageStock(message,type){const z=document.getElementById("stock-settings-message");if(!z)return;z.hidden=false;z.textContent=message||"";z.className=`settings-form-message ${type==="error"?"is-error":type==="success"?"is-success":"is-info"}`;}
+function masquerMessageStock(){const z=document.getElementById("stock-settings-message");if(!z)return;z.hidden=true;z.textContent="";z.className="settings-form-message";}
+
+
+/* ===========================================================
+   PARAMÈTRES > FINANCE — DYNAMIQUE
+=========================================================== */
+let parametresFinanceCharges = null;
+let comptesFinanceEdition = [];
+let modesFinanceEdition = [];
+
+function slugFinanceFront(v){return texteParametre(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
+function comptesFinanceDefautFront(){return [{id:"caisse-principale",libelle:"Caisse principale",type:"especes",actif:true},{id:"banque",libelle:"Banque",type:"banque",actif:true},{id:"wave-business",libelle:"Wave Business",type:"mobile-money",actif:true},{id:"orange-money-business",libelle:"Orange Money Business",type:"mobile-money",actif:true}];}
+function modesFinanceDefautFront(){return [{id:"especes",libelle:"Espèces",groupe:"especes",compteId:"caisse-principale",actif:true},{id:"wave",libelle:"Wave",groupe:"mobile-money",compteId:"wave-business",actif:true},{id:"orange-money",libelle:"Orange Money",groupe:"mobile-money",compteId:"orange-money-business",actif:true},{id:"virement",libelle:"Virement bancaire",groupe:"virement",compteId:"banque",actif:true},{id:"cheque",libelle:"Chèque",groupe:"cheque",compteId:"banque",actif:true},{id:"carte-bancaire",libelle:"Carte bancaire",groupe:"carte-bancaire",compteId:"banque",actif:true}];}
+
+function initialiserParametresFinance() {
+    document.getElementById("finance-settings-form")?.addEventListener("submit", enregistrerParametresFinance);
+    document.getElementById("reset-finance-settings-btn")?.addEventListener("click", restaurerParametresFinanceCharges);
+    document.getElementById("finance-add-account-btn")?.addEventListener("click",()=>{comptesFinanceEdition.push({id:"",libelle:"",type:"autre",actif:true});rendreComptesFinance();});
+    document.getElementById("finance-add-method-btn")?.addEventListener("click",()=>{modesFinanceEdition.push({id:"",libelle:"",groupe:"autre",compteId:comptesFinanceEdition.find(c=>c.actif)?.id||"",actif:true});rendreModesFinance();});
+    chargerParametresFinance();
+}
+
+async function chargerParametresFinance() {
+    definirChargementFinance(true); afficherMessageFinance("Chargement des paramètres financiers...", "info");
+    try { const resultat=await apiGet("getParametresFinance"); if(!resultat?.success)throw new Error(resultat?.message||"Impossible de charger les paramètres financiers."); parametresFinanceCharges=normaliserParametresFinance(resultat.data||resultat.parametres||{}); appliquerParametresFinance(parametresFinanceCharges); masquerMessageFinance(); }
+    catch(error){console.error("Paramètres finance — chargement :",error);afficherMessageFinance(error.message||"Impossible de charger les paramètres financiers.","error");}
+    finally{definirChargementFinance(false);}
+}
+
+function normaliserParametresFinance(data) {
+    const devise=texteParametre(data?.devise||data?.codeDevise||"XOF").toUpperCase()||"XOF";
+    const comptes=Array.isArray(data?.comptesFinanciers)&&data.comptesFinanciers.length?data.comptesFinanciers:comptesFinanceDefautFront();
+    const modes=Array.isArray(data?.modesPaiement)&&data.modesPaiement.length?data.modesPaiement:modesFinanceDefautFront();
+    return {devise,libelleDevise:texteParametre(data?.libelleDevise)||(devise==="XOF"?"FCFA":devise),formatMontant:texteParametre(data?.formatMontant)==="devise-nombre"?"devise-nombre":"nombre-devise",nombreDecimales:Number(data?.nombreDecimales)===2?2:0,autoriserPaiementsPartiels:booleenParametreVentes(data?.autoriserPaiementsPartiels,true),autoriserVentesCredit:booleenParametreVentes(data?.autoriserVentesCredit,true),comptesFinanciers:comptes.map(c=>({...c,actif:c.actif!==false})),modesPaiement:modes.map(m=>({...m,actif:m.actif!==false})),derniereModification:texteParametre(data?.derniereModification)};
+}
+
+function appliquerParametresFinance(data){const p=normaliserParametresFinance(data);definirValeurParametre("finance-currency",`${p.devise} — ${p.libelleDevise}`);definirValeurParametre("finance-amount-format",p.formatMontant);definirValeurParametre("finance-decimals",p.nombreDecimales);definirCaseParametre("finance-allow-partial-payments",p.autoriserPaiementsPartiels);definirCaseParametre("finance-allow-credit-sales",p.autoriserVentesCredit);comptesFinanceEdition=p.comptesFinanciers.map(x=>({...x}));modesFinanceEdition=p.modesPaiement.map(x=>({...x}));rendreComptesFinance();rendreModesFinance();}
+
+function echapperFinance(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function rendreComptesFinance(){const z=document.getElementById("finance-accounts-list");if(!z)return;z.innerHTML=comptesFinanceEdition.map((c,i)=>`<div class="finance-dynamic-row" data-fin-account="${i}"><input class="finance-account-label" value="${echapperFinance(c.libelle)}" placeholder="Nom du compte"><select class="finance-account-type"><option value="especes">Espèces</option><option value="banque">Banque</option><option value="mobile-money">Mobile Money</option><option value="autre">Autre</option></select><label class="finance-mini-switch"><input type="checkbox" class="finance-account-active" ${c.actif!==false?"checked":""}><span>Actif</span></label><button type="button" class="finance-remove-btn" aria-label="Supprimer">✕</button></div>`).join("");z.querySelectorAll("[data-fin-account]").forEach(row=>{const i=Number(row.dataset.finAccount),c=comptesFinanceEdition[i];row.querySelector(".finance-account-type").value=c.type||"autre";row.querySelector(".finance-account-label").addEventListener("input",e=>{c.libelle=e.target.value;if(!c.id)c.id=slugFinanceFront(e.target.value);rendreModesFinance();});row.querySelector(".finance-account-type").addEventListener("change",e=>c.type=e.target.value);row.querySelector(".finance-account-active").addEventListener("change",e=>{c.actif=e.target.checked;rendreModesFinance();});row.querySelector(".finance-remove-btn").addEventListener("click",()=>{if(comptesFinanceEdition.length<=1)return afficherMessageFinance("Au moins un compte financier est requis.","error");const id=c.id;comptesFinanceEdition.splice(i,1);modesFinanceEdition.forEach(m=>{if(m.compteId===id)m.compteId="";});rendreComptesFinance();rendreModesFinance();});});}
+function rendreModesFinance(){const z=document.getElementById("finance-methods-list");if(!z)return;const options=comptesFinanceEdition.map(c=>`<option value="${echapperFinance(c.id||slugFinanceFront(c.libelle))}" ${c.actif===false?"disabled":""}>${echapperFinance(c.libelle||"Compte sans nom")}${c.actif===false?" — inactif":""}</option>`).join("");z.innerHTML=modesFinanceEdition.map((m,i)=>`<div class="finance-dynamic-row finance-method-row" data-fin-method="${i}"><input class="finance-method-label" value="${echapperFinance(m.libelle)}" placeholder="Nom du mode"><select class="finance-method-group"><option value="especes">Espèces</option><option value="mobile-money">Mobile Money</option><option value="virement">Virement</option><option value="cheque">Chèque</option><option value="carte-bancaire">Carte bancaire</option><option value="autre">Autre</option></select><select class="finance-method-account"><option value="">Compte associé</option>${options}</select><label class="finance-mini-switch"><input type="checkbox" class="finance-method-active" ${m.actif!==false?"checked":""}><span>Actif</span></label><button type="button" class="finance-remove-btn" aria-label="Supprimer">✕</button></div>`).join("");z.querySelectorAll("[data-fin-method]").forEach(row=>{const i=Number(row.dataset.finMethod),m=modesFinanceEdition[i];row.querySelector(".finance-method-group").value=m.groupe||"autre";row.querySelector(".finance-method-account").value=m.compteId||"";row.querySelector(".finance-method-label").addEventListener("input",e=>{m.libelle=e.target.value;if(!m.id)m.id=slugFinanceFront(e.target.value);});row.querySelector(".finance-method-group").addEventListener("change",e=>m.groupe=e.target.value);row.querySelector(".finance-method-account").addEventListener("change",e=>m.compteId=e.target.value);row.querySelector(".finance-method-active").addEventListener("change",e=>m.actif=e.target.checked);row.querySelector(".finance-remove-btn").addEventListener("click",()=>{if(modesFinanceEdition.length<=1)return afficherMessageFinance("Au moins un mode de paiement est requis.","error");modesFinanceEdition.splice(i,1);rendreModesFinance();});});}
+
+function collecterFinanceDynamique(){const comptes=comptesFinanceEdition.map((c,i)=>{const libelle=texteParametre(c.libelle);return{id:slugFinanceFront(c.id||libelle)||`compte-${i+1}`,libelle,type:c.type||"autre",actif:c.actif!==false};});const ids=new Set();for(const c of comptes){if(!c.libelle)throw new Error("Chaque compte financier doit avoir un nom.");if(ids.has(c.id))throw new Error("Deux comptes financiers ont le même identifiant.");ids.add(c.id);}const modes=modesFinanceEdition.map((m,i)=>{const libelle=texteParametre(m.libelle);return{id:slugFinanceFront(m.id||libelle)||`mode-${i+1}`,libelle,groupe:m.groupe||"autre",compteId:m.compteId||"",actif:m.actif!==false};});const mids=new Set();for(const m of modes){if(!m.libelle)throw new Error("Chaque mode de paiement doit avoir un nom.");if(mids.has(m.id))throw new Error("Deux modes de paiement ont le même identifiant.");mids.add(m.id);if(m.actif&&!m.compteId)throw new Error(`Le mode « ${m.libelle} » doit être lié à un compte.`);}return{comptes,modes};}
+
+async function enregistrerParametresFinance(event){event.preventDefault();const bouton=document.getElementById("save-finance-settings-btn");try{const dyn=collecterFinanceDynamique();const payload={formatMontant:valeurParametre("finance-amount-format")||"nombre-devise",nombreDecimales:Number(valeurParametre("finance-decimals"))===2?2:0,autoriserPaiementsPartiels:caseParametreCochee("finance-allow-partial-payments"),autoriserVentesCredit:caseParametreCochee("finance-allow-credit-sales"),comptesFinanciers:dyn.comptes,modesPaiement:dyn.modes};if(!dyn.modes.some(m=>m.actif))throw new Error("Activez au moins un mode de paiement.");definirChargementFinance(true);if(bouton){bouton.dataset.originalText=bouton.textContent;bouton.textContent="Enregistrement...";}afficherMessageFinance("Enregistrement en cours...","info");const resultat=await apiPost("saveParametresFinance",payload);if(!resultat?.success)throw new Error(resultat?.message||"Impossible d'enregistrer les paramètres financiers.");parametresFinanceCharges=normaliserParametresFinance(resultat.data||resultat.parametres||payload);appliquerParametresFinance(parametresFinanceCharges);afficherMessageFinance(resultat.message||"Les paramètres financiers ont été enregistrés.","success");afficherToastParametres("Paramètres financiers enregistrés.","success");}catch(error){console.error("Paramètres finance — enregistrement :",error);afficherMessageFinance(error.message||"Impossible d'enregistrer les paramètres financiers.","error");}finally{definirChargementFinance(false);if(bouton)bouton.textContent=bouton.dataset.originalText||"💾 Enregistrer";}}
+function restaurerParametresFinanceCharges(){if(!parametresFinanceCharges)return chargerParametresFinance();appliquerParametresFinance(parametresFinanceCharges);masquerMessageFinance();afficherToastParametres("Modifications annulées.","info");}
+function definirChargementFinance(actif){const f=document.getElementById("finance-settings-form");if(!f)return;f.classList.toggle("is-loading",Boolean(actif));f.setAttribute("aria-busy",String(Boolean(actif)));f.querySelectorAll("button,input:not([readonly]),select").forEach(el=>{if(actif){el.dataset.financeEtatDesactive=el.disabled?"1":"0";el.disabled=true;}else{const d=el.dataset.financeEtatDesactive==="1";delete el.dataset.financeEtatDesactive;if(!d)el.disabled=false;}});}
+function afficherMessageFinance(message,type){const z=document.getElementById("finance-settings-message");if(!z)return;z.hidden=false;z.textContent=message||"";z.className=`settings-form-message ${type==="error"?"is-error":type==="success"?"is-success":"is-info"}`;}
+function masquerMessageFinance(){const z=document.getElementById("finance-settings-message");if(!z)return;z.hidden=true;z.textContent="";z.className="settings-form-message";}
+
 /* ===========================================================
    AUTRES SECTIONS — PAS ENCORE CONNECTÉES
 =========================================================== */
@@ -1336,7 +1611,7 @@ function neutraliserFormulairesParametresNonConnectes() {
     document
         .querySelectorAll(".settings-form")
         .forEach((formulaire) => {
-            if (["company-settings-form", "user-settings-form", "role-settings-form"].includes(formulaire.id)) return;
+            if (["company-settings-form", "user-settings-form", "role-settings-form", "sales-settings-form", "stock-settings-form", "finance-settings-form", "notifications-settings-form"].includes(formulaire.id)) return;
 
             formulaire.addEventListener("submit", (event) => {
                 event.preventDefault();
@@ -1347,6 +1622,322 @@ function neutraliserFormulairesParametresNonConnectes() {
                 );
             });
         });
+}
+
+
+/* ===========================================================
+   NOTIFICATIONS
+=========================================================== */
+
+let parametresNotificationsCharges = null;
+let comptesFinanceNotifications = [];
+
+function initialiserParametresNotifications() {
+    document
+        .getElementById("notifications-settings-form")
+        ?.addEventListener("submit", enregistrerParametresNotifications);
+
+    document
+        .getElementById("disable-all-notifications-btn")
+        ?.addEventListener("click", desactiverToutesNotifications);
+
+    document
+        .getElementById("reset-notifications-settings-btn")
+        ?.addEventListener("click", restaurerParametresNotificationsCharges);
+
+    chargerParametresNotifications();
+}
+
+async function chargerParametresNotifications() {
+    definirChargementNotifications(true);
+    afficherMessageNotifications("Chargement des paramètres de notifications...", "info");
+
+    try {
+        const [resultatNotifications, resultatFinance] = await Promise.all([
+            apiGet("getParametresNotifications"),
+            apiGet("getParametresFinance").catch(() => null)
+        ]);
+
+        if (!resultatNotifications?.success) {
+            throw new Error(
+                resultatNotifications?.message ||
+                "Impossible de charger les paramètres de notifications."
+            );
+        }
+
+        const finance = resultatFinance?.success
+            ? (resultatFinance.data || resultatFinance.parametres || {})
+            : {};
+
+        comptesFinanceNotifications = Array.isArray(finance.comptesFinanciers)
+            ? finance.comptesFinanciers.filter((compte) => compte && compte.actif !== false)
+            : [];
+
+        parametresNotificationsCharges = normaliserParametresNotifications(
+            resultatNotifications.data || resultatNotifications.parametres || {}
+        );
+
+        appliquerParametresNotifications(parametresNotificationsCharges);
+        masquerMessageNotifications();
+    } catch (error) {
+        console.error("Paramètres notifications — chargement :", error);
+        afficherMessageNotifications(
+            error.message || "Impossible de charger les paramètres de notifications.",
+            "error"
+        );
+    } finally {
+        definirChargementNotifications(false);
+    }
+}
+
+function normaliserParametresNotifications(data) {
+    data = data || {};
+    return {
+        nouvelleCommande: data.nouvelleCommande !== false,
+        commandeConfirmee: data.commandeConfirmee !== false,
+        commandeAnnulee: data.commandeAnnulee !== false,
+        paiementRecu: data.paiementRecu !== false,
+        stockFaible: data.stockFaible !== false,
+        ruptureStock: data.ruptureStock !== false,
+        retardLivraison: data.retardLivraison !== false,
+        livraisonAPreparer: data.livraisonAPreparer !== false,
+        livraisonPretePourDepart: data.livraisonPretePourDepart !== false,
+        livraisonEnCours: data.livraisonEnCours !== false,
+        livraisonEffectuee: data.livraisonEffectuee !== false,
+        livraisonNonLivree: data.livraisonNonLivree !== false,
+        livraisonReportee: data.livraisonReportee !== false,
+        retourProduit: data.retourProduit !== false,
+        mouvementCaisseImportant: data.mouvementCaisseImportant !== false,
+        soldeCaisseFaible: data.soldeCaisseFaible !== false,
+        rapportJournalier: data.rapportJournalier === true,
+        rapportHebdomadaire: data.rapportHebdomadaire === true,
+        rapportMensuel: data.rapportMensuel === true,
+        seuilMouvementCaisseImportant: Math.max(0, Number(data.seuilMouvementCaisseImportant) || 0),
+        seuilsSoldeCaisse: data.seuilsSoldeCaisse && typeof data.seuilsSoldeCaisse === "object"
+            ? { ...data.seuilsSoldeCaisse }
+            : {}
+    };
+}
+
+function appliquerParametresNotifications(data) {
+    const p = normaliserParametresNotifications(data);
+
+    definirCaseParametre("notification-new-order", p.nouvelleCommande);
+    definirCaseParametre("notification-order-confirmed", p.commandeConfirmee);
+    definirCaseParametre("notification-order-cancelled", p.commandeAnnulee);
+    definirCaseParametre("notification-payment-received", p.paiementRecu);
+    definirCaseParametre("notification-low-stock", p.stockFaible);
+    definirCaseParametre("notification-out-stock", p.ruptureStock);
+    definirCaseParametre("notification-delivery-late", p.retardLivraison);
+    definirCaseParametre("notification-delivery-to-prepare", p.livraisonAPreparer);
+    definirCaseParametre("notification-delivery-ready", p.livraisonPretePourDepart);
+    definirCaseParametre("notification-delivery-in-progress", p.livraisonEnCours);
+    definirCaseParametre("notification-delivery-done", p.livraisonEffectuee);
+    definirCaseParametre("notification-delivery-not-delivered", p.livraisonNonLivree);
+    definirCaseParametre("notification-delivery-postponed", p.livraisonReportee);
+    definirCaseParametre("notification-product-return", p.retourProduit);
+    definirCaseParametre("notification-cash-important", p.mouvementCaisseImportant);
+    definirCaseParametre("notification-cash-low", p.soldeCaisseFaible);
+    definirCaseParametre("notification-daily-report", p.rapportJournalier);
+    definirCaseParametre("notification-weekly-report", p.rapportHebdomadaire);
+    definirCaseParametre("notification-monthly-report", p.rapportMensuel);
+    definirValeurParametre(
+        "notification-important-cash-threshold",
+        p.seuilMouvementCaisseImportant || 500000
+    );
+
+    rendreSeuilsComptesNotifications(p.seuilsSoldeCaisse);
+}
+
+function rendreSeuilsComptesNotifications(seuils) {
+    const conteneur = document.getElementById("notification-account-thresholds");
+    if (!conteneur) return;
+
+    const comptes = comptesFinanceNotifications.length
+        ? comptesFinanceNotifications
+        : [
+            { libelle: "Caisse principale", actif: true },
+            { libelle: "Banque", actif: true },
+            { libelle: "Wave Business", actif: true },
+            { libelle: "Orange Money Business", actif: true }
+        ];
+
+    conteneur.innerHTML = comptes.map((compte) => {
+        const libelle = texteParametre(compte.libelle || compte.nom || compte.label);
+        if (!libelle) return "";
+        const valeur = Math.max(0, Number(seuils?.[libelle]) || 0);
+        return `
+            <div class="notification-account-threshold-row" data-notification-account="${echapperHtmlNotifications(libelle)}">
+                <div>
+                    <strong>${echapperHtmlNotifications(libelle)}</strong>
+                    <span>Alerter lorsque le solde atteint ou passe sous ce montant.</span>
+                </div>
+                <div class="settings-money-input notification-account-threshold-input">
+                    <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value="${valeur}"
+                        data-notification-account-threshold="${echapperHtmlNotifications(libelle)}"
+                    >
+                    <span>FCFA</span>
+                </div>
+            </div>`;
+    }).join("");
+}
+
+async function enregistrerParametresNotifications(event) {
+    event.preventDefault();
+    const bouton = document.getElementById("save-notifications-settings-btn");
+
+    try {
+        const payload = lireParametresNotificationsFormulaire();
+        definirChargementNotifications(true);
+
+        if (bouton) {
+            bouton.dataset.originalText = bouton.textContent;
+            bouton.textContent = "Enregistrement...";
+        }
+
+        afficherMessageNotifications("Enregistrement en cours...", "info");
+
+        const resultat = await apiPost("saveParametresNotifications", payload);
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible d'enregistrer les paramètres de notifications."
+            );
+        }
+
+        parametresNotificationsCharges = normaliserParametresNotifications(
+            resultat.data || resultat.parametres || payload
+        );
+        appliquerParametresNotifications(parametresNotificationsCharges);
+        afficherMessageNotifications(
+            resultat.message || "Paramètres de notifications enregistrés.",
+            "success"
+        );
+        afficherToastParametres("Paramètres de notifications enregistrés.", "success");
+
+        if (typeof window.visiblNotificationsRefresh === "function") {
+            window.visiblNotificationsRefresh();
+        }
+    } catch (error) {
+        console.error("Paramètres notifications — enregistrement :", error);
+        afficherMessageNotifications(
+            error.message || "Impossible d'enregistrer les paramètres de notifications.",
+            "error"
+        );
+    } finally {
+        definirChargementNotifications(false);
+        if (bouton) {
+            bouton.textContent = bouton.dataset.originalText || "💾 Enregistrer";
+        }
+    }
+}
+
+function lireParametresNotificationsFormulaire() {
+    const seuilsSoldeCaisse = {};
+    document
+        .querySelectorAll("[data-notification-account-threshold]")
+        .forEach((input) => {
+            const compte = texteParametre(input.dataset.notificationAccountThreshold);
+            if (compte) {
+                seuilsSoldeCaisse[compte] = Math.max(0, Number(input.value) || 0);
+            }
+        });
+
+    return {
+        nouvelleCommande: caseParametreCochee("notification-new-order"),
+        commandeConfirmee: caseParametreCochee("notification-order-confirmed"),
+        commandeAnnulee: caseParametreCochee("notification-order-cancelled"),
+        paiementRecu: caseParametreCochee("notification-payment-received"),
+        stockFaible: caseParametreCochee("notification-low-stock"),
+        ruptureStock: caseParametreCochee("notification-out-stock"),
+        retardLivraison: caseParametreCochee("notification-delivery-late"),
+        livraisonAPreparer: caseParametreCochee("notification-delivery-to-prepare"),
+        livraisonPretePourDepart: caseParametreCochee("notification-delivery-ready"),
+        livraisonEnCours: caseParametreCochee("notification-delivery-in-progress"),
+        livraisonEffectuee: caseParametreCochee("notification-delivery-done"),
+        livraisonNonLivree: caseParametreCochee("notification-delivery-not-delivered"),
+        livraisonReportee: caseParametreCochee("notification-delivery-postponed"),
+        retourProduit: caseParametreCochee("notification-product-return"),
+        mouvementCaisseImportant: caseParametreCochee("notification-cash-important"),
+        soldeCaisseFaible: caseParametreCochee("notification-cash-low"),
+        rapportJournalier: caseParametreCochee("notification-daily-report"),
+        rapportHebdomadaire: caseParametreCochee("notification-weekly-report"),
+        rapportMensuel: caseParametreCochee("notification-monthly-report"),
+        seuilMouvementCaisseImportant: Math.max(
+            0,
+            Number(valeurParametre("notification-important-cash-threshold")) || 0
+        ),
+        seuilsSoldeCaisse
+    };
+}
+
+function desactiverToutesNotifications() {
+    document
+        .querySelectorAll("#notifications-settings .settings-switch-input")
+        .forEach((input) => {
+            input.checked = false;
+        });
+
+    afficherToastParametres(
+        "Toutes les notifications ont été désactivées dans le formulaire. Enregistrez pour confirmer.",
+        "info"
+    );
+}
+
+function restaurerParametresNotificationsCharges() {
+    if (!parametresNotificationsCharges) {
+        chargerParametresNotifications();
+        return;
+    }
+
+    appliquerParametresNotifications(parametresNotificationsCharges);
+    masquerMessageNotifications();
+    afficherToastParametres("Modifications des notifications annulées.", "info");
+}
+
+function definirChargementNotifications(actif) {
+    const formulaire = document.getElementById("notifications-settings-form");
+    if (!formulaire) return;
+
+    formulaire.classList.toggle("is-loading", Boolean(actif));
+    formulaire.setAttribute("aria-busy", String(Boolean(actif)));
+    formulaire
+        .querySelectorAll("button, input, select, textarea")
+        .forEach((element) => {
+            element.disabled = Boolean(actif);
+        });
+}
+
+function afficherMessageNotifications(message, type) {
+    const zone = document.getElementById("notifications-settings-message");
+    if (!zone) return;
+
+    zone.hidden = false;
+    zone.textContent = message || "";
+    zone.className =
+        "settings-form-message " +
+        (type === "success" ? "is-success" : type === "error" ? "is-error" : "is-info");
+}
+
+function masquerMessageNotifications() {
+    const zone = document.getElementById("notifications-settings-message");
+    if (!zone) return;
+    zone.hidden = true;
+    zone.textContent = "";
+    zone.className = "settings-form-message";
+}
+
+function echapperHtmlNotifications(valeur) {
+    return String(valeur ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 /* ===========================================================

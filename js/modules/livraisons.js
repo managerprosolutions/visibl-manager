@@ -2,8 +2,9 @@
 let livraisonsChargees=[],livraisonsFiltrees=[],livraisonOuverte=null,pageLivraisonsActuelle=1,taillePageLivraisons=10;
 let catalogueClientsLivraisons=[],catalogueLivreursLivraisons=[];
 let parametresAlertesLivraison={delaiJours:1,heure:"09:00"};
+let parametresFinanceLivraisons={formatMontant:"nombre-devise",nombreDecimales:0,libelleDevise:"FCFA",modeEspeces:true,modeMobileMoney:true,modeVirement:true,modeCheque:true,modeCarteBancaire:true,autoriserPaiementsPartiels:true,autoriserVentesCredit:true};
 
-document.addEventListener("DOMContentLoaded",()=>{initLivraisons();chargerLivraisons();});
+document.addEventListener("DOMContentLoaded",async()=>{initLivraisons();await chargerParametresFinanceLivraisons();chargerLivraisons();});
 
 function initLivraisons(){
 initialiserMenuActionsLivraisons();
@@ -506,6 +507,17 @@ if(boutonRetour?.disabled)return;
 if(boutonRetour)boutonRetour.disabled=true;
 
 try{
+let paiementEnregistreAvantRetour=false;
+if(estLivre&&paiementRetour){
+const paiement=await apiPost("ajouterEncaissementLivraison",{
+idLivraison:val("return-delivery-id"),
+...paiementRetour,
+idUtilisateur:userId()
+});
+if(!paiement?.success)throw new Error(paiement?.message||"L'encaissement n'a pas pu être enregistré.");
+paiementEnregistreAvantRetour=true;
+}
+
 const r=await apiPost("enregistrerRetourLivreur",{
 idLivraison:val("return-delivery-id"),
 resultatLivraison,
@@ -519,18 +531,9 @@ idUtilisateur:userId()
 });
 if(!r?.success)throw new Error(r?.message||"Impossible d'enregistrer le retour");
 
-if(estLivre&&paiementRetour){
-const paiement=await apiPost("ajouterEncaissementLivraison",{
-idLivraison:val("return-delivery-id"),
-...paiementRetour,
-idUtilisateur:userId()
-});
-if(!paiement?.success)throw new Error(paiement?.message||"Le retour a été enregistré, mais l'encaissement n'a pas pu être enregistré.");
-}
-
 closeModal("delivery-return-modal");
 closeModal("delivery-view-modal");
-toast(estLivre&&paiementRetour?"Retour et encaissement enregistrés.":r.message,"success");
+toast(estLivre&&paiementEnregistreAvantRetour?"Retour et encaissement enregistrés.":r.message,"success");
 await chargerLivraisons();
 }catch(e){
 msg("delivery-return-message",e.message);
@@ -584,7 +587,7 @@ const csv=rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";"
 function openModal(id){const m=document.getElementById(id);if(m){m.classList.add("active");m.setAttribute("aria-hidden","false");document.body.classList.add("modal-open")}}
 function closeModal(id){const m=document.getElementById(id);m?.classList.remove("active");m?.setAttribute("aria-hidden","true");if(!document.querySelector(".modal-overlay.active"))document.body.classList.remove("modal-open")}
 function val(id){return String(document.getElementById(id)?.value??"").trim()}function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v??""}function text(id,v){const e=document.getElementById(id);if(e)e.textContent=v??""}
-function norm(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase()}function num(v){const n=Number(String(v??"").replace(/\s/g,"").replace(",","."));return Number.isFinite(n)?n:0}function fcfa(v){return Math.round(num(v)).toLocaleString("fr-FR")+" FCFA"}function label(v){const s=String(v??"").replace(/-/g," ").trim();return s?s.charAt(0).toUpperCase()+s.slice(1):"—"}function dateFr(v){if(!v)return"—";if(/^\d{2}\/\d{2}\/\d{4}$/.test(String(v)))return String(v);const d=new Date(v);return isNaN(d)?String(v):d.toLocaleDateString("fr-FR")}function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function norm(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase()}function num(v){const n=Number(String(v??"").replace(/\s/g,"").replace(",","."));return Number.isFinite(n)?n:0}function fcfa(v){const p=parametresFinanceLivraisons||{};const d=Number(p.nombreDecimales)===2?2:0;const n=num(v).toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d});const devise=String(p.libelleDevise||"FCFA").trim()||"FCFA";return p.formatMontant==="devise-nombre"?devise+" "+n:n+" "+devise}function label(v){const s=String(v??"").replace(/-/g," ").trim();return s?s.charAt(0).toUpperCase()+s.slice(1):"—"}function dateFr(v){if(!v)return"—";if(/^\d{2}\/\d{2}\/\d{4}$/.test(String(v)))return String(v);const d=new Date(v);return isNaN(d)?String(v):d.toLocaleDateString("fr-FR")}function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
 function userId(){const u=typeof getCurrentUser==="function"?getCurrentUser():null;return String(u?.idUtilisateur||u?.["ID Utilisateur"]||u?.id||"").trim()}function msg(id,m){const e=document.getElementById(id);if(e){e.textContent=m;e.className="form-message error";e.style.display="block"}}function toast(m,t="info"){if(typeof showToast==="function")return showToast(m,t);const z=document.getElementById("toast-container"),e=document.createElement("div");e.className=`toast ${t}`;e.textContent=m;z?.appendChild(e);setTimeout(()=>e.remove(),3500)}
 
 
@@ -664,3 +667,18 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
   }
 });
+
+
+/* ===== PARAMÈTRES > FINANCE — LIVRAISONS ===== */
+async function chargerParametresFinanceLivraisons(){
+try{const r=await apiGet("getParametresFinance");if(r?.success)parametresFinanceLivraisons={...parametresFinanceLivraisons,...(r.data||r.parametres||{})};}
+catch(e){console.warn("Paramètres finance indisponibles dans Livraisons :",e)}
+appliquerModesPaiementFinanceLivraisons();
+}
+function groupeModeFinanceLivraisons(v){const t=norm(v).replace(/_/g,"-").replace(/\s+/g,"-");if(["especes","espece","cash"].includes(t))return"especes";if(t.includes("mobile")||t.includes("wave")||t.includes("orange")||t.includes("mtn")||t.includes("moov"))return"mobile-money";if(t.includes("virement")||t.includes("transfer"))return"virement";if(t.includes("cheque"))return"cheque";if(t.includes("carte")||t.includes("card"))return"carte-bancaire";return t;}
+function modeFinanceLivraisonsActif(v){const g=groupeModeFinanceLivraisons(v),p=parametresFinanceLivraisons||{};if(!g)return true;if(g==="especes")return p.modeEspeces!==false;if(g==="mobile-money")return p.modeMobileMoney!==false;if(g==="virement")return p.modeVirement!==false;if(g==="cheque")return p.modeCheque!==false;if(g==="carte-bancaire")return p.modeCarteBancaire!==false;return false;}
+function appliquerModesPaiementFinanceLivraisons(){["delivery-payment-method","return-payment-method"].forEach(id=>{const s=document.getElementById(id);if(!s)return;Array.from(s.options).forEach(o=>{if(!o.value)return;const a=modeFinanceLivraisonsActif(o.value);o.hidden=!a;o.disabled=!a;if(!a&&s.value===o.value)s.value=""});});}
+
+
+/* ===== FINANCE DYNAMIQUE — LIVRAISONS ===== */
+function appliquerModesPaiementFinanceLivraisons(){const modes=Array.isArray(parametresFinanceLivraisons?.modesPaiement)?parametresFinanceLivraisons.modesPaiement.filter(m=>m&&m.actif!==false && !["credit","avoir"].includes(String(m.id||""))):[];["delivery-payment-method","return-payment-method"].forEach(id=>{const select=document.getElementById(id);if(!select)return;const courant=select.value;if(modes.length){select.innerHTML='<option value="">Sélectionner le mode de paiement</option>'+modes.map(m=>`<option value="${esc(m.id)}">${esc(m.libelle||m.id)}</option>`).join("");if(Array.from(select.options).some(o=>o.value===courant))select.value=courant;return;}Array.from(select.options).forEach(o=>{if(!o.value)return;const a=modeFinanceLivraisonsActif(o.value);o.hidden=!a;o.disabled=!a;});});}

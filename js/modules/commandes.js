@@ -15,6 +15,19 @@ let reservationCommandeEnModification = new Map();
 let ligneCommandeEnModificationId = null;
 let creditDisponibleClientCommande = 0;
 let modeSelectionCommandes = false;
+let autoriserCommandeStockInsuffisant = false;
+let parametresFinanceCommande = {
+    formatMontant: "nombre-devise",
+    nombreDecimales: 0,
+    libelleDevise: "FCFA",
+    modeEspeces: true,
+    modeMobileMoney: true,
+    modeVirement: true,
+    modeCheque: true,
+    modeCarteBancaire: true,
+    autoriserPaiementsPartiels: true,
+    autoriserVentesCredit: true
+};
 const commandesSelectionnees = new Set();
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -25,6 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    chargerParametresStockCommande();
+    chargerParametresFinanceCommande();
     initialiserModaleCommande();
     initialiserDateHeureCommande();
     initialiserGestionClientsCommande();
@@ -40,6 +55,17 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserMenuActionsCommandes();
     initialiserVenteLieeCommande();
 });
+
+
+async function chargerParametresStockCommande() {
+    try {
+        const resultat = await apiGet("getParametresStock");
+        autoriserCommandeStockInsuffisant = resultat?.success === true && resultat?.data?.autoriserCommandeStockInsuffisant === true;
+    } catch (error) {
+        console.warn("Paramètres stock indisponibles dans Commandes :", error);
+        autoriserCommandeStockInsuffisant = false;
+    }
+}
 
 
 function initialiserModaleCommande() {
@@ -1125,6 +1151,10 @@ async function enregistrerCommande(event) {
                 })
             )
     };
+
+    if (!validerReglesFinanceCommandeFront(donnees)) {
+        return;
+    }
 
     try {
         if (bouton) {
@@ -4875,11 +4905,12 @@ function verifierQuantiteProduitSelectionne() {
     const stock = obtenirStockProduit(produit);
     const quantite = Math.max(1, Math.trunc(convertirNombre(champQuantite.value)));
 
-    champQuantite.max = String(stock);
+    if (autoriserCommandeStockInsuffisant) champQuantite.removeAttribute("max");
+    else champQuantite.max = String(stock);
 
-    if (stock <= 0) return false;
+    if (!autoriserCommandeStockInsuffisant && stock <= 0) return false;
 
-    if (quantite > stock) {
+    if (!autoriserCommandeStockInsuffisant && quantite > stock) {
         afficherMessageCommande(
             `La quantité demandée (${quantite}) dépasse le stock disponible (${stock}).`,
             "error"
@@ -4913,9 +4944,10 @@ function mettreAJourPrixProduitSelectionne() {
     if (champPrix) champPrix.value = obtenirPrixProduit(produit);
     if (champQuantite) {
         champQuantite.value = 1;
-        champQuantite.max = String(stock);
+        if (autoriserCommandeStockInsuffisant) champQuantite.removeAttribute("max");
+        else champQuantite.max = String(stock);
     }
-    if (boutonAjouter) boutonAjouter.disabled = stock <= 0;
+    if (boutonAjouter) boutonAjouter.disabled = !autoriserCommandeStockInsuffisant && stock <= 0;
 
     afficherStockProduitCommande(stock, true);
 }
@@ -5017,7 +5049,7 @@ function ajouterProduitCommande(event) {
             )
         );
 
-    if (stockDisponible <= 0) {
+    if (!autoriserCommandeStockInsuffisant && stockDisponible <= 0) {
         afficherMessageCommande(
             "Ce produit est en rupture de stock.",
             "error"
@@ -5085,6 +5117,7 @@ function ajouterProduitCommande(event) {
             : quantiteDejaAjoutee + quantite;
 
     if (
+        !autoriserCommandeStockInsuffisant &&
         nouvelleQuantite >
         stockDisponible
     ) {
@@ -5529,7 +5562,16 @@ function convertirNombre(valeur) {
 
 
 function formaterFCFA(valeur) {
-    return Math.round(convertirNombre(valeur)).toLocaleString("fr-FR") + " FCFA";
+    const p = parametresFinanceCommande || {};
+    const decimales = Number(p.nombreDecimales) === 2 ? 2 : 0;
+    const montant = convertirNombre(valeur).toLocaleString("fr-FR", {
+        minimumFractionDigits: decimales,
+        maximumFractionDigits: decimales
+    });
+    const devise = String(p.libelleDevise || "FCFA").trim() || "FCFA";
+    return p.formatMontant === "devise-nombre"
+        ? `${devise} ${montant}`
+        : `${montant} ${devise}`;
 }
 
 
@@ -5712,3 +5754,96 @@ function recalculerPaiementCommande(){
         : "Payée"
   );
 }
+
+
+/* ===========================================================
+   PARAMÈTRES > FINANCE — COMMANDES
+=========================================================== */
+async function chargerParametresFinanceCommande() {
+    try {
+        const resultat = await apiGet("getParametresFinance");
+        if (!resultat?.success) throw new Error(resultat?.message || "Paramètres finance indisponibles.");
+        parametresFinanceCommande = {
+            ...parametresFinanceCommande,
+            ...(resultat.data || resultat.parametres || {})
+        };
+        appliquerModesPaiementFinanceCommande();
+        recalculerPaiementCommande();
+    } catch (error) {
+        console.warn("Paramètres finance indisponibles dans Commandes :", error);
+    }
+}
+
+function normaliserGroupeModeFinanceCommande(mode) {
+    const texte = String(mode ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .trim().toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
+    if (["especes", "espece", "cash"].includes(texte)) return "especes";
+    if (texte.includes("mobile") || texte.includes("wave") || texte.includes("orange") || texte.includes("mtn") || texte.includes("moov")) return "mobile-money";
+    if (texte.includes("virement") || texte.includes("transfer")) return "virement";
+    if (texte.includes("cheque")) return "cheque";
+    if (texte.includes("carte") || texte.includes("card")) return "carte-bancaire";
+    if (texte === "credit") return "credit";
+    if (texte === "avoir") return "avoir";
+    return texte;
+}
+
+function modeFinanceCommandeActif(mode) {
+    const groupe = normaliserGroupeModeFinanceCommande(mode);
+    const p = parametresFinanceCommande || {};
+    if (!groupe || groupe === "avoir") return true;
+    if (groupe === "credit") return p.autoriserVentesCredit === true;
+    if (groupe === "especes") return p.modeEspeces !== false;
+    if (groupe === "mobile-money") return p.modeMobileMoney !== false;
+    if (groupe === "virement") return p.modeVirement !== false;
+    if (groupe === "cheque") return p.modeCheque !== false;
+    if (groupe === "carte-bancaire") return p.modeCarteBancaire !== false;
+    return false;
+}
+
+function appliquerModesPaiementFinanceCommande() {
+    ["order-payment-method", "order-payment-method-real"].forEach((id) => {
+        const select = document.getElementById(id);
+        if (!select) return;
+        Array.from(select.options).forEach((option) => {
+            if (!option.value) return;
+            const actif = modeFinanceCommandeActif(option.value);
+            option.hidden = !actif;
+            option.disabled = !actif;
+            if (!actif && select.value === option.value) select.value = "";
+        });
+    });
+}
+
+function validerReglesFinanceCommandeFront(data) {
+    const p = parametresFinanceCommande || {};
+    const total = Math.max(0, convertirNombre(data?.totalAPayer));
+    const avoir = Math.max(0, Math.min(total, convertirNombre(data?.montantAvoirUtilise)));
+    const paye = Math.max(0, Math.min(total - avoir, convertirNombre(data?.montantPaye)));
+    const regle = paye + avoir;
+    const reste = Math.max(0, total - regle);
+    const modePrevu = data?.modePaiementPrevu || "";
+    const modeReel = data?.modePaiement || modePrevu || "";
+
+    if (modePrevu && !modeFinanceCommandeActif(modePrevu)) {
+        afficherMessageCommande("Ce mode de paiement est désactivé dans Paramètres > Finance.", "error");
+        return false;
+    }
+
+    if (paye > 0 && (!modeReel || !modeFinanceCommandeActif(modeReel))) {
+        afficherMessageCommande("Sélectionnez un mode de paiement actif pour l'encaissement.", "error");
+        return false;
+    }
+
+    if (p.autoriserPaiementsPartiels === false && regle > 0 && reste > 0) {
+        afficherMessageCommande(
+            "Les paiements partiels sont désactivés. Réglez la totalité ou laissez le règlement à 0.",
+            "error"
+        );
+        return false;
+    }
+    return true;
+}
+
+
+/* ===== FINANCE DYNAMIQUE — COMMANDES ===== */
+function appliquerModesPaiementFinanceCommande(){const modes=Array.isArray(parametresFinanceCommande?.modesPaiement)?parametresFinanceCommande.modesPaiement.filter(m=>m&&m.actif!==false):[];["order-payment-method","order-payment-method-real"].forEach(id=>{const select=document.getElementById(id);if(!select)return;const courant=select.value;let liste=modes.map(m=>({value:m.id,label:m.libelle||m.id}));if(parametresFinanceCommande?.autoriserVentesCredit===true)liste.push({value:"credit",label:"Crédit"});select.innerHTML='<option value="">Sélectionner</option>'+liste.map(x=>`<option value="${String(x.value).replace(/"/g,"&quot;")}">${String(x.label)}</option>`).join("");if(Array.from(select.options).some(o=>o.value===courant))select.value=courant;});}

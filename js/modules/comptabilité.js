@@ -8,6 +8,7 @@
 
 let ecrituresComptaChargees = [];
 let ecrituresComptaAffichees = [];
+let parametresFinanceCompta = {formatMontant:"nombre-devise",nombreDecimales:0,libelleDevise:"FCFA"};
 
 const ETAT_COMPTA = {
     resume: {
@@ -41,7 +42,7 @@ function initialiserComptabilite() {
     initialiserActionsCompta();
     initialiserRechercheHeaderCompta();
 
-    chargerComptabilite();
+    chargerParametresFinanceCompta().finally(chargerComptabilite);
 }
 
 
@@ -960,19 +961,11 @@ function convertirNombreComptaFront(
 function formaterMontantCompta(
     valeur
 ) {
-    return (
-        new Intl.NumberFormat(
-            "fr-FR",
-            {
-                maximumFractionDigits: 0
-            }
-        ).format(
-            convertirNombreComptaFront(
-                valeur
-            )
-        ) +
-        " FCFA"
-    );
+    const p = parametresFinanceCompta || {};
+    const decimales = Number(p.nombreDecimales) === 2 ? 2 : 0;
+    const montant = new Intl.NumberFormat("fr-FR", {minimumFractionDigits: decimales, maximumFractionDigits: decimales}).format(convertirNombreComptaFront(valeur));
+    const devise = String(p.libelleDevise || "FCFA").trim() || "FCFA";
+    return p.formatMontant === "devise-nombre" ? devise + " " + montant : montant + " " + devise;
 }
 
 
@@ -1227,3 +1220,7 @@ if (document.readyState === "loading") {
 } else {
     initialiserInteractionsHeaderCompta();
 }
+
+
+/* PARAMÈTRES > FINANCE — COMPTABILITÉ */
+async function chargerParametresFinanceCompta(){try{const r=await apiGet("getParametresFinance");if(r?.success)parametresFinanceCompta={...parametresFinanceCompta,...(r.data||r.parametres||{})};}catch(e){console.warn("Paramètres finance indisponibles dans Comptabilité :",e)}}

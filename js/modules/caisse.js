@@ -11,6 +11,7 @@ let operationsCaisseAffichees = [];
 let rechercheCaisse = "";
 let operationCaisseSelectionnee = null;
 let menuActionCaisseActif = null;
+let parametresFinanceCaisse = {formatMontant:"nombre-devise",nombreDecimales:0,libelleDevise:"FCFA",modeEspeces:true,modeMobileMoney:true,modeVirement:true,modeCheque:true,modeCarteBancaire:true};
 
 
 /* ===========================================================
@@ -112,7 +113,7 @@ function initialiserCaisse() {
     initialiserRechercheFiltresCaisse();
     initialiserActionsCaisse();
 
-    chargerOperationsCaisse();
+    chargerParametresFinanceCaisse().finally(chargerOperationsCaisse);
 }
 
 
@@ -3540,17 +3541,11 @@ function convertirMontantCaisseFront(
 function formaterMontantCaisseFront(
     valeur
 ) {
-    return (
-        Math.round(
-            convertirMontantCaisseFront(
-                valeur
-            )
-        )
-            .toLocaleString(
-                "fr-FR"
-            ) +
-        " FCFA"
-    );
+    const p = parametresFinanceCaisse || {};
+    const decimales = Number(p.nombreDecimales) === 2 ? 2 : 0;
+    const montant = convertirMontantCaisseFront(valeur).toLocaleString("fr-FR", { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
+    const devise = String(p.libelleDevise || "FCFA").trim() || "FCFA";
+    return p.formatMontant === "devise-nombre" ? devise + " " + montant : montant + " " + devise;
 }
 
 
@@ -3792,3 +3787,24 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
   }
 });
+
+
+/* ===========================================================
+   PARAMÈTRES > FINANCE — CAISSE
+=========================================================== */
+async function chargerParametresFinanceCaisse(){try{const r=await apiGet("getParametresFinance");if(r?.success)parametresFinanceCaisse={...parametresFinanceCaisse,...(r.data||r.parametres||{})};}catch(e){console.warn("Paramètres finance indisponibles dans Caisse :",e)}appliquerModesPaiementFinanceCaisse();}
+function groupeModeFinanceCaisse(mode){const t=String(mode??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/_/g,"-").replace(/\s+/g,"-");if(["especes","espece","cash"].includes(t))return"especes";if(t.includes("mobile")||t.includes("wave")||t.includes("orange")||t.includes("mtn")||t.includes("moov"))return"mobile-money";if(t.includes("virement")||t.includes("transfer"))return"virement";if(t.includes("cheque"))return"cheque";if(t.includes("carte")||t.includes("card"))return"carte-bancaire";return t;}
+function modeFinanceCaisseActif(mode){const g=groupeModeFinanceCaisse(mode),p=parametresFinanceCaisse||{};if(!g)return true;if(g==="especes")return p.modeEspeces!==false;if(g==="mobile-money")return p.modeMobileMoney!==false;if(g==="virement")return p.modeVirement!==false;if(g==="cheque")return p.modeCheque!==false;if(g==="carte-bancaire")return p.modeCarteBancaire!==false;return false;}
+function appliquerModesPaiementFinanceCaisse(){const s=document.getElementById("cash-operation-method");if(!s)return;if(!Array.from(s.options).some(o=>o.value==="carte-bancaire")){const o=document.createElement("option");o.value="carte-bancaire";o.textContent="Carte bancaire";s.appendChild(o);}Array.from(s.options).forEach(o=>{if(!o.value)return;const a=modeFinanceCaisseActif(o.value);o.hidden=!a;o.disabled=!a;if(!a&&s.value===o.value)s.value=""});}
+
+
+/* ===========================================================
+   FINANCE DYNAMIQUE — COMPTES + MODES
+=========================================================== */
+function comptesFinanceCaisseActifs(){const a=Array.isArray(parametresFinanceCaisse?.comptesFinanciers)?parametresFinanceCaisse.comptesFinanciers:[];return a.filter(c=>c&&c.actif!==false);}
+function modesFinanceCaisseActifs(){const a=Array.isArray(parametresFinanceCaisse?.modesPaiement)?parametresFinanceCaisse.modesPaiement:[];return a.filter(m=>m&&m.actif!==false && !["credit","avoir"].includes(String(m.id||"")));}
+function remplirSelectFinanceCaisse(id,liste,placeholder){const s=document.getElementById(id);if(!s)return;const courant=s.value;s.innerHTML=`<option value="">${placeholder||"Sélectionner"}</option>`+liste.map(x=>`<option value="${echapperHTMLCaisse(x.value)}">${echapperHTMLCaisse(x.label)}</option>`).join("");if(Array.from(s.options).some(o=>o.value===courant))s.value=courant;}
+function rendreComptesFinanceCaisse(){const comptes=comptesFinanceCaisseActifs();const grid=document.querySelector(".cash-accounts-grid");if(grid){const soldes=ETAT_CAISSE.soldesParCompte||{};grid.innerHTML=comptes.map(c=>`<article class="cash-account-card"><div class="cash-account-icon">${c.type==="especes"?"💵":c.type==="banque"?"🏦":c.type==="mobile-money"?"📱":"💰"}</div><div class="cash-account-content"><span class="cash-account-name">${echapperHTMLCaisse(c.libelle)}</span><strong>${echapperHTMLCaisse(formaterMontantCaisseFront(soldes[c.libelle]||0))}</strong></div></article>`).join("")||'<div class="empty-table">Aucun compte financier actif.</div>';}
+const opts=comptes.map(c=>({value:c.libelle,label:c.libelle}));remplirSelectFinanceCaisse("cash-operation-account",opts,"Sélectionner");remplirSelectFinanceCaisse("cash-destination-account",opts,"Sélectionner");}
+function appliquerModesPaiementFinanceCaisse(){const comptes=comptesFinanceCaisseActifs();if(comptes.length)rendreComptesFinanceCaisse();const modes=modesFinanceCaisseActifs();if(modes.length){const opts=modes.map(m=>({value:m.id,label:m.libelle||m.id}));remplirSelectFinanceCaisse("cash-operation-method",opts,"Sélectionner");remplirSelectFinanceCaisse("cash-method-filter",opts,"Tous les modes");return;}const s=document.getElementById("cash-operation-method");if(!s)return;Array.from(s.options).forEach(o=>{if(!o.value)return;const a=modeFinanceCaisseActif(o.value);o.hidden=!a;o.disabled=!a;});}
+function mettreAJourKpisCaisse(){const resume=ETAT_CAISSE.resumeMois||{};definirTexteCaisse("cash-balance-value",formaterMontantCaisseFront(ETAT_CAISSE.soldeGlobal));definirTexteCaisse("cash-income-value",formaterMontantCaisseFront(resume.entrees||0));definirTexteCaisse("cash-expense-value",formaterMontantCaisseFront(resume.sorties||0));definirTexteCaisse("cash-operations-value",String(resume.operations||0));rendreComptesFinanceCaisse();}
