@@ -7,6 +7,229 @@ let donneesRapports = null;
 let lignesRapport = [];
 let lignesRapportFiltrees = [];
 
+const RAPPORTS_VERSION_CHECK_INTERVAL_MS = 3000;
+const RAPPORTS_POLL_MS = 3000;
+const RAPPORTS_POLL_MAX_MS = 120000;
+
+let rapportsSynchronisationEnCours = false;
+let rapportsDerniereVerification = 0;
+let rapportsTimerVersion = null;
+let rapportsVerificationTimer = null;
+let rapportsLoaderTimer = null;
+let rapportsLoaderProgress = 8;
+
+// V13.2 — cache de navigation de l’onglet uniquement.
+// Il évite de retélécharger tout Rapports quand on quitte la page puis qu’on y revient.
+// La version serveur reste la source de vérité : si elle change, la synchronisation normale reprend.
+const RAPPORTS_NAV_CACHE_KEY = "visibl:rapports:nav-cache:v1";
+
+function sauvegarderCacheNavigationRapports(){
+    if(!donneesRapports) return;
+    try{
+        sessionStorage.setItem(RAPPORTS_NAV_CACHE_KEY, JSON.stringify({
+            version: versionLocaleRapports(),
+            donnees: donneesRapports,
+            savedAt: Date.now()
+        }));
+    }catch(error){
+        console.warn("Cache navigation Rapports indisponible :", error);
+    }
+}
+
+function restaurerCacheNavigationRapports(){
+    try{
+        const brut=sessionStorage.getItem(RAPPORTS_NAV_CACHE_KEY);
+        if(!brut) return false;
+        const cache=JSON.parse(brut);
+        if(!cache?.donnees || typeof cache.donnees!=="object") return false;
+        donneesRapports=cache.donnees;
+        genererRapport();
+        return true;
+    }catch(error){
+        console.warn("Restauration cache navigation Rapports impossible :", error);
+        return false;
+    }
+}
+
+function afficherLoaderSynchronisationRapports(){
+    const loader=document.getElementById("rapports-sync-loader");
+    if(!loader) return;
+
+    const dejaVisible=!loader.hidden && loader.getAttribute("aria-busy")==="true";
+    loader.hidden=false;
+    loader.setAttribute("aria-busy","true");
+
+    // Un même cycle de synchronisation ne repart jamais à zéro.
+    if(!dejaVisible){
+        rapportsLoaderProgress=Math.max(8,rapportsLoaderProgress||0);
+        mettreAJourProgressionLoaderRapports(rapportsLoaderProgress);
+    }
+
+    if(rapportsLoaderTimer) return;
+    rapportsLoaderTimer=setInterval(()=>{
+        if(rapportsLoaderProgress>=95) return;
+        const reste=95-rapportsLoaderProgress;
+        rapportsLoaderProgress=Math.min(95,rapportsLoaderProgress+Math.max(1,Math.ceil(reste*.10)));
+        mettreAJourProgressionLoaderRapports(rapportsLoaderProgress);
+    },350);
+}
+
+function mettreAJourProgressionLoaderRapports(valeur){
+    const p=Math.max(0,Math.min(100,Math.round(valeur)));
+    const barre=document.getElementById("rapports-sync-progress-bar");
+    const texte=document.getElementById("rapports-sync-percent");
+    if(barre) barre.style.width=p+"%";
+    if(texte) texte.textContent=p+"%";
+}
+
+function masquerLoaderSynchronisationRapports(){
+    const loader=document.getElementById("rapports-sync-loader");
+    if(!loader) return;
+    if(rapportsLoaderTimer){ clearInterval(rapportsLoaderTimer); rapportsLoaderTimer=null; }
+    rapportsLoaderProgress=100;
+    mettreAJourProgressionLoaderRapports(100);
+    setTimeout(()=>{
+        loader.hidden=true;
+        loader.setAttribute("aria-busy","false");
+        rapportsLoaderProgress=8;
+    },260);
+}
+
+function masquerLoaderRapportsImmediatement(){
+    const loader=document.getElementById("rapports-sync-loader");
+    if(!loader) return;
+    if(rapportsLoaderTimer){ clearInterval(rapportsLoaderTimer); rapportsLoaderTimer=null; }
+    loader.hidden=true;
+    loader.setAttribute("aria-busy","false");
+}
+
+// ===========================================================
+// V13 — SYNCHRONISATION SERVEUR MULTI-APPAREILS
+// Aucun cache métier persistant dans localStorage.
+// Le cache partagé du backend est l'unique source de vérité.
+// ===========================================================
+
+async function lireVersionRapportsServeur(){
+    const r=await apiGet("getRapportsVersion",{_visibl_ts:Date.now()});
+    if(!r?.success) throw new Error(r?.message||"Version Rapports indisponible.");
+    return r.data||{};
+}
+
+function versionLocaleRapports(){
+    return Number(
+        donneesRapports?.meta?.cacheVersion ??
+        donneesRapports?.meta?.serverVersion ??
+        0
+    );
+}
+
+async function recupererPatchRapportsFrais(versionCible=0){
+    const r=await apiGet("getRapportsPatch",{_multiDeviceSync:Date.now()});
+    if(!r?.success) throw new Error(r?.message||"Impossible de synchroniser les rapports.");
+
+    if(r?.busy) return { applique:false, busy:true };
+
+    const payload=r.data||{};
+    const patch=payload.patch||{};
+    const meta=payload.meta||patch.meta||{};
+
+    if(!donneesRapports) donneesRapports={};
+
+    Object.keys(patch).forEach((cle)=>{
+        if(cle!=="meta") donneesRapports[cle]=patch[cle];
+    });
+    donneesRapports.meta={...(donneesRapports.meta||{}),...meta};
+    genererRapport();
+    sauvegarderCacheNavigationRapports();
+
+    const versionAppliquee=versionLocaleRapports();
+    return {
+        applique:versionAppliquee>=Number(versionCible||0),
+        busy:false,
+        versionAppliquee
+    };
+}
+
+async function recupererRapportsFrais(){
+    // Jeu complet venant du cache partagé backend. Rien n'est conservé dans localStorage.
+    const r=await apiGet("getRapports",{_multiDeviceSync:Date.now()});
+    if(!r?.success) throw new Error(r?.message||"Impossible de synchroniser les rapports.");
+    donneesRapports=r.data||{};
+    genererRapport();
+    sauvegarderCacheNavigationRapports();
+    return donneesRapports;
+}
+
+async function synchroniserRapportsAvecServeur(forcer=false,afficherLoaderSiChangement=true){
+    if(rapportsSynchronisationEnCours) return false;
+
+    const maintenant=Date.now();
+    if(!forcer && maintenant-rapportsDerniereVerification<RAPPORTS_VERSION_CHECK_INTERVAL_MS) return false;
+    rapportsDerniereVerification=maintenant;
+    rapportsSynchronisationEnCours=true;
+
+    try{
+        const version=await lireVersionRapportsServeur();
+        const dirty=Number(version.dirtyVersion ?? version.version ?? 0);
+        const cacheServeur=Number(version.cacheVersion ?? 0);
+        const locale=versionLocaleRapports();
+
+        // Aucun jeu en mémoire : on prend directement le jeu partagé du serveur.
+        if(!donneesRapports){
+            if(afficherLoaderSiChangement) afficherLoaderSynchronisationRapports();
+            await recupererRapportsFrais();
+            masquerLoaderSynchronisationRapports();
+            return true;
+        }
+
+        // Un autre appareil a déjà publié un cache plus récent.
+        // IMPORTANT : on récupère le jeu GLOBAL, pas un patch potentiellement déjà consommé.
+        if(cacheServeur>locale){
+            if(afficherLoaderSiChangement) afficherLoaderSynchronisationRapports();
+            await recupererRapportsFrais();
+            const ok=versionLocaleRapports()>=cacheServeur;
+            if(ok) masquerLoaderSynchronisationRapports();
+            return ok;
+        }
+
+        // Une modification est enregistrée côté serveur mais le cache partagé
+        // n'est pas encore reconstruit. Un seul appareil fera réellement le patch
+        // grâce au verrou backend ; les autres verront busy puis réessaieront.
+        if(dirty>cacheServeur){
+            if(afficherLoaderSiChangement) afficherLoaderSynchronisationRapports();
+            const resultat=await recupererPatchRapportsFrais(dirty);
+            if(resultat?.busy) return false;
+
+            if(resultat?.applique){
+                masquerLoaderSynchronisationRapports();
+                return true;
+            }
+            return false;
+        }
+
+        // Serveur et écran déjà sur la même version.
+        if(locale>=cacheServeur){
+            masquerLoaderSynchronisationRapports();
+            return true;
+        }
+
+        return false;
+    }catch(error){
+        console.warn("Synchronisation Rapports :",error);
+        return false;
+    }finally{
+        rapportsSynchronisationEnCours=false;
+    }
+}
+
+// Les événements de l'application accélèrent la mise à jour sur l'appareil qui
+// vient d'écrire. Pour les autres appareils, la version serveur est vérifiée
+// automatiquement toutes les 3 secondes.
+function demanderSynchronisationRapportsImmediatement(){
+    synchroniserRapportsAvecServeur(true,true);
+}
+
+
 const CONFIG_RAPPORTS = {
     ventes: {
         titre: "Rapport des ventes",
@@ -56,6 +279,20 @@ function initialiserRapports(){
     mettreAJourPeriodePersonnalisee();
     chargerRapports();
 }
+
+window.addEventListener("visibl:rapports-refresh",demanderSynchronisationRapportsImmediatement);
+
+// Au retour sur l’onglet, on demande immédiatement la version serveur.
+// Aucun état métier n’est lu depuis le navigateur.
+function reprendreSynchronisationRapports(){
+    synchroniserRapportsAvecServeur(true,true);
+}
+
+window.addEventListener("focus",reprendreSynchronisationRapports);
+window.addEventListener("pageshow",reprendreSynchronisationRapports);
+document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState==="visible") reprendreSynchronisationRapports();
+});
 
 if(document.readyState==="loading"){
     document.addEventListener("DOMContentLoaded", initialiserRapports);
@@ -108,18 +345,24 @@ async function regenererRapportDepuisServeur(){
     const texteInitial=bouton?.innerHTML;
     if(bouton){
         bouton.disabled=true;
-        bouton.innerHTML="<span>⏳</span> Génération...";
+        bouton.innerHTML="<span>⏳</span> Actualisation...";
     }
 
     try{
-        const r=await apiGet("getRapports");
-        if(!r?.success) throw new Error(r?.message||"Impossible de générer le rapport.");
-        donneesRapports=r.data||{};
-        genererRapport();
-        toastRapport("Rapport généré avec les données à jour.","success");
+        const version=await lireVersionRapportsServeur();
+        const dirtyVersion=Number(version.dirtyVersion ?? version.version ?? 0);
+        const cacheVersion=Number(version.cacheVersion ?? 0);
+
+        if(dirtyVersion>cacheVersion){
+            toastRapport("Les rapports se mettent à jour en arrière-plan.","info");
+            await synchroniserRapportsAvecServeur(true);
+        }else{
+            await chargerRapportsDepuisServeur(false);
+            toastRapport("Rapports actualisés.","success");
+        }
     }catch(error){
-        console.error("Génération du rapport :",error);
-        toastRapport(error.message||"Impossible de générer le rapport.","error");
+        console.error("Actualisation du rapport :",error);
+        toastRapport(error.message||"Impossible d'actualiser les rapports.","error");
     }finally{
         if(bouton){
             bouton.disabled=false;
@@ -180,19 +423,115 @@ function exporterRapportPDF(){
 
 
 async function chargerRapports(){
-    definirChargementRapport(true);
+    // V13.2 : si Rapports a déjà été chargé dans cet onglet, on restaure
+    // immédiatement l’affichage puis on ne demande au serveur que sa version.
+    // Si rien n’a changé, aucun getRapports complet et aucun loader.
+    const restaure=restaurerCacheNavigationRapports();
+
+    if(restaure){
+        masquerLoaderRapportsImmediatement();
+        await synchroniserRapportsAvecServeur(true,true);
+    }else{
+        afficherLoaderSynchronisationRapports();
+
+        try{
+            await recupererRapportsFrais();
+
+            const dirty=Number(donneesRapports?.meta?.dirtyVersion||0);
+            const cacheVersion=Number(
+                donneesRapports?.meta?.cacheVersion ??
+                donneesRapports?.meta?.serverVersion ??
+                0
+            );
+
+            if(dirty>cacheVersion){
+                await synchroniserRapportsAvecServeur(true,true);
+            }
+
+            const version=await lireVersionRapportsServeur();
+            const dirtyFinal=Number(version.dirtyVersion ?? version.version ?? 0);
+            const cacheFinal=Number(version.cacheVersion ?? 0);
+            const localeFinal=versionLocaleRapports();
+
+            if(cacheFinal>localeFinal || dirtyFinal>cacheFinal){
+                await synchroniserRapportsAvecServeur(true,true);
+            }
+        }finally{
+            masquerLoaderSynchronisationRapports();
+        }
+    }
+
+    if(!rapportsTimerVersion){
+        rapportsTimerVersion=window.setInterval(
+            ()=>synchroniserRapportsAvecServeur(false,true),
+            RAPPORTS_VERSION_CHECK_INTERVAL_MS
+        );
+    }
+}
+
+function rapportsPreparationEnCours_(message){
+    return norm(message).includes("rapports sont deja en cours de preparation") ||
+           norm(message).includes("rapports sont déjà en cours de préparation");
+}
+
+async function chargerRapportsDepuisServeur(afficherChargement){
+    if(afficherChargement) definirChargementRapport(true);
+
+    let garderChargement=false;
+
     try{
-        const r=await apiGet("getRapports");
-        if(!r?.success) throw new Error(r?.message||"Impossible de charger les rapports.");
+        const r=await apiGet("getRapports",{_visibl_ts:Date.now()});
+
+        if(!r?.success){
+            const message=r?.message||"Impossible de charger les rapports.";
+
+            // Cas normal du tout premier démarrage : initialiserCacheRapports()
+            // travaille déjà. On n'affiche pas une erreur ; on attend et on
+            // réessaie automatiquement jusqu'à ce que le cache global soit prêt.
+            if(rapportsPreparationEnCours_(message)){
+                garderChargement=true;
+                window.setTimeout(
+                    ()=>chargerRapportsDepuisServeur(true),
+                    RAPPORTS_REFRESH_POLL_MS
+                );
+                return;
+            }
+
+            throw new Error(message);
+        }
+
         donneesRapports=r.data||{};
         genererRapport();
+        sauvegarderCacheNavigationRapports();
+
+        const dirty=Number(donneesRapports?.meta?.dirtyVersion||0);
+        const cacheVersion=Number(
+            donneesRapports?.meta?.cacheVersion ??
+            donneesRapports?.meta?.serverVersion ??
+            0
+        );
+
+        // Le backend nous a servi l'ancien cache pendant sa reconstruction.
+        // On laisse l'utilisateur travailler et on récupérera le nouveau jeu
+        // dès qu'il sera prêt.
+        if(dirty>cacheVersion){
+            window.setTimeout(
+                ()=>synchroniserRapportsAvecServeur(true),
+                RAPPORTS_REFRESH_POLL_MS
+            );
+        }
     }catch(error){
         console.error("Erreur rapports :",error);
-        donneesRapports={};
-        lignesRapport=[];
-        afficherEtatVideRapport(error.message||"Impossible de charger les rapports.");
+
+        // Ne jamais effacer un rapport déjà affiché si une simple
+        // vérification réseau échoue.
+        if(!donneesRapports){
+            donneesRapports={};
+            lignesRapport=[];
+            afficherEtatVideRapport(error.message||"Impossible de charger les rapports.");
+        }
     }finally{
-        definirChargementRapport(false);
+        if(afficherChargement && !garderChargement) definirChargementRapport(false);
     }
 }
 

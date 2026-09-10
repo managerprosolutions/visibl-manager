@@ -91,6 +91,39 @@ function redirectAuthenticatedUser() {
  * Déconnecte l'utilisateur.
  */
 function logoutUser() {
+    /*
+     * Une déconnexion doit démarrer une nouvelle session ERP.
+     * Les modules optimisés conservent leurs données de navigation
+     * dans sessionStorage (Commandes, Ventes, Rapports, etc.).
+     * On vide donc ce cache uniquement lors d'une vraie déconnexion,
+     * afin que la prochaine connexion refasse le premier chargement.
+     *
+     * La navigation normale entre modules n'est pas concernée :
+     * leurs caches restent actifs tant que l'utilisateur est connecté.
+     */
+    try {
+        sessionStorage.clear();
+    } catch (error) {
+        console.warn(
+            "Impossible de vider le cache de session lors de la déconnexion :",
+            error
+        );
+    }
+
+    // Le Dashboard utilise un cache persistant dans localStorage.
+    // On supprime uniquement ses clés lors d'une vraie déconnexion
+    // pour forcer un chargement frais à la prochaine connexion.
+    try {
+        localStorage.removeItem("VISIBL_DASHBOARD_BROWSER_CACHE_V1");
+        localStorage.removeItem("VISIBL_DASHBOARD_REFRESH_SIGNAL");
+        localStorage.removeItem("VISIBL_DASHBOARD_REFRESH_TRAITE");
+    } catch (error) {
+        console.warn(
+            "Impossible de vider le cache Dashboard lors de la déconnexion :",
+            error
+        );
+    }
+
     localStorage.removeItem(
         AUTH_CONFIG.USER_STORAGE_KEY
     );

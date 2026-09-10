@@ -662,6 +662,22 @@
 
 </div>
 
+<!-- ===== Loader de synchronisation Rapports V3.2 ===== -->
+<div id="rapports-sync-loader" class="rapports-sync-loader" hidden aria-live="polite" aria-busy="true">
+  <div class="rapports-sync-card">
+    <div class="rapports-sync-visual" aria-hidden="true">
+      <div class="rapports-sync-ring"></div>
+      <div class="rapports-sync-bars"><span></span><span></span><span></span></div>
+      <i class="rapports-sync-spark s1">✦</i><i class="rapports-sync-spark s2">✦</i><i class="rapports-sync-spark s3">✦</i>
+    </div>
+    <h3>Mise à jour des rapports...</h3>
+    <p>Synchronisation des nouvelles données en cours</p>
+    <div class="rapports-sync-progress"><span id="rapports-sync-progress-bar"></span></div>
+    <strong id="rapports-sync-percent">0%</strong>
+    <small>Cela peut prendre quelques secondes</small>
+  </div>
+</div>
+
 <script src="../js/api.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/app.js"></script>

@@ -7,15 +7,86 @@ let lignesVente = [];
 let catalogueProduitsVente = [];
 let catalogueClientsVente = [];
 let catalogueLivreursVente = [];
+let chargementClientsVentePromise = null;
+let chargementProduitsVentePromise = null;
+let chargementLivreursVentePromise = null;
 let ventesChargees = [];
 let ventesFiltrees = [];
 let venteEnModificationId = null;
 let ligneVenteEnModificationId = null;
 let brouillonLivraisonVente = null;
 let pageVentesActuelle = 1;
-let taillePageVentes = 10;
+let taillePageVentes = 20;
 let modeSelectionVentes = false;
 const ventesSelectionnees = new Set();
+
+// Pagination serveur Ventes : 20 ventes fixes par page.
+const pagesVentesServeur = new Map();
+let totalVentesServeur = 0;
+let totalPagesVentesServeur = 1;
+let prechargementVentesPromise = null;
+let generationChargementVentes = 0;
+let versionVentesServeur = "";
+
+// Cache de navigation : conserve les ventes et les noms clients déjà chargés.
+const VENTES_NAV_CACHE_KEY = "visibl:ventes:nav-cache:v1";
+const INTERVALLE_SYNC_VENTES_MS = 10000;
+let timerSyncVentes = null;
+let syncVentesEnCours = false;
+
+function sauvegarderCacheNavigationVentes() {
+    try {
+        if (!pagesVentesServeur.size) return;
+        sessionStorage.setItem(
+            VENTES_NAV_CACHE_KEY,
+            JSON.stringify({
+                pages: Array.from(pagesVentesServeur.entries()),
+                total: totalVentesServeur,
+                totalPages: totalPagesVentesServeur,
+                pageActuelle: pageVentesActuelle,
+                clients: catalogueClientsVente,
+                version: versionVentesServeur,
+                savedAt: Date.now()
+            })
+        );
+    } catch (error) {
+        console.warn("Cache navigation Ventes indisponible :", error);
+    }
+}
+
+function restaurerCacheNavigationVentes() {
+    try {
+        const brut = sessionStorage.getItem(VENTES_NAV_CACHE_KEY);
+        if (!brut) return false;
+        const cache = JSON.parse(brut);
+        if (!Array.isArray(cache?.pages) || !cache.pages.length) return false;
+        if (!Array.isArray(cache.clients)) return false;
+        const pages = new Map(cache.pages);
+        if (!pages.has(1)) return false;
+
+        catalogueClientsVente = cache.clients;
+        pagesVentesServeur.clear();
+        pages.forEach((valeur, cle) => pagesVentesServeur.set(Number(cle), valeur));
+        totalVentesServeur = Math.max(0, Number(cache.total) || 0);
+        totalPagesVentesServeur = Math.max(
+            1,
+            Number(cache.totalPages) || Math.ceil(totalVentesServeur / taillePageVentes) || 1
+        );
+        pageVentesActuelle = Math.max(
+            1,
+            Math.min(Number(cache.pageActuelle) || 1, totalPagesVentesServeur)
+        );
+        versionVentesServeur = String(cache.version || "");
+        reconstruireVentesDepuisPagesServeur();
+        const page1 = pagesVentesServeur.get(1);
+        if (page1?.kpi) afficherKPIVentesServeur(page1.kpi);
+        afficherTableauVentes();
+        return true;
+    } catch (error) {
+        console.warn("Restauration cache navigation Ventes impossible :", error);
+        return false;
+    }
+}
 
 
 
@@ -38,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserCalculsVente();
     initialiserEnregistrementVente();
     initialiserListeVentes();
+    initialiserSynchronisationVentes();
     initialiserInteractionsHeaderVente();
     initialiserFactureDepuisVente();
 });
@@ -692,7 +764,7 @@ function initialiserGestionClientsVente() {
         .getElementById("quick-client-form")
         ?.addEventListener("submit", enregistrerClientRapideVente);
 
-    chargerClientsVente();
+    chargementClientsVentePromise = chargerClientsVente();
 }
 
 
@@ -1383,7 +1455,7 @@ function initialiserLivraisonVente() {
             afficherLivreursParCommuneVente
         );
 
-    chargerLivreursVente();
+    chargementLivreursVentePromise = chargerLivreursVente();
     mettreAJourAffichageLivraisonVente();
 }
 
@@ -2012,7 +2084,7 @@ function initialiserProduitsVente() {
         );
     });
 
-    chargerProduitsVente();
+    chargementProduitsVentePromise = chargerProduitsVente();
 }
 
 
@@ -3593,7 +3665,7 @@ async function enregistrerVente(event) {
          * car une vente validée peut modifier le stock.
          */
         await Promise.allSettled([
-            chargerVentes({ silencieux: true, conserverPage: true }),
+            chargerVentes({ silencieux: true, conserverPage: true, forcer: true }),
             chargerProduitsVente()
         ]);
 
@@ -3631,10 +3703,7 @@ async function enregistrerVente(event) {
 function initialiserListeVentes() {
     document
         .querySelector(".header .search-input")
-        ?.addEventListener(
-            "input",
-            appliquerFiltresVentes
-        );
+        ?.addEventListener("input", appliquerFiltresVentes);
 
     initialiserMenuActionsVentes();
     initialiserModeSelectionVentes();
@@ -3645,127 +3714,53 @@ function initialiserListeVentes() {
         "sale-payment-method-filter",
         "sale-client-filter"
     ].forEach(id => {
-        document
-            .getElementById(id)
-            ?.addEventListener(
-                "change",
-                appliquerFiltresVentes
-            );
+        document.getElementById(id)?.addEventListener("change", appliquerFiltresVentes);
     });
 
     document
         .getElementById("reset-sale-filters")
-        ?.addEventListener(
-            "click",
-            reinitialiserFiltresVentes
-        );
+        ?.addEventListener("click", reinitialiserFiltresVentes);
 
     document
         .getElementById("refresh-sales-btn")
-        ?.addEventListener(
-            "click",
-            chargerVentes
-        );
-
-    document
-        .getElementById("sales-per-page")
-        ?.addEventListener(
-            "change",
-            event => {
-                taillePageVentes =
-                    Math.max(
-                        1,
-                        Number(
-                            event.target.value
-                        ) ||
-                        10
-                    );
-
-                pageVentesActuelle = 1;
-                afficherTableauVentes();
-            }
-        );
+        ?.addEventListener("click", () => chargerVentes({ forcer: true }));
 
     document
         .getElementById("previous-sale-page-btn")
-        ?.addEventListener(
-            "click",
-            () => {
-                if (
-                    pageVentesActuelle >
-                    1
-                ) {
-                    pageVentesActuelle--;
-                    afficherTableauVentes();
-                }
-            }
-        );
+        ?.addEventListener("click", () => {
+            if (pageVentesActuelle > 1) allerPageVentes(pageVentesActuelle - 1);
+        });
 
     document
         .getElementById("next-sale-page-btn")
-        ?.addEventListener(
-            "click",
-            () => {
-                const totalPages =
-                    Math.max(
-                        1,
-                        Math.ceil(
-                            ventesFiltrees.length /
-                            taillePageVentes
-                        )
-                    );
-
-                if (
-                    pageVentesActuelle <
-                    totalPages
-                ) {
-                    pageVentesActuelle++;
-                    afficherTableauVentes();
-                }
-            }
-        );
+        ?.addEventListener("click", () => {
+            const totalPages = filtresVentesActifs()
+                ? Math.max(1, Math.ceil(ventesFiltrees.length / taillePageVentes))
+                : totalPagesVentesServeur;
+            if (pageVentesActuelle < totalPages) allerPageVentes(pageVentesActuelle + 1);
+        });
 
     document
         .getElementById("sales-table-body")
-        ?.addEventListener(
-            "click",
-            gererActionsTableauVentes
-        );
+        ?.addEventListener("click", gererActionsTableauVentes);
 
     document
         .getElementById("close-view-sale-modal")
-        ?.addEventListener(
-            "click",
-            fermerModaleVoirVente
-        );
+        ?.addEventListener("click", fermerModaleVoirVente);
 
     document
         .getElementById("close-view-sale-footer")
-        ?.addEventListener(
-            "click",
-            fermerModaleVoirVente
-        );
+        ?.addEventListener("click", fermerModaleVoirVente);
 
     document
         .getElementById("view-sale-modal")
-        ?.addEventListener(
-            "click",
-            event => {
-                if (
-                    event.target.id ===
-                    "view-sale-modal"
-                ) {
-                    fermerModaleVoirVente();
-                }
-            }
-        );
+        ?.addEventListener("click", event => {
+            if (event.target.id === "view-sale-modal") fermerModaleVoirVente();
+        });
 
     document
         .getElementById("print-sales-btn")
-        ?.addEventListener(
-            "click",
-            () => window.print()
-        );
+        ?.addEventListener("click", () => window.print());
 
     initialiserModaleRetourVente();
     initialiserHistoriqueRetoursVente();
@@ -3775,111 +3770,301 @@ function initialiserListeVentes() {
     chargerVentes();
 }
 
+function initialiserSynchronisationVentes() {
+    if (timerSyncVentes) clearInterval(timerSyncVentes);
+    timerSyncVentes = setInterval(() => {
+        if (document.visibilityState !== "visible") return;
+        synchroniserVentesMultiAppareils();
+    }, INTERVALLE_SYNC_VENTES_MS);
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") synchroniserVentesMultiAppareils();
+    });
+}
+
+async function synchroniserVentesMultiAppareils() {
+    if (syncVentesEnCours || typeof apiGet !== "function" || !pagesVentesServeur.has(1)) return;
+    syncVentesEnCours = true;
+    try {
+        const etat = await apiGet("getEtatSyncVentes", { _ts: Date.now() });
+        if (!etat?.success) return;
+
+        const versionDistante = String(etat.version || "");
+        const totalDistant = Math.max(0, Number(etat.total) || 0);
+        const dernierIdDistant = String(etat.dernierIdVente || "").trim();
+        const page1 = pagesVentesServeur.get(1);
+        const dernierIdLocal = String(page1?.ventes?.[0]?.idVente || "").trim();
+
+        if (
+            versionDistante === versionVentesServeur &&
+            totalDistant === totalVentesServeur &&
+            dernierIdDistant === dernierIdLocal
+        ) return;
+
+        await rafraichirVentesApresSynchronisation(etat);
+    } catch (error) {
+        console.warn("Synchronisation automatique des ventes indisponible :", error);
+    } finally {
+        syncVentesEnCours = false;
+    }
+}
+
+async function rafraichirVentesApresSynchronisation(etat) {
+    const pageAvant = pageVentesActuelle;
+    const resultat = await apiGet("getVentesPage", {
+        page: 1,
+        limite: taillePageVentes,
+        _ts: Date.now()
+    });
+    if (!resultat?.success) throw new Error(resultat?.message || "Impossible de synchroniser les ventes.");
+
+    // Une modification peut concerner une ancienne vente : les autres pages sont
+    // invalidées pour ne jamais conserver une fiche périmée en cache.
+    pagesVentesServeur.clear();
+    pagesVentesServeur.set(1, construireObjetPageVentes(resultat));
+    totalVentesServeur = Math.max(0, Number(resultat.pagination?.total ?? etat?.total) || 0);
+    totalPagesVentesServeur = Math.max(
+        1,
+        Number(resultat.pagination?.totalPages ?? etat?.totalPages) ||
+            Math.ceil(totalVentesServeur / taillePageVentes) || 1
+    );
+    versionVentesServeur = String(resultat.version || etat?.version || "");
+
+    // Les noms clients peuvent eux aussi avoir changé sur un autre appareil.
+    await Promise.allSettled([chargerClientsVente()]);
+    reconstruireVentesDepuisPagesServeur();
+    if (resultat.kpi) afficherKPIVentesServeur(resultat.kpi);
+
+    pageVentesActuelle = Math.min(pageAvant, totalPagesVentesServeur);
+    if (pageVentesActuelle > 1) {
+        try {
+            const pageCourante = await chargerPageVentesServeur(pageVentesActuelle, true);
+            appliquerPageVentesServeur(pageCourante);
+        } catch (error) {
+            pageVentesActuelle = 1;
+        }
+    }
+    afficherTableauVentes();
+    sauvegarderCacheNavigationVentes();
+
+    if (totalPagesVentesServeur > 1) {
+        const generation = ++generationChargementVentes;
+        prechargementVentesPromise = prechargerPagesVentesEnCascade(2, generation);
+    }
+}
 
 async function chargerVentes(options = {}) {
-    const { silencieux = false, conserverPage = false } = options;
+    const { silencieux = false, conserverPage = false, forcer = false } = options || {};
+    const tbody = document.getElementById("sales-table-body");
+    const pageAvant = conserverPage ? pageVentesActuelle : 1;
 
-    const tbody =
-        document.getElementById(
-            "sales-table-body"
-        );
+    if (!forcer && restaurerCacheNavigationVentes()) {
+        synchroniserVentesMultiAppareils();
+        if (!toutesPagesVentesChargees()) {
+            const generation = generationChargementVentes;
+            const premierePageManquante = Array.from(
+                { length: totalPagesVentesServeur },
+                (_, index) => index + 1
+            ).find(page => !pagesVentesServeur.has(page));
+            if (premierePageManquante) {
+                prechargementVentesPromise = prechargerPagesVentesEnCascade(premierePageManquante, generation);
+            }
+        }
+        return;
+    }
 
-    /*
-     * Lors d'une actualisation déclenchée après une création, une modification
-     * ou une suppression, on conserve le tableau actuel à l'écran jusqu'à ce
-     * que les nouvelles données soient prêtes. Cela évite le clignotement et
-     * la disparition temporaire de la liste des ventes.
-     *
-     * Le chargement visible reste utilisé au premier affichage et lorsque
-     * l'utilisateur clique volontairement sur le bouton Actualiser.
-     */
+    const generation = ++generationChargementVentes;
+    pagesVentesServeur.clear();
+    totalVentesServeur = 0;
+    totalPagesVentesServeur = 1;
+    prechargementVentesPromise = null;
+    pageVentesActuelle = 1;
+    ventesChargees = [];
+    ventesFiltrees = [];
+
     if (tbody && !silencieux) {
-        document.body.classList.add(
-            "sales-data-loading"
-        );
-
+        document.body.classList.add("sales-data-loading");
         tbody.innerHTML = `
             <tr>
                 <td colspan="13" class="empty-table sales-loading-cell">
                     <span class="sales-loader" aria-hidden="true"></span>
-                    <span>Chargement des ventes...</span>
+                    <span>Chargement des 20 dernières ventes...</span>
                 </td>
-            </tr>
-        `;
+            </tr>`;
     }
 
     try {
-        const resultat =
-            await apiGet("getVentes");
+        const [resultat] = await Promise.all([
+            chargerPageVentesServeur(1, true),
+            Promise.allSettled([
+                chargementClientsVentePromise || Promise.resolve()
+            ])
+        ]);
+        if (generation !== generationChargementVentes) return;
+        appliquerPageVentesServeur(resultat);
+        pageVentesActuelle = Math.min(Math.max(1, pageAvant), totalPagesVentesServeur);
 
-        if (!resultat?.success) {
-            throw new Error(
-                resultat?.message ||
-                "Impossible de charger les ventes."
-            );
+        if (pageVentesActuelle > 1) {
+            const pageCible = await chargerPageVentesServeur(pageVentesActuelle);
+            if (generation !== generationChargementVentes) return;
+            appliquerPageVentesServeur(pageCible);
         }
 
-        ventesChargees =
-            extraireListeVente(
-                resultat,
-                "ventes"
-            );
-
-        mettreAJourKPIVentes();
-        appliquerFiltresVentes(conserverPage);
-
+        afficherTableauVentes();
+        prechargementVentesPromise = prechargerPagesVentesEnCascade(2, generation);
     } catch (error) {
-        console.error(
-            "Erreur de chargement des ventes :",
-            error
-        );
-
-        /*
-         * En mode silencieux, on garde les anciennes données affichées en cas
-         * d'échec du rafraîchissement. Une erreur réseau ne doit donc pas faire
-         * disparaître un tableau qui était déjà utilisable.
-         */
+        console.error("Erreur de chargement des ventes :", error);
         if (!silencieux) {
             ventesChargees = [];
             ventesFiltrees = [];
-
             afficherTableauVentes();
-            mettreAJourKPIVentes();
         }
-
-        /*
-         * Tant que VentesService.gs n'est pas encore branché,
-         * aucune donnée fictive n'est affichée.
-         */
-        afficherToastVente(
-            error.message ||
-            "Impossible de charger les ventes.",
-            "error"
-        );
+        afficherToastVente(error.message || "Impossible de charger les ventes.", "error");
     } finally {
-        document.body.classList.remove(
-            "sales-data-loading"
-        );
-
-        [
-            "total-sales-value",
-            "sales-revenue-value",
-            "sales-paid-value",
-            "sales-balance-value"
-        ].forEach(id => {
-            document
-                .getElementById(id)
-                ?.classList.remove(
-                    "is-loading"
-                );
-        });
+        document.body.classList.remove("sales-data-loading");
+        ["total-sales-value","sales-revenue-value","sales-paid-value","sales-balance-value"]
+            .forEach(id => document.getElementById(id)?.classList.remove("is-loading"));
     }
 }
 
+function construireObjetPageVentes(resultat) {
+    return {
+        ventes: extraireListeVente(resultat, "ventes"),
+        pagination: resultat.pagination || {},
+        kpi: resultat.kpi || null,
+        version: String(resultat.version || "")
+    };
+}
+
+async function chargerPageVentesServeur(page, forcer = false) {
+    const numero = Math.max(1, Number(page) || 1);
+    if (!forcer && pagesVentesServeur.has(numero)) return pagesVentesServeur.get(numero);
+    const resultat = await apiGet("getVentesPage", {
+        page: numero,
+        limite: taillePageVentes,
+        _ts: Date.now()
+    });
+    if (!resultat?.success) throw new Error(resultat?.message || "Impossible de charger cette page de ventes.");
+    const objet = construireObjetPageVentes(resultat);
+    pagesVentesServeur.set(numero, objet);
+    return objet;
+}
+
+function reconstruireVentesDepuisPagesServeur() {
+    const toutes = [];
+    Array.from(pagesVentesServeur.keys())
+        .sort((a, b) => a - b)
+        .forEach(numero => {
+            const page = pagesVentesServeur.get(numero);
+            if (Array.isArray(page?.ventes)) toutes.push(...page.ventes);
+        });
+    ventesChargees = toutes;
+    ventesFiltrees = [...toutes];
+}
+
+function appliquerPageVentesServeur(objet) {
+    const pagination = objet?.pagination || {};
+    totalVentesServeur = Math.max(0, Number(pagination.total) || totalVentesServeur || 0);
+    totalPagesVentesServeur = Math.max(
+        1,
+        Number(pagination.totalPages) || Math.ceil(totalVentesServeur / taillePageVentes) || 1
+    );
+    if (objet?.version) versionVentesServeur = String(objet.version);
+    reconstruireVentesDepuisPagesServeur();
+    if (objet?.kpi) afficherKPIVentesServeur(objet.kpi);
+    sauvegarderCacheNavigationVentes();
+}
+
+function afficherKPIVentesServeur(kpi) {
+    if (!kpi || typeof kpi !== "object") return;
+    const total = Math.max(0, Number(kpi.total) || 0);
+    const nouvellesCeMois = Math.max(0, Number(kpi.nouvellesCeMois) || 0);
+    const chiffreAffaires = Math.max(0, Number(kpi.chiffreAffaires) || 0);
+    const montantEncaisse = Math.max(0, Number(kpi.montantEncaisse) || 0);
+    const creances = Math.max(0, Number(kpi.creances) || 0);
+    const ventesNonSoldees = Math.max(0, Number(kpi.ventesNonSoldees) || 0);
+    const tauxEncaissement = chiffreAffaires > 0 ? Math.round((montantEncaisse / chiffreAffaires) * 100) : 0;
+    const correspondances = {
+        "total-sales-value": total,
+        "total-sales-description": `${nouvellesCeMois} nouvelle${nouvellesCeMois > 1 ? "s" : ""} vente${nouvellesCeMois > 1 ? "s" : ""} ce mois`,
+        "sales-revenue-value": formaterFCFAVente(chiffreAffaires),
+        "sales-paid-value": formaterFCFAVente(montantEncaisse),
+        "sales-paid-description": `${tauxEncaissement} % du chiffre d'affaires`,
+        "sales-balance-value": formaterFCFAVente(creances),
+        "sales-balance-description": `${ventesNonSoldees} vente${ventesNonSoldees > 1 ? "s" : ""} non soldée${ventesNonSoldees > 1 ? "s" : ""}`
+    };
+    Object.entries(correspondances).forEach(([id, valeur]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = valeur;
+            element.classList.remove("is-loading");
+        }
+    });
+}
+
+async function prechargerPagesVentesEnCascade(debutPage, generation) {
+    for (let page = debutPage; page <= totalPagesVentesServeur; page++) {
+        if (generation !== generationChargementVentes) return;
+        if (pagesVentesServeur.has(page)) continue;
+        try {
+            const objet = await chargerPageVentesServeur(page);
+            if (generation !== generationChargementVentes) return;
+            appliquerPageVentesServeur(objet);
+            if (pageVentesActuelle === page) afficherTableauVentes();
+        } catch (error) {
+            console.warn("Préchargement Ventes page " + page + " interrompu :", error);
+            return;
+        }
+    }
+    if (generation === generationChargementVentes) reconstruireVentesDepuisPagesServeur();
+}
+
+function toutesPagesVentesChargees() {
+    return pagesVentesServeur.size >= totalPagesVentesServeur;
+}
+
+function filtresVentesActifs() {
+    return Boolean(
+        String(document.querySelector(".header .search-input")?.value || "").trim() ||
+        obtenirValeurVente("sale-payment-status-filter") ||
+        obtenirValeurVente("sale-delivery-status-filter") ||
+        obtenirValeurVente("sale-payment-method-filter") ||
+        obtenirValeurVente("sale-client-filter")
+    );
+}
+
+async function allerPageVentes(page) {
+    const totalPages = filtresVentesActifs()
+        ? Math.max(1, Math.ceil(ventesFiltrees.length / taillePageVentes))
+        : totalPagesVentesServeur;
+    const cible = Math.max(1, Math.min(Number(page) || 1, totalPages));
+    pageVentesActuelle = cible;
+
+    if (!filtresVentesActifs() && !pagesVentesServeur.has(cible)) {
+        const tbody = document.getElementById("sales-table-body");
+        if (tbody) tbody.innerHTML = `<tr><td colspan="13" class="empty-table">Chargement de la page ${cible}...</td></tr>`;
+        try {
+            const objet = await chargerPageVentesServeur(cible);
+            appliquerPageVentesServeur(objet);
+        } catch (error) {
+            console.error("Chargement page Ventes :", error);
+            afficherToastVente(error.message || "Impossible de charger cette page.", "error");
+            return;
+        }
+    }
+    afficherTableauVentes();
+    sauvegarderCacheNavigationVentes();
+}
 
 function appliquerFiltresVentes(
     conserverPage = false
 ) {
+    if (filtresVentesActifs() && !toutesPagesVentesChargees()) {
+        if (prechargementVentesPromise) {
+            prechargementVentesPromise.then(() => appliquerFiltresVentes(conserverPage));
+        }
+        return;
+    }
     const recherche =
         normaliserTexteVente(
             document
@@ -4016,92 +4201,45 @@ function reinitialiserFiltresVentes() {
 
 
 function afficherTableauVentes() {
-    const tbody =
-        document.getElementById(
-            "sales-table-body"
-        );
+    const tbody = document.getElementById("sales-table-body");
+    if (!tbody) return;
 
-    if (!tbody) {
-        return;
+    const filtresActifs = filtresVentesActifs();
+    let total;
+    let totalPages;
+    let debut;
+    let fin;
+    let page;
+
+    if (filtresActifs) {
+        total = ventesFiltrees.length;
+        totalPages = Math.max(1, Math.ceil(total / taillePageVentes));
+        pageVentesActuelle = Math.min(pageVentesActuelle, totalPages);
+        debut = (pageVentesActuelle - 1) * taillePageVentes;
+        fin = debut + taillePageVentes;
+        page = ventesFiltrees.slice(debut, fin);
+    } else {
+        total = totalVentesServeur;
+        totalPages = totalPagesVentesServeur;
+        pageVentesActuelle = Math.min(pageVentesActuelle, totalPages);
+        debut = (pageVentesActuelle - 1) * taillePageVentes;
+        fin = Math.min(debut + taillePageVentes, total);
+        const objetPage = pagesVentesServeur.get(pageVentesActuelle);
+        page = Array.isArray(objetPage?.ventes) ? objetPage.ventes : [];
     }
-
-    const total =
-        ventesFiltrees.length;
-
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                total /
-                taillePageVentes
-            )
-        );
-
-    pageVentesActuelle =
-        Math.min(
-            pageVentesActuelle,
-            totalPages
-        );
-
-    const debut =
-        (
-            pageVentesActuelle -
-            1
-        ) *
-        taillePageVentes;
-
-    const fin =
-        debut +
-        taillePageVentes;
-
-    const page =
-        ventesFiltrees.slice(
-            debut,
-            fin
-        );
 
     if (!page.length) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="13" class="empty-table">
-                    Aucune vente enregistrée.
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="13" class="empty-table">Aucune vente enregistrée.</td></tr>`;
     } else {
-        tbody.innerHTML =
-            page
-                .map(
-                    creerLigneVenteHTML
-                )
-                .join("");
+        tbody.innerHTML = page.map(creerLigneVenteHTML).join("");
     }
 
-    const compteur =
-        document.getElementById(
-            "filtered-sale-count"
-        );
+    const compteur = document.getElementById("filtered-sale-count");
+    if (compteur) compteur.textContent = String(total);
 
-    if (compteur) {
-        compteur.textContent =
-            String(total);
-    }
-
-    afficherPaginationVentes(
-        totalPages,
-        total,
-        debut,
-        Math.min(
-            fin,
-            total
-        )
-    );
-
-    if (modeSelectionVentes) {
-        synchroniserSelectionVentes();
-    }
+    afficherPaginationVentes(totalPages, total, debut, Math.min(fin, total));
+    if (modeSelectionVentes) synchroniserSelectionVentes();
 }
-
 
 function estVenteAnnuleeApresEchecLivraison(
     vente
@@ -4142,7 +4280,6 @@ function creerLigneVenteHTML(vente) {
             vente.idClient
         ) ||
         vente.nomClient ||
-        vente.idClient ||
         "—";
 
     const numeroCommande =
@@ -5766,7 +5903,8 @@ async function enregistrerRetourVente() {
 
         await chargerVentes({
             silencieux: true,
-            conserverPage: true
+            conserverPage: true,
+            forcer: true
         });
 
     } catch (error) {
@@ -6100,7 +6238,8 @@ async function effectuerControleRetourVente(idVente, idRetour) {
 
         await chargerVentes({
             silencieux: true,
-            conserverPage: true
+            conserverPage: true,
+            forcer: true
         });
 
         const vente =
@@ -6171,7 +6310,7 @@ async function confirmerAnnulationRetourVente() {
         if (!resultat?.success) throw new Error(resultat?.message || "Impossible d'annuler le retour.");
         fermerAnnulationRetourVente();
         afficherToastVente(resultat.message || "Retour annulé avec succès.", "success");
-        await chargerVentes({ silencieux: true, conserverPage: true });
+        await chargerVentes({ silencieux: true, conserverPage: true, forcer: true });
         const vente = ventesChargees.find(v => String(v.idVente) === String(idVente));
         if (vente) afficherHistoriqueRetoursVente(vente);
     } catch (error) {
@@ -7153,7 +7292,7 @@ async function confirmerSuppressionVente() {
         venteASupprimerId = null;
         afficherToastVente(resultat.message || "Vente supprimée avec succès.", "success");
         await Promise.allSettled([
-            chargerVentes({ silencieux: true, conserverPage: true }),
+            chargerVentes({ silencieux: true, conserverPage: true, forcer: true }),
             chargerProduitsVente()
         ]);
     } catch (error) {
@@ -7394,10 +7533,7 @@ function afficherPaginationVentes(
             bouton.addEventListener(
                 "click",
                 () => {
-                    pageVentesActuelle =
-                        page;
-
-                    afficherTableauVentes();
+                    allerPageVentes(page);
                 }
             );
 
@@ -8847,7 +8983,7 @@ async function enregistrerEncaissementPaiementVente() {
 
         fermerModaleEncaissementPaiementVente();
         afficherToastVente(resultat.message || "Paiement encaissé avec succès.", "success");
-        await chargerVentes({ silencieux: true, conserverPage: true });
+        await chargerVentes({ silencieux: true, conserverPage: true, forcer: true });
 
         const venteActualisee = ventesChargees.find(
             element => String(element.idVente) === String(idVente)

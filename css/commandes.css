@@ -2714,6 +2714,26 @@ body.orders-selection-mode .orders-table td.order-selection-column{display:table
     border-radius:12px;box-shadow:0 18px 42px rgba(15,23,42,.16)
 }
 .order-row-actions-dropdown[hidden]{display:none!important}
+
+/*
+ * Menu de ligne adaptatif VISIBL.
+ * Sur desktop, le JS le sort du flux du tableau avec position:fixed afin
+ * qu'il ne soit jamais coupé par le conteneur scrollable.
+ */
+.order-row-actions-dropdown.visibl-floating-menu{
+    position:fixed;
+    top:var(--visibl-menu-top, auto);
+    left:var(--visibl-menu-left, auto);
+    right:auto;
+    bottom:auto;
+    max-height:var(--visibl-menu-max-height, calc(100vh - 24px));
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    z-index:10000;
+}
+.order-row-actions-dropdown.opens-up{
+    transform-origin:bottom right;
+}
 .order-row-actions-dropdown button{
     width:100%;display:flex;align-items:center;gap:9px;padding:10px 11px;
     color:#334155;background:transparent;border:0;border-radius:8px;
@@ -2760,7 +2780,8 @@ body.orders-selection-mode .orders-table td.order-selection-column{display:table
         width:auto;min-width:0;max-height:min(70dvh,520px);overflow:auto;z-index:10000
     }
     .orders-actions-dropdown button{min-height:48px}
-    .order-row-actions-dropdown{
+    .order-row-actions-dropdown,
+    .order-row-actions-dropdown.visibl-floating-menu{
         position:fixed;top:auto;right:max(12px,env(safe-area-inset-right));
         bottom:max(12px,env(safe-area-inset-bottom));left:max(12px,env(safe-area-inset-left));
         width:auto;min-width:0;max-height:min(70dvh,520px);overflow:auto;z-index:10000
@@ -2945,7 +2966,71 @@ body.orders-selection-mode .orders-table td.order-selection-column{display:table
     font-size: clamp(24px, 2.2vw, 32px);
     letter-spacing: -.025em;
 }
-\n\n/* ==========================================================\n   CORRECTIF COMMANDES — vente liée + toolbar sans Sélection\n========================================================== */\n.orders-toolbar-actions{margin-left:auto;justify-content:flex-end}\n\n#linked-sale-modal .linked-sale-modal{\n    width:min(980px,calc(100vw - 32px));\n    border-radius:18px;\n    box-shadow:0 28px 80px rgba(15,23,42,.28);\n}\n#linked-sale-modal .modal-header{\n    padding:20px 22px;\n    border-bottom:1px solid #e8edf3;\n}\n#linked-sale-modal .modal-header h2{margin:0 0 4px;font-size:1.25rem;color:#0f172a}\n#linked-sale-modal .modal-header p{margin:0;color:#64748b;font-size:.78rem}\n#linked-sale-modal .modal-body{padding:18px 20px;background:#f8fafc}\n#linked-sale-content{display:flex;flex-direction:column;gap:14px}\n.linked-sale-section{\n    padding:16px;\n    border:1px solid #e5e7eb;\n    border-radius:14px;\n    background:#fff;\n}\n.linked-sale-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}\n.linked-sale-section-head h3{margin:0 0 3px;color:#0f172a;font-size:.92rem}\n.linked-sale-section-head p{margin:0;color:#94a3b8;font-size:.7rem;line-height:1.45}\n.linked-sale-grid{margin-bottom:0}\n.linked-sale-info-grid{grid-template-columns:repeat(4,minmax(0,1fr))}\n.linked-sale-finance-grid,.linked-sale-status-grid{grid-template-columns:repeat(3,minmax(0,1fr))}\n.linked-sale-status-grid{margin-top:10px}\n.linked-sale-box{\n    min-width:0;\n    padding:13px 14px;\n    border-color:#e8edf3;\n    border-radius:11px;\n    background:#fbfdff;\n}\n.linked-sale-box span{font-size:9.5px;letter-spacing:.035em}\n.linked-sale-box strong{font-size:12.5px;line-height:1.4}\n.linked-sale-kpi{background:#f8fafc}\n.linked-sale-kpi strong{font-size:1rem}\n.linked-sale-kpi.is-paid strong{color:#15803d}\n.linked-sale-kpi.is-balance strong{color:#b45309}\n.linked-sale-status{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:5px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:11px!important}\n.linked-sale-lines-wrapper{border-radius:11px;box-shadow:none}\n.linked-sale-lines-table th{background:#f8fafc}\n#linked-sale-modal .modal-footer{padding:13px 20px}\n\n@media(max-width:900px){\n    .linked-sale-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}\n}\n@media(max-width:700px){\n    .orders-toolbar{grid-template-columns:minmax(0,1fr) auto!important}\n    .orders-toolbar-actions{width:auto!important;margin-left:auto!important}\n    #linked-sale-modal .modal-body{padding:12px;background:#f8fafc}\n    .linked-sale-section{padding:13px;border-radius:12px}\n    .linked-sale-info-grid,.linked-sale-finance-grid,.linked-sale-status-grid{grid-template-columns:1fr}\n    .linked-sale-grid{gap:8px}\n    .linked-sale-status-grid{margin-top:8px}\n    .linked-sale-box{padding:12px}\n}\n
+
+
+/* ==========================================================
+   CORRECTIF COMMANDES — vente liée + toolbar sans Sélection
+========================================================== */
+.orders-toolbar-actions{margin-left:auto;justify-content:flex-end}
+
+#linked-sale-modal .linked-sale-modal{
+    width:min(980px,calc(100vw - 32px));
+    border-radius:18px;
+    box-shadow:0 28px 80px rgba(15,23,42,.28);
+}
+#linked-sale-modal .modal-header{
+    padding:20px 22px;
+    border-bottom:1px solid #e8edf3;
+}
+#linked-sale-modal .modal-header h2{margin:0 0 4px;font-size:1.25rem;color:#0f172a}
+#linked-sale-modal .modal-header p{margin:0;color:#64748b;font-size:.78rem}
+#linked-sale-modal .modal-body{padding:18px 20px;background:#f8fafc}
+#linked-sale-content{display:flex;flex-direction:column;gap:14px}
+.linked-sale-section{
+    padding:16px;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    background:#fff;
+}
+.linked-sale-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+.linked-sale-section-head h3{margin:0 0 3px;color:#0f172a;font-size:.92rem}
+.linked-sale-section-head p{margin:0;color:#94a3b8;font-size:.7rem;line-height:1.45}
+.linked-sale-grid{margin-bottom:0}
+.linked-sale-info-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.linked-sale-finance-grid,.linked-sale-status-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.linked-sale-status-grid{margin-top:10px}
+.linked-sale-box{
+    min-width:0;
+    padding:13px 14px;
+    border-color:#e8edf3;
+    border-radius:11px;
+    background:#fbfdff;
+}
+.linked-sale-box span{font-size:9.5px;letter-spacing:.035em}
+.linked-sale-box strong{font-size:12.5px;line-height:1.4}
+.linked-sale-kpi{background:#f8fafc}
+.linked-sale-kpi strong{font-size:1rem}
+.linked-sale-kpi.is-paid strong{color:#15803d}
+.linked-sale-kpi.is-balance strong{color:#b45309}
+.linked-sale-status{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:5px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:11px!important}
+.linked-sale-lines-wrapper{border-radius:11px;box-shadow:none}
+.linked-sale-lines-table th{background:#f8fafc}
+#linked-sale-modal .modal-footer{padding:13px 20px}
+
+@media(max-width:900px){
+    .linked-sale-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+    .orders-toolbar{grid-template-columns:minmax(0,1fr) auto!important}
+    .orders-toolbar-actions{width:auto!important;margin-left:auto!important}
+    #linked-sale-modal .modal-body{padding:12px;background:#f8fafc}
+    .linked-sale-section{padding:13px;border-radius:12px}
+    .linked-sale-info-grid,.linked-sale-finance-grid,.linked-sale-status-grid{grid-template-columns:1fr}
+    .linked-sale-grid{gap:8px}
+    .linked-sale-status-grid{margin-top:8px}
+    .linked-sale-box{padding:12px}
+}
+
 
 /* ==========================================================
    AMÉLIORATION VISUELLE — "VOIR LA VENTE LIÉE"
@@ -3189,3 +3274,384 @@ body.orders-selection-mode .orders-table td.order-selection-column{display:table
     #linked-sale-modal #close-linked-sale-footer-btn { width: 100%; }
 }
 
+
+
+/* ==========================================================
+   FILTRES COMMANDES — défilement horizontal mobile/tablette
+   Desktop : la disposition existante reste inchangée.
+========================================================== */
+.orders-filter-scroll {
+    display: contents;
+}
+
+@media (max-width: 768px) {
+    .orders-filters {
+        display: block;
+        padding: 13px;
+        overflow: hidden;
+    }
+
+    .orders-filter-scroll {
+        display: flex;
+        width: 100%;
+        gap: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 1px 1px 8px;
+        scroll-snap-type: x proximity;
+        overscroll-behavior-inline: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .orders-filter-scroll select {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 165px;
+        max-width: 220px;
+        scroll-snap-align: start;
+    }
+
+    .orders-filter-scroll #order-commune-filter {
+        min-width: 180px;
+    }
+
+    .orders-filters .btn-filter-reset {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+    }
+}
+
+
+/* ==========================================================
+   LOADER SOFT — ENREGISTREMENT COMMANDE
+   Overlay léger à l'intérieur de la fenêtre de commande.
+========================================================== */
+
+#order-form {
+    position: relative;
+}
+
+.order-save-soft-loader {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(1.5px);
+    -webkit-backdrop-filter: blur(1.5px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.18s ease,
+        visibility 0.18s ease;
+}
+
+.order-save-soft-loader.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.order-save-soft-loader-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    min-width: min(330px, 100%);
+    max-width: 420px;
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 14px;
+    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.14);
+}
+
+.order-save-soft-spinner {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    border: 3px solid rgba(37, 99, 235, 0.16);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: order-save-soft-spin 0.75s linear infinite;
+}
+
+.order-save-soft-loader-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.order-save-soft-loader-title {
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.order-save-soft-loader-text {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+@keyframes order-save-soft-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 640px) {
+    .order-save-soft-loader {
+        padding: 16px;
+    }
+
+    .order-save-soft-loader-card {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .order-save-soft-spinner {
+        animation-duration: 1.4s;
+    }
+}
+
+
+/* ==========================================================
+   SUCCÈS — ENREGISTREMENT COMMANDE
+   Le loader se transforme au même endroit en confirmation.
+========================================================== */
+
+.order-save-loading-view {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+}
+
+.order-save-loading-view[aria-hidden="true"] {
+    display: none;
+}
+
+.order-save-success-view {
+    position: relative;
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 4px 2px 2px;
+    overflow: hidden;
+}
+
+.order-save-success-view:not([aria-hidden="true"]) {
+    display: flex;
+}
+
+.order-save-soft-loader.is-success
+.order-save-soft-loader-card {
+    min-width: min(390px, 100%);
+    max-width: 430px;
+    padding: 24px 26px 20px;
+    border-color: rgba(16, 185, 129, 0.18);
+    box-shadow: 0 18px 46px rgba(15, 23, 42, 0.16);
+}
+
+.order-save-success-icon {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    margin-bottom: 3px;
+    border-radius: 50%;
+    background: #10b981;
+    color: #ffffff;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow:
+        0 0 0 9px rgba(16, 185, 129, 0.08),
+        0 10px 24px rgba(16, 185, 129, 0.22);
+    animation: order-save-success-pop 0.32s ease-out both;
+}
+
+.order-save-success-title {
+    color: #059669;
+    font-size: 20px;
+    line-height: 1.25;
+    margin-top: 5px;
+}
+
+.order-save-success-text {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.order-save-success-reference {
+    width: 100%;
+    margin-top: 7px;
+    padding: 11px 14px;
+    border-radius: 11px;
+    background: #f0f9ff;
+    border: 1px solid #dbeafe;
+}
+
+.order-save-success-reference-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.order-save-success-reference-value {
+    display: block;
+    color: #0f172a;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.order-save-success-btn {
+    min-width: 166px;
+    margin-top: 8px;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 9px;
+    background: #10b981;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(16, 185, 129, 0.20);
+    transition:
+        transform 0.16s ease,
+        filter 0.16s ease,
+        box-shadow 0.16s ease;
+}
+
+.order-save-success-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+    box-shadow: 0 10px 22px rgba(16, 185, 129, 0.25);
+}
+
+.order-save-success-btn:active {
+    transform: translateY(0);
+}
+
+.order-save-success-confetti {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 95px;
+    pointer-events: none;
+}
+
+.order-save-success-confetti span {
+    position: absolute;
+    font-size: 8px;
+    opacity: 0;
+    animation: order-save-confetti 0.75s ease-out forwards;
+}
+
+.order-save-success-confetti span:nth-child(1) {
+    left: 17%;
+    top: 18%;
+    color: #2563eb;
+    animation-delay: 0.04s;
+}
+
+.order-save-success-confetti span:nth-child(2) {
+    left: 29%;
+    top: 7%;
+    color: #10b981;
+    animation-delay: 0.10s;
+}
+
+.order-save-success-confetti span:nth-child(3) {
+    right: 18%;
+    top: 15%;
+    color: #f59e0b;
+    animation-delay: 0.06s;
+}
+
+.order-save-success-confetti span:nth-child(4) {
+    right: 29%;
+    top: 5%;
+    color: #10b981;
+    animation-delay: 0.12s;
+}
+
+.order-save-success-confetti span:nth-child(5) {
+    left: 9%;
+    top: 43%;
+    color: #34d399;
+    animation-delay: 0.15s;
+}
+
+.order-save-success-confetti span:nth-child(6) {
+    right: 9%;
+    top: 40%;
+    color: #60a5fa;
+    animation-delay: 0.18s;
+}
+
+@keyframes order-save-success-pop {
+    0% {
+        transform: scale(0.72);
+        opacity: 0;
+    }
+
+    72% {
+        transform: scale(1.07);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes order-save-confetti {
+    0% {
+        transform: translateY(-7px) scale(0.7) rotate(0deg);
+        opacity: 0;
+    }
+
+    35% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(18px) scale(1) rotate(150deg);
+        opacity: 0.85;
+    }
+}
+
+@media (max-width: 640px) {
+    .order-save-soft-loader.is-success
+    .order-save-soft-loader-card {
+        min-width: 0;
+        width: 100%;
+        padding: 22px 18px 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .order-save-success-icon,
+    .order-save-success-confetti span {
+        animation: none;
+        opacity: 1;
+    }
+}

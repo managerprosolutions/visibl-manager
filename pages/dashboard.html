@@ -524,6 +524,44 @@
 </div>
 
 <!-- ========================================
+     ÉTAT DE CHARGEMENT DU DASHBOARD
+======================================== -->
+<div id="dashboard-loader" class="dashboard-loader is-hidden" role="status" aria-live="polite" aria-busy="false">
+    <div class="dashboard-loader-backdrop"></div>
+
+    <div class="dashboard-loader-card">
+        <div class="dashboard-loader-visual" aria-hidden="true">
+            <div class="dashboard-loader-ring">
+                <div class="dashboard-loader-bars">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <span class="dashboard-loader-spark spark-1">✦</span>
+            <span class="dashboard-loader-spark spark-2">＋</span>
+            <span class="dashboard-loader-spark spark-3">◇</span>
+            <span class="dashboard-loader-spark spark-4">✦</span>
+        </div>
+
+        <h2>Mise à jour du tableau de bord...</h2>
+        <p>Récupération et calcul des données en cours</p>
+
+        <div class="dashboard-loader-progress-wrap">
+            <div class="dashboard-loader-progress" aria-hidden="true">
+                <span id="dashboard-loader-progress-bar"></span>
+            </div>
+            <strong id="dashboard-loader-progress-text">8%</strong>
+        </div>
+
+        <div class="dashboard-loader-hint">
+            <span aria-hidden="true">◷</span>
+            <span>Cela peut prendre quelques secondes</span>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================
      SCRIPTS
 ======================================== -->
 

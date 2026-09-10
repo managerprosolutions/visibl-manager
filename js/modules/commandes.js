@@ -6,11 +6,137 @@ let lignesCommande = [];
 let catalogueProduitsCommande = [];
 let catalogueLivreursCommande = [];
 let catalogueClientsCommande = [];
+
+/*
+ * Préparation des libellés au chargement initial.
+ * Le tableau Commandes attend ces catalogues avant son premier affichage
+ * afin de montrer directement les noms plutôt que les ID.
+ */
+let chargementClientsCommandePromise = null;
+let chargementClientsCommandeCompletPromise = null;
+let clientsCommandeCompletsCharges = false;
+let chargementProduitsCommandePromise = null;
+let chargementLivreursCommandePromise = null;
 let commandesChargees = [];
 let commandesFiltrees = [];
 let commandeEnModificationId = null;
 let pageCommandesActuelle = 1;
 let taillePageCommandes = 10;
+
+// Pagination serveur Commandes : aucune donnée métier dans localStorage.
+const pagesCommandesServeur = new Map();
+let totalCommandesServeur = 0;
+let totalPagesCommandesServeur = 1;
+let prechargementCommandesPromise = null;
+let generationChargementCommandes = 0;
+
+
+// Cache de navigation Commandes, limité à l'onglet courant.
+// Évite de retélécharger les pages déjà chargées lorsqu'on quitte Commandes
+// puis qu'on y revient. La synchronisation serveur reste la source de vérité.
+const COMMANDES_NAV_CACHE_KEY = "visibl:commandes:nav-cache:v3-source-serveur";
+const COMMANDES_NAV_CACHE_SCHEMA = 3;
+try { sessionStorage.removeItem("visibl:commandes:nav-cache:v2-10lignes"); } catch (error) {}
+
+function sauvegarderCacheNavigationCommandes() {
+    try {
+        if (!pagesCommandesServeur.size) return;
+
+        sessionStorage.setItem(
+            COMMANDES_NAV_CACHE_KEY,
+            JSON.stringify({
+                schema: COMMANDES_NAV_CACHE_SCHEMA,
+                pages: Array.from(pagesCommandesServeur.entries()),
+                total: totalCommandesServeur,
+                totalPages: totalPagesCommandesServeur,
+                pageActuelle: pageCommandesActuelle,
+                // Conserve aussi les correspondances ID -> noms pour qu’un retour
+                // sur Commandes puisse être rendu immédiatement, sans flash d’ID
+                // et sans attendre un nouvel appel réseau.
+                clients: catalogueClientsCommande,
+                livreurs: catalogueLivreursCommande,
+                savedAt: Date.now()
+            })
+        );
+    } catch (error) {
+        console.warn("Cache navigation Commandes indisponible :", error);
+    }
+}
+
+function restaurerCacheNavigationCommandes() {
+    try {
+        const brut = sessionStorage.getItem(COMMANDES_NAV_CACHE_KEY);
+        if (!brut) return false;
+
+        const cache = JSON.parse(brut);
+
+        if (Number(cache?.schema) !== COMMANDES_NAV_CACHE_SCHEMA) {
+            sessionStorage.removeItem(COMMANDES_NAV_CACHE_KEY);
+            return false;
+        }
+
+        if (!Array.isArray(cache?.pages) || !cache.pages.length) return false;
+
+        const pages = new Map(cache.pages);
+        if (!pages.has(1)) return false;
+
+        // Un ancien cache qui ne contient pas encore les catalogues de noms
+        // n’est pas restauré : on effectue alors un vrai chargement initial.
+        // Après ce premier chargement, les catalogues sont sauvegardés avec le
+        // tableau et les retours suivants sont instantanés.
+        if (!Array.isArray(cache.clients) || !Array.isArray(cache.livreurs)) {
+            return false;
+        }
+
+        catalogueClientsCommande = cache.clients;
+        catalogueLivreursCommande = cache.livreurs;
+
+        pagesCommandesServeur.clear();
+        pages.forEach((valeur, cle) => {
+            pagesCommandesServeur.set(Number(cle), valeur);
+        });
+
+        totalCommandesServeur = Math.max(0, Number(cache.total) || 0);
+        totalPagesCommandesServeur = Math.max(
+            1,
+            Number(cache.totalPages) ||
+                Math.ceil(totalCommandesServeur / taillePageCommandes) ||
+                1
+        );
+        pageCommandesActuelle = Math.max(
+            1,
+            Math.min(Number(cache.pageActuelle) || 1, totalPagesCommandesServeur)
+        );
+
+        reconstruireCommandesDepuisPagesServeur();
+        actualiserFiltreCommunesCommandes();
+
+        const page1 = pagesCommandesServeur.get(1);
+        if (page1?.kpi) {
+            afficherKPICommandesServeur(page1.kpi);
+        } else {
+            const totalKpi = document.getElementById("total-orders-value");
+            if (totalKpi) {
+                totalKpi.textContent = String(totalCommandesServeur);
+                totalKpi.classList.remove("is-loading");
+            }
+        }
+
+        afficherTableauCommandes();
+        return true;
+    } catch (error) {
+        console.warn("Restauration cache navigation Commandes impossible :", error);
+        return false;
+    }
+}
+
+/*
+ * Synchronisation légère multi-appareils.
+ * Vérifie les nouveautés sans recharger toute la page.
+ */
+const INTERVALLE_SYNC_COMMANDES_MS = 10000;
+let timerSyncCommandes = null;
+let syncCommandesEnCours = false;
 let reservationCommandeEnModification = new Map();
 let ligneCommandeEnModificationId = null;
 let creditDisponibleClientCommande = 0;
@@ -29,6 +155,77 @@ let parametresFinanceCommande = {
     autoriserVentesCredit: true
 };
 const commandesSelectionnees = new Set();
+
+/* ===========================================================
+   LOADER GLOBAL VISIBL — COMMANDES
+   Utilise visibl-loading.css + visibl-loading.js.
+   Aucun changement de mise en page : le loader remplace
+   temporairement les valeurs KPI et les lignes du tableau.
+=========================================================== */
+
+function preparerLoaderCommandes() {
+    const zonePage = document.querySelector(".content");
+
+    if (zonePage) {
+        zonePage.setAttribute("data-visibl-page", "");
+        zonePage.classList.add("visibl-loading-scope");
+
+        const ancre =
+            zonePage.querySelector(".welcome-section");
+
+        if (ancre) {
+            ancre.setAttribute("data-loading-anchor", "");
+        }
+    }
+
+    [
+        "total-orders-value",
+        "orders-revenue-value",
+        "pending-orders-value",
+        "completed-orders-value"
+    ].forEach(id => {
+        document
+            .getElementById(id)
+            ?.setAttribute("data-kpi-value", "");
+    });
+
+    document
+        .getElementById("orders-table-body")
+        ?.setAttribute("data-loading-table-body", "");
+}
+
+
+function demarrerLoaderCommandes(
+    message = "Chargement des commandes…"
+) {
+    preparerLoaderCommandes();
+
+    if (
+        window.VisiblLoading &&
+        typeof window.VisiblLoading.start === "function"
+    ) {
+        window.VisiblLoading.start({
+            scope: ".content",
+            tableBody: "#orders-table-body",
+            rows: taillePageCommandes,
+            message: message
+        });
+    }
+}
+
+
+function terminerLoaderCommandes() {
+    if (
+        window.VisiblLoading &&
+        typeof window.VisiblLoading.stop === "function"
+    ) {
+        window.VisiblLoading.stop({
+            scope: ".content",
+            tableBody: "#orders-table-body"
+        });
+    }
+}
+
 
 document.addEventListener("DOMContentLoaded", () => {
     if (
@@ -50,6 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserPaiementCommande();
     initialiserEnregistrementCommande();
     initialiserListeCommandes();
+    initialiserSynchronisationCommandes();
     initialiserInteractionsHeaderCommande();
     initialiserSelectionCommandes();
     initialiserMenuActionsCommandes();
@@ -101,6 +299,10 @@ function initialiserModaleCommande() {
          */
         chargerLivreursCommande();
 
+        // Les crédits/avoirs viennent de getClients() complet. On le charge
+        // en arrière-plan pour préserver toute la logique métier du formulaire.
+        chargerClientsCommandeCompletsEnArrierePlan();
+
         modale.classList.add("active");
         modale.setAttribute("aria-hidden", "false");
         document.body.classList.add("modal-open");
@@ -114,9 +316,10 @@ function initialiserModaleCommande() {
     boutonFermer?.addEventListener("click", fermer);
     boutonAnnuler?.addEventListener("click", fermer);
 
-    modale.addEventListener("click", event => {
-        if (event.target === modale) fermer();
-    });
+    /*
+     * La modale ne se ferme plus sur un clic extérieur.
+     * Fermeture volontaire uniquement via la croix ou le bouton Annuler.
+     */
 
     document.addEventListener("keydown", event => {
         if (event.key === "Escape" && modale.classList.contains("active")) {
@@ -215,7 +418,7 @@ function initialiserGestionClientsCommande() {
         .getElementById("quick-client-form")
         ?.addEventListener("submit", enregistrerClientRapide);
 
-    chargerClientsCommande();
+    chargementClientsCommandePromise = chargerClientsCommande();
 }
 
 
@@ -459,7 +662,10 @@ async function chargerClientsCommande(idASelectionner = "", libelleSecours = "")
     select.innerHTML = '<option value="">Chargement des clients...</option>';
 
     try {
-        const resultat = await apiGet("getClients");
+        // OPT4 : au chargement initial de Commandes, on demande uniquement
+        // les informations nécessaires à l'affichage des noms. Les statistiques
+        // lourdes de getClients() ne bloquent plus les 20 premières lignes.
+        const resultat = await apiGet("getClientsLegersCommandes", { _ts: Date.now() });
         if (!resultat?.success) {
             throw new Error(resultat?.message || "Impossible de charger les clients.");
         }
@@ -631,6 +837,64 @@ function lireValeurClientCommande(client, cles) {
 
 
 
+
+
+/* ===========================================================
+   CLIENTS COMPLETS — CHARGEMENT DIFFÉRÉ POUR LA MODALE
+   Le premier tableau n'attend pas cet appel. Il conserve cependant
+   toutes les données métier (crédit/avoir) dès que l'utilisateur
+   travaille dans le formulaire de commande.
+=========================================================== */
+async function chargerClientsCommandeCompletsEnArrierePlan() {
+    if (clientsCommandeCompletsCharges) return catalogueClientsCommande;
+    if (chargementClientsCommandeCompletPromise) {
+        return chargementClientsCommandeCompletPromise;
+    }
+
+    chargementClientsCommandeCompletPromise = (async () => {
+        try {
+            const resultat = await apiGet("getClients", { _ts: Date.now() });
+            if (!resultat?.success) {
+                throw new Error(resultat?.message || "Impossible de charger les données complètes des clients.");
+            }
+
+            const clients = Array.isArray(resultat.data)
+                ? resultat.data
+                : Array.isArray(resultat.data?.clients)
+                    ? resultat.data.clients
+                    : Array.isArray(resultat.clients)
+                        ? resultat.clients
+                        : [];
+
+            catalogueClientsCommande = clients;
+            clientsCommandeCompletsCharges = true;
+
+            // Met à jour les informations de crédit/avoir si un client est déjà sélectionné.
+            actualiserCreditClientCommande();
+            sauvegarderCacheNavigationCommandes();
+            return clients;
+        } catch (error) {
+            console.warn("Chargement différé des clients complets indisponible :", error);
+            return catalogueClientsCommande;
+        } finally {
+            chargementClientsCommandeCompletPromise = null;
+        }
+    })();
+
+    return chargementClientsCommandeCompletPromise;
+}
+
+function planifierClientsCommandeComplets() {
+    const lancer = () => {
+        chargerClientsCommandeCompletsEnArrierePlan();
+    };
+
+    if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(lancer, { timeout: 1500 });
+    } else {
+        setTimeout(lancer, 250);
+    }
+}
 
 
 /* ===========================================================
@@ -850,6 +1114,312 @@ function actualiserCreditClientCommande() {
 }
 
 
+
+/* ===========================================================
+   LOADER SOFT — ENREGISTREMENT / MODIFICATION COMMANDE
+   Le même emplacement affiche ensuite la confirmation de succès.
+=========================================================== */
+
+function obtenirLoaderEnregistrementCommande() {
+    const formulaire =
+        document.getElementById("order-form");
+
+    if (!formulaire) {
+        return null;
+    }
+
+    let loader =
+        formulaire.querySelector(
+            ".order-save-soft-loader"
+        );
+
+    if (loader) {
+        return loader;
+    }
+
+    loader =
+        document.createElement("div");
+
+    loader.className =
+        "order-save-soft-loader";
+
+    loader.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    loader.innerHTML = `
+        <div
+            class="order-save-soft-loader-card"
+            role="status"
+            aria-live="polite"
+        >
+            <div class="order-save-loading-view">
+                <span
+                    class="order-save-soft-spinner"
+                    aria-hidden="true"
+                ></span>
+
+                <div class="order-save-soft-loader-copy">
+                    <strong class="order-save-soft-loader-title">
+                        Enregistrement de la commande…
+                    </strong>
+                    <span class="order-save-soft-loader-text">
+                        Quelques secondes, s’il vous plaît.
+                    </span>
+                </div>
+            </div>
+
+            <div
+                class="order-save-success-view"
+                aria-hidden="true"
+            >
+                <div
+                    class="order-save-success-icon"
+                    aria-hidden="true"
+                >
+                    ✓
+                </div>
+
+                <div
+                    class="order-save-success-confetti"
+                    aria-hidden="true"
+                >
+                    <span>◆</span>
+                    <span>●</span>
+                    <span>◆</span>
+                    <span>●</span>
+                    <span>◆</span>
+                    <span>●</span>
+                </div>
+
+                <strong class="order-save-success-title">
+                    Commande enregistrée !
+                </strong>
+
+                <span class="order-save-success-text">
+                    La commande a été enregistrée avec succès.
+                </span>
+
+                <div
+                    class="order-save-success-reference"
+                    hidden
+                >
+                    <span class="order-save-success-reference-label">
+                        N° de commande
+                    </span>
+                    <strong class="order-save-success-reference-value"></strong>
+                </div>
+
+                <button
+                    type="button"
+                    class="order-save-success-btn"
+                >
+                    ✓ Parfait !
+                </button>
+            </div>
+        </div>
+    `;
+
+    formulaire.appendChild(loader);
+
+    return loader;
+}
+
+
+function demarrerLoaderEnregistrementCommande(
+    modification = false
+) {
+    const loader =
+        obtenirLoaderEnregistrementCommande();
+
+    if (!loader) {
+        return;
+    }
+
+    loader.classList.remove("is-success");
+
+    const loadingView =
+        loader.querySelector(
+            ".order-save-loading-view"
+        );
+
+    const successView =
+        loader.querySelector(
+            ".order-save-success-view"
+        );
+
+    loadingView?.removeAttribute("aria-hidden");
+    successView?.setAttribute("aria-hidden", "true");
+
+    const titre =
+        loader.querySelector(
+            ".order-save-soft-loader-title"
+        );
+
+    if (titre) {
+        titre.textContent =
+            modification
+                ? "Modification de la commande…"
+                : "Enregistrement de la commande…";
+    }
+
+    loader.classList.add("is-visible");
+    loader.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+}
+
+
+function afficherSuccesEnregistrementCommande(
+    commande,
+    modification = false
+) {
+    return new Promise(resolve => {
+        const loader =
+            obtenirLoaderEnregistrementCommande();
+
+        if (!loader) {
+            resolve();
+            return;
+        }
+
+        const loadingView =
+            loader.querySelector(
+                ".order-save-loading-view"
+            );
+
+        const successView =
+            loader.querySelector(
+                ".order-save-success-view"
+            );
+
+        const titre =
+            loader.querySelector(
+                ".order-save-success-title"
+            );
+
+        const texte =
+            loader.querySelector(
+                ".order-save-success-text"
+            );
+
+        const blocReference =
+            loader.querySelector(
+                ".order-save-success-reference"
+            );
+
+        const valeurReference =
+            loader.querySelector(
+                ".order-save-success-reference-value"
+            );
+
+        const bouton =
+            loader.querySelector(
+                ".order-save-success-btn"
+            );
+
+        loadingView?.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        successView?.removeAttribute(
+            "aria-hidden"
+        );
+
+        if (titre) {
+            titre.textContent =
+                modification
+                    ? "Commande modifiée !"
+                    : "Commande enregistrée !";
+        }
+
+        if (texte) {
+            texte.textContent =
+                modification
+                    ? "Les modifications ont été enregistrées avec succès."
+                    : "La commande a été enregistrée avec succès.";
+        }
+
+        const numeroCommande =
+            String(
+                commande?.numeroCommande ||
+                commande?.["Numéro Commande"] ||
+                commande?.idCommande ||
+                ""
+            ).trim();
+
+        if (
+            blocReference &&
+            valeurReference &&
+            numeroCommande
+        ) {
+            valeurReference.textContent =
+                numeroCommande;
+
+            blocReference.hidden = false;
+        } else if (blocReference) {
+            blocReference.hidden = true;
+        }
+
+        loader.classList.add(
+            "is-success"
+        );
+
+        const terminer = () => {
+            if (bouton) {
+                bouton.removeEventListener(
+                    "click",
+                    terminer
+                );
+            }
+
+            resolve();
+        };
+
+        if (bouton) {
+            bouton.addEventListener(
+                "click",
+                terminer,
+                { once: true }
+            );
+
+            setTimeout(() => {
+                bouton.focus();
+            }, 80);
+        } else {
+            resolve();
+        }
+    });
+}
+
+
+function terminerLoaderEnregistrementCommande() {
+    const loader =
+        document
+            .getElementById("order-form")
+            ?.querySelector(
+                ".order-save-soft-loader"
+            );
+
+    if (!loader) {
+        return;
+    }
+
+    loader.classList.remove(
+        "is-visible",
+        "is-success"
+    );
+
+    loader.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+}
+
+
 /* ===========================================================
    ENREGISTREMENT ET LISTE DES COMMANDES
 =========================================================== */
@@ -907,29 +1477,12 @@ function initialiserListeCommandes() {
         );
 
     document
-        .getElementById("orders-per-page")
-        ?.addEventListener(
-            "change",
-            event => {
-                taillePageCommandes =
-                    Math.max(
-                        1,
-                        Number(event.target.value) || 10
-                    );
-
-                pageCommandesActuelle = 1;
-                afficherTableauCommandes();
-            }
-        );
-
-    document
         .getElementById("previous-order-page-btn")
         ?.addEventListener(
             "click",
             () => {
                 if (pageCommandesActuelle > 1) {
-                    pageCommandesActuelle--;
-                    afficherTableauCommandes();
+                    allerPageCommandes(pageCommandesActuelle - 1);
                 }
             }
         );
@@ -939,18 +1492,8 @@ function initialiserListeCommandes() {
         ?.addEventListener(
             "click",
             () => {
-                const totalPages =
-                    Math.max(
-                        1,
-                        Math.ceil(
-                            commandesFiltrees.length /
-                            taillePageCommandes
-                        )
-                    );
-
-                if (pageCommandesActuelle < totalPages) {
-                    pageCommandesActuelle++;
-                    afficherTableauCommandes();
+                if (pageCommandesActuelle < totalPagesCommandesServeur) {
+                    allerPageCommandes(pageCommandesActuelle + 1);
                 }
             }
         );
@@ -1157,6 +1700,10 @@ async function enregistrerCommande(event) {
     }
 
     try {
+        demarrerLoaderEnregistrementCommande(
+            Boolean(commandeEnModificationId)
+        );
+
         if (bouton) {
             bouton.disabled = true;
             bouton.textContent =
@@ -1177,11 +1724,55 @@ async function enregistrerCommande(event) {
                 ? "updateCommande"
                 : "createCommande";
 
+        const debutEnregistrementNavigateur = performance.now();
+
         const resultat =
             await apiPost(
                 action,
                 donnees
             );
+
+        const tempsEnregistrementNavigateur =
+            Math.round(
+                performance.now() -
+                debutEnregistrementNavigateur
+            );
+
+        console.group(
+            commandeEnModificationId
+                ? "VISIBL — DIAGNOSTIC MODIFICATION COMMANDE"
+                : "VISIBL — DIAGNOSTIC CRÉATION COMMANDE"
+        );
+        console.log(
+            "Temps navigateur apiPost :",
+            tempsEnregistrementNavigateur,
+            "ms"
+        );
+        console.log(
+            "Diagnostic backend Commandes :",
+            resultat?.diagnosticTemps || null
+        );
+        console.log(
+            "Diagnostic doPost global :",
+            resultat?.diagnosticDoPost || null
+        );
+        if (
+            resultat?.diagnosticDoPost &&
+            Number(resultat.diagnosticDoPost.totalDoPostMs) >= 0
+        ) {
+            console.log(
+                "Surcoût réseau / redirection Apps Script estimé :",
+                Math.max(
+                    0,
+                    tempsEnregistrementNavigateur -
+                    Number(resultat.diagnosticDoPost.totalDoPostMs || 0)
+                ),
+                "ms"
+            );
+        }
+        if (resultat?.diagnosticTemps) console.table(resultat.diagnosticTemps);
+        if (resultat?.diagnosticDoPost) console.table(resultat.diagnosticDoPost);
+        console.groupEnd();
 
         if (!resultat?.success) {
             throw new Error(
@@ -1206,13 +1797,15 @@ async function enregistrerCommande(event) {
             commandeSauvegardee
         );
 
-        if (typeof showToast === "function") {
-            showToast(
-                resultat.message ||
-                "Commande enregistrée avec succès.",
-                "success"
-            );
-        }
+        /*
+         * Le loader devient maintenant la carte de confirmation.
+         * On conserve la fenêtre de commande derrière et on attend
+         * le clic sur "Parfait !" avant de fermer / réinitialiser.
+         */
+        await afficherSuccesEnregistrementCommande(
+            commandeSauvegardee,
+            Boolean(commandeEnModificationId)
+        );
 
         fermerModaleCommande();
         reinitialiserFormulaireCommande();
@@ -1242,6 +1835,8 @@ async function enregistrerCommande(event) {
         );
 
     } finally {
+        terminerLoaderEnregistrementCommande();
+
         formulaire.dataset.processing = "false";
 
         if (bouton) {
@@ -1255,59 +1850,910 @@ async function enregistrerCommande(event) {
 }
 
 
-async function chargerCommandes() {
-    const tbody =
-        document.getElementById("orders-table-body");
+/* ===========================================================
+   SYNCHRONISATION COMMANDES — MULTI-APPAREILS
+=========================================================== */
 
-    if (tbody) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="13" class="empty-table">
-                    Chargement des commandes...
-                </td>
-            </tr>
-        `;
+function initialiserSynchronisationCommandes() {
+    if (timerSyncCommandes) {
+        clearInterval(timerSyncCommandes);
     }
 
-    try {
-        const resultat =
-            await apiGet("getCommandes");
+    /*
+     * Première vérification rapide après ouverture du module.
+     * Elle rattrape notamment un cache de navigation contenant encore
+     * un ancien statut ("En attente" alors que le serveur est "Confirmée").
+     */
+    setTimeout(
+        () => {
+            synchroniserCommandesMultiAppareils();
+        },
+        2500
+    );
 
-        if (!resultat?.success) {
-            throw new Error(
-                resultat?.message ||
-                "Impossible de charger les commandes."
+    timerSyncCommandes =
+        setInterval(
+            () => {
+                /*
+                 * Aucun appel lorsque l'onglet n'est pas visible.
+                 */
+                if (
+                    document.visibilityState !==
+                    "visible"
+                ) {
+                    return;
+                }
+
+                synchroniserCommandesMultiAppareils();
+            },
+            INTERVALLE_SYNC_COMMANDES_MS
+        );
+
+    /*
+     * Au retour sur l'onglet, vérifie immédiatement
+     * s'il y a eu de nouvelles commandes.
+     */
+    document.addEventListener(
+        "visibilitychange",
+        () => {
+            if (
+                document.visibilityState ===
+                "visible"
+            ) {
+                synchroniserCommandesMultiAppareils();
+            }
+        }
+    );
+}
+
+
+function obtenirDernierIdCommandeAffichee() {
+    const page1 =
+        pagesCommandesServeur.get(1);
+
+    const commandes =
+        Array.isArray(
+            page1?.commandes
+        )
+            ? page1.commandes
+            : [];
+
+    return String(
+        commandes[0]?.idCommande ||
+        ""
+    ).trim();
+}
+
+
+async function synchroniserCommandesMultiAppareils() {
+    if (
+        syncCommandesEnCours ||
+        typeof apiGet !== "function"
+    ) {
+        return;
+    }
+
+    /*
+     * Attend que le chargement initial de la page 1
+     * soit terminé avant de commencer la surveillance.
+     */
+    if (
+        !pagesCommandesServeur.has(1)
+    ) {
+        return;
+    }
+
+    syncCommandesEnCours = true;
+
+    try {
+        /*
+         * État léger :
+         * - total ;
+         * - dernière commande ;
+         * - ID + statut uniquement.
+         *
+         * Aucun détail produit / avoir / livraison n'est chargé ici.
+         */
+        const etat =
+            await apiGet(
+                "getEtatSyncCommandes",
+                {
+                    _ts: Date.now()
+                }
+            );
+
+        if (!etat?.success) {
+            return;
+        }
+
+        const totalDistant =
+            Math.max(
+                0,
+                Number(etat.total) || 0
+            );
+
+        const dernierIdDistant =
+            String(
+                etat.dernierIdCommande ||
+                ""
+            ).trim();
+
+        const dernierIdLocal =
+            obtenirDernierIdCommandeAffichee();
+
+        /*
+         * FIX SYNCHRO STATUTS
+         *
+         * On compare désormais le statut serveur avec les commandes
+         * déjà chargées en mémoire. Une confirmation faite sur un autre
+         * appareil est donc détectée même si :
+         * - le nombre total ne change pas ;
+         * - la dernière commande ne change pas.
+         */
+        const statutsDistants =
+            new Map(
+                (
+                    Array.isArray(
+                        etat.statutsCommandes
+                    )
+                        ? etat.statutsCommandes
+                        : []
+                )
+                    .map(element => [
+                        String(
+                            element?.idCommande ||
+                            ""
+                        ).trim(),
+                        normaliserTexteCommande(
+                            element?.statut ||
+                            ""
+                        )
+                    ])
+                    .filter(
+                        element =>
+                            Boolean(
+                                element[0]
+                            )
+                    )
+            );
+
+        let nombreStatutsCorriges = 0;
+
+        pagesCommandesServeur.forEach(
+            pageData => {
+                const commandes =
+                    Array.isArray(
+                        pageData?.commandes
+                    )
+                        ? pageData.commandes
+                        : [];
+
+                commandes.forEach(
+                    commande => {
+                        const id =
+                            String(
+                                commande?.idCommande ||
+                                ""
+                            ).trim();
+
+                        if (
+                            !id ||
+                            !statutsDistants.has(id)
+                        ) {
+                            return;
+                        }
+
+                        const statutDistant =
+                            statutsDistants.get(id);
+
+                        const statutLocal =
+                            normaliserTexteCommande(
+                                commande.statut ||
+                                ""
+                            );
+
+                        if (
+                            statutDistant &&
+                            statutDistant !==
+                                statutLocal
+                        ) {
+                            commande.statut =
+                                statutDistant;
+
+                            nombreStatutsCorriges++;
+                        }
+                    }
+                );
+            }
+        );
+
+        /*
+         * Si un statut a été corrigé en mémoire, on reconstruit
+         * immédiatement la liste avant le rafraîchissement léger.
+         */
+        if (nombreStatutsCorriges > 0) {
+            reconstruireCommandesDepuisPagesServeur();
+            afficherTableauCommandes();
+
+            console.log(
+                "Synchronisation statuts Commandes :",
+                nombreStatutsCorriges,
+                "statut(s) corrigé(s)."
             );
         }
 
-        commandesChargees =
-            extraireListeCommande(
-                resultat,
-                "commandes"
-            );
+        /*
+         * Même total + même dernière commande + aucun statut différent :
+         * rien à faire.
+         */
+        if (
+            totalDistant ===
+                totalCommandesServeur &&
+            dernierIdDistant ===
+                dernierIdLocal &&
+            nombreStatutsCorriges === 0
+        ) {
+            return;
+        }
 
-        actualiserFiltreCommunesCommandes();
-        mettreAJourKPICommandes();
-        appliquerFiltresCommandes();
+        /*
+         * Le rafraîchissement de la page 1 remet aussi les KPI serveur
+         * à jour et conserve la logique existante de pagination/cache.
+         */
+        await rafraichirCommandesApresSynchronisation(
+            etat
+        );
 
     } catch (error) {
-        console.error(
-            "Erreur de chargement des commandes :",
+        /*
+         * La synchronisation ne doit jamais bloquer
+         * l'utilisation normale du module.
+         */
+        console.warn(
+            "Synchronisation automatique des commandes indisponible :",
             error
         );
 
+    } finally {
+        syncCommandesEnCours = false;
+    }
+}
+
+async function rafraichirCommandesApresSynchronisation(
+    etat
+) {
+    const ancienTotal =
+        totalCommandesServeur;
+
+    const cacheEtaitComplet =
+        toutesPagesCommandesChargees();
+
+    const anciennesCommandes =
+        [...commandesChargees];
+
+    /*
+     * Recharge uniquement la page 1.
+     * On appelle directement l'API pour éviter
+     * de récupérer la page 1 depuis le cache local.
+     */
+    const resultat =
+        await apiGet(
+            "getCommandesPage",
+            {
+                page: 1,
+                limite: taillePageCommandes,
+                _ts: Date.now()
+            }
+        );
+
+    if (!resultat?.success) {
+        throw new Error(
+            resultat?.message ||
+            "Impossible de synchroniser les nouvelles commandes."
+        );
+    }
+
+    const nouvellesPage1 =
+        extraireListeCommande(
+            resultat,
+            "commandes"
+        );
+
+    const pagination =
+        resultat.pagination ||
+        {};
+
+    const nouveauTotal =
+        Math.max(
+            0,
+            Number(
+                pagination.total ??
+                etat?.total
+            ) || 0
+        );
+
+    const nouveauNombrePages =
+        Math.max(
+            1,
+            Number(
+                pagination.totalPages ??
+                etat?.totalPages
+            ) ||
+            Math.ceil(
+                nouveauTotal /
+                taillePageCommandes
+            ) ||
+            1
+        );
+
+    const nombreNouvellesCommandes =
+        Math.max(
+            0,
+            nouveauTotal - ancienTotal
+        );
+
+    /*
+     * Cas optimal :
+     * toutes les anciennes pages étaient déjà en RAM
+     * et au maximum 20 nouvelles commandes sont arrivées
+     * depuis le dernier contrôle.
+     *
+     * On reconstruit alors toute la pagination en mémoire,
+     * sans rappeler les pages 2, 3, 4...
+     */
+    if (
+        cacheEtaitComplet &&
+        nouveauTotal >= ancienTotal &&
+        nombreNouvellesCommandes <=
+            taillePageCommandes
+    ) {
+        const idsPage1 =
+            new Set(
+                nouvellesPage1.map(
+                    commande =>
+                        String(
+                            commande.idCommande
+                        )
+                )
+            );
+
+        const fusion =
+            [
+                ...nouvellesPage1,
+                ...anciennesCommandes.filter(
+                    commande =>
+                        !idsPage1.has(
+                            String(
+                                commande.idCommande
+                            )
+                        )
+                )
+            ]
+                .slice(
+                    0,
+                    nouveauTotal
+                );
+
+        pagesCommandesServeur.clear();
+
+        for (
+            let page = 1;
+            page <= nouveauNombrePages;
+            page++
+        ) {
+            const debut =
+                (page - 1) *
+                taillePageCommandes;
+
+            const fin =
+                debut +
+                taillePageCommandes;
+
+            pagesCommandesServeur.set(
+                page,
+                {
+                    commandes:
+                        fusion.slice(
+                            debut,
+                            fin
+                        ),
+
+                    pagination: {
+                        page: page,
+                        limite:
+                            taillePageCommandes,
+                        total:
+                            nouveauTotal,
+                        totalPages:
+                            nouveauNombrePages,
+                        hasNext:
+                            page <
+                            nouveauNombrePages,
+                        hasPrevious:
+                            page > 1
+                    },
+
+                    kpi:
+                        page === 1
+                            ? (
+                                resultat.kpi ||
+                                null
+                              )
+                            : null
+                }
+            );
+        }
+
+        totalCommandesServeur =
+            nouveauTotal;
+
+        totalPagesCommandesServeur =
+            nouveauNombrePages;
+
+        reconstruireCommandesDepuisPagesServeur();
+
+        /*
+         * Conserve exactement la page consultée par
+         * l'utilisateur, mais rafraîchit son contenu.
+         */
+        pageCommandesActuelle =
+            Math.min(
+                pageCommandesActuelle,
+                totalPagesCommandesServeur
+            );
+
+        afficherTableauCommandes();
+
+    } else {
+        /*
+         * Cache incomplet, suppression parallèle
+         * ou trop de nouveautés :
+         * on garde la page 1 fraîche et on recharge
+         * les autres pages discrètement en arrière-plan.
+         */
+        pagesCommandesServeur.clear();
+
+        pagesCommandesServeur.set(
+            1,
+            {
+                commandes:
+                    nouvellesPage1,
+                pagination:
+                    pagination,
+                kpi:
+                    resultat.kpi ||
+                    null
+            }
+        );
+
+        totalCommandesServeur =
+            nouveauTotal;
+
+        totalPagesCommandesServeur =
+            nouveauNombrePages;
+
+        reconstruireCommandesDepuisPagesServeur();
+
+        if (
+            pageCommandesActuelle === 1
+        ) {
+            afficherTableauCommandes();
+        }
+
+        if (
+            nouveauNombrePages > 1
+        ) {
+            prechargementCommandesPromise =
+                prechargerPagesCommandesEnCascade(
+                    2,
+                    generationChargementCommandes
+                );
+        }
+    }
+
+    if (resultat.kpi) {
+        afficherKPICommandesServeur(
+            resultat.kpi
+        );
+    }
+
+    actualiserFiltreCommunesCommandes();
+
+    console.log(
+        "Synchronisation Commandes :",
+        ancienTotal,
+        "→",
+        nouveauTotal,
+        "commande(s)."
+    );
+
+    sauvegarderCacheNavigationCommandes();
+}
+
+async function revaliderCommandesDepuisServeurApresCache() {
+    try {
+        const resultat = await apiGet(
+            "getCommandesPage",
+            {
+                page: 1,
+                limite: taillePageCommandes,
+                _ts: Date.now()
+            }
+        );
+
+        if (!resultat?.success) return;
+
+        pagesCommandesServeur.set(1, {
+            commandes: extraireListeCommande(resultat, "commandes"),
+            pagination: resultat.pagination || {},
+            kpi: resultat.kpi || null
+        });
+
+        const pagination = resultat.pagination || {};
+
+        totalCommandesServeur = Math.max(
+            0,
+            Number(pagination.total) || 0
+        );
+
+        totalPagesCommandesServeur = Math.max(
+            1,
+            Number(pagination.totalPages) ||
+                Math.ceil(totalCommandesServeur / taillePageCommandes) ||
+                1
+        );
+
+        pageCommandesActuelle = Math.min(
+            Math.max(1, pageCommandesActuelle),
+            totalPagesCommandesServeur
+        );
+
+        reconstruireCommandesDepuisPagesServeur();
+
+        if (resultat.kpi) {
+            afficherKPICommandesServeur(resultat.kpi);
+        } else {
+            const totalKpi = document.getElementById("total-orders-value");
+            if (totalKpi) {
+                totalKpi.textContent = String(totalCommandesServeur);
+                totalKpi.classList.remove("is-loading");
+            }
+        }
+
+        actualiserFiltreCommunesCommandes();
+        afficherTableauCommandes();
+        sauvegarderCacheNavigationCommandes();
+
+    } catch (error) {
+        console.warn("Revalidation serveur Commandes impossible :", error);
+    }
+}
+
+
+async function chargerCommandes() {
+    const tbody = document.getElementById("orders-table-body");
+
+    // Si les Commandes ont déjà été chargées dans cet onglet, on les réaffiche
+    // immédiatement. Aucun gros rechargement n’est lancé tant que la vérification
+    // légère ne détecte pas une modification côté serveur.
+    if (restaurerCacheNavigationCommandes()) {
+        // Le cache s'affiche tout de suite, mais la source de vérité
+        // est relue immédiatement depuis le serveur.
+        revaliderCommandesDepuisServeurApresCache();
+
+        if (!toutesPagesCommandesChargees()) {
+            const premierePageManquante = Array.from(
+                { length: totalPagesCommandesServeur },
+                (_, index) => index + 1
+            ).find(page => !pagesCommandesServeur.has(page));
+
+            if (premierePageManquante) {
+                // Optimisation 1 : ne relance pas immédiatement toutes les pages
+                // au retour sur Commandes. Le cache est affiché d'abord, puis le
+                // complément arrive uniquement quand le navigateur est disponible.
+                planifierPrechargementCommandesEnArrierePlan(
+                    premierePageManquante,
+                    generationChargementCommandes
+                );
+            }
+        }
+        // Le tableau est déjà affiché depuis le cache : on peut maintenant
+        // compléter discrètement les données clients pour le formulaire.
+        planifierClientsCommandeComplets();
+        return;
+    }
+
+    // Le loader apparaît uniquement lorsqu'un vrai chargement réseau est nécessaire.
+    demarrerLoaderCommandes("Chargement des commandes…");
+
+    const generation = ++generationChargementCommandes;
+
+    pagesCommandesServeur.clear();
+    totalCommandesServeur = 0;
+    totalPagesCommandesServeur = 1;
+    prechargementCommandesPromise = null;
+    pageCommandesActuelle = 1;
+    commandesChargees = [];
+    commandesFiltrees = [];
+
+    try {
+        /*
+         * La page 1 et les catalogues sont chargés en parallèle.
+         * On attend simplement que les correspondances ID -> nom soient prêtes
+         * avant le tout premier rendu du tableau : aucun flash d'ID.
+         */
+        const [
+            resultat,
+            _catalogues
+        ] = await Promise.all([
+            chargerPageCommandesServeur(1),
+            Promise.allSettled([
+                // Optimisation 2 : le tableau n'utilise que les noms Client/Livreur.
+                // Le catalogue Produits continue de charger en parallèle pour la modale,
+                // mais ne bloque plus l'affichage des 20 commandes.
+                chargementClientsCommandePromise || Promise.resolve(),
+                chargementLivreursCommandePromise || Promise.resolve()
+            ])
+        ]);
+
+        if (generation !== generationChargementCommandes) return;
+
+        appliquerPageCommandesServeur(resultat);
+        pageCommandesActuelle = 1;
+        afficherTableauCommandes();
+
+        // OPT4 : le chrono du premier affichage est terminé ici.
+        // Les données clients complètes (crédit/avoir) arrivent ensuite en tâche de fond.
+        planifierClientsCommandeComplets();
+
+        // Optimisation 1 : la page 1 reste prioritaire. Les pages suivantes ne
+        // commencent plus immédiatement après le rendu : elles sont planifiées en
+        // arrière-plan lorsque le navigateur est disponible. Cela évite de remettre
+        // tout de suite Apps Script / Google Sheets sous charge après le 1er affichage.
+        planifierPrechargementCommandesEnArrierePlan(2, generation);
+    } catch (error) {
+        console.error("Erreur de chargement des commandes :", error);
         commandesChargees = [];
         commandesFiltrees = [];
         afficherTableauCommandes();
-
         if (typeof showToast === "function") {
-            showToast(
-                error.message ||
-                "Impossible de charger les commandes.",
-                "error"
-            );
+            showToast(error.message || "Impossible de charger les commandes.", "error");
+        }
+    } finally {
+        /*
+         * Le loader disparaît seulement après que le code a préparé
+         * KPI + tableau + pagination. visibl-loading.js attend ensuite
+         * deux frames de rendu avant de révéler les vraies données.
+         */
+        terminerLoaderCommandes();
+    }
+}
+
+async function chargerPageCommandesServeur(page) {
+    const numero = Math.max(1, Number(page) || 1);
+    if (pagesCommandesServeur.has(numero)) {
+        return pagesCommandesServeur.get(numero);
+    }
+
+    const resultat = await apiGet("getCommandesPage", { page: numero, limite: taillePageCommandes, _ts: Date.now() });
+    if (!resultat?.success) {
+        throw new Error(resultat?.message || "Impossible de charger cette page de commandes.");
+    }
+
+    const objet = {
+        commandes: extraireListeCommande(resultat, "commandes"),
+        pagination: resultat.pagination || {},
+        kpi: resultat.kpi || null
+    };
+    pagesCommandesServeur.set(numero, objet);
+    return objet;
+}
+
+function reconstruireCommandesDepuisPagesServeur() {
+    const toutes = [];
+    Array.from(pagesCommandesServeur.keys())
+        .sort((a, b) => a - b)
+        .forEach(numero => {
+            const page = pagesCommandesServeur.get(numero);
+            if (Array.isArray(page?.commandes)) toutes.push(...page.commandes);
+        });
+    commandesChargees = toutes;
+    commandesFiltrees = [...toutes];
+}
+
+function appliquerPageCommandesServeur(resultat) {
+    const pagination = resultat?.pagination || {};
+    totalCommandesServeur = Math.max(0, Number(pagination.total) || totalCommandesServeur || 0);
+    totalPagesCommandesServeur = Math.max(1, Number(pagination.totalPages) || Math.ceil(totalCommandesServeur / taillePageCommandes) || 1);
+    reconstruireCommandesDepuisPagesServeur();
+
+    if (resultat?.kpi) {
+        afficherKPICommandesServeur(resultat.kpi);
+    } else {
+        const totalKpi = document.getElementById("total-orders-value");
+        if (totalKpi) {
+            totalKpi.textContent = String(totalCommandesServeur);
+            totalKpi.classList.remove("is-loading");
         }
     }
+
+    actualiserFiltreCommunesCommandes();
+    sauvegarderCacheNavigationCommandes();
+}
+
+
+function afficherKPICommandesServeur(kpi) {
+    if (!kpi || typeof kpi !== "object") {
+        return;
+    }
+
+    const total =
+        Math.max(
+            0,
+            Number(kpi.total) || 0
+        );
+
+    const chiffreAffaires =
+        Math.max(
+            0,
+            Number(kpi.chiffreAffaires) || 0
+        );
+
+    const enAttente =
+        Math.max(
+            0,
+            Number(kpi.enAttente) || 0
+        );
+
+    const terminees =
+        Math.max(
+            0,
+            Number(kpi.terminees) || 0
+        );
+
+    const nouvellesCeMois =
+        Math.max(
+            0,
+            Number(kpi.nouvellesCeMois) || 0
+        );
+
+    const descriptionNouvellesCommandes =
+        `${nouvellesCeMois} nouvelle${
+            nouvellesCeMois > 1 ? "s" : ""
+        } commande${
+            nouvellesCeMois > 1 ? "s" : ""
+        } ce mois`;
+
+    const correspondances = {
+        "total-orders-value": total,
+        "total-orders-description":
+            descriptionNouvellesCommandes,
+        "orders-revenue-value":
+            formaterFCFA(chiffreAffaires),
+        "pending-orders-value":
+            enAttente,
+        "completed-orders-value":
+            terminees
+    };
+
+    Object.entries(correspondances)
+        .forEach(
+            ([id, valeur]) => {
+                const element =
+                    document.getElementById(id);
+
+                if (element) {
+                    element.textContent = valeur;
+                    element.classList.remove("is-loading");
+                }
+            }
+        );
+}
+
+function planifierPrechargementCommandesEnArrierePlan(debutPage, generation) {
+    const lancer = () => {
+        if (generation !== generationChargementCommandes) return;
+        if (document.hidden) {
+            // Si l'utilisateur a déjà quitté l'onglet, inutile de solliciter le
+            // backend immédiatement. On réessaie plus tard sans bloquer la navigation.
+            window.setTimeout(lancer, 1500);
+            return;
+        }
+
+        prechargementCommandesPromise =
+            prechargerPagesCommandesEnCascade(debutPage, generation);
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(lancer, { timeout: 1800 });
+    } else {
+        window.setTimeout(lancer, 1200);
+    }
+}
+
+
+async function prechargerPagesCommandesEnCascade(debutPage, generation) {
+    for (let page = debutPage; page <= totalPagesCommandesServeur; page++) {
+        if (generation !== generationChargementCommandes) return;
+        try {
+            const resultat = await chargerPageCommandesServeur(page);
+            if (generation !== generationChargementCommandes) return;
+            appliquerPageCommandesServeur(resultat);
+
+            // Si l'utilisateur se trouve sur cette page, elle apparaît dès son arrivée.
+            if (pageCommandesActuelle === page) afficherTableauCommandes();
+        } catch (error) {
+            console.warn("Préchargement Commandes page " + page + " interrompu :", error);
+            return;
+        }
+    }
+
+    if (generation === generationChargementCommandes) {
+        reconstruireCommandesDepuisPagesServeur();
+        actualiserFiltreCommunesCommandes();
+    }
+}
+
+function toutesPagesCommandesChargees() {
+    return pagesCommandesServeur.size >= totalPagesCommandesServeur;
+}
+
+async function allerPageCommandes(page) {
+    const cible = Math.max(
+        1,
+        Math.min(
+            Number(page) || 1,
+            totalPagesCommandesServeur
+        )
+    );
+
+    pageCommandesActuelle = cible;
+
+    if (!pagesCommandesServeur.has(cible)) {
+        demarrerLoaderCommandes(
+            `Chargement de la page ${cible}…`
+        );
+
+        try {
+            const resultat =
+                await chargerPageCommandesServeur(
+                    cible
+                );
+
+            appliquerPageCommandesServeur(
+                resultat
+            );
+
+            afficherTableauCommandes();
+            sauvegarderCacheNavigationCommandes();
+
+        } catch (error) {
+            console.error(
+                "Chargement page Commandes :",
+                error
+            );
+
+            if (
+                typeof showToast === "function"
+            ) {
+                showToast(
+                    error.message ||
+                    "Impossible de charger cette page.",
+                    "error"
+                );
+            }
+
+            return;
+
+        } finally {
+            terminerLoaderCommandes();
+        }
+
+        return;
+    }
+
+    afficherTableauCommandes();
+    sauvegarderCacheNavigationCommandes();
 }
 
 
@@ -1337,9 +2783,19 @@ function mettreAJourCommandeLocale(commande) {
         );
     }
 
+    if (pagesCommandesServeur.has(1)) {
+        const p1 = pagesCommandesServeur.get(1);
+        const liste = Array.isArray(p1.commandes) ? p1.commandes.filter(x => String(x.idCommande) !== String(commande.idCommande)) : [];
+        liste.unshift(commande);
+        p1.commandes = liste.slice(0, taillePageCommandes);
+    }
+    totalCommandesServeur = Math.max(totalCommandesServeur, commandesChargees.length);
+    totalPagesCommandesServeur = Math.max(1, Math.ceil(totalCommandesServeur / taillePageCommandes));
+
     actualiserFiltreCommunesCommandes();
-    mettreAJourKPICommandes();
+    if (toutesPagesCommandesChargees()) mettreAJourKPICommandes();
     appliquerFiltresCommandes(true);
+    sauvegarderCacheNavigationCommandes();
 }
 
 
@@ -1357,23 +2813,97 @@ function retirerCommandeLocale(idCommande) {
 }
 
 
+function normaliserStatutPaiementCommandeFiltre(valeur) {
+    const statut =
+        normaliserTexteCommande(
+            valeur || ""
+        );
+
+    const alias = {
+        "non-paye": "non-paye",
+        "non-payee": "non-paye",
+        "non-payé": "non-paye",
+        "non-regle": "non-paye",
+        "impaye": "non-paye",
+        "partiel": "partiel",
+        "partielle": "partiel",
+        "partiellement-paye": "partiel",
+        "partiellement-payee": "partiel",
+        "paiement-partiel": "partiel",
+        "paye": "paye",
+        "payee": "paye",
+        "regle": "paye",
+        "reglee": "paye",
+        "solde": "paye",
+        "soldee": "paye"
+    };
+
+    return alias[statut] || statut;
+}
+
+
 function appliquerFiltresCommandes(
     conserverPage = false
 ) {
-    const recherche =
+    const rechercheDemandee =
         normaliserTexteCommande(
-            obtenirValeurCommande("orders-header-search-input")
+            obtenirValeurCommande(
+                "orders-header-search-input"
+            )
         );
+
+    const statutDemande =
+        normaliserTexteCommande(
+            obtenirValeurCommande(
+                "order-status-filter"
+            )
+        );
+
+    const paiementDemande =
+        normaliserStatutPaiementCommandeFiltre(
+            obtenirValeurCommande(
+                "order-payment-status-filter"
+            )
+        );
+
+    const communeDemandee =
+        normaliserTexteCommande(
+            obtenirValeurCommande(
+                "order-commune-filter"
+            )
+        );
+
+    if (
+        (
+            rechercheDemandee ||
+            statutDemande ||
+            paiementDemande ||
+            communeDemandee
+        ) &&
+        !toutesPagesCommandesChargees()
+    ) {
+        if (prechargementCommandesPromise) {
+            prechargementCommandesPromise.then(
+                () =>
+                    appliquerFiltresCommandes(
+                        conserverPage
+                    )
+            );
+        }
+        return;
+    }
+
+    const recherche =
+        rechercheDemandee;
 
     const statut =
-        normaliserTexteCommande(
-            obtenirValeurCommande("order-status-filter")
-        );
+        statutDemande;
+
+    const paiement =
+        paiementDemande;
 
     const commune =
-        normaliserTexteCommande(
-            obtenirValeurCommande("order-commune-filter")
-        );
+        communeDemandee;
 
     commandesFiltrees =
         commandesChargees.filter(
@@ -1394,7 +2924,9 @@ function appliquerFiltresCommandes(
                             commande.communeLivraison,
                             commande.zoneLivraison,
                             commande.statut,
+                            commande.statutPaiement,
                             commande.modePaiementPrevu,
+                            commande.modePaiement,
                             commande.origine ||
                             commande.origineCommande,
                             commande.idVente
@@ -1403,13 +2935,21 @@ function appliquerFiltresCommandes(
 
                 const correspondRecherche =
                     !recherche ||
-                    texte.includes(recherche);
+                    texte.includes(
+                        recherche
+                    );
 
                 const correspondStatut =
                     !statut ||
                     normaliserTexteCommande(
                         commande.statut
                     ) === statut;
+
+                const correspondPaiement =
+                    !paiement ||
+                    normaliserStatutPaiementCommandeFiltre(
+                        commande.statutPaiement
+                    ) === paiement;
 
                 const correspondCommune =
                     !commune ||
@@ -1420,6 +2960,7 @@ function appliquerFiltresCommandes(
                 return (
                     correspondRecherche &&
                     correspondStatut &&
+                    correspondPaiement &&
                     correspondCommune
                 );
             }
@@ -1431,7 +2972,6 @@ function appliquerFiltresCommandes(
 
     afficherTableauCommandes();
 }
-
 
 
 function actualiserFiltreCommunesCommandes() {
@@ -1533,80 +3073,54 @@ function reinitialiserFiltresCommandes() {
 
 
 function afficherTableauCommandes() {
-    const tbody =
-        document.getElementById("orders-table-body");
+    const tbody = document.getElementById("orders-table-body");
+    if (!tbody) return;
 
-    if (!tbody) {
+    const recherche = normaliserTexteCommande(obtenirValeurCommande("orders-header-search-input"));
+    const statut = normaliserTexteCommande(obtenirValeurCommande("order-status-filter"));
+    const paiement = normaliserStatutPaiementCommandeFiltre(obtenirValeurCommande("order-payment-status-filter"));
+    const commune = normaliserTexteCommande(obtenirValeurCommande("order-commune-filter"));
+    const filtresActifs = !!(recherche || statut || paiement || commune);
+
+    // Sans filtre : vraie pagination serveur, une page = exactement les 20 lignes demandées.
+    if (!filtresActifs && pagesCommandesServeur.size) {
+        const paquet = pagesCommandesServeur.get(pageCommandesActuelle);
+        const page = Array.isArray(paquet?.commandes) ? paquet.commandes : [];
+
+        tbody.innerHTML = page.length
+            ? page.map(creerLigneCommandeHTML).join("")
+            : `<tr><td colspan="13" class="empty-table">Chargement de cette page...</td></tr>`;
+
+        const compteur = document.getElementById("filtered-order-count");
+        if (compteur) compteur.textContent = String(totalCommandesServeur);
+
+        synchroniserSelectionCommandes();
+        const debut = (pageCommandesActuelle - 1) * taillePageCommandes;
+        afficherPaginationCommandes(
+            totalPagesCommandesServeur,
+            totalCommandesServeur,
+            debut,
+            Math.min(debut + page.length, totalCommandesServeur)
+        );
         return;
     }
 
-    const total =
-        commandesFiltrees.length;
+    // Avec filtre : dès que toutes les pages sont en RAM, comportement historique intact.
+    const total = commandesFiltrees.length;
+    const totalPages = Math.max(1, Math.ceil(total / taillePageCommandes));
+    pageCommandesActuelle = Math.min(pageCommandesActuelle, totalPages);
+    const debut = (pageCommandesActuelle - 1) * taillePageCommandes;
+    const fin = debut + taillePageCommandes;
+    const page = commandesFiltrees.slice(debut, fin);
 
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                total /
-                taillePageCommandes
-            )
-        );
+    tbody.innerHTML = page.length
+        ? page.map(creerLigneCommandeHTML).join("")
+        : `<tr><td colspan="13" class="empty-table">Aucune commande enregistrée.</td></tr>`;
 
-    pageCommandesActuelle =
-        Math.min(
-            pageCommandesActuelle,
-            totalPages
-        );
-
-    const debut =
-        (pageCommandesActuelle - 1) *
-        taillePageCommandes;
-
-    const fin =
-        debut +
-        taillePageCommandes;
-
-    const page =
-        commandesFiltrees.slice(
-            debut,
-            fin
-        );
-
-    if (!page.length) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="13" class="empty-table">
-                    Aucune commande enregistrée.
-                </td>
-            </tr>
-        `;
-    } else {
-        tbody.innerHTML =
-            page
-                .map(
-                    creerLigneCommandeHTML
-                )
-                .join("");
-    }
-
-    const compteur =
-        document.getElementById(
-            "filtered-order-count"
-        );
-
-    if (compteur) {
-        compteur.textContent =
-            String(total);
-    }
-
+    const compteur = document.getElementById("filtered-order-count");
+    if (compteur) compteur.textContent = String(total);
     synchroniserSelectionCommandes();
-
-    afficherPaginationCommandes(
-        totalPages,
-        total,
-        debut,
-        Math.min(fin, total)
-    );
+    afficherPaginationCommandes(totalPages, total, debut, Math.min(fin, total));
 }
 
 
@@ -2540,43 +4054,81 @@ async function voirCommande(idCommande) {
             }`;
     }
 
-    let montantPayeAffiche =
-        convertirNombre(
-            commande.montantPaye
+    /*
+     * "Voir la commande" utilise uniquement les données financières
+     * de la commande affichée.
+     *
+     * Important :
+     * - aucune relecture de toutes les ventes ici ;
+     * - pas de mélange Commande / Vente liée dans le même récapitulatif ;
+     * - le backend synchronise déjà les paiements de la vente vers la commande.
+     */
+    const totalAPayerAffiche =
+        Math.max(
+            0,
+            convertirNombre(
+                commande.totalAPayer
+            )
         );
 
-    let montantAvoirAffiche =
-        convertirNombre(
-            commande.montantAvoirUtilise
+    const montantPayeAffiche =
+        Math.max(
+            0,
+            convertirNombre(
+                commande.montantPaye
+            )
         );
 
-    let montantRegleAffiche =
-        convertirNombre(
-            commande.montantRegle
-        ) ||
-        (
+    const montantAvoirAffiche =
+        Math.max(
+            0,
+            convertirNombre(
+                commande.montantAvoirUtilise
+            )
+        );
+
+    const montantRegleCalcule =
+        Math.min(
+            totalAPayerAffiche,
             montantPayeAffiche +
             montantAvoirAffiche
         );
 
-    let resteAPayerAffiche =
+    const montantRegleAffiche =
+        commande.montantRegle !== undefined &&
+        commande.montantRegle !== null &&
+        commande.montantRegle !== ""
+            ? Math.max(
+                0,
+                Math.min(
+                    totalAPayerAffiche,
+                    convertirNombre(
+                        commande.montantRegle
+                    )
+                )
+              )
+            : montantRegleCalcule;
+
+    const resteAPayerAffiche =
         commande.resteAPayer !== undefined &&
         commande.resteAPayer !== null &&
         commande.resteAPayer !== ""
-            ? convertirNombre(
-                commande.resteAPayer
+            ? Math.max(
+                0,
+                convertirNombre(
+                    commande.resteAPayer
+                )
               )
             : Math.max(
                 0,
-                convertirNombre(
-                    commande.totalAPayer
-                ) - montantPayeAffiche
+                totalAPayerAffiche -
+                montantRegleAffiche
               );
 
-    let statutPaiementAffiche =
+    const statutPaiementAffiche =
         commande.statutPaiement ||
         (
-            montantPayeAffiche <= 0
+            montantRegleAffiche <= 0
                 ? "Impayée"
                 : (
                     resteAPayerAffiche > 0
@@ -2585,98 +4137,24 @@ async function voirCommande(idCommande) {
                   )
         );
 
-    /*
-     * Après livraison, la Vente liée contient le paiement réconcilié
-     * avec les encaissements de Livraison. On l'utilise pour afficher
-     * le vrai état financier dans "Voir la commande".
-     */
-    if (
-        commande.idVente &&
-        typeof apiGet === "function"
-    ) {
-        try {
-            const resultatVentes =
-                await apiGet(
-                    "getVentes"
-                );
-
-            const ventes =
-                Array.isArray(resultatVentes?.data)
-                    ? resultatVentes.data
-                    : Array.isArray(resultatVentes?.data?.ventes)
-                        ? resultatVentes.data.ventes
-                        : Array.isArray(resultatVentes?.ventes)
-                            ? resultatVentes.ventes
-                            : [];
-
-            const venteLiee =
-                ventes.find(
-                    vente =>
-                        String(
-                            vente.idVente ||
-                            vente["ID Vente"] ||
-                            ""
-                        ).trim() ===
-                        String(
-                            commande.idVente
-                        ).trim()
-                );
-
-            if (venteLiee) {
-                montantPayeAffiche =
-                    convertirNombre(
-                        venteLiee.montantPaye ??
-                        venteLiee["Montant Payé"]
-                    );
-
-                montantAvoirAffiche =
-                    convertirNombre(
-                        venteLiee.montantAvoirUtilise ??
-                        venteLiee["Montant Avoir Utilisé"] ??
-                        commande.montantAvoirUtilise
-                    );
-
-                montantRegleAffiche =
-                    convertirNombre(
-                        venteLiee.montantRegle ??
-                        venteLiee["Montant Réglé"]
-                    ) ||
-                    (
-                        montantPayeAffiche +
-                        montantAvoirAffiche
-                    );
-
-                resteAPayerAffiche =
-                    convertirNombre(
-                        venteLiee.resteAPayer ??
-                        venteLiee["Reste à Payer"]
-                    );
-
-                statutPaiementAffiche =
-                    venteLiee.statutPaiement ||
-                    venteLiee["Statut Paiement"] ||
-                    statutPaiementAffiche;
-            }
-        } catch (error) {
-            console.warn(
-                "Impossible de récupérer le paiement de la vente liée :",
-                error
-            );
-        }
-    }
-
     const detailsFinanciers = [
         ["Sous-total", formaterFCFA(commande.totalCommande), ""],
         ["Remise totale", formaterFCFA(commande.remiseTotale), "is-discount"],
         ["Frais de livraison", formaterFCFA(commande.fraisLivraison), ""],
-        ["Total à payer", formaterFCFA(commande.totalAPayer), "is-total"],
+        ["Total à payer", formaterFCFA(totalAPayerAffiche), "is-total"],
         ["Paiement encaissé", formaterFCFA(montantPayeAffiche), "is-paid"],
         ...(montantAvoirAffiche > 0
             ? [["Avoir client utilisé", formaterFCFA(montantAvoirAffiche), "is-credit"]]
             : []),
         ["Total réglé", formaterFCFA(montantRegleAffiche), "is-settled"],
         ["Reste à payer", formaterFCFA(resteAPayerAffiche), "is-balance"],
-        ["Statut paiement", formaterLibelleStatutCommande(statutPaiementAffiche), "is-payment-status"]
+        [
+            "Statut paiement",
+            String(statutPaiementAffiche || "—")
+                .replaceAll("-", " ")
+                .replace(/^./, caractere => caractere.toUpperCase()),
+            "is-payment-status"
+        ]
     ];
 
     zoneFinanciere.innerHTML =
@@ -2861,6 +4339,9 @@ function fermerModaleVoirCommande() {
 async function ouvrirModificationCommande(
     idCommande
 ) {
+    const debutOuvertureModification =
+        performance.now();
+
     const commande =
         commandesChargees.find(
             element =>
@@ -2905,8 +4386,17 @@ async function ouvrirModificationCommande(
             });
     }
 
-    /* Recharge le stock pour inclure la réservation propre à la commande. */
-    await chargerProduitsCommande();
+    /*
+     * OUVERTURE RAPIDE DE LA MODIFICATION
+     *
+     * Les données de la commande sont déjà présentes dans commandesChargees
+     * et le catalogue Produits est déjà chargé pour le module Commandes.
+     * On ne bloque donc plus l'ouverture de la fenêtre avec un nouvel appel réseau.
+     *
+     * Le stock est rafraîchi discrètement après l'ouverture.
+     */
+    const idCommandeModificationEnCours =
+        String(commande.idCommande || "");
 
     definirValeurCommande(
         "order-id",
@@ -2987,6 +4477,15 @@ async function ouvrirModificationCommande(
         commande.dateLivraisonPrevue
     );
 
+    /*
+     * PAIEMENT EN MODIFICATION
+     *
+     * IMPORTANT :
+     * on ne remplit plus l'encaissement avant de reconstruire les lignes
+     * et le Total à payer. Sinon actualiserCreditClientCommande() appelle
+     * recalculerPaiementCommande() avec un total encore à 0 et écrase
+     * l'encaissement existant.
+     */
     definirValeurCommande(
         "order-payment-method",
         commande.modePaiementPrevu
@@ -2996,18 +4495,6 @@ async function ouvrirModificationCommande(
         "order-payment-method-real",
         commande.modePaiement || commande.modePaiementPrevu || ""
     );
-
-    definirValeurCommande(
-        "order-paid-amount",
-        commande.montantPaye || 0
-    );
-
-    definirValeurCommande(
-        "order-credit-used",
-        commande.montantAvoirUtilise || 0
-    );
-
-    actualiserCreditClientCommande();
 
     definirValeurCommande(
         "order-comment",
@@ -3056,6 +4543,23 @@ async function ouvrirModificationCommande(
     afficherLignesCommande();
     recalculerTotauxCommande();
 
+    /*
+     * Le total est maintenant disponible : on peut restaurer
+     * l'encaissement déjà enregistré sans qu'il soit remis à zéro.
+     */
+    definirValeurCommande(
+        "order-paid-amount",
+        commande.montantPaye || 0
+    );
+
+    definirValeurCommande(
+        "order-credit-used",
+        commande.montantAvoirUtilise || 0
+    );
+
+    actualiserCreditClientCommande();
+    recalculerPaiementCommande();
+
     afficherLivreursParCommuneCommande(
         commande.idLivreur || ""
     );
@@ -3093,6 +4597,452 @@ async function ouvrirModificationCommande(
 
     document.body.classList.add(
         "modal-open"
+    );
+
+    console.log(
+        "VISIBL — ouverture modification commande :",
+        Math.round(
+            performance.now() -
+            debutOuvertureModification
+        ),
+        "ms"
+    );
+
+    /*
+     * Actualisation du stock en arrière-plan :
+     * elle ne bloque plus le clic sur « Modifier ».
+     * Si l'utilisateur est toujours sur la même commande lorsque
+     * la réponse revient, on met uniquement à jour les stocks en mémoire.
+     */
+    chargerProduitsCommande()
+        .then(() => {
+            if (
+                String(commandeEnModificationId || "") !==
+                idCommandeModificationEnCours
+            ) {
+                return;
+            }
+
+            lignesCommande =
+                lignesCommande.map(ligne => ({
+                    ...ligne,
+                    designation:
+                        obtenirNomProduitCommandeParId(
+                            ligne.idProduit
+                        ) ||
+                        ligne.designation ||
+                        ligne.idProduit,
+                    stockDisponible:
+                        obtenirStockProduit(
+                            catalogueProduitsCommande.find(
+                                produit =>
+                                    obtenirIdProduitCommande(
+                                        produit
+                                    ) ===
+                                    String(ligne.idProduit)
+                            ) || {}
+                        )
+                }));
+
+            afficherLignesCommande();
+        })
+        .catch(error => {
+            console.warn(
+                "Actualisation différée du stock en modification impossible :",
+                error
+            );
+        });
+}
+
+
+
+/* ===========================================================
+   FEEDBACK SOFT — CONFIRMATION COMMANDE
+   Loader central puis succès au même endroit.
+=========================================================== */
+
+function obtenirFeedbackConfirmationCommande() {
+    let overlay =
+        document.getElementById(
+            "order-confirm-soft-feedback"
+        );
+
+    if (overlay) {
+        return overlay;
+    }
+
+    const styleId =
+        "order-confirm-soft-feedback-style";
+
+    if (!document.getElementById(styleId)) {
+        const style =
+            document.createElement("style");
+
+        style.id = styleId;
+
+        style.textContent = `
+            #order-confirm-soft-feedback {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: rgba(15, 23, 42, 0.18);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition:
+                    opacity .18s ease,
+                    visibility .18s ease;
+            }
+
+            #order-confirm-soft-feedback.is-visible {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: all;
+            }
+
+            #order-confirm-soft-feedback .confirm-soft-card {
+                position: relative;
+                width: min(390px, 100%);
+                padding: 22px 24px;
+                border: 1px solid rgba(148, 163, 184, .24);
+                border-radius: 16px;
+                background: rgba(255, 255, 255, .98);
+                box-shadow: 0 18px 48px rgba(15, 23, 42, .18);
+                text-align: center;
+                overflow: hidden;
+            }
+
+            #order-confirm-soft-feedback .confirm-loading-view {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                text-align: left;
+            }
+
+            #order-confirm-soft-feedback .confirm-spinner {
+                width: 30px;
+                height: 30px;
+                flex: 0 0 30px;
+                border: 3px solid rgba(37, 99, 235, .16);
+                border-top-color: #2563eb;
+                border-radius: 50%;
+                animation: visibl-confirm-spin .75s linear infinite;
+            }
+
+            #order-confirm-soft-feedback .confirm-copy {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+            }
+
+            #order-confirm-soft-feedback .confirm-title {
+                color: #0f172a;
+                font-size: 15px;
+                line-height: 1.35;
+            }
+
+            #order-confirm-soft-feedback .confirm-text {
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.45;
+            }
+
+            #order-confirm-soft-feedback .confirm-success-view {
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+
+            #order-confirm-soft-feedback.is-success
+            .confirm-loading-view {
+                display: none;
+            }
+
+            #order-confirm-soft-feedback.is-success
+            .confirm-success-view {
+                display: flex;
+            }
+
+            #order-confirm-soft-feedback .confirm-success-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 64px;
+                height: 64px;
+                margin-bottom: 3px;
+                border-radius: 50%;
+                background: #10b981;
+                color: #fff;
+                font-size: 35px;
+                font-weight: 800;
+                box-shadow:
+                    0 0 0 9px rgba(16, 185, 129, .08),
+                    0 10px 24px rgba(16, 185, 129, .22);
+                animation: visibl-confirm-pop .32s ease-out both;
+            }
+
+            #order-confirm-soft-feedback .confirm-success-title {
+                margin-top: 5px;
+                color: #059669;
+                font-size: 20px;
+                line-height: 1.25;
+            }
+
+            #order-confirm-soft-feedback .confirm-success-text {
+                color: #64748b;
+                font-size: 13px;
+                line-height: 1.5;
+            }
+
+            #order-confirm-soft-feedback .confirm-success-ref {
+                width: 100%;
+                margin-top: 7px;
+                padding: 10px 12px;
+                border: 1px solid #dbeafe;
+                border-radius: 10px;
+                background: #f8fbff;
+            }
+
+            #order-confirm-soft-feedback .confirm-success-ref span {
+                display: block;
+                margin-bottom: 2px;
+                color: #64748b;
+                font-size: 11px;
+            }
+
+            #order-confirm-soft-feedback .confirm-success-ref strong {
+                color: #0f172a;
+                font-size: 14px;
+            }
+
+            #order-confirm-soft-feedback .confirm-success-btn {
+                min-width: 165px;
+                margin-top: 8px;
+                padding: 10px 18px;
+                border: 0;
+                border-radius: 9px;
+                background: #10b981;
+                color: #fff;
+                font-size: 13px;
+                font-weight: 800;
+                cursor: pointer;
+                box-shadow: 0 8px 18px rgba(16, 185, 129, .20);
+            }
+
+            @keyframes visibl-confirm-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @keyframes visibl-confirm-pop {
+                0% {
+                    transform: scale(.72);
+                    opacity: 0;
+                }
+
+                72% {
+                    transform: scale(1.07);
+                    opacity: 1;
+                }
+
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            @media (max-width: 640px) {
+                #order-confirm-soft-feedback {
+                    padding: 16px;
+                }
+
+                #order-confirm-soft-feedback .confirm-soft-card {
+                    padding: 20px 18px;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                #order-confirm-soft-feedback .confirm-spinner,
+                #order-confirm-soft-feedback .confirm-success-icon {
+                    animation: none;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    overlay =
+        document.createElement("div");
+
+    overlay.id =
+        "order-confirm-soft-feedback";
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    overlay.innerHTML = `
+        <div
+            class="confirm-soft-card"
+            role="status"
+            aria-live="polite"
+        >
+            <div class="confirm-loading-view">
+                <span
+                    class="confirm-spinner"
+                    aria-hidden="true"
+                ></span>
+
+                <div class="confirm-copy">
+                    <strong class="confirm-title">
+                        Confirmation de la commande…
+                    </strong>
+
+                    <span class="confirm-text">
+                        Vérification et réservation du stock en cours.
+                    </span>
+                </div>
+            </div>
+
+            <div class="confirm-success-view">
+                <div
+                    class="confirm-success-icon"
+                    aria-hidden="true"
+                >
+                    ✓
+                </div>
+
+                <strong class="confirm-success-title">
+                    Commande confirmée !
+                </strong>
+
+                <span class="confirm-success-text">
+                    La commande a été confirmée avec succès.
+                </span>
+
+                <div class="confirm-success-ref">
+                    <span>N° de commande</span>
+                    <strong class="confirm-success-ref-value"></strong>
+                </div>
+
+                <button
+                    type="button"
+                    class="confirm-success-btn"
+                >
+                    ✓ Parfait !
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(
+        overlay
+    );
+
+    return overlay;
+}
+
+
+function demarrerFeedbackConfirmationCommande() {
+    const overlay =
+        obtenirFeedbackConfirmationCommande();
+
+    overlay.classList.remove(
+        "is-success"
+    );
+
+    overlay.classList.add(
+        "is-visible"
+    );
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+}
+
+
+function afficherSuccesConfirmationCommande(
+    commande
+) {
+    return new Promise(resolve => {
+        const overlay =
+            obtenirFeedbackConfirmationCommande();
+
+        const reference =
+            overlay.querySelector(
+                ".confirm-success-ref-value"
+            );
+
+        if (reference) {
+            reference.textContent =
+                String(
+                    commande?.numeroCommande ||
+                    commande?.idCommande ||
+                    ""
+                );
+        }
+
+        overlay.classList.add(
+            "is-success"
+        );
+
+        const bouton =
+            overlay.querySelector(
+                ".confirm-success-btn"
+            );
+
+        const terminer = () => {
+            bouton?.removeEventListener(
+                "click",
+                terminer
+            );
+
+            resolve();
+        };
+
+        bouton?.addEventListener(
+            "click",
+            terminer,
+            { once: true }
+        );
+
+        setTimeout(
+            () => bouton?.focus(),
+            80
+        );
+    });
+}
+
+
+function terminerFeedbackConfirmationCommande() {
+    const overlay =
+        document.getElementById(
+            "order-confirm-soft-feedback"
+        );
+
+    if (!overlay) {
+        return;
+    }
+
+    overlay.classList.remove(
+        "is-visible",
+        "is-success"
+    );
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "true"
     );
 }
 
@@ -3176,6 +5126,16 @@ async function changerStatutCommandeFrontend(
     }
 
     try {
+        if (action === "confirmer") {
+            demarrerFeedbackConfirmationCommande();
+        }
+
+        const debutActionStatutNavigateur =
+            performance.now();
+
+        const debutApiStatut =
+            performance.now();
+
         const resultat =
             await apiPost(
                 "changerStatutCommande",
@@ -3186,6 +5146,49 @@ async function changerStatutCommandeFrontend(
                         action
                 }
             );
+
+        const tempsApiStatut =
+            Math.round(
+                performance.now() -
+                debutApiStatut
+            );
+
+        console.group(
+            `VISIBL — DIAGNOSTIC STATUT COMMANDE — ${action}`
+        );
+        console.log(
+            "Temps navigateur apiPost :",
+            tempsApiStatut,
+            "ms"
+        );
+        console.log(
+            "Diagnostic backend statut :",
+            resultat?.diagnosticTemps || null
+        );
+        console.log(
+            "Diagnostic doPost global :",
+            resultat?.diagnosticDoPost || null
+        );
+
+        console.log(
+            "Diagnostic routeur statut :",
+            resultat?.diagnosticRouteurStatut || null
+        );
+
+        console.log(
+            "Diagnostic notifications :",
+            resultat?.diagnosticNotifications || null
+        );
+        if (resultat?.diagnosticTemps) {
+            console.table(
+                resultat.diagnosticTemps
+            );
+        }
+        if (resultat?.diagnosticDoPost) {
+            console.table(
+                resultat.diagnosticDoPost
+            );
+        }
 
         if (!resultat?.success) {
             throw new Error(
@@ -3228,13 +5231,56 @@ async function changerStatutCommandeFrontend(
             );
         }
 
+        const debutRechargementApresStatut =
+            performance.now();
+
         await chargerCommandes();
 
+        const tempsRechargementApresStatut =
+            Math.round(
+                performance.now() -
+                debutRechargementApresStatut
+            );
+
+        console.log(
+            "Rechargement Commandes après statut :",
+            tempsRechargementApresStatut,
+            "ms"
+        );
+        console.log(
+            "Temps total clic → fin traitement :",
+            Math.round(
+                performance.now() -
+                debutActionStatutNavigateur
+            ),
+            "ms"
+        );
+        console.groupEnd();
+
+        if (action === "confirmer") {
+            await afficherSuccesConfirmationCommande(
+                {
+                    ...commande,
+                    ...miseAJour
+                }
+            );
+
+            terminerFeedbackConfirmationCommande();
+        }
+
     } catch (error) {
+        if (action === "confirmer") {
+            terminerFeedbackConfirmationCommande();
+        }
+
         console.error(
             "Erreur changement statut commande :",
             error
         );
+
+        try {
+            console.groupEnd();
+        } catch (e) {}
 
         if (
             typeof showToast === "function"
@@ -3560,16 +5606,128 @@ function basculerMenuActionLigneCommande(trigger) {
     const id = String(trigger.dataset.orderMenuTrigger || "");
     const menu = document.querySelector(`[data-order-menu="${CSS.escape(id)}"]`);
     const ouvrir = Boolean(menu?.hidden);
+
     fermerMenusActionsLigneCommande();
     fermerMenuActionsCommandes();
-    if (menu) menu.hidden = !ouvrir;
-    trigger.setAttribute("aria-expanded", ouvrir ? "true" : "false");
+
+    if (!menu || !ouvrir) {
+        trigger.setAttribute("aria-expanded", "false");
+        return;
+    }
+
+    menu.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+
+    /*
+     * Menu adaptatif VISIBL :
+     * - mobile/tablette <= 900px : le CSS l'affiche comme panneau bas ;
+     * - desktop : le menu devient flottant dans le viewport et choisit
+     *   automatiquement le haut ou le bas selon l'espace disponible.
+     *
+     * Cela évite qu'un menu de la dernière ligne soit coupé par le tableau
+     * ou oblige l'utilisateur à faire défiler la page.
+     */
+    positionnerMenuContextuelVisibl(menu, trigger);
 }
 
-function fermerMenusActionsLigneCommande() {
-    document.querySelectorAll(".order-row-actions-dropdown").forEach(menu => menu.hidden = true);
-    document.querySelectorAll("[data-order-menu-trigger]").forEach(btn => btn.setAttribute("aria-expanded", "false"));
+
+function positionnerMenuContextuelVisibl(menu, trigger) {
+    if (!menu || !trigger) return;
+
+    menu.classList.remove("opens-up", "visibl-floating-menu");
+    menu.style.removeProperty("--visibl-menu-top");
+    menu.style.removeProperty("--visibl-menu-left");
+    menu.style.removeProperty("--visibl-menu-max-height");
+
+    if (window.matchMedia("(max-width: 900px)").matches) {
+        return;
+    }
+
+    const marge = 12;
+    const ecart = 6;
+    const rectTrigger = trigger.getBoundingClientRect();
+
+    menu.classList.add("visibl-floating-menu");
+
+    /*
+     * Le menu doit être mesurable une fois visible et en position fixed.
+     */
+    const rectMenu = menu.getBoundingClientRect();
+    const largeurMenu = Math.max(rectMenu.width, 220);
+    const hauteurMenu = rectMenu.height;
+
+    const espaceBas = window.innerHeight - rectTrigger.bottom - marge;
+    const espaceHaut = rectTrigger.top - marge;
+    const ouvrirVersHaut =
+        hauteurMenu > espaceBas &&
+        espaceHaut > espaceBas;
+
+    const hauteurDisponible =
+        Math.max(
+            120,
+            ouvrirVersHaut
+                ? espaceHaut - ecart
+                : espaceBas - ecart
+        );
+
+    const top =
+        ouvrirVersHaut
+            ? Math.max(
+                marge,
+                rectTrigger.top -
+                Math.min(hauteurMenu, hauteurDisponible) -
+                ecart
+              )
+            : Math.min(
+                window.innerHeight - marge,
+                rectTrigger.bottom + ecart
+              );
+
+    const left =
+        Math.max(
+            marge,
+            Math.min(
+                rectTrigger.right - largeurMenu,
+                window.innerWidth - largeurMenu - marge
+            )
+        );
+
+    if (ouvrirVersHaut) {
+        menu.classList.add("opens-up");
+    }
+
+    menu.style.setProperty("--visibl-menu-top", `${Math.round(top)}px`);
+    menu.style.setProperty("--visibl-menu-left", `${Math.round(left)}px`);
+    menu.style.setProperty(
+        "--visibl-menu-max-height",
+        `${Math.floor(hauteurDisponible)}px`
+    );
 }
+
+
+function fermerMenusActionsLigneCommande() {
+    document.querySelectorAll(".order-row-actions-dropdown").forEach(menu => {
+        menu.hidden = true;
+        menu.classList.remove("opens-up", "visibl-floating-menu");
+        menu.style.removeProperty("--visibl-menu-top");
+        menu.style.removeProperty("--visibl-menu-left");
+        menu.style.removeProperty("--visibl-menu-max-height");
+    });
+
+    document
+        .querySelectorAll("[data-order-menu-trigger]")
+        .forEach(btn =>
+            btn.setAttribute("aria-expanded", "false")
+        );
+}
+
+/*
+ * Si la page ou le viewport bouge, on ferme les menus flottants.
+ * Au prochain clic, leur position sera recalculée avec les nouvelles dimensions.
+ */
+window.addEventListener("resize", fermerMenusActionsLigneCommande);
+window.addEventListener("scroll", fermerMenusActionsLigneCommande, true);
+
 
 function exporterCommandesFiltreesCSV() {
     if (!Array.isArray(commandesFiltrees) || !commandesFiltrees.length) {
@@ -3857,12 +6015,7 @@ function afficherPaginationCommandes(
 
             bouton.addEventListener(
                 "click",
-                () => {
-                    pageCommandesActuelle =
-                        page;
-
-                    afficherTableauCommandes();
-                }
+                () => allerPageCommandes(page)
             );
 
             boutons.appendChild(
@@ -4094,7 +6247,7 @@ function initialiserLivreursCommande() {
      * Aucun livreur n'est affiché tant qu'une commune
      * n'a pas été sélectionnée.
      */
-    chargerLivreursCommande();
+    chargementLivreursCommandePromise = chargerLivreursCommande();
 }
 
 
@@ -4558,7 +6711,7 @@ function initialiserProduitsCommande() {
             }
         );
 
-    chargerProduitsCommande();
+    chargementProduitsCommandePromise = chargerProduitsCommande();
 }
 
 

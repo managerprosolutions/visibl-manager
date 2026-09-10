@@ -43,6 +43,7 @@
 
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/commandes.css">
+    <link rel="stylesheet" href="../css/visibl-loading.css">
 
     <link
     rel="stylesheet"
@@ -495,7 +496,6 @@
             <div class="welcome-section">
                 <div>
                     <h2>Gestion des commandes</h2>
-                    <p>Créez, consultez et suivez les commandes clients, leurs produits, leurs paiements et leur livraison.</p>
                 </div>
                 <button class="btn-primary" id="new-order-btn">➕ Nouvelle commande</button>
             </div>
@@ -552,25 +552,24 @@
                 </div>
             </div>
 <div class="clients-filters orders-filters">
-                <select id="order-status-filter">
-                    <option value="">Tous les statuts</option>
-                    <option value="en-attente">En attente</option>
-                    <option value="confirmee">Confirmée</option>
-                    <option value="en-preparation">En préparation</option>
-                    <option value="convertie-en-vente">Convertie en vente</option>
-                    <option value="terminee">Convertie en vente</option>
-                    <option value="livree">Livrée</option>
-                    <option value="annulee">Annulée</option>
-                </select>
-                <select id="order-payment-status-filter">
-                    <option value="">Tous les paiements</option>
-                    <option value="non-paye">Non payé</option>
-                    <option value="partiel">Partiel</option>
-                    <option value="paye">Payé</option>
-                </select>
-                <select id="order-commune-filter">
-                    <option value="">Toutes les communes</option>
-                </select>
+                <div class="orders-filter-scroll">
+                    <select id="order-status-filter">
+                        <option value="">Tous les statuts</option>
+                        <option value="en-attente">En attente</option>
+                        <option value="confirmee">Confirmée</option>
+                        <option value="convertie-en-vente">Convertie en vente</option>
+                        <option value="annulee">Annulée</option>
+                    </select>
+                    <select id="order-payment-status-filter">
+                        <option value="">Tous les paiements</option>
+                        <option value="non-paye">Non payé</option>
+                        <option value="partiel">Partiel</option>
+                        <option value="paye">Payé</option>
+                    </select>
+                    <select id="order-commune-filter">
+                        <option value="">Toutes les communes</option>
+                    </select>
+                </div>
                 <button class="btn-filter-reset" id="reset-order-filters">Effacer les filtres</button>
             </div>
 
@@ -602,11 +601,7 @@
 
                 <div class="table-pagination">
                     <div class="pagination-info">
-                        <span>Afficher</span>
-                        <select id="orders-per-page">
-                            <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option>
-                        </select>
-                        <span>éléments par page</span>
+                        <span>10 commandes par page</span>
                     </div>
                     <div class="pagination-controls" id="orders-pagination-controls">
                         <button type="button" class="pagination-btn" id="previous-order-page-btn">‹</button>
@@ -1484,6 +1479,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="../js/modules/notifications.js"></script>
 <script src="../js/modules/commandes.js"></script>
+    <script src="../js/visibl-loading.js" defer></script>
 
 </body>
 
