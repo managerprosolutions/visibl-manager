@@ -53,9 +53,207 @@ let pageProduitsCourante = 1;
 let produitsParPage = 10;
 let animationProduitSuivante = null;
 
+/* POINT 5 — RECHERCHE SERVEUR PRODUITS */
+let rechercheProduitsServeurActive = false;
+let totalRechercheProduitsServeur = 0;
+let totalPagesRechercheProduitsServeur = 1;
+let timerRechercheProduitsServeur = null;
+let sequenceRechercheProduitsServeur = 0;
+
+/* ===========================================================
+   POINT 1 — CACHE DE NAVIGATION PRODUITS
+   Conserve uniquement la liste déjà chargée pendant la session.
+   Aucun comportement métier, filtre, tri ou CRUD n'est modifié.
+=========================================================== */
+
+const PRODUITS_NAV_CACHE_KEY = "visibl:produits:nav-cache:v1";
+
+/* POINT 2 — SYNCHRONISATION LÉGÈRE PAR SIGNATURE */
+const PRODUITS_SYNC_INTERVAL_MS = 10000;
+const PRODUITS_SYNC_COOLDOWN_MS = 5000;
+let derniereVerificationSyncProduitsAt = 0;
+let signatureSyncProduits = null;
+let verificationSyncProduitsEnCours = null;
+let intervalleSyncProduits = null;
+
+/* POINT 16 — protège l’état Produits contre les réponses API obsolètes. */
+let sequenceChargementProduits = 0;
+
+function sauvegarderCacheNavigationProduits() {
+    try {
+        sessionStorage.setItem(
+            PRODUITS_NAV_CACHE_KEY,
+            JSON.stringify({
+                produits: Array.isArray(produits) ? produits : [],
+                signature: signatureSyncProduits,
+                /* POINT 26 — état de consultation Produits. */
+                consultation: {
+                    page: Math.max(1, Number(pageProduitsCourante) || 1),
+                    recherche: String(
+                        document.getElementById("header-products-search-input")?.value || ""
+                    ),
+                    statut: String(
+                        document.getElementById("product-status-filter")?.value || ""
+                    )
+                },
+                savedAt: Date.now()
+            })
+        );
+    } catch (error) {
+        console.warn(
+            "Cache navigation Produits indisponible :",
+            error
+        );
+    }
+}
+
+function restaurerCacheNavigationProduits() {
+    try {
+        const brut =
+            sessionStorage.getItem(PRODUITS_NAV_CACHE_KEY);
+
+        if (!brut) {
+            return false;
+        }
+
+        const cache = JSON.parse(brut);
+
+        if (!Array.isArray(cache?.produits)) {
+            return false;
+        }
+
+        signatureSyncProduits =
+            cache.signature != null
+                ? String(cache.signature)
+                : null;
+
+        /* POINT 26 — restaure la consultation avant de réafficher la liste. */
+        const consultation = cache?.consultation || {};
+        pageProduitsCourante = Math.max(
+            1,
+            Number(consultation.page) || 1
+        );
+
+        const champRecherche =
+            document.getElementById("header-products-search-input");
+        if (champRecherche) {
+            champRecherche.value = String(consultation.recherche || "");
+        }
+
+        const filtreStatut =
+            document.getElementById("product-status-filter");
+        if (filtreStatut) {
+            filtreStatut.value = String(consultation.statut || "");
+        }
+
+        chargerProduits(cache.produits);
+        return true;
+
+    } catch (error) {
+        console.warn(
+            "Restauration cache navigation Produits impossible :",
+            error
+        );
+        return false;
+    }
+}
+
+/* ===========================================================
+   POINT 2 — SYNCHRONISATION LÉGÈRE PRODUITS
+   Vérifie uniquement une petite signature toutes les 10 secondes.
+   La liste complète n'est rechargée que si cette signature change.
+=========================================================== */
+
+async function obtenirSignatureSyncProduits() {
+    try {
+        const resultat = await apiGet(
+            "getEtatSyncProduits",
+            { _ts: Date.now() }
+        );
+
+        if (
+            !resultat ||
+            resultat.success !== true ||
+            resultat.signature == null
+        ) {
+            return null;
+        }
+
+        return String(resultat.signature);
+    } catch (error) {
+        console.warn(
+            "Vérification légère Produits indisponible :",
+            error
+        );
+        return null;
+    }
+}
+
+async function verifierSynchronisationProduits() {
+    /* GRAND AUDIT — cooldown léger : évite deux contrôles de signature
+       inutilement rapprochés sans modifier la synchronisation toutes les 10 s. */
+    const maintenantSyncProduits = Date.now();
+
+    if (
+        derniereVerificationSyncProduitsAt > 0 &&
+        (maintenantSyncProduits - derniereVerificationSyncProduitsAt) <
+            PRODUITS_SYNC_COOLDOWN_MS
+    ) {
+        return false;
+    }
+
+    derniereVerificationSyncProduitsAt = maintenantSyncProduits;
+
+    if (verificationSyncProduitsEnCours) {
+        return verificationSyncProduitsEnCours;
+    }
+
+    verificationSyncProduitsEnCours = (async () => {
+        const nouvelleSignature =
+            await obtenirSignatureSyncProduits();
+
+        if (nouvelleSignature == null) {
+            return false;
+        }
+
+        if (signatureSyncProduits == null) {
+            signatureSyncProduits = nouvelleSignature;
+            sauvegarderCacheNavigationProduits();
+            return false;
+        }
+
+        if (nouvelleSignature === signatureSyncProduits) {
+            return false;
+        }
+
+        await chargerProduitsDepuisAPI({ silencieux: true });
+        return true;
+    })();
+
+    try {
+        return await verificationSyncProduitsEnCours;
+    } finally {
+        verificationSyncProduitsEnCours = null;
+    }
+}
+
+function initialiserSynchronisationAutoProduits() {
+    if (intervalleSyncProduits) {
+        return;
+    }
+
+    intervalleSyncProduits = setInterval(() => {
+        verifierSynchronisationProduits();
+    }, PRODUITS_SYNC_INTERVAL_MS);
+}
+
 /* Fournisseurs disponibles dans le formulaire Produit. */
 let fournisseursProduits = [];
+let fournisseursProduitsCharges = false;
+let promesseChargementFournisseursProduits = null;
 let stockProduitsPourFiche = [];
+let promessePrechargementStockProduits = null;
+let stockProduitsPrecharge = false;
 
 
 
@@ -196,7 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
         refreshButton.addEventListener("click", () => {
 
             chargerProduitsDepuisAPI();
-            chargerFournisseursPourProduits();
+            chargerFournisseursPourProduits("", { forcer: true });
 
         });
 
@@ -213,7 +411,23 @@ function initProduits() {
 
     mettreAJourKPIs();
 
-    chargerProduitsDepuisAPI();
+    /*
+     * On laisse d'abord l'initialisation de la page se terminer.
+     * Au retour sur Produits, la liste déjà chargée est alors restaurée
+     * immédiatement sans relancer le loader. Au premier accès seulement,
+     * le chargement API habituel reste strictement inchangé.
+     */
+    setTimeout(() => {
+        const cacheRestaure = restaurerCacheNavigationProduits();
+
+        if (!cacheRestaure) {
+            chargerProduitsDepuisAPI();
+        } else {
+            verifierSynchronisationProduits();
+        }
+
+        initialiserSynchronisationAutoProduits();
+    }, 0);
 
 }
 
@@ -1190,6 +1404,7 @@ function initialiserCalculsProduit() {
 
     const champsCalcul = [
         "product-purchase-price",
+        "product-vat-rate",
         "product-transport-cost",
         "product-customs-cost",
         "product-other-costs",
@@ -1222,6 +1437,14 @@ function calculerValeursProduit() {
     const prixAchat =
         obtenirValeurNombre("product-purchase-price");
 
+    const tauxTVA = Math.min(
+        18,
+        Math.max(0, obtenirValeurNombre("product-vat-rate"))
+    );
+
+    const montantTVA =
+        prixAchat * tauxTVA / 100;
+
     const fraisTransport =
         obtenirValeurNombre("product-transport-cost");
 
@@ -1236,6 +1459,7 @@ function calculerValeursProduit() {
 
     const prixRevient =
         prixAchat +
+        montantTVA +
         fraisTransport +
         fraisDouane +
         autresFrais;
@@ -1247,6 +1471,11 @@ function calculerValeursProduit() {
         prixRevient > 0
             ? margeFCFA / prixRevient * 100
             : 0;
+
+    definirValeurChamp(
+        "product-vat-amount",
+        arrondirNombre(montantTVA)
+    );
 
     definirValeurChamp(
         "product-cost-price",
@@ -1330,6 +1559,25 @@ function initialiserFormulaireProduit() {
         enregistrerProduit
     );
 
+    /* Point 20 — champs numériques sans spinners natifs. */
+    [
+        "product-purchase-price",
+        "product-vat-rate",
+        "product-transport-cost",
+        "product-customs-cost",
+        "product-other-costs",
+        "product-sale-price",
+        "product-minimum-price",
+        "product-initial-stock",
+        "product-alert-threshold",
+        "product-warranty"
+    ].forEach(id => {
+        const champ = document.getElementById(id);
+        if (!champ) return;
+        champ.type = "text";
+        champ.inputMode = "decimal";
+    });
+
 }
 
 
@@ -1389,6 +1637,35 @@ async function enregistrerProduit(event) {
 
     calculerValeursProduit();
 
+    const tauxTVA = obtenirValeurNombre("product-vat-rate");
+    const prixRevient = obtenirValeurNombre("product-cost-price");
+    const prixVente = obtenirValeurNombre("product-sale-price");
+    const prixMinimum = obtenirValeurNombre("product-minimum-price");
+
+    if (tauxTVA < 0 || tauxTVA > 18) {
+        afficherMessageFormulaireProduit(
+            "Le taux de TVA doit être compris entre 0 % et 18 %.",
+            "error"
+        );
+        return;
+    }
+
+    if (prixMinimum < prixRevient) {
+        afficherMessageFormulaireProduit(
+            "Le prix minimum de vente ne peut pas être inférieur au prix de revient.",
+            "error"
+        );
+        return;
+    }
+
+    if (prixMinimum > prixVente) {
+        afficherMessageFormulaireProduit(
+            "Le prix minimum de vente ne peut pas être supérieur au prix de vente.",
+            "error"
+        );
+        return;
+    }
+
     /*
        On capture l'état de l'image avant de fermer/réinitialiser la modale.
        - Si l'URL Cloudinary est déjà prête, elle est enregistrée directement.
@@ -1422,9 +1699,11 @@ async function enregistrerProduit(event) {
         prixAchat:
             obtenirValeurNombre("product-purchase-price"),
 
-        tauxTVA: 0,
+        tauxTVA:
+            obtenirValeurNombre("product-vat-rate"),
 
-        montantTVA: 0,
+        montantTVA:
+            obtenirValeurNombre("product-vat-amount"),
 
         fraisTransport:
             obtenirValeurNombre("product-transport-cost"),
@@ -1505,6 +1784,13 @@ async function enregistrerProduit(event) {
 
         const produitCree = resultat.data || {};
 
+        /* Revalidation intelligente : le CRUD renvoie déjà la nouvelle
+           signature Produits. On l'adopte immédiatement pour éviter une
+           relecture complète inutile de la liste. */
+        if (resultat.signature != null) {
+            signatureSyncProduits = String(resultat.signature);
+        }
+
         if (promesseImageAPoursuivre) {
             produitCree._imageSyncPending = true;
         }
@@ -1547,6 +1833,43 @@ async function enregistrerProduit(event) {
 
         mettreAJourKPIs();
         appliquerFiltresProduits();
+        sauvegarderCacheNavigationProduits();
+
+        /*
+           Création rapide : les notifications liées au stock ne bloquent plus
+           la confirmation utilisateur. Elles partent dans une seconde requête
+           après le succès du CRUD. Une erreur de notification ne remet jamais
+           en cause un produit déjà enregistré.
+        */
+        setTimeout(() => {
+            const actionNotifications = estModification
+                ? "traiterNotificationsUpdateProduit"
+                : "traiterNotificationsCreateProduit";
+
+            apiPost(
+                actionNotifications,
+                {
+                    idProduit:
+                        produitCree["ID Produit"] ||
+                        produitCree.idProduit ||
+                        idProduitEnModification ||
+                        ""
+                }
+            ).catch(error => {
+                console.warn(
+                    "Notifications produit en arrière-plan impossibles :",
+                    error
+                );
+            });
+        }, 0);
+
+        /* Revalidation intelligente : si le backend a fourni la nouvelle
+           signature, la mise à jour locale est déjà cohérente et la synchro
+           légère périodique reste le filet de sécurité. En absence de
+           signature seulement, on conserve l'ancienne revalidation complète. */
+        if (resultat.signature == null) {
+            chargerProduitsDepuisAPI({ silencieux: true });
+        }
 
         fermerModaleProduit();
 
@@ -1668,6 +1991,16 @@ async function synchroniserImageProduitEnArrierePlan(
         });
 
         appliquerFiltresProduits();
+        sauvegarderCacheNavigationProduits();
+
+        /* Même principe pour l'image : la signature renvoyée par le backend
+           suffit à recaler la synchronisation. On ne relit toute la liste
+           qu'en solution de secours si cette signature manque. */
+        if (resultatMiseAJour.signature != null) {
+            signatureSyncProduits = String(resultatMiseAJour.signature);
+        } else {
+            chargerProduitsDepuisAPI({ silencieux: true });
+        }
 
         console.log(
             "Image du produit synchronisée : " + idProduit
@@ -1792,11 +2125,16 @@ function remettreValeursParDefautProduit() {
    CHARGEMENT DEPUIS L'API
 =========================================================== */
 
-async function chargerProduitsDepuisAPI() {
+async function chargerProduitsDepuisAPI(options = {}) {
+
+    const silencieux = options.silencieux === true;
+    const sequenceCourante = ++sequenceChargementProduits;
 
     try {
 
-        afficherEtatChargement();
+        if (!silencieux) {
+            afficherEtatChargement();
+        }
 
         const resultat =
             await apiGet("getProduits");
@@ -1808,6 +2146,18 @@ async function chargerProduitsDepuisAPI() {
                 "Impossible de récupérer les produits."
             );
 
+        }
+
+        /*
+         * POINT 16 — si un chargement plus récent a été lancé pendant
+         * cet appel, cette réponse ne doit plus modifier l’état affiché.
+         */
+        if (sequenceCourante !== sequenceChargementProduits) {
+            return false;
+        }
+
+        if (resultat.signature != null) {
+            signatureSyncProduits = String(resultat.signature);
         }
 
         chargerProduits(resultat.data);
@@ -1827,6 +2177,15 @@ async function chargerProduitsDepuisAPI() {
         afficherErreurChargement(
             error.message
         );
+
+    } finally {
+
+        if (
+            !silencieux &&
+            sequenceCourante === sequenceChargementProduits
+        ) {
+            terminerLoaderProduits();
+        }
 
     }
 
@@ -1871,6 +2230,16 @@ function chargerProduits(data) {
         pagination();
 
     }
+
+    sauvegarderCacheNavigationProduits();
+
+    /*
+     * POINT 13 — préchargement silencieux des détails dynamiques.
+     * Les informations Produit sont déjà présentes dans `produits`.
+     * On précharge donc uniquement le stock en arrière-plan afin que
+     * "Voir le produit" puisse l'afficher immédiatement lorsqu'il est prêt.
+     */
+    prechargerStockProduitsSilencieusement();
 
 }
 
@@ -1939,7 +2308,7 @@ function obtenirNomFournisseurProduit(
    AFFICHAGE DÉTAILLÉ DES PRODUITS
 =========================================================== */
 
-function afficherProduits(listeProduits) {
+function afficherProduits(listeProduits, options = {}) {
 
     const tableBody = obtenirCorpsTableauProduits();
 
@@ -1953,20 +2322,27 @@ function afficherProduits(listeProduits) {
     produitsFiltresCourants =
         Array.isArray(listeProduits) ? [...listeProduits] : [];
 
-    const total = produitsFiltresCourants.length;
-    const totalPages = Math.max(
-        1,
-        Math.ceil(total / produitsParPage)
-    );
+    const dejaPagineeServeur =
+        options.dejaPagineeServeur === true;
+
+    const total = dejaPagineeServeur
+        ? Number(options.totalServeur || 0)
+        : produitsFiltresCourants.length;
+
+    const totalPages = dejaPagineeServeur
+        ? Math.max(1, Number(options.totalPagesServeur || 1))
+        : Math.max(1, Math.ceil(total / produitsParPage));
 
     if (pageProduitsCourante > totalPages) {
         pageProduitsCourante = totalPages;
     }
 
-    const debut =
-        (pageProduitsCourante - 1) * produitsParPage;
-    const fin = debut + produitsParPage;
-    const page = produitsFiltresCourants.slice(debut, fin);
+    const page = dejaPagineeServeur
+        ? produitsFiltresCourants
+        : produitsFiltresCourants.slice(
+            (pageProduitsCourante - 1) * produitsParPage,
+            pageProduitsCourante * produitsParPage
+        );
 
     mettreAJourCompteurProduits(total);
     afficherPaginationProduits(total, totalPages);
@@ -2728,6 +3104,7 @@ async function ouvrirConsultationProduit(idProduit) {
 
     /* La fiche s'ouvre immédiatement.
        Le stock est ensuite chargé sans bloquer l'affichage. */
+    modal.dataset.productId = String(idProduit || "").trim();
     modal.classList.add("active");
     modal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
@@ -2738,20 +3115,121 @@ async function ouvrirConsultationProduit(idProduit) {
 
 
 
+async function prechargerStockProduitsSilencieusement(options = {}) {
+    const forcerActualisation = options.forcerActualisation === true;
+
+    if (stockProduitsPrecharge && !forcerActualisation) {
+        return stockProduitsPourFiche;
+    }
+
+    if (promessePrechargementStockProduits) {
+        return promessePrechargementStockProduits;
+    }
+
+    promessePrechargementStockProduits = (async () => {
+
+        try {
+            const resultat = await apiGet("getStock");
+
+            if (!resultat?.success) {
+                throw new Error(
+                    resultat?.message || "Impossible de précharger le stock."
+                );
+            }
+
+            const lignes = Array.isArray(resultat.data)
+                ? resultat.data
+                : [];
+
+            stockProduitsPourFiche = lignes
+                .map(normaliserStockPourFicheProduit)
+                .filter(stock => stock.idProduit);
+
+            stockProduitsPrecharge = true;
+            return stockProduitsPourFiche;
+        } catch (error) {
+            console.warn(
+                "Préchargement silencieux du stock Produits impossible :",
+                error
+            );
+            return null;
+        } finally {
+            promessePrechargementStockProduits = null;
+        }
+    })();
+
+    return promessePrechargementStockProduits;
+}
+
+
 async function chargerStockDansFicheProduit(idProduit) {
     const sectionStock = document.querySelector("#product-view-modal .product-view-stock-section");
+    const idRecherche = String(idProduit || "").trim();
+
+    /* POINT 13 : si le préchargement est terminé, aucun loader ni appel API. */
+    if (stockProduitsPrecharge) {
+        const stock = stockProduitsPourFiche.find(
+            element => element.idProduit === idRecherche
+        );
+
+        /* POINT 27 — stale-while-revalidate :
+           affiche immédiatement le stock préchargé, puis le confirme
+           silencieusement depuis le backend afin qu'un mouvement de stock
+           récent ne laisse jamais la fiche durablement sur une ancienne valeur. */
+        afficherStockDansFicheProduit(stock);
+        sectionStock?.classList.remove("is-loading");
+
+        prechargerStockProduitsSilencieusement({
+            forcerActualisation: true
+        }).then(stockActualise => {
+            if (!Array.isArray(stockActualise)) {
+                return;
+            }
+
+            const modale = document.getElementById("product-view-modal");
+            if (!modale?.classList.contains("active")) {
+                return;
+            }
+
+            const produitToujoursAffiche = String(
+                modale.dataset.productId || ""
+            ).trim();
+
+            /* Si la modale n'expose pas l'ID en dataset, l'appel courant reste
+               la référence ; sinon on évite d'écraser une autre fiche ouverte. */
+            if (
+                produitToujoursAffiche &&
+                produitToujoursAffiche !== idRecherche
+            ) {
+                return;
+            }
+
+            const stockFrais = stockProduitsPourFiche.find(
+                element => element.idProduit === idRecherche
+            );
+
+            afficherStockDansFicheProduit(stockFrais);
+        }).catch(() => {
+            /* La valeur déjà affichée reste utilisable si la revalidation échoue. */
+        });
+
+        return;
+    }
+
     sectionStock?.classList.add("is-loading");
 
     const ids=["view-product-stock-physical","view-product-stock-reserved","view-product-stock-unsellable","view-product-stock-sellable","view-product-stock-status","view-product-stock-threshold","view-product-stock-updated"];
     ids.forEach(id=>definirTexteElement(id,"…"));
     const msg=document.getElementById("view-product-stock-message");
     if(msg){msg.hidden=true;msg.textContent="";}
+
     try{
-        const resultat=await apiGet("getStock");
-        if(!resultat?.success) throw new Error(resultat?.message||"Impossible de charger le stock.");
-        const lignes=Array.isArray(resultat.data)?resultat.data:[];
-        stockProduitsPourFiche=lignes.map(normaliserStockPourFicheProduit).filter(x=>x.idProduit);
-        const stock=stockProduitsPourFiche.find(x=>x.idProduit===String(idProduit||"").trim());
+        const stockPrecharge = await prechargerStockProduitsSilencieusement();
+        if (stockPrecharge === null) {
+            throw new Error("Impossible de charger le stock.");
+        }
+
+        const stock=stockProduitsPourFiche.find(x=>x.idProduit===idRecherche);
         afficherStockDansFicheProduit(stock);
         sectionStock?.classList.remove("is-loading");
     }catch(error){
@@ -2845,6 +3323,7 @@ function fermerConsultationProduit() {
 
     modal.classList.remove("active");
     modal.setAttribute("aria-hidden", "true");
+    delete modal.dataset.productId;
     document.body.classList.remove("modal-open");
 }
 
@@ -2891,25 +3370,63 @@ function afficherImageConsultationProduit(urlImage) {
    ÉTAT DE CHARGEMENT DU TABLEAU
 =========================================================== */
 
-function afficherEtatChargement() {
+function preparerLoaderProduits() {
 
-    const tableBody =
-        obtenirCorpsTableauProduits();
+    const zonePage = document.querySelector(".content");
 
-    if (!tableBody) {
+    if (zonePage) {
+        zonePage.setAttribute("data-visibl-page", "");
+        zonePage.classList.add("visibl-loading-scope");
 
-        return;
-
+        const ancre = zonePage.querySelector(".welcome-section");
+        if (ancre) {
+            ancre.setAttribute("data-loading-anchor", "");
+        }
     }
+
+    [
+        "kpi-total-products",
+        "kpi-stock-value",
+        "kpi-average-margin",
+        "kpi-active-products"
+    ].forEach(id => {
+        document.getElementById(id)?.setAttribute("data-kpi-value", "");
+    });
+
+    document.getElementById("products-table-body")?.setAttribute("data-loading-table-body", "");
+}
+
+function afficherEtatChargement(message = "Chargement des produits…") {
+
+    preparerLoaderProduits();
+
+    if (window.VisiblLoading && typeof window.VisiblLoading.start === "function") {
+        window.VisiblLoading.start({
+            scope: ".content",
+            tableBody: "#products-table-body",
+            rows: 10,
+            message: message
+        });
+        return;
+    }
+
+    const tableBody = obtenirCorpsTableauProduits();
+    if (!tableBody) return;
 
     tableBody.innerHTML = `
         <tr>
-            <td colspan="9" class="table-message">
-                Chargement des produits...
-            </td>
+            <td colspan="9" class="table-message">Chargement des produits...</td>
         </tr>
     `;
+}
 
+function terminerLoaderProduits() {
+    if (window.VisiblLoading && typeof window.VisiblLoading.stop === "function") {
+        window.VisiblLoading.stop({
+            scope: ".content",
+            tableBody: "#products-table-body"
+        });
+    }
 }
 
 
@@ -3185,6 +3702,37 @@ function mettreAJourKPIs() {
         " % du catalogue"
     );
 
+    /*
+     * Les valeurs KPI sont maintenant disponibles :
+     * on sort explicitement les cartes du mode skeleton.
+     * Le composant global kpi.js expose setLoading() pour cela.
+     */
+    const idsKpiProduits = [
+        "products-total",
+        "products-stock-value",
+        "products-margin",
+        "products-active"
+    ];
+
+    idsKpiProduits.forEach(idKpi => {
+        if (
+            window.VisiblKPI &&
+            typeof window.VisiblKPI.setLoading === "function"
+        ) {
+            window.VisiblKPI.setLoading(idKpi, false);
+            return;
+        }
+
+        const carte = document.querySelector(
+            `[data-kpi-id="${idKpi}"]`
+        );
+
+        if (carte) {
+            carte.classList.remove("is-loading");
+            carte.setAttribute("aria-busy", "false");
+        }
+    });
+
 }
 
 
@@ -3375,7 +3923,8 @@ function echapperHTML(value) {
  * fournisseur reste sélectionnable même s'il est devenu inactif.
  */
 async function chargerFournisseursPourProduits(
-    idFournisseurAConserver = ""
+    idFournisseurAConserver = "",
+    options = {}
 ) {
 
     const select =
@@ -3391,6 +3940,31 @@ async function chargerFournisseursPourProduits(
         ""
     ).trim();
 
+    const forcer = options.forcer === true;
+
+    /*
+       Les fournisseurs déjà chargés sont réutilisés immédiatement.
+       Une nouvelle lecture Google Sheets n'est faite que lors du premier
+       chargement, après un échec, ou lors d'un rafraîchissement forcé.
+    */
+    if (fournisseursProduitsCharges && !forcer) {
+        remplirListeFournisseursProduits(
+            fournisseursProduits,
+            valeurAvantChargement
+        );
+        return fournisseursProduits;
+    }
+
+    /* Évite plusieurs appels getFournisseurs simultanés. */
+    if (promesseChargementFournisseursProduits && !forcer) {
+        await promesseChargementFournisseursProduits;
+        remplirListeFournisseursProduits(
+            fournisseursProduits,
+            valeurAvantChargement
+        );
+        return fournisseursProduits;
+    }
+
     select.disabled = true;
 
     select.innerHTML = `
@@ -3399,8 +3973,7 @@ async function chargerFournisseursPourProduits(
         </option>
     `;
 
-    try {
-
+    const chargement = (async () => {
         const resultat =
             await apiGet("getFournisseurs");
 
@@ -3415,6 +3988,15 @@ async function chargerFournisseursPourProduits(
             Array.isArray(resultat.data)
                 ? resultat.data
                 : [];
+
+        fournisseursProduitsCharges = true;
+        return fournisseursProduits;
+    })();
+
+    promesseChargementFournisseursProduits = chargement;
+
+    try {
+        await chargement;
 
         remplirListeFournisseursProduits(
             fournisseursProduits,
@@ -3432,6 +4014,7 @@ async function chargerFournisseursPourProduits(
         return fournisseursProduits;
 
     } catch (error) {
+        fournisseursProduitsCharges = false;
 
         console.error(
             "Erreur de chargement des fournisseurs du produit :",
@@ -3447,7 +4030,9 @@ async function chargerFournisseursPourProduits(
         return [];
 
     } finally {
-
+        if (promesseChargementFournisseursProduits === chargement) {
+            promesseChargementFournisseursProduits = null;
+        }
         select.disabled = false;
     }
 }
@@ -3725,9 +4310,11 @@ function selectionnerFournisseurProduit(valeur) {
 /* TVA retirée de l'interface Produits : aucune initialisation nécessaire. */
 
 document.addEventListener("input", event => {
-    if (event.target?.id === "product-vat-rate") {
-        event.target.value = "18";
-    }
+    if (event.target?.id !== "product-vat-rate") return;
+
+    const valeur = convertirNombre(event.target.value);
+    if (valeur > 18) event.target.value = "18";
+    if (valeur < 0) event.target.value = "0";
 });
 
 /* ===========================================================
@@ -3976,6 +4563,17 @@ async function confirmerSuppressionProduit() {
     }
 
     if (!idProduitASupprimer) {
+        console.error("Suppression produit : aucun ID mémorisé.");
+        afficherMessageSuppressionProduit(
+            "Impossible de supprimer : identifiant du produit manquant.",
+            "error"
+        );
+        const boutonConfirmerSansId =
+            document.getElementById("confirm-delete-product-btn");
+        if (boutonConfirmerSansId) {
+            boutonConfirmerSansId.disabled = false;
+            boutonConfirmerSansId.textContent = "Supprimer le produit";
+        }
         return;
     }
 
@@ -4009,6 +4607,22 @@ async function confirmerSuppressionProduit() {
             );
         }
 
+        if (resultat.signature != null) {
+            signatureSyncProduits = String(resultat.signature);
+        }
+
+        setTimeout(() => {
+            apiPost(
+                "traiterNotificationsDeleteProduit",
+                { idProduit }
+            ).catch(error => {
+                console.warn(
+                    "Notifications suppression produit en arrière-plan impossibles :",
+                    error
+                );
+            });
+        }, 0);
+
         produits = produits.filter(produit => {
 
             const id = String(
@@ -4023,7 +4637,15 @@ async function confirmerSuppressionProduit() {
 
         mettreAJourKPIs();
         appliquerFiltresProduits();
+        sauvegarderCacheNavigationProduits();
         fermerConfirmationSuppressionProduit();
+
+        /* La suppression a déjà mis la liste locale à jour. Si sa nouvelle
+           signature a été renvoyée, aucune relecture complète immédiate n'est
+           nécessaire. On garde la revalidation complète uniquement en secours. */
+        if (resultat.signature == null) {
+            chargerProduitsDepuisAPI({ silencieux: true });
+        }
 
     } catch (error) {
 
@@ -4112,6 +4734,51 @@ function initialiserFiltresProduits() {
             appliquerFiltresProduits
         );
     }
+
+    document
+        .querySelectorAll(".product-status-tab")
+        .forEach(bouton => {
+            if (bouton.dataset.initialise === "true") {
+                return;
+            }
+
+            bouton.dataset.initialise = "true";
+
+            bouton.addEventListener("click", () => {
+                if (!filtreStatut) {
+                    return;
+                }
+
+                filtreStatut.value =
+                    String(bouton.dataset.productStatus || "");
+
+                filtreStatut.dispatchEvent(
+                    new Event("change", { bubbles: true })
+                );
+            });
+        });
+
+    synchroniserBarreStatutsProduits();
+}
+
+
+function synchroniserBarreStatutsProduits() {
+    const valeur = String(
+        document.getElementById("product-status-filter")?.value || ""
+    );
+
+    document
+        .querySelectorAll(".product-status-tab")
+        .forEach(bouton => {
+            const actif =
+                String(bouton.dataset.productStatus || "") === valeur;
+
+            bouton.classList.toggle("active", actif);
+            bouton.setAttribute(
+                "aria-pressed",
+                actif ? "true" : "false"
+            );
+        });
 }
 
 
@@ -4121,6 +4788,8 @@ function appliquerFiltresProduits(event) {
         pageProduitsCourante = 1;
     }
 
+    synchroniserBarreStatutsProduits();
+
     const recherche = normaliserTexteFiltreProduit(
         document.getElementById("header-products-search-input")?.value
     );
@@ -4128,6 +4797,20 @@ function appliquerFiltresProduits(event) {
     const statutRecherche = normaliserStatutFiltreProduit(
         document.getElementById("product-status-filter")?.value
     );
+
+    /*
+     * POINT 10 — STRATÉGIE HYBRIDE PRODUITS
+     * La liste complète est déjà chargée dans `produits` par getProduits().
+     * Tant que cette liste complète est disponible, recherche et filtre Statut
+     * sont donc exécutés immédiatement dans le navigateur : aucun aller-retour
+     * serveur à chaque frappe. La synchronisation légère par signature reste
+     * l'autorité et recharge silencieusement la liste si le catalogue change.
+     *
+     * La recherche serveur des points 5/6 est conservée comme repli pour une
+     * future bascule vers un catalogue non chargé intégralement.
+     */
+    annulerRechercheProduitsServeur();
+    rechercheProduitsServeurActive = false;
 
     const listeFiltree = produits.filter(produit => {
 
@@ -4172,6 +4855,89 @@ function appliquerFiltresProduits(event) {
     });
 
     afficherProduits(listeFiltree);
+
+    /* POINT 26 — mémorise recherche, filtre et page après consultation. */
+    sauvegarderCacheNavigationProduits();
+}
+
+
+function annulerRechercheProduitsServeur() {
+    if (timerRechercheProduitsServeur) {
+        clearTimeout(timerRechercheProduitsServeur);
+        timerRechercheProduitsServeur = null;
+    }
+    sequenceRechercheProduitsServeur++;
+}
+
+
+function planifierRechercheProduitsServeur(recherche, statut = "") {
+    if (timerRechercheProduitsServeur) {
+        clearTimeout(timerRechercheProduitsServeur);
+    }
+
+    const sequence = ++sequenceRechercheProduitsServeur;
+
+    timerRechercheProduitsServeur = setTimeout(() => {
+        timerRechercheProduitsServeur = null;
+        rechercherProduitsServeur(
+            recherche,
+            pageProduitsCourante,
+            sequence,
+            statut
+        );
+    }, 300);
+}
+
+
+async function rechercherProduitsServeur(
+    recherche,
+    page = 1,
+    sequence = ++sequenceRechercheProduitsServeur,
+    statut = ""
+) {
+    try {
+        const resultat = await apiGet("getProduitsPage", {
+            page: Math.max(1, Number(page) || 1),
+            recherche: String(recherche || "").trim(),
+            statut: String(statut || "").trim(),
+            _ts: Date.now()
+        });
+
+        if (sequence !== sequenceRechercheProduitsServeur) {
+            return;
+        }
+
+        if (!resultat || resultat.success !== true) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de rechercher les produits."
+            );
+        }
+
+        rechercheProduitsServeurActive = true;
+        pageProduitsCourante = Math.max(1, Number(resultat.page) || 1);
+        totalRechercheProduitsServeur = Number(resultat.total || 0);
+        totalPagesRechercheProduitsServeur = Math.max(
+            1,
+            Number(resultat.totalPages || 1)
+        );
+
+        afficherProduits(resultat.data || [], {
+            dejaPagineeServeur: true,
+            totalServeur: totalRechercheProduitsServeur,
+            totalPagesServeur: totalPagesRechercheProduitsServeur
+        });
+
+    } catch (error) {
+        if (sequence !== sequenceRechercheProduitsServeur) {
+            return;
+        }
+
+        console.error("Erreur recherche Produits serveur :", error);
+        afficherErreurChargement(
+            error.message || "Impossible de rechercher les produits."
+        );
+    }
 }
 
 function normaliserTexteFiltreProduit(valeur) {
@@ -4499,11 +5265,13 @@ function initialiserOutilsAvancesProduits() {
     const taillePage =
         document.getElementById("products-page-size");
 
-    taillePage?.addEventListener("change", () => {
-        produitsParPage = Number(taillePage.value) || 10;
-        pageProduitsCourante = 1;
-        appliquerFiltresProduits();
-    });
+    /* POINT 4 — pagination Produits fixée à 10 éléments par page. */
+    produitsParPage = 10;
+
+    if (taillePage) {
+        taillePage.value = "10";
+        taillePage.disabled = true;
+    }
 
     const tableBody = obtenirCorpsTableauProduits();
 
@@ -4698,7 +5466,26 @@ function afficherPaginationProduits(total, totalPages) {
                     page <= totalPages
                 ) {
                     pageProduitsCourante = page;
-                    afficherProduits(produitsFiltresCourants);
+
+                    if (rechercheProduitsServeurActive) {
+                        const recherche = normaliserTexteFiltreProduit(
+                            document.getElementById("header-products-search-input")?.value
+                        );
+                        const statut = normaliserStatutFiltreProduit(
+                            document.getElementById("product-status-filter")?.value
+                        );
+                        rechercherProduitsServeur(
+                            recherche,
+                            page,
+                            ++sequenceRechercheProduitsServeur,
+                            statut
+                        );
+                    } else {
+                        afficherProduits(produitsFiltresCourants);
+                    }
+
+                    /* POINT 26 — conserve la page choisie au retour sur Produits. */
+                    sauvegarderCacheNavigationProduits();
 
                     document
                         .querySelector(".sales-table-container")
@@ -4893,9 +5680,6 @@ async function confirmerSuppressionEnMasseProduits() {
             "cancel-bulk-delete-products-btn"
         );
 
-    const supprimes = [];
-    const erreurs = [];
-
     try {
 
         if (bouton) {
@@ -4907,33 +5691,30 @@ async function confirmerSuppressionEnMasseProduits() {
             boutonAnnuler.disabled = true;
         }
 
-        for (const idProduit of ids) {
+        /* POINT 17 — un seul appel backend pour toute la sélection. */
 
-            try {
+        const resultat = await apiPost(
+            "deleteProduitsBulk",
+            { idsProduits: ids }
+        );
 
-                const resultat = await apiPost(
-                    "deleteProduit",
-                    { idProduit }
-                );
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Suppression multiple refusée."
+            );
+        }
 
-                if (!resultat?.success) {
-                    throw new Error(
-                        resultat?.message ||
-                        "Suppression refusée."
-                    );
-                }
+        const supprimes = Array.isArray(resultat?.data?.supprimes)
+            ? resultat.data.supprimes.map(id => String(id || "").trim())
+            : [];
 
-                supprimes.push(idProduit);
+        const erreurs = Array.isArray(resultat?.data?.erreurs)
+            ? resultat.data.erreurs
+            : [];
 
-            } catch (error) {
-
-                erreurs.push({
-                    idProduit,
-                    message:
-                        error?.message ||
-                        "Erreur inconnue"
-                });
-            }
+        if (resultat.signature != null) {
+            signatureSyncProduits = String(resultat.signature);
         }
 
         if (supprimes.length > 0) {
@@ -4956,6 +5737,13 @@ async function confirmerSuppressionEnMasseProduits() {
 
             mettreAJourKPIs();
             appliquerFiltresProduits();
+            sauvegarderCacheNavigationProduits();
+        }
+
+        if (supprimes.length > 0 && resultat.signature == null) {
+            /* Secours uniquement : si aucune signature n'est revenue du backend,
+               on confirme l'état réel par une relecture complète silencieuse. */
+            chargerProduitsDepuisAPI({ silencieux: true });
         }
 
         if (erreurs.length > 0) {
@@ -4970,6 +5758,18 @@ async function confirmerSuppressionEnMasseProduits() {
 
         fermerSuppressionEnMasseProduits();
 
+    } catch (error) {
+
+        console.error(
+            "Erreur de suppression multiple des produits :",
+            error
+        );
+
+        afficherMessageSuppressionEnMasse(
+            error?.message ||
+            "Une erreur est survenue pendant la suppression multiple."
+        );
+
     } finally {
 
         if (bouton) {
@@ -4983,7 +5783,6 @@ async function confirmerSuppressionEnMasseProduits() {
         }
     }
 }
-
 
 function afficherMessageSuppressionEnMasse(message) {
 
@@ -5451,6 +6250,7 @@ function appliquerAnimationProduit() {
 function valeurRechercheProduitsHeader(){
     return String(document.getElementById("header-products-search-input")?.value || "").trim();
 }
+
 /* ===========================================================
    CORRECTIFS UI PRODUITS — RÉFÉRENCE VENTES
 =========================================================== */
@@ -5502,7 +6302,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const menu=q("#products-main-actions-dropdown");
     const trigger=q("#products-main-actions-trigger");
     const selection=q("#selection-products-btn");
-    [q("#refresh-products-btn"),q("#export-products-btn")?.closest(".products-export-menu"),q("#print-products-btn")].filter(Boolean).forEach(old=>{
+    [q("#export-products-btn")?.closest(".products-export-menu"),q("#print-products-btn")].filter(Boolean).forEach(old=>{
         const source=old.matches?.("button")?old:q("button",old);
         if(!source||!menu)return;
         const b=document.createElement("button"); b.type="button"; b.innerHTML=source.innerHTML;

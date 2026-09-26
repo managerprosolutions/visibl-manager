@@ -16,11 +16,11 @@ let venteEnModificationId = null;
 let ligneVenteEnModificationId = null;
 let brouillonLivraisonVente = null;
 let pageVentesActuelle = 1;
-let taillePageVentes = 20;
+let taillePageVentes = 10;
 let modeSelectionVentes = false;
 const ventesSelectionnees = new Set();
 
-// Pagination serveur Ventes : 20 ventes fixes par page.
+// Pagination serveur Ventes : 10 ventes fixes par page.
 const pagesVentesServeur = new Map();
 let totalVentesServeur = 0;
 let totalPagesVentesServeur = 1;
@@ -29,7 +29,9 @@ let generationChargementVentes = 0;
 let versionVentesServeur = "";
 
 // Cache de navigation : conserve les ventes et les noms clients déjà chargés.
-const VENTES_NAV_CACHE_KEY = "visibl:ventes:nav-cache:v1";
+const VENTES_NAV_CACHE_KEY = "visibl:ventes:nav-cache:v2-10lignes";
+const VENTES_NAV_CACHE_SCHEMA = 2;
+try { sessionStorage.removeItem("visibl:ventes:nav-cache:v1"); } catch (error) {}
 const INTERVALLE_SYNC_VENTES_MS = 10000;
 let timerSyncVentes = null;
 let syncVentesEnCours = false;
@@ -40,6 +42,7 @@ function sauvegarderCacheNavigationVentes() {
         sessionStorage.setItem(
             VENTES_NAV_CACHE_KEY,
             JSON.stringify({
+                schema: VENTES_NAV_CACHE_SCHEMA,
                 pages: Array.from(pagesVentesServeur.entries()),
                 total: totalVentesServeur,
                 totalPages: totalPagesVentesServeur,
@@ -59,6 +62,10 @@ function restaurerCacheNavigationVentes() {
         const brut = sessionStorage.getItem(VENTES_NAV_CACHE_KEY);
         if (!brut) return false;
         const cache = JSON.parse(brut);
+        if (Number(cache?.schema) !== VENTES_NAV_CACHE_SCHEMA) {
+            sessionStorage.removeItem(VENTES_NAV_CACHE_KEY);
+            return false;
+        }
         if (!Array.isArray(cache?.pages) || !cache.pages.length) return false;
         if (!Array.isArray(cache.clients)) return false;
         const pages = new Map(cache.pages);
@@ -3772,6 +3779,12 @@ function initialiserListeVentes() {
 
 function initialiserSynchronisationVentes() {
     if (timerSyncVentes) clearInterval(timerSyncVentes);
+
+    // Comme Commandes : première vérification légère peu après l'ouverture.
+    setTimeout(() => {
+        synchroniserVentesMultiAppareils();
+    }, 2500);
+
     timerSyncVentes = setInterval(() => {
         if (document.visibilityState !== "visible") return;
         synchroniserVentesMultiAppareils();
@@ -3849,9 +3862,92 @@ async function rafraichirVentesApresSynchronisation(etat) {
 
     if (totalPagesVentesServeur > 1) {
         const generation = ++generationChargementVentes;
-        prechargementVentesPromise = prechargerPagesVentesEnCascade(2, generation);
+        planifierPrechargementVentesEnArrierePlan(2, generation);
     }
 }
+
+
+async function revaliderVentesDepuisServeurApresCache() {
+    try {
+        const resultat = await apiGet("getVentesPage", {
+            page: 1,
+            limite: taillePageVentes,
+            _ts: Date.now()
+        });
+
+        if (!resultat?.success) return;
+
+        pagesVentesServeur.set(
+            1,
+            construireObjetPageVentes(resultat)
+        );
+
+        const pagination = resultat.pagination || {};
+
+        totalVentesServeur = Math.max(
+            0,
+            Number(pagination.total) || 0
+        );
+
+        totalPagesVentesServeur = Math.max(
+            1,
+            Number(pagination.totalPages) ||
+                Math.ceil(totalVentesServeur / taillePageVentes) ||
+                1
+        );
+
+        pageVentesActuelle = Math.min(
+            Math.max(1, pageVentesActuelle),
+            totalPagesVentesServeur
+        );
+
+        if (resultat?.version) {
+            versionVentesServeur = String(resultat.version);
+        }
+
+        reconstruireVentesDepuisPagesServeur();
+
+        if (resultat.kpi) {
+            afficherKPIVentesServeur(resultat.kpi);
+        } else {
+            const totalKpi = document.getElementById("total-sales-value");
+            if (totalKpi) {
+                totalKpi.textContent = String(totalVentesServeur);
+                totalKpi.classList.remove("is-loading");
+            }
+        }
+
+        afficherTableauVentes();
+        sauvegarderCacheNavigationVentes();
+    } catch (error) {
+        console.warn("Revalidation serveur Ventes impossible :", error);
+    }
+}
+
+
+function planifierPrechargementVentesEnArrierePlan(debutPage, generation) {
+    const lancer = () => {
+        if (generation !== generationChargementVentes) return;
+
+        if (document.hidden) {
+            window.setTimeout(lancer, 1500);
+            return;
+        }
+
+        prechargementVentesPromise =
+            prechargerPagesVentesEnCascade(
+                debutPage,
+                generation
+            );
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(lancer, { timeout: 1500 });
+    } else {
+        window.setTimeout(lancer, 350);
+    }
+}
+
 
 async function chargerVentes(options = {}) {
     const { silencieux = false, conserverPage = false, forcer = false } = options || {};
@@ -3859,15 +3955,22 @@ async function chargerVentes(options = {}) {
     const pageAvant = conserverPage ? pageVentesActuelle : 1;
 
     if (!forcer && restaurerCacheNavigationVentes()) {
-        synchroniserVentesMultiAppareils();
+        // Même stratégie que Commandes : affichage immédiat du cache,
+        // puis revalidation discrète de la page 1 côté serveur.
+        revaliderVentesDepuisServeurApresCache();
+
         if (!toutesPagesVentesChargees()) {
             const generation = generationChargementVentes;
             const premierePageManquante = Array.from(
                 { length: totalPagesVentesServeur },
                 (_, index) => index + 1
             ).find(page => !pagesVentesServeur.has(page));
+
             if (premierePageManquante) {
-                prechargementVentesPromise = prechargerPagesVentesEnCascade(premierePageManquante, generation);
+                planifierPrechargementVentesEnArrierePlan(
+                    premierePageManquante,
+                    generation
+                );
             }
         }
         return;
@@ -3888,7 +3991,7 @@ async function chargerVentes(options = {}) {
             <tr>
                 <td colspan="13" class="empty-table sales-loading-cell">
                     <span class="sales-loader" aria-hidden="true"></span>
-                    <span>Chargement des 20 dernières ventes...</span>
+                    <span>Chargement des 10 dernières ventes...</span>
                 </td>
             </tr>`;
     }
@@ -3911,7 +4014,7 @@ async function chargerVentes(options = {}) {
         }
 
         afficherTableauVentes();
-        prechargementVentesPromise = prechargerPagesVentesEnCascade(2, generation);
+        planifierPrechargementVentesEnArrierePlan(2, generation);
     } catch (error) {
         console.error("Erreur de chargement des ventes :", error);
         if (!silencieux) {
@@ -3923,7 +4026,11 @@ async function chargerVentes(options = {}) {
     } finally {
         document.body.classList.remove("sales-data-loading");
         ["total-sales-value","sales-revenue-value","sales-paid-value","sales-balance-value"]
-            .forEach(id => document.getElementById(id)?.classList.remove("is-loading"));
+            .forEach(id => {
+                const element = document.getElementById(id);
+                element?.classList.remove("is-loading");
+                element?.closest(".visibl-kpi-card")?.classList.remove("is-loading");
+            });
     }
 }
 
@@ -3998,6 +4105,7 @@ function afficherKPIVentesServeur(kpi) {
         if (element) {
             element.textContent = valeur;
             element.classList.remove("is-loading");
+            element.closest(".visibl-kpi-card")?.classList.remove("is-loading");
         }
     });
 }
@@ -4059,11 +4167,33 @@ async function allerPageVentes(page) {
 function appliquerFiltresVentes(
     conserverPage = false
 ) {
-    if (filtresVentesActifs() && !toutesPagesVentesChargees()) {
-        if (prechargementVentesPromise) {
-            prechargementVentesPromise.then(() => appliquerFiltresVentes(conserverPage));
-        }
-        return;
+    const filtresDemandes =
+        filtresVentesActifs();
+
+    /*
+     * Même correction que Commandes :
+     * le filtre agit immédiatement sur les ventes déjà chargées.
+     * Si le préchargement continue, le résultat est recalculé
+     * automatiquement lorsqu'il se termine.
+     */
+    if (
+        filtresDemandes &&
+        !toutesPagesVentesChargees() &&
+        prechargementVentesPromise
+    ) {
+        const promesseEnCours =
+            prechargementVentesPromise;
+
+        promesseEnCours.then(() => {
+            if (
+                prechargementVentesPromise ===
+                promesseEnCours
+            ) {
+                appliquerFiltresVentes(
+                    conserverPage
+                );
+            }
+        });
     }
     const recherche =
         normaliserTexteVente(
@@ -5749,6 +5879,99 @@ function validerFormulaireRetourVente() {
     return valide;
 }
 
+
+/* ===========================================================
+   FEEDBACK SOFT — ACTIONS VENTES
+   Même expérience visuelle que Clients : loader centré,
+   puis confirmation de succès au même endroit avec "Parfait !".
+=========================================================== */
+function obtenirFeedbackActionVente() {
+    let overlay = document.getElementById("vente-action-soft-feedback");
+    if (overlay) return overlay;
+
+    overlay = document.createElement("div");
+    overlay.id = "vente-action-soft-feedback";
+    overlay.className = "vente-action-soft-feedback";
+    overlay.setAttribute("aria-hidden", "true");
+    overlay.innerHTML = `
+        <div class="vente-action-soft-card" role="status" aria-live="polite">
+            <div class="vente-action-loading-view">
+                <span class="vente-action-soft-spinner" aria-hidden="true"></span>
+                <div class="vente-action-soft-copy">
+                    <strong class="vente-action-soft-title">Traitement en cours…</strong>
+                    <span class="vente-action-soft-text">Quelques secondes, s’il vous plaît.</span>
+                </div>
+            </div>
+            <div class="vente-action-success-view" aria-hidden="true">
+                <div class="vente-action-success-icon" aria-hidden="true">✓</div>
+                <div class="vente-action-success-confetti" aria-hidden="true">
+                    <span>◆</span><span>●</span><span>◆</span>
+                    <span>●</span><span>◆</span><span>●</span>
+                </div>
+                <strong class="vente-action-success-title">Action réussie !</strong>
+                <span class="vente-action-success-text">L’action a été effectuée avec succès.</span>
+                <button type="button" class="vente-action-success-btn">✓ Parfait !</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+function demarrerFeedbackActionVente(titre = "Traitement en cours…") {
+    const overlay = obtenirFeedbackActionVente();
+    const loading = overlay.querySelector(".vente-action-loading-view");
+    const success = overlay.querySelector(".vente-action-success-view");
+    const titreEl = overlay.querySelector(".vente-action-soft-title");
+
+    overlay.classList.remove("vente-action-is-success");
+    loading?.removeAttribute("aria-hidden");
+    success?.setAttribute("aria-hidden", "true");
+    if (titreEl) titreEl.textContent = titre;
+
+    overlay.classList.add("is-visible");
+    overlay.setAttribute("aria-hidden", "false");
+}
+
+function terminerFeedbackActionVente() {
+    const overlay = document.getElementById("vente-action-soft-feedback");
+    if (!overlay) return;
+    overlay.classList.remove("is-visible", "vente-action-is-success");
+    overlay.setAttribute("aria-hidden", "true");
+}
+
+function afficherSuccesActionVente(titre, message) {
+    return new Promise(resolve => {
+        const overlay = obtenirFeedbackActionVente();
+        const loading = overlay.querySelector(".vente-action-loading-view");
+        const success = overlay.querySelector(".vente-action-success-view");
+        const titreEl = overlay.querySelector(".vente-action-success-title");
+        const texteEl = overlay.querySelector(".vente-action-success-text");
+        const bouton = overlay.querySelector(".vente-action-success-btn");
+
+        loading?.setAttribute("aria-hidden", "true");
+        success?.removeAttribute("aria-hidden");
+        if (titreEl) titreEl.textContent = titre || "Action réussie !";
+        if (texteEl) texteEl.textContent = message || "L’action a été effectuée avec succès.";
+
+        overlay.classList.add("is-visible", "vente-action-is-success");
+        overlay.setAttribute("aria-hidden", "false");
+
+        const terminer = () => {
+            terminerFeedbackActionVente();
+            resolve();
+        };
+
+        if (bouton) {
+            bouton.addEventListener("click", terminer, { once: true });
+            window.setTimeout(() => bouton.focus(), 80);
+        } else {
+            terminer();
+        }
+    });
+}
+
+
 async function enregistrerRetourVente() {
     if (!validerFormulaireRetourVente()) {
         afficherMessageRetourVente(
@@ -5830,6 +6053,8 @@ async function enregistrerRetourVente() {
         );
 
     try {
+        demarrerFeedbackActionVente("Enregistrement du retour…");
+
         definirBoutonChargementVente(
             bouton,
             true,
@@ -5895,10 +6120,9 @@ async function enregistrerRetourVente() {
 
         fermerModaleRetourVente();
 
-        afficherToastVente(
-            resultat.message ||
-            "Retour enregistré avec succès.",
-            "success"
+        await afficherSuccesActionVente(
+            "Retour enregistré !",
+            resultat.message || "Le retour a été enregistré avec succès."
         );
 
         await chargerVentes({
@@ -5908,6 +6132,8 @@ async function enregistrerRetourVente() {
         });
 
     } catch (error) {
+        terminerFeedbackActionVente();
+
         console.error(
             "Erreur enregistrement retour vente :",
             error
@@ -6204,6 +6430,8 @@ async function effectuerControleRetourVente(idVente, idRetour) {
             : null;
 
     try {
+        demarrerFeedbackActionVente("Enregistrement du contrôle…");
+
         const resultat = await apiPost(
             "createRetourVente",
             {
@@ -6230,10 +6458,9 @@ async function effectuerControleRetourVente(idVente, idRetour) {
             );
         }
 
-        afficherToastVente(
-            resultat.message ||
-            "Contrôle enregistré.",
-            "success"
+        await afficherSuccesActionVente(
+            "Contrôle enregistré !",
+            resultat.message || "Le contrôle du retour a été enregistré avec succès."
         );
 
         await chargerVentes({
@@ -6254,6 +6481,8 @@ async function effectuerControleRetourVente(idVente, idRetour) {
         }
 
     } catch (error) {
+        terminerFeedbackActionVente();
+
         afficherToastVente(
             error.message ||
             "Impossible d'enregistrer le contrôle.",
@@ -6299,6 +6528,7 @@ async function confirmerAnnulationRetourVente() {
     const utilisateur = typeof getCurrentUser === "function" ? getCurrentUser() : null;
     const bouton = document.getElementById("confirm-cancel-return-btn");
     try {
+        demarrerFeedbackActionVente("Annulation du retour…");
         definirBoutonChargementVente(bouton, true, "Annulation...");
         const resultat = await apiPost("createRetourVente", {
             operation: "annuler",
@@ -6309,11 +6539,12 @@ async function confirmerAnnulationRetourVente() {
         });
         if (!resultat?.success) throw new Error(resultat?.message || "Impossible d'annuler le retour.");
         fermerAnnulationRetourVente();
-        afficherToastVente(resultat.message || "Retour annulé avec succès.", "success");
+        await afficherSuccesActionVente("Retour annulé !", resultat.message || "Le retour a été annulé avec succès.");
         await chargerVentes({ silencieux: true, conserverPage: true, forcer: true });
         const vente = ventesChargees.find(v => String(v.idVente) === String(idVente));
         if (vente) afficherHistoriqueRetoursVente(vente);
     } catch (error) {
+        terminerFeedbackActionVente();
         const zone = document.getElementById("cancel-return-message");
         if (zone) { zone.textContent = error.message || "Impossible d'annuler le retour."; zone.className = "form-message error"; }
     } finally {
@@ -8963,6 +9194,7 @@ async function enregistrerEncaissementPaiementVente() {
         : null;
 
     try {
+        demarrerFeedbackActionVente("Encaissement du paiement…");
         definirBoutonChargementVente(bouton, true, "Encaissement...");
 
         const resultat = await apiPost("encaisserPaiementVente", {
@@ -8982,7 +9214,7 @@ async function enregistrerEncaissementPaiementVente() {
         }
 
         fermerModaleEncaissementPaiementVente();
-        afficherToastVente(resultat.message || "Paiement encaissé avec succès.", "success");
+        await afficherSuccesActionVente("Paiement encaissé !", resultat.message || "Le paiement a été encaissé avec succès.");
         await chargerVentes({ silencieux: true, conserverPage: true, forcer: true });
 
         const venteActualisee = ventesChargees.find(
@@ -8992,6 +9224,7 @@ async function enregistrerEncaissementPaiementVente() {
             voirVente(idVente);
         }
     } catch (error) {
+        terminerFeedbackActionVente();
         erreur(error.message || "Impossible d'enregistrer l'encaissement.");
     } finally {
         definirBoutonChargementVente(bouton, false, "Encaisser");

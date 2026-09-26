@@ -1,225 +1,102 @@
 /* ===========================================================
    VISIBL ERP — dashboard.js
-   Frontend léger : une seule source backend getDashboard()
+   DASHBOARD TEMPS RÉEL V2 — CACHE SERVEUR UNIQUEMENT
 =========================================================== */
 
 let graphiqueRevenusDashboard = null;
 let graphiqueVentesDashboard = null;
 let dashboardCharge = null;
 
-const DASHBOARD_SIGNAL_KEY = "VISIBL_DASHBOARD_REFRESH_SIGNAL";
-const DASHBOARD_SIGNAL_TRAITE_KEY = "VISIBL_DASHBOARD_REFRESH_TRAITE";
-const DASHBOARD_POLL_MS = 3000;
-const DASHBOARD_POLL_MAX_MS = 120000;
-
-// Cache navigateur : réaffichage instantané si aucune donnée n'a changé.
-const DASHBOARD_BROWSER_CACHE_KEY = "VISIBL_DASHBOARD_BROWSER_CACHE_V1";
-const DASHBOARD_BROWSER_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
-
-// Synchronisation multi-appareils : vérification légère de la version serveur.
+/*
+ * Le snapshot navigateur est volontairement en sessionStorage :
+ * - jamais en localStorage ;
+ * - il survit à la navigation entre les modules dans le même onglet ;
+ * - il disparaît à la fermeture de l'onglet / fin de session ;
+ * - on le supprime explicitement à la déconnexion.
+ *
+ * C'est ce qui permet un retour Dashboard réellement instantané sans
+ * refaire un appel serveur quand les données déjà affichées sont connues.
+ */
+const DASHBOARD_SESSION_KEY = "VISIBL_DASHBOARD_SESSION_SNAPSHOT_V1";
 const DASHBOARD_VERSION_CHECK_INTERVAL_MS = 15000;
 let dashboardDerniereVerificationServeur = 0;
 let dashboardVerificationServeurEnCours = false;
-
 let dashboardVerificationTimer = null;
 
-
-/* ===========================================================
-   INITIALISATION
-=========================================================== */
-
-async function initialiserDashboard() {
-    if (
-        typeof requireAuth === "function"
-    ) {
-        requireAuth();
-    }
-
-    const utilisateurConnecte =
-        typeof getCurrentUser === "function"
-            ? getCurrentUser()
-            : null;
-
-    if (
-        typeof getCurrentUser === "function" &&
-        !utilisateurConnecte
-    ) {
-        return;
-    }
-
-    afficherInformationsUtilisateur(
-        utilisateurConnecte
-    );
-
-    initialiserDeconnexion();
-
-    document
-        .getElementById("periode-revenus")
-        ?.addEventListener(
-            "change",
-            afficherGraphiqueRevenus
-        );
-
-    const cacheNavigateurDisponible = restaurerDashboardDepuisCacheNavigateur();
-    const modificationEnAttente = existeModificationDashboardEnAttente();
-
-    if (cacheNavigateurDisponible && !modificationEnAttente) {
-        // Retour sur le Dashboard sans modification : affichage instantané,
-        // sans loader et sans nouvel appel backend.
-        masquerChargementDashboardImmediatement();
-        // Le cache local s'affiche immédiatement, puis on vérifie en arrière-plan
-        // si un autre appareil a publié une version plus récente.
-        synchroniserDashboardAvecServeur(true);
-    } else {
-        // Premier passage, cache absent/expiré ou modification détectée.
-        // Si un ancien cache est déjà affiché mais qu'une modification existe,
-        // on force le loader pendant la récupération de la version fraîche.
-        await chargerDashboard(false, modificationEnAttente);
-    }
-
-    demarrerVerificationDashboardSiNecessaire();
-
-    window.addEventListener(
-        "storage",
-        function(event) {
-            if (event.key === DASHBOARD_SIGNAL_KEY) {
-                demarrerVerificationDashboardSiNecessaire(true);
-            }
-        }
-    );
-
-    // Même onglet / navigation interne.
-    window.addEventListener(
-        "visibl:dashboard-refresh",
-        function() {
-            demarrerVerificationDashboardSiNecessaire(true);
-        }
-    );
-
-    // Quand l'utilisateur revient sur le Dashboard, on revérifie
-    // immédiatement s'il existe une modification non encore traitée.
-    window.addEventListener(
-        "focus",
-        function() {
-            demarrerVerificationDashboardSiNecessaire();
-            synchroniserDashboardAvecServeur(true);
-        }
-    );
-
-    window.addEventListener(
-        "pageshow",
-        function() {
-            demarrerVerificationDashboardSiNecessaire();
-            synchroniserDashboardAvecServeur(true);
-        }
-    );
-
-    document.addEventListener(
-        "visibilitychange",
-        function() {
-            if (!document.hidden) {
-                demarrerVerificationDashboardSiNecessaire();
-                synchroniserDashboardAvecServeur(true);
-            }
-        }
-    );
-}
-
-
-if (document.readyState === "loading") {
-    document.addEventListener(
-        "DOMContentLoaded",
-        initialiserDashboard
-    );
-} else {
-    initialiserDashboard();
-}
-
-
-/* ===========================================================
-   ACTUALISATION APRÈS UNE MODIFICATION MÉTIER
-=========================================================== */
-
-
-/* ===========================================================
-   CACHE NAVIGATEUR DU DASHBOARD
-=========================================================== */
-
-function lireCacheNavigateurDashboard() {
+function lireDashboardSession_() {
     try {
-        const brut = localStorage.getItem(DASHBOARD_BROWSER_CACHE_KEY);
+        const brut = sessionStorage.getItem(DASHBOARD_SESSION_KEY);
         if (!brut) return null;
-
-        const cache = JSON.parse(brut);
-        if (!cache || !cache.data || !cache.enregistreLe) return null;
-
-        const age = Date.now() - Number(cache.enregistreLe);
-        if (!Number.isFinite(age) || age < 0 || age > DASHBOARD_BROWSER_CACHE_MAX_AGE_MS) {
-            localStorage.removeItem(DASHBOARD_BROWSER_CACHE_KEY);
-            return null;
-        }
-
-        return cache;
-    } catch (error) {
-        console.warn("Cache navigateur Dashboard illisible :", error);
+        const snapshot = JSON.parse(brut);
+        return snapshot && typeof snapshot === "object" ? snapshot : null;
+    } catch (e) {
         return null;
     }
 }
 
-function enregistrerCacheNavigateurDashboard(data) {
+function enregistrerDashboardSession_() {
     try {
-        localStorage.setItem(
-            DASHBOARD_BROWSER_CACHE_KEY,
-            JSON.stringify({
-                enregistreLe: Date.now(),
-                version: String(data?.meta?.actualiseLe || ""),
-                serverVersion: Number(data?.meta?.serverVersion || 0),
-                data: data || {}
-            })
-        );
-    } catch (error) {
-        console.warn("Cache navigateur Dashboard non enregistré :", error);
+        if (dashboardCharge) {
+            sessionStorage.setItem(DASHBOARD_SESSION_KEY, JSON.stringify(dashboardCharge));
+        }
+    } catch (e) {
+        console.warn("Snapshot Dashboard session indisponible :", e);
     }
 }
 
-function existeModificationDashboardEnAttente() {
-    const signal = lireSignalDashboard();
-    if (!signal || !signal.timestamp) return false;
-    return Number(signal.timestamp) > lireDernierSignalDashboardTraite();
+function viderDashboardSession_() {
+    try { sessionStorage.removeItem(DASHBOARD_SESSION_KEY); } catch (e) {}
 }
 
-function afficherDashboardCharge() {
-    afficherKPIPrincipaux();
-    afficherKPISecondaires();
-    afficherGraphiqueRevenus();
-    afficherGraphiqueVentes();
-    afficherNotificationsDashboard();
-}
+async function initialiserDashboard() {
+    if (typeof requireAuth === "function") requireAuth();
 
-function restaurerDashboardDepuisCacheNavigateur() {
-    const cache = lireCacheNavigateurDashboard();
-    if (!cache) return false;
+    const utilisateurConnecte =
+        typeof getCurrentUser === "function" ? getCurrentUser() : null;
 
-    dashboardCharge = cache.data || {};
-    dashboardCharge.meta = dashboardCharge.meta || {};
-    if (!dashboardCharge.meta.serverVersion && cache.serverVersion) {
-        dashboardCharge.meta.serverVersion = Number(cache.serverVersion || 0);
+    if (typeof getCurrentUser === "function" && !utilisateurConnecte) return;
+
+    afficherInformationsUtilisateur(utilisateurConnecte);
+    initialiserDeconnexion();
+
+    document.getElementById("periode-revenus")?.addEventListener(
+        "change",
+        afficherGraphiqueRevenus
+    );
+
+    const snapshotSession = lireDashboardSession_();
+
+    if (snapshotSession) {
+        // RETOUR SUR DASHBOARD : affichage immédiat, zéro loader, zéro attente.
+        dashboardCharge = snapshotSession;
+        masquerChargementDashboardImmediatement();
+        afficherDashboardCharge();
+
+        // Vérification silencieuse ensuite. Si le serveur annonce une vraie
+        // modification, seulement à ce moment-là on actualise.
+        synchroniserDashboardAvecServeur(false);
+    } else {
+        // PREMIÈRE ARRIVÉE APRÈS CONNEXION : loader obligatoire.
+        afficherChargementDashboard();
+        try {
+            await chargerDashboard();
+        } finally {
+            masquerChargementDashboard();
+        }
     }
-    afficherDashboardCharge();
-    return true;
+
+    demarrerSurveillanceDashboard();
+
+    window.addEventListener("online", () => synchroniserDashboardAvecServeur(true));
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) synchroniserDashboardAvecServeur(false);
+    });
 }
 
-function masquerChargementDashboardImmediatement() {
-    const loader = document.getElementById("dashboard-loader");
-    if (!loader) return;
-
-    if (dashboardLoaderTimer) {
-        clearInterval(dashboardLoaderTimer);
-        dashboardLoaderTimer = null;
-    }
-
-    loader.classList.add("is-hidden");
-    loader.setAttribute("aria-busy", "false");
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialiserDashboard);
+} else {
+    initialiserDashboard();
 }
 
 async function lireVersionDashboardServeur() {
@@ -227,12 +104,15 @@ async function lireVersionDashboardServeur() {
         const resultat = await apiGet("getDashboardVersion", {
             _versionCheck: Date.now()
         });
-
         if (!resultat || resultat.success === false) return null;
 
         return {
             dirtyVersion: Number(resultat.data?.dirtyVersion || 0),
-            cacheVersion: Number(resultat.data?.cacheVersion || 0)
+            cacheVersion: Number(resultat.data?.cacheVersion || 0),
+            cacheDisponible: Boolean(resultat.data?.cacheDisponible),
+            cachePropre: Boolean(resultat.data?.cachePropre),
+            estPerime: !Number(resultat.data?.cacheVersion || 0) ||
+                Number(resultat.data?.dirtyVersion || 0) > Number(resultat.data?.cacheVersion || 0)
         };
     } catch (error) {
         console.warn("Version serveur Dashboard indisponible :", error);
@@ -240,21 +120,18 @@ async function lireVersionDashboardServeur() {
     }
 }
 
-function obtenirVersionServeurDashboardLocal() {
-    return Number(dashboardCharge?.meta?.serverVersion || 0);
+function demarrerSurveillanceDashboard() {
+    if (dashboardVerificationTimer) clearInterval(dashboardVerificationTimer);
+    dashboardVerificationTimer = window.setInterval(() => {
+        if (!document.hidden) synchroniserDashboardAvecServeur(false);
+    }, DASHBOARD_VERSION_CHECK_INTERVAL_MS);
 }
 
 async function synchroniserDashboardAvecServeur(forcer = false) {
     if (dashboardVerificationServeurEnCours) return;
 
     const maintenant = Date.now();
-    if (
-        !forcer &&
-        maintenant - dashboardDerniereVerificationServeur <
-            DASHBOARD_VERSION_CHECK_INTERVAL_MS
-    ) {
-        return;
-    }
+    if (!forcer && maintenant - dashboardDerniereVerificationServeur < DASHBOARD_VERSION_CHECK_INTERVAL_MS) return;
 
     dashboardVerificationServeurEnCours = true;
     dashboardDerniereVerificationServeur = maintenant;
@@ -263,47 +140,27 @@ async function synchroniserDashboardAvecServeur(forcer = false) {
         const versionServeur = await lireVersionDashboardServeur();
         if (!versionServeur) return;
 
-        const versionLocale = obtenirVersionServeurDashboardLocal();
+        const versionLocale = Number(dashboardCharge?.meta?.serverVersion || 0);
         const versionReference = Math.max(
             versionServeur.dirtyVersion,
             versionServeur.cacheVersion
         );
 
-        // Cache local déjà aligné avec le serveur.
-        if (versionLocale && versionLocale >= versionReference) {
+        // Rien de nouveau : absolument rien à faire.
+        if (
+            dashboardCharge &&
+            versionLocale &&
+            versionLocale >= versionReference &&
+            versionServeur.cachePropre
+        ) {
             return;
         }
 
-        // Un autre appareil a modifié les données, ou ce cache navigateur
-        // n'a pas encore de version serveur : on récupère la version fraîche.
+        // Une vraie modification existe : loader + récupération du snapshot
+        // serveur actualisé. Le backend ne recalcule que les blocs modifiés.
         afficherChargementDashboard();
-
         try {
-            const resultat = await apiGet("getDashboard", {
-                _multiDeviceSync: Date.now()
-            });
-
-            if (!resultat || resultat.success === false) {
-                throw new Error(
-                    resultat?.message ||
-                    "Impossible de synchroniser le Dashboard."
-                );
-            }
-
-            const data = resultat.data || {};
-            const versionApres = await lireVersionDashboardServeur();
-
-            data.meta = data.meta || {};
-            data.meta.serverVersion = Number(
-                versionApres?.cacheVersion ||
-                versionApres?.dirtyVersion ||
-                versionReference ||
-                0
-            );
-
-            dashboardCharge = data;
-            afficherDashboardCharge();
-            enregistrerCacheNavigateurDashboard(dashboardCharge);
+            await chargerDashboard();
         } finally {
             masquerChargementDashboard();
         }
@@ -312,165 +169,19 @@ async function synchroniserDashboardAvecServeur(forcer = false) {
     }
 }
 
-function lireSignalDashboard() {
-    try {
-        return JSON.parse(
-            localStorage.getItem(DASHBOARD_SIGNAL_KEY) || "null"
-        );
-    } catch (error) {
-        return null;
-    }
-}
-
-function lireDernierSignalDashboardTraite() {
-    return Number(
-        localStorage.getItem(DASHBOARD_SIGNAL_TRAITE_KEY) || 0
-    );
-}
-
-function marquerSignalDashboardTraite(timestamp) {
-    try {
-        localStorage.setItem(
-            DASHBOARD_SIGNAL_TRAITE_KEY,
-            String(timestamp || Date.now())
-        );
-    } catch (error) {
-        console.warn("Signal Dashboard non marqué comme traité :", error);
-    }
-}
-
-function obtenirVersionDashboard() {
-    return String(
-        dashboardCharge?.meta?.actualiseLe || ""
-    );
-}
-
-/**
- * Convertit "dd/MM/yyyy HH:mm:ss" en timestamp navigateur.
- * Le backend utilise déjà ce format dans meta.actualiseLe.
- */
-function convertirVersionDashboardEnTimestamp(version) {
-    const texte = String(version || "").trim();
-    const correspondance = texte.match(
-        /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/
-    );
-
-    if (!correspondance) return 0;
-
-    const jour = Number(correspondance[1]);
-    const mois = Number(correspondance[2]) - 1;
-    const annee = Number(correspondance[3]);
-    const heure = Number(correspondance[4]);
-    const minute = Number(correspondance[5]);
-    const seconde = Number(correspondance[6]);
-
-    const date = new Date(
-        annee,
-        mois,
-        jour,
-        heure,
-        minute,
-        seconde
-    );
-
-    const timestamp = date.getTime();
-    return Number.isFinite(timestamp) ? timestamp : 0;
-}
-
-/**
- * Dit si le cache actuellement chargé a été généré après l'action métier.
- * Une tolérance de 2 secondes évite les faux négatifs liés à l'arrondi
- * de meta.actualiseLe à la seconde.
- */
-function cacheDashboardEstPosterieurAuSignal(signal) {
-    if (!signal || !signal.timestamp) return false;
-
-    const versionTimestamp =
-        convertirVersionDashboardEnTimestamp(
-            obtenirVersionDashboard()
-        );
-
-    if (!versionTimestamp) return false;
-
-    return versionTimestamp >= Number(signal.timestamp) - 2000;
-}
-
-function arreterVerificationDashboard() {
-    if (dashboardVerificationTimer) {
-        clearInterval(dashboardVerificationTimer);
-        dashboardVerificationTimer = null;
-    }
-}
-
-function demarrerVerificationDashboardSiNecessaire(forcer = false) {
-    const signal = lireSignalDashboard();
-
-    if (!signal || !signal.timestamp) return;
-
-    if (
-        !forcer &&
-        signal.timestamp <= lireDernierSignalDashboardTraite()
-    ) {
-        return;
-    }
-
-    // Si le premier chargement de la page a déjà récupéré le cache produit
-    // après l'action, inutile de continuer à interroger le backend.
-    if (cacheDashboardEstPosterieurAuSignal(signal)) {
-        marquerSignalDashboardTraite(signal.timestamp);
-        arreterVerificationDashboard();
-        return;
-    }
-
-    if (dashboardVerificationTimer) {
-        return;
-    }
-
-    const debut = Date.now();
-    let verificationEnCours = false;
-
-    const verifier = async function() {
-        if (verificationEnCours) return;
-        verificationEnCours = true;
-
-        try {
-            await chargerDashboard(true);
-
-            if (cacheDashboardEstPosterieurAuSignal(signal)) {
-                marquerSignalDashboardTraite(signal.timestamp);
-                arreterVerificationDashboard();
-                console.log(
-                    "Dashboard actualisé automatiquement après :",
-                    signal.action
-                );
-                return;
-            }
-
-            if (Date.now() - debut >= DASHBOARD_POLL_MAX_MS) {
-                arreterVerificationDashboard();
-                console.warn(
-                    "Le nouveau cache Dashboard n'est pas encore disponible après 120 secondes."
-                );
-            }
-        } finally {
-            verificationEnCours = false;
-        }
-    };
-
-    // Première vérification immédiate, puis toutes les 3 secondes.
-    verifier();
-    dashboardVerificationTimer = window.setInterval(
-        verifier,
-        DASHBOARD_POLL_MS
-    );
-}
-
-/* ===========================================================
-   ÉTAT VISUEL DE CHARGEMENT
-=========================================================== */
-
 let dashboardLoaderTimer = null;
 let dashboardLoaderProgression = 8;
+
+function masquerChargementDashboardImmediatement() {
+    const loader = document.getElementById("dashboard-loader");
+    if (!loader) return;
+    if (dashboardLoaderTimer) {
+        clearInterval(dashboardLoaderTimer);
+        dashboardLoaderTimer = null;
+    }
+    loader.classList.add("is-hidden");
+    loader.setAttribute("aria-busy", "false");
+}
 
 function afficherChargementDashboard() {
     const loader = document.getElementById("dashboard-loader");
@@ -481,22 +192,17 @@ function afficherChargementDashboard() {
 
     loader.classList.remove("is-hidden");
     loader.setAttribute("aria-busy", "true");
-
     dashboardLoaderProgression = 8;
+
     if (barre) barre.style.width = `${dashboardLoaderProgression}%`;
     if (texte) texte.textContent = `${dashboardLoaderProgression}%`;
 
-    if (dashboardLoaderTimer) {
-        clearInterval(dashboardLoaderTimer);
-    }
-
-    dashboardLoaderTimer = window.setInterval(function() {
+    if (dashboardLoaderTimer) clearInterval(dashboardLoaderTimer);
+    dashboardLoaderTimer = window.setInterval(() => {
         if (dashboardLoaderProgression >= 88) return;
-
         const reste = 88 - dashboardLoaderProgression;
         const increment = Math.max(1, Math.ceil(reste * 0.12));
         dashboardLoaderProgression = Math.min(88, dashboardLoaderProgression + increment);
-
         if (barre) barre.style.width = `${dashboardLoaderProgression}%`;
         if (texte) texte.textContent = `${dashboardLoaderProgression}%`;
     }, 450);
@@ -518,75 +224,41 @@ function masquerChargementDashboard() {
     if (barre) barre.style.width = "100%";
     if (texte) texte.textContent = "100%";
 
-    window.setTimeout(function() {
+    window.setTimeout(() => {
         loader.classList.add("is-hidden");
         loader.setAttribute("aria-busy", "false");
-    }, 260);
+    }, 180);
 }
 
-/* ===========================================================
-   CHARGEMENT
-=========================================================== */
+function afficherDashboardCharge() {
+    afficherKPIPrincipaux();
+    afficherKPISecondaires();
+    afficherGraphiqueRevenus();
+    afficherGraphiqueVentes();
+    afficherNotificationsDashboard();
+}
 
-async function chargerDashboard(forcerFraicheur = false, forcerLoader = false) {
-    const afficherLoader =
-        !forcerFraicheur &&
-        (forcerLoader || !dashboardCharge);
-
-    if (afficherLoader) {
-        afficherChargementDashboard();
-    }
-
+async function chargerDashboard() {
     try {
-        const resultat =
-            await apiGet(
-                "getDashboard",
-                forcerFraicheur
-                    ? { _dashboardPoll: Date.now() }
-                    : {}
-            );
+        const resultat = await apiGet("getDashboard", { _dashboard: Date.now() });
 
-        if (
-            !resultat ||
-            resultat.success === false
-        ) {
-            throw new Error(
-                resultat?.message ||
-                "Impossible de charger le Dashboard."
-            );
+        if (!resultat || resultat.success === false) {
+            throw new Error(resultat?.message || "Impossible de charger le Dashboard.");
         }
 
-        dashboardCharge =
-            resultat.data || {};
+        dashboardCharge = resultat.data || {};
+        dashboardCharge.meta = dashboardCharge.meta || {};
 
-        // Mémorise la version commune du serveur avec les données locales.
-        // Cela permet aux autres ouvertures de comparer sans recharger inutilement.
-        try {
-            const versionServeur = await lireVersionDashboardServeur();
-            dashboardCharge.meta = dashboardCharge.meta || {};
-            dashboardCharge.meta.serverVersion = Number(
-                versionServeur?.cacheVersion ||
-                versionServeur?.dirtyVersion ||
-                dashboardCharge.meta.serverVersion ||
-                0
-            );
-        } catch (error) {}
+        if (resultat.meta?.serverVersion) {
+            dashboardCharge.meta.serverVersion = Number(resultat.meta.serverVersion);
+        }
 
+        enregistrerDashboardSession_();
         afficherDashboardCharge();
-        enregistrerCacheNavigateurDashboard(dashboardCharge);
-
     } catch (error) {
-        console.error(
-            "Erreur chargement Dashboard :",
-            error
-        );
-    } finally {
-        if (afficherLoader) {
-            masquerChargementDashboard();
-        }
+        console.error("Erreur chargement Dashboard :", error);
     }
 }
-
 
 /* ===========================================================
    KPI
@@ -1133,6 +805,8 @@ function initialiserDeconnexion() {
         "click",
         function(event) {
             event.preventDefault();
+
+            viderDashboardSession_();
 
             if (
                 typeof logoutUser ===

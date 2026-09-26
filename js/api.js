@@ -1,6 +1,33 @@
 const API_CONFIG = {
-  BASE_URL: "https://script.google.com/macros/s/AKfycbzCxVhwhGfCffRlh3h7HwdvbWqc0GEJMNN-fCNbopOLdEdE84eyKjGmgYAEfVHwRlxFyQ/exec"
+  BASE_URL: "https://script.google.com/macros/s/AKfycby9oFIInHTN0xywR8pSvyewr-uIkx6exuZ4scr227Yke9X_mNPO5i5_EdhTlk9sxTgOMA/exec"
 };
+
+
+
+/**
+ * Retourne le jeton de session serveur de l'utilisateur connecté.
+ * Le backend place ce jeton dans visibl_user.sessionToken au login.
+ */
+function obtenirSessionTokenVisiblApi_() {
+  try {
+    const brut = localStorage.getItem("visibl_user");
+    if (!brut) return "";
+
+    const utilisateur = JSON.parse(brut);
+    return String(
+      utilisateur &&
+      utilisateur.sessionToken
+        ? utilisateur.sessionToken
+        : ""
+    ).trim();
+  } catch (error) {
+    console.warn(
+      "Impossible de lire le jeton de session VISIBL :",
+      error
+    );
+    return "";
+  }
+}
 
 /**
  * Envoie une requête GET vers VISIBL Backend.
@@ -10,24 +37,43 @@ async function apiGet(action, params = {}) {
 
   url.searchParams.set("action", action);
 
+  // Toutes les routes protégées peuvent ainsi récupérer automatiquement
+  // la session créée au login, sans modifier chaque module séparément.
+  const sessionToken = obtenirSessionTokenVisiblApi_();
+  if (
+    sessionToken &&
+    !url.searchParams.has("_session")
+  ) {
+    url.searchParams.set("_session", sessionToken);
+  }
+
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       url.searchParams.set(key, value);
     }
   });
 
-  // Le Dashboard doit toujours interroger réellement le backend pendant
-  // sa courte phase de vérification. Sans ce paramètre unique, le navigateur
-  // ou un cache HTTP intermédiaire peut renvoyer une ancienne réponse.
-  if (["getDashboard", "getDashboardVersion", "getRapports", "getRapportsVersion", "getRapportsPatch"].includes(action)) {
+  // Ces lectures doivent toujours interroger réellement le backend.
+  // Cela évite qu'un navigateur, un appareil mobile ou un cache HTTP
+  // intermédiaire renvoie une ancienne version des données / signatures.
+  const ACTIONS_GET_SANS_CACHE = new Set([
+    "getDashboard",
+    "getDashboardVersion",
+    "getRapports",
+    "getRapportsVersion",
+    "getRapportsPatch",
+    "getClients",
+    "getEtatSyncClients"
+  ]);
+
+  const sansCache = ACTIONS_GET_SANS_CACHE.has(action);
+
+  if (sansCache) {
     url.searchParams.set("_visibl_ts", String(Date.now()));
   }
 
   const response = await fetch(url.toString(), {
-    cache:
-      ["getDashboard", "getDashboardVersion", "getRapports", "getRapportsVersion", "getRapportsPatch"].includes(action)
-        ? "no-store"
-        : "default"
+    cache: sansCache ? "no-store" : "default"
   });
 
   if (!response.ok) {
@@ -126,7 +172,15 @@ async function apiPost(action, data = {}) {
     },
     body: JSON.stringify({
       action,
-      ...data
+      ...data,
+      ...(
+        data && data._session
+          ? {}
+          : {
+              _session:
+                obtenirSessionTokenVisiblApi_()
+            }
+      )
     })
   });
 

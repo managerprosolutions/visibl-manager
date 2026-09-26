@@ -40,8 +40,33 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
     <link
         rel="stylesheet"
-        href="../css/produits.css"
+        href="../css/produits.css?v=20260919-deletefix-complet"
     >
+    <link rel="stylesheet" href="../css/visibl-loading.css">
+    <link rel="stylesheet" href="../css/kpi.css">
+    <link rel="stylesheet" href="../css/header.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+
+<style id="products-toolbar-refresh-position-fix">
+/* VISIBL — Produits : Actualiser juste avant Actions */
+.products-toolbar-left {
+    display: none !important;
+}
+.products-toolbar-controls {
+    margin-left: auto !important;
+}
+#refresh-products-btn {
+    order: 1;
+}
+.products-main-actions-menu {
+    order: 2;
+}
+</style>
 
 </head>
 
@@ -363,115 +388,70 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
 
         <!-- ===== Header ===== -->
-        <header class="header">
-
-            <div class="header-left">
-
-                <button id="sidebar-toggle" class="sidebar-toggle">
-                    ☰
-                </button>
-
-                <a href="dashboard.html" class="logo">
-                    <img src="../logo-vizibl.png" alt="Logo">
+        <header class="header visibl-header" data-visibl-header>
+            <div class="header-left visibl-header-left">
+                <a href="dashboard.html" class="visibl-header-brand" aria-label="Accueil VISIBL">
+                    <img src="../logo-vizibl.png" alt="VISIBL">
                 </a>
-
-                <h2>Produits</h2>
-
+                <span class="visibl-header-separator" aria-hidden="true"></span>
+                <h2 class="visibl-header-page-title">Produits</h2>
             </div>
 
-            <div class="header-right">
-
-                <div class="search-box">
-
-                    <!-- Icône visible sur mobile -->
-                    <button class="icon-btn" id="mobile-search-btn">
-                        🔍
+            <div class="header-right visibl-header-right">
+                <div class="search-box visibl-search" data-header-panel="search">
+                    <button class="visibl-header-btn visibl-mobile-search-btn" id="mobile-search-btn" type="button" aria-label="Rechercher" aria-expanded="false">
+                        <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
-
-                    <!-- Barre de recherche -->
-                    <div class="search-container">
-
-                        <input
-                            type="text"
-                            class="search-input"
-                            id="header-products-search-input"
-                            placeholder="Rechercher un produit..."
-                        >
-
-                        <button class="search-btn"
-                            id="header-products-search-btn"
-                            type="button"
-                            aria-label="Rechercher">
-                            🔍
+                    <div class="search-container visibl-search-container">
+                        <i class="fa-solid fa-magnifying-glass visibl-search-icon" aria-hidden="true"></i>
+                        <input type="text" id="header-products-search-input" class="search-input visibl-search-input" placeholder="Rechercher un produit..." autocomplete="off">
+                        <button id="header-products-search-btn" class="search-btn visibl-search-submit" type="button" aria-label="Lancer la recherche">
+                            <i class="fa-solid fa-arrow-right"></i>
                         </button>
-
                     </div>
-
                 </div>
 
-                <div class="header-icons">
-
-                    <div class="notification-menu">
-
-    <button
-        id="notification-button"
-        class="icon-btn notifications"
-        type="button"
-        aria-label="Afficher les notifications"
-        aria-expanded="false">
-
-        🔔
-        <span class="notification-badge" hidden>0</span>
-
-    </button>
-
-    <div
-        id="notification-panel"
-        class="notification-panel"
-        hidden>
-        <div class="notification-panel-header"><h3>Notifications</h3></div>
-        <div class="notification-empty-state">
-            <span aria-hidden="true">🔔</span>
-            <p>Aucune notification pour le moment.</p>
-        </div>
-    </div>
-
-    </div>
-
-    <div class="profile-menu id="product-profile-menu">
-
-                        <button
-                            class="icon-btn"
-                            id="profile-menu-button"
-                            type="button"
-                            aria-label="Afficher le menu du profil"
-                            aria-expanded="false">
-                            👤
+                <div class="header-icons visibl-header-actions">
+                    <div class="notification-menu visibl-header-menu" data-header-panel="notifications">
+                        <button id="notification-button" class="visibl-header-btn visibl-notification-btn notifications" type="button" aria-label="Afficher les notifications" aria-expanded="false">
+                            <span class="visibl-action-icon visibl-action-icon-notification" aria-hidden="true">
+                                <i class="fa-regular fa-bell"></i>
+                            </span>
+                            <span class="notification-badge" hidden>0</span>
                         </button>
-
-                        <div
-                            class="dropdown-menu"
-                            id="profile-dropdown"
-                            hidden>
-
-                            <a href="moncompte.html">
-                                Mon compte
-                            </a>
-
-                            <hr>
-
-                            <a href="#" class="logout" id="logout-button">
-        Déconnexion
-    </a>
-
+                        <div id="notification-panel" class="notification-panel visibl-header-dropdown visibl-notification-panel" hidden>
+                            <div class="notification-panel-header">
+                                <div>
+                                    <span class="visibl-dropdown-kicker">Centre d’activité</span>
+                                    <h3>Notifications</h3>
+                                </div>
+                                <span class="visibl-live-dot" aria-hidden="true"></span>
+                            </div>
+                            <div class="notification-empty-state">
+                                <span class="visibl-empty-icon" aria-hidden="true"><i class="fa-regular fa-bell"></i></span>
+                                <p>Aucune notification pour le moment.</p>
+                            </div>
                         </div>
-
                     </div>
 
+                    <div class="visibl-profile-menu visibl-header-menu" data-header-panel="profile">
+                        <button id="profile-button" class="visibl-header-btn visibl-profile-btn" type="button" aria-label="Ouvrir le profil" aria-expanded="false">
+                            <span class="visibl-action-icon visibl-action-icon-profile" aria-hidden="true">
+                                <i class="fa-solid fa-user"></i>
+                            </span>
+                        </button>
+                        <div id="profile-panel" class="visibl-header-dropdown visibl-profile-panel" hidden>
+                            <div class="visibl-profile-heading">
+                                <span class="visibl-profile-avatar"><i class="fa-regular fa-user"></i></span>
+                                <div><strong>Mon profil</strong><small>Compte VISIBL</small></div>
+                            </div>
+                            <a href="moncompte.html"><i class="fa-regular fa-user"></i><span>Mon compte</span></a>
+                            <hr>
+                            <a href="#" class="logout" id="logout-button"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Déconnexion</span></a>
+                        </div>
+                    </div>
                 </div>
-
             </div>
-
         </header>
 
 
@@ -480,14 +460,14 @@ html.visibl-auth-pending body{visibility:hidden!important}
              CONTENU DE LA PAGE
         ================================================== -->
 
-        <section class="content">
+        <section class="content" data-visibl-page>
 
 
             <!-- =============================================
                  PRÉSENTATION
             ============================================== -->
 
-            <div class="welcome-section products-welcome-section">
+            <div class="welcome-section products-welcome-section" data-loading-anchor>
                 <div>
                     <h2>Produits</h2>
                     <p>
@@ -503,162 +483,66 @@ html.visibl-auth-pending body{visibility:hidden!important}
             </div>
 
 
-            <!-- =============================================
-                 CARTES KPI
-            ============================================== -->
+            <!-- ===== KPI Produits — composant global VISIBL ===== -->
+            <div class="visibl-kpi-grid products-kpi-grid" id="products-kpi-grid">
 
-            <div
-                class="kpi-grid"
-                id="products-kpi-grid"
-            >
-
-
-                <!-- Total des produits -->
-
-                <article class="kpi-card">
-
-                    <div
-                        class="kpi-icon"
-                        aria-hidden="true"
-                    >
-                        📦
+                <article class="visibl-kpi-card is-loading" data-kpi-id="products-total" data-theme="blue">
+                    <div class="visibl-kpi-top">
+                        <div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <div class="visibl-kpi-trend" data-kpi-trend hidden></div>
                     </div>
-
-                    <div class="kpi-content">
-
-                        <h3>
-                            Total des produits
-                        </h3>
-
-                        <p
-                            class="kpi-value"
-                            id="kpi-total-products"
-                            aria-live="polite"
-                        >
-                            0
-                        </p>
-
-                        <small
-                            id="kpi-products-month"
-                            aria-live="polite"
-                        >
-                            +0 ce mois
-                        </small>
-
+                    <div class="visibl-kpi-label" data-kpi-label>Total des produits</div>
+                    <div class="visibl-kpi-value-row">
+                        <div class="visibl-kpi-value" id="kpi-total-products" data-kpi-value data-current-value="0" aria-live="polite">0</div>
                     </div>
-
+                    <div class="visibl-kpi-subtitle" id="kpi-products-month" data-kpi-subtitle aria-live="polite">+0 ce mois</div>
+                    <div class="visibl-kpi-body"></div>
+                    <div class="visibl-kpi-footer" data-kpi-footer>Catalogue produits</div>
                 </article>
 
-
-                <!-- Valeur du stock initial -->
-
-                <article class="kpi-card">
-
-                    <div
-                        class="kpi-icon"
-                        aria-hidden="true"
-                    >
-                        💰
+                <article class="visibl-kpi-card is-loading" data-kpi-id="products-stock-value" data-theme="orange">
+                    <div class="visibl-kpi-top">
+                        <div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-coins"></i></div>
+                        <div class="visibl-kpi-trend" data-kpi-trend hidden></div>
                     </div>
-
-                    <div class="kpi-content">
-
-                        <h3>
-                            Valeur du stock initial
-                        </h3>
-
-                        <p
-                            class="kpi-value"
-                            id="kpi-stock-value"
-                            aria-live="polite"
-                        >
-                            0 FCFA
-                        </p>
-
-                        <small>
-                            Prix de revient × stock initial
-                        </small>
-
+                    <div class="visibl-kpi-label" data-kpi-label>Valeur du stock initial</div>
+                    <div class="visibl-kpi-value-row">
+                        <div class="visibl-kpi-value" id="kpi-stock-value" data-kpi-value data-current-value="0" aria-live="polite">0 FCFA</div>
                     </div>
-
+                    <div class="visibl-kpi-subtitle" data-kpi-subtitle>Prix de revient × stock initial</div>
+                    <div class="visibl-kpi-body"></div>
+                    <div class="visibl-kpi-footer" data-kpi-footer>Valorisation initiale</div>
                 </article>
 
-
-                <!-- Marge moyenne -->
-
-                <article class="kpi-card">
-
-                    <div
-                        class="kpi-icon"
-                        aria-hidden="true"
-                    >
-                        📈
+                <article class="visibl-kpi-card is-loading" data-kpi-id="products-margin" data-theme="purple">
+                    <div class="visibl-kpi-top">
+                        <div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="visibl-kpi-trend" data-kpi-trend hidden></div>
                     </div>
-
-                    <div class="kpi-content">
-
-                        <h3>
-                            Marge moyenne
-                        </h3>
-
-                        <p
-                            class="kpi-value"
-                            id="kpi-average-margin"
-                            aria-live="polite"
-                        >
-                            0 %
-                        </p>
-
-                        <small
-                            id="kpi-average-margin-fcfa"
-                            aria-live="polite"
-                        >
-                            Marge moyenne
-                        </small>
-
+                    <div class="visibl-kpi-label" data-kpi-label>Marge moyenne</div>
+                    <div class="visibl-kpi-value-row">
+                        <div class="visibl-kpi-value" id="kpi-average-margin" data-kpi-value data-current-value="0" aria-live="polite">0 %</div>
                     </div>
-
+                    <div class="visibl-kpi-subtitle" id="kpi-average-margin-fcfa" data-kpi-subtitle aria-live="polite">Marge moyenne</div>
+                    <div class="visibl-kpi-body"></div>
+                    <div class="visibl-kpi-footer" data-kpi-footer>Rentabilité catalogue</div>
                 </article>
 
-
-                <!-- Produits actifs -->
-
-                <article class="kpi-card">
-
-                    <div
-                        class="kpi-icon"
-                        aria-hidden="true"
-                    >
-                        ✅
+                <article class="visibl-kpi-card is-loading" data-kpi-id="products-active" data-theme="green">
+                    <div class="visibl-kpi-top">
+                        <div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="visibl-kpi-trend" data-kpi-trend hidden></div>
                     </div>
-
-                    <div class="kpi-content">
-
-                        <h3>
-                            Produits actifs
-                        </h3>
-
-                        <p
-                            class="kpi-value"
-                            id="kpi-active-products"
-                            aria-live="polite"
-                        >
-                            0
-                        </p>
-
-                        <small
-                            id="kpi-active-percent"
-                            aria-live="polite"
-                        >
-                            0 % du catalogue
-                        </small>
-
+                    <div class="visibl-kpi-label" data-kpi-label>Produits actifs</div>
+                    <div class="visibl-kpi-value-row">
+                        <div class="visibl-kpi-value" id="kpi-active-products" data-kpi-value data-current-value="0" aria-live="polite">0</div>
                     </div>
-
+                    <div class="visibl-kpi-subtitle" id="kpi-active-percent" data-kpi-subtitle aria-live="polite">0 % du catalogue</div>
+                    <div class="visibl-kpi-body"></div>
+                    <div class="visibl-kpi-footer" data-kpi-footer>Produits en activité</div>
                 </article>
 
             </div>
-
 
             <!-- =============================================
                  BARRE D'ACTIONS
@@ -667,17 +551,7 @@ html.visibl-auth-pending body{visibility:hidden!important}
             <div class="sales-toolbar products-advanced-toolbar">
 
                 <div class="products-toolbar-left">
-
-                    <button
-                        type="button"
-                        class="btn-secondary"
-                        id="refresh-products-btn"
-                        title="Actualiser les produits"
-                    >
-                        🔄 Actualiser
-                    </button>
-
-                    <div class="products-export-menu" id="products-export-menu">
+<div class="products-export-menu" id="products-export-menu">
 
                         <button
                             type="button"
@@ -731,16 +605,21 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
                 </div>
 
-                <div class="products-toolbar-controls">
-                    <select id="product-status-filter" aria-label="Filtrer les produits par statut">
-                        <option value="">Tous les statuts</option>
-                        <option value="actif">Actif</option>
-                        <option value="inactif">Inactif</option>
-                        <option value="archive">Archivé</option>
-                    </select>
+                <div class="products-toolbar-right products-toolbar-summary">
+                    <span class="products-visible-count">
+                        <strong id="filtered-product-count">0</strong>
+                        produit(s) affiché(s)
+                    </span>
+                </div>
 
-                    <button type="button" class="btn-secondary" id="selection-products-btn" aria-pressed="false">
-                        ☑️ Sélection
+                <div class="products-toolbar-controls">
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="refresh-products-btn"
+                        title="Actualiser les produits"
+                    >
+                        🔄 Actualiser
                     </button>
 
                     <div class="products-main-actions-menu">
@@ -749,13 +628,6 @@ html.visibl-auth-pending body{visibility:hidden!important}
                         </button>
                         <div class="products-main-actions-dropdown" id="products-main-actions-dropdown" hidden></div>
                     </div>
-                </div>
-
-                <div class="products-toolbar-right">
-                    <span class="products-visible-count">
-                        <strong id="filtered-product-count">0</strong>
-                        produit(s) affiché(s)
-                    </span>
                 </div>
 
             </div>
@@ -795,14 +667,29 @@ html.visibl-auth-pending body{visibility:hidden!important}
             ============================================== -->
 
             <div class="sales-filters products-simple-filters">
-</div>
+                <select id="product-status-filter" aria-label="Filtrer les produits par statut" hidden>
+                    <option value="">Tous les statuts</option>
+                    <option value="actif">Actif</option>
+                    <option value="inactif">Inactif</option>
+                    <option value="archive">Archivé</option>
+                </select>
+
+                <div class="product-status-tabs" id="product-status-tabs" role="group" aria-label="Filtrer les produits par statut">
+                    <button type="button" class="product-status-tab active" data-product-status="" aria-pressed="true">Tous les statuts</button>
+                    <button type="button" class="product-status-tab" data-product-status="actif" aria-pressed="false">Actif</button>
+                    <button type="button" class="product-status-tab" data-product-status="inactif" aria-pressed="false">Inactif</button>
+                    <button type="button" class="product-status-tab" data-product-status="archive" aria-pressed="false">Archivé</button>
+                </div>
+            </div>
 
 
             <!-- =============================================
                  TABLEAU DES PRODUITS
             ============================================== -->
 
-            <div class="sales-table-container">
+            <div class="sales-table-container products-table-container">
+
+                <div class="table-responsive products-table-responsive">
 
                 <table class="sales-table products-advanced-table">
 
@@ -826,7 +713,7 @@ html.visibl-auth-pending body{visibility:hidden!important}
                         </tr>
                     </thead>
 
-                    <tbody id="products-table-body">
+                    <tbody id="products-table-body" data-loading-table-body>
                         <tr>
                             <td
                                 colspan="9"
@@ -839,21 +726,12 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
                 </table>
 
-                <div class="products-pagination">
+                </div>
 
-                    <div class="products-pagination-size">
-                        <label for="products-page-size">
-                            Afficher
-                        </label>
+                <div class="products-pagination table-pagination">
 
-                        <select id="products-page-size">
-                            <option value="10" selected>10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-
-                        <span>produits par page</span>
+                    <div class="products-pagination-size products-pagination-fixed-size" aria-label="Nombre de produits par page">
+                        <span>10 produits par page</span>
                     </div>
 
                     <div
@@ -1658,6 +1536,8 @@ html.visibl-auth-pending body{visibility:hidden!important}
                 </div>
             </section>
 
+        </div><!-- /.modal-body.product-view-body -->
+
         <div class="modal-footer product-view-footer">
             <button
                 type="button"
@@ -1844,7 +1724,10 @@ html.visibl-auth-pending body{visibility:hidden!important}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="../js/modules/notifications.js"></script>
-<script src="../js/modules/produits.js"></script>
+<script src="../js/visibl-loading.js"></script>
+<script src="../js/kpi.js"></script>
+<script src="../js/header.js"></script>
+<script src="../js/modules/produits.js?v=20260919-loader-produits"></script>
 
 </body>
 </html>

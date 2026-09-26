@@ -34,6 +34,9 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/clients.css">
+    <link rel="stylesheet" href="../css/visibl-loading.css">
+    <link rel="stylesheet" href="../css/kpi.css">
+    <link rel="stylesheet" href="../css/header.css"> 
 
     <link
     rel="stylesheet"
@@ -255,105 +258,71 @@ html.visibl-auth-pending body{visibility:hidden!important}
     <!-- ===== Contenu principal ===== -->
     <main class="main-content">
 
-        <!-- ===== Header ===== -->
-        <header class="header">
-
-            <div class="header-left">
-
-                <button id="sidebar-toggle" class="sidebar-toggle">
-                    ☰
-                </button>
-
-                <a href="dashboard.html" class="logo">
-                    <img src="../logo-vizibl.png" alt="Logo">
+        <!-- ===== Header global VISIBL ===== -->
+        <header class="header visibl-header" data-visibl-header>
+            <div class="header-left visibl-header-left">
+                <a href="dashboard.html" class="visibl-header-brand" aria-label="Accueil VISIBL">
+                    <img src="../logo-vizibl.png" alt="VISIBL">
                 </a>
-
-                <h2>Clients</h2>
-
+                <span class="visibl-header-separator" aria-hidden="true"></span>
+                <h2 class="visibl-header-page-title">Clients</h2>
             </div>
 
-            <div class="header-right">
-
-                <div class="search-box">
-
-                    <!-- Icône visible sur mobile -->
-                    <button class="icon-btn" id="mobile-search-btn">
-                        🔍
+            <div class="header-right visibl-header-right">
+                <div class="search-box visibl-search" data-header-panel="search">
+                    <button class="visibl-header-btn visibl-mobile-search-btn" id="mobile-search-btn" type="button" aria-label="Rechercher" aria-expanded="false">
+                        <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
-
-                    <!-- Barre de recherche -->
-                    <div class="search-container">
-
-                        <input
-                            type="text"
-                            class="search-input"
-                            placeholder="Rechercher un client..."
-                        >
-
-                        <button class="search-btn">
-                            🔍
+                    <div class="search-container visibl-search-container">
+                        <i class="fa-solid fa-magnifying-glass visibl-search-icon" aria-hidden="true"></i>
+                        <input type="text" class="search-input visibl-search-input" placeholder="Rechercher un client..." autocomplete="off">
+                        <button class="search-btn visibl-search-submit" type="button" aria-label="Lancer la recherche">
+                            <i class="fa-solid fa-arrow-right"></i>
                         </button>
-
                     </div>
-
                 </div>
 
-                <div class="header-icons">
-
-                    <div class="notification-menu">
-
-    <button
-        id="notification-button"
-        class="icon-btn notifications"
-        type="button"
-        aria-label="Afficher les notifications"
-        aria-expanded="false">
-
-        🔔
-        <span class="notification-badge" hidden>0</span>
-
-    </button>
-
-    <div
-        id="notification-panel"
-        class="notification-panel"
-        hidden>
-
-        <div class="notification-panel-header">
-            <h3>Notifications</h3>
-        </div>
-        <div class="notification-empty-state">
-            <span aria-hidden="true">🔔</span>
-            <p>Aucune notification pour le moment.</p>
-        </div>
-    </div>
-</div>
-                    <div class="profile-menu">
-
-                        <button class="icon-btn">
-                            👤
+                <div class="header-icons visibl-header-actions">
+                    <div class="notification-menu visibl-header-menu" data-header-panel="notifications">
+                        <button id="notification-button" class="visibl-header-btn visibl-notification-btn notifications" type="button" aria-label="Afficher les notifications" aria-expanded="false">
+                            <span class="visibl-action-icon visibl-action-icon-notification" aria-hidden="true">
+                                <i class="fa-regular fa-bell"></i>
+                            </span>
+                            <span class="notification-badge" hidden>0</span>
                         </button>
-
-                        <div class="dropdown-menu">
-
-                            <a href="moncompte.html">
-                                Mon compte
-                            </a>
-
-                            <hr>
-
-                            <a href="#" class="logout" id="logout-button">
-        Déconnexion
-    </a>
-
+                        <div id="notification-panel" class="notification-panel visibl-header-dropdown visibl-notification-panel" hidden>
+                            <div class="notification-panel-header">
+                                <div>
+                                    <span class="visibl-dropdown-kicker">Centre d’activité</span>
+                                    <h3>Notifications</h3>
+                                </div>
+                                <span class="visibl-live-dot" aria-hidden="true"></span>
+                            </div>
+                            <div class="notification-empty-state">
+                                <span class="visibl-empty-icon" aria-hidden="true"><i class="fa-regular fa-bell"></i></span>
+                                <p>Aucune notification pour le moment.</p>
+                            </div>
                         </div>
-
                     </div>
 
+                    <div class="visibl-profile-menu visibl-header-menu" data-header-panel="profile">
+                        <button id="profile-button" class="visibl-header-btn visibl-profile-btn" type="button" aria-label="Ouvrir le profil" aria-expanded="false">
+                            <span class="visibl-action-icon visibl-action-icon-profile" aria-hidden="true">
+                                <i class="fa-solid fa-user"></i>
+                            </span>
+                        </button>
+                        <div id="profile-panel" class="visibl-header-dropdown visibl-profile-panel" hidden>
+                            <div class="visibl-profile-heading">
+                                <span class="visibl-profile-avatar"><i class="fa-regular fa-user"></i></span>
+                                <div><strong>Mon profil</strong><small>Compte VISIBL</small></div>
+                            </div>
+                            <a href="moncompte.html"><i class="fa-regular fa-user"></i><span>Mon compte</span></a>
+                            <hr>
+                            <a href="#" class="logout" id="logout-button"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Déconnexion</span></a>
+                        </div>
+                    </div>
                 </div>
-
             </div>
-
         </header>
 
         <!-- ===== Contenu de la page ===== -->
@@ -364,11 +333,6 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
         <div>
             <h2>Gestion des clients</h2>
-
-            <p>
-                Enregistrez, consultez et gérez l’ensemble des clients
-                de votre entreprise.
-            </p>
         </div>
 
         <button class="btn-primary" id="new-client-btn">
@@ -378,75 +342,189 @@ html.visibl-auth-pending body{visibility:hidden!important}
     </div>
 
 
-    <!-- ===== KPI Clients ===== -->
-    <div class="kpi-grid clients-kpi-grid">
+    <!-- ===== KPI Clients — composant global VISIBL ===== -->
+    <div class="visibl-kpi-grid clients-kpi-grid">
 
-        <article class="kpi-card">
-
-            <div class="kpi-card-header">
-                <span class="kpi-icon">👥</span>
-                <span class="kpi-title">Total clients</span>
+        <article
+            class="visibl-kpi-card is-loading"
+            data-kpi-id="clients-total"
+            data-theme="blue"
+        >
+            <div class="visibl-kpi-top">
+                <div class="visibl-kpi-icon" aria-hidden="true">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="visibl-kpi-trend" data-kpi-trend hidden></div>
             </div>
 
-            <h3 class="kpi-value is-loading" id="total-clients-value">
-                —
-            </h3>
+            <div class="visibl-kpi-label" data-kpi-label>Total clients</div>
 
-            <p class="kpi-trend up" id="total-clients-description">
-                Chargement des données…
-            </p>
+            <div class="visibl-kpi-value-row">
+                <div
+                    class="visibl-kpi-value"
+                    id="total-clients-value"
+                    data-kpi-value
+                    data-current-value="0"
+                >—</div>
+            </div>
 
+            <div
+                class="visibl-kpi-subtitle"
+                id="total-clients-description"
+                data-kpi-subtitle
+            >—</div>
+
+            <div class="visibl-kpi-body">
+                <svg
+                    class="visibl-kpi-chart"
+                    data-kpi-chart
+                    viewBox="0 0 240 70"
+                    preserveAspectRatio="none"
+                    hidden
+                    aria-hidden="true"
+                >
+                    <path class="kpi-area"></path>
+                    <path class="kpi-line"></path>
+                    <circle class="kpi-dot" r="4"></circle>
+                </svg>
+            </div>
+
+            <div class="visibl-kpi-footer" data-kpi-footer>
+                Base clients
+            </div>
         </article>
 
-        <article class="kpi-card">
 
-            <div class="kpi-card-header">
-                <span class="kpi-icon">✅</span>
-                <span class="kpi-title">Clients actifs</span>
+        <article
+            class="visibl-kpi-card is-loading"
+            data-kpi-id="clients-actifs"
+            data-theme="green"
+        >
+            <div class="visibl-kpi-top">
+                <div class="visibl-kpi-icon" aria-hidden="true">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="visibl-kpi-trend" data-kpi-trend hidden></div>
             </div>
 
-            <h3 class="kpi-value is-loading" id="active-clients-value">
-                —
-            </h3>
+            <div class="visibl-kpi-label" data-kpi-label>Clients actifs</div>
 
-            <p class="kpi-description" id="active-clients-description">
-                Chargement des données…
-            </p>
+            <div class="visibl-kpi-value-row">
+                <div
+                    class="visibl-kpi-value"
+                    id="active-clients-value"
+                    data-kpi-value
+                    data-current-value="0"
+                >—</div>
+            </div>
 
+            <div
+                class="visibl-kpi-subtitle"
+                id="active-clients-description"
+                data-kpi-subtitle
+            >—</div>
+
+            <div class="visibl-kpi-body">
+                <div class="visibl-kpi-ring" data-kpi-ring hidden>
+                    <svg viewBox="0 0 72 72" aria-hidden="true">
+                        <circle class="ring-track" cx="36" cy="36" r="28"></circle>
+                        <circle class="ring-value" cx="36" cy="36" r="28"></circle>
+                    </svg>
+                    <span class="ring-label">—</span>
+                </div>
+            </div>
+
+            <div class="visibl-kpi-footer" data-kpi-footer>
+                Clients en activité
+            </div>
         </article>
 
-        <article class="kpi-card">
 
-            <div class="kpi-card-header">
-                <span class="kpi-icon">🆕</span>
-                <span class="kpi-title">Nouveaux ce mois</span>
+        <article
+            class="visibl-kpi-card is-loading"
+            data-kpi-id="clients-nouveaux"
+            data-theme="purple"
+        >
+            <div class="visibl-kpi-top">
+                <div class="visibl-kpi-icon" aria-hidden="true">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div class="visibl-kpi-trend" data-kpi-trend hidden></div>
             </div>
 
-            <h3 class="kpi-value is-loading" id="new-clients-value">
-                —
-            </h3>
+            <div class="visibl-kpi-label" data-kpi-label>Nouveaux ce mois</div>
 
-            <p class="kpi-trend up" id="new-clients-description">
-                Chargement des données…
-            </p>
+            <div class="visibl-kpi-value-row">
+                <div
+                    class="visibl-kpi-value"
+                    id="new-clients-value"
+                    data-kpi-value
+                    data-current-value="0"
+                >—</div>
+            </div>
 
+            <div
+                class="visibl-kpi-subtitle"
+                id="new-clients-description"
+                data-kpi-subtitle
+            >—</div>
+
+            <div class="visibl-kpi-body">
+                <svg
+                    class="visibl-kpi-chart"
+                    data-kpi-chart
+                    viewBox="0 0 240 70"
+                    preserveAspectRatio="none"
+                    hidden
+                    aria-hidden="true"
+                >
+                    <path class="kpi-area"></path>
+                    <path class="kpi-line"></path>
+                    <circle class="kpi-dot" r="4"></circle>
+                </svg>
+            </div>
+
+            <div class="visibl-kpi-footer" data-kpi-footer>
+                Inscriptions du mois
+            </div>
         </article>
 
-        <article class="kpi-card">
 
-            <div class="kpi-card-header">
-                <span class="kpi-icon">💰</span>
-                <span class="kpi-title">Achats cumulés</span>
+        <article
+            class="visibl-kpi-card is-loading"
+            data-kpi-id="clients-achats"
+            data-theme="orange"
+        >
+            <div class="visibl-kpi-top">
+                <div class="visibl-kpi-icon" aria-hidden="true">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <div class="visibl-kpi-trend" data-kpi-trend hidden></div>
             </div>
 
-            <h3 class="kpi-value is-loading" id="client-revenue-value">
-                —
-            </h3>
+            <div class="visibl-kpi-label" data-kpi-label>Achats cumulés</div>
 
-            <p class="kpi-trend up" id="client-revenue-description">
-                Chargement des données…
-            </p>
+            <div class="visibl-kpi-value-row">
+                <div
+                    class="visibl-kpi-value"
+                    id="client-revenue-value"
+                    data-kpi-value
+                    data-current-value="0"
+                >—</div>
+                <div class="visibl-kpi-unit" data-kpi-unit>FCFA</div>
+            </div>
 
+            <div
+                class="visibl-kpi-subtitle"
+                id="client-revenue-description"
+                data-kpi-subtitle
+            >—</div>
+
+            <div class="visibl-kpi-body"></div>
+
+            <div class="visibl-kpi-footer" data-kpi-footer>
+                Valeur totale des achats
+            </div>
         </article>
 
     </div>
@@ -479,9 +557,17 @@ html.visibl-auth-pending body{visibility:hidden!important}
                     <button type="button" id="clients-action-xlsx">📊 <span>Exporter Excel</span></button>
                     <button type="button" id="clients-action-csv">📑 <span>Exporter CSV</span></button>
                     <button type="button" id="clients-action-print">🖨️ <span>Imprimer</span></button>
-                    <button type="button" id="clients-action-refresh">🔄 <span>Actualiser</span></button>
                 </div>
             </div>
+
+            <button
+                type="button"
+                class="btn-secondary clients-refresh-btn"
+                id="clients-action-refresh"
+                title="Actualiser la liste des clients"
+            >
+                🔄 <span>Actualiser</span>
+            </button>
         </div>
     </div>
 <div class="bulk-clients-bar clients-selection-bar" id="bulk-clients-bar" hidden>
@@ -1247,6 +1333,9 @@ html.visibl-auth-pending body{visibility:hidden!important}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="../js/modules/notifications.js"></script>
+<script src="../js/visibl-loading.js" defer></script>
+<script src="../js/kpi.js"></script>
+<script src="../js/header.js"></script>
 <script src="../js/modules/clients.js"></script>
 
 </body>

@@ -1,6 +1,6 @@
 /* ===========================================================
-   VISIBL ERP — Loading UI global
-   API :
+   VISIBL ERP — Loading UI global central
+   API compatible :
      VisiblLoading.start(options)
      VisiblLoading.stop(options)
      VisiblLoading.wrap(promise, options)
@@ -13,8 +13,13 @@
     scope: "[data-visibl-page]",
     tableBody: "[data-loading-table-body]",
     rows: 6,
-    message: "Chargement des données…"
+    message: "Nous récupérons vos données, veuillez patienter quelques instants.",
+    title: "Chargement des données…",
+    icon: "✨",
+    tip: "Préparation de vos données en cours."
   };
+
+  let overlay = null;
 
   function q(selector, root) {
     return (root || document).querySelector(selector);
@@ -25,68 +30,11 @@
     return q(selector) || document.body;
   }
 
-  function ensureLoader(scope, message) {
-    let loader = q(".visibl-page-loader", scope);
-
-    if (!loader) {
-      loader = document.createElement("div");
-      loader.className = "visibl-page-loader";
-      loader.setAttribute("aria-live", "polite");
-      loader.innerHTML = `
-        <span class="visibl-loader-equipment" aria-hidden="true">
-          <span class="visibl-gear" title="Caméra">
-            <svg viewBox="0 0 24 24">
-              <rect x="3" y="7" width="13" height="10" rx="2"></rect>
-              <circle cx="9.5" cy="12" r="3"></circle>
-              <path d="M16 10l4-2v8l-4-2z"></path>
-            </svg>
-          </span>
-          <span class="visibl-gear" title="Ring light">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="8" r="5"></circle>
-              <path d="M12 13v7M9 20h6"></path>
-            </svg>
-          </span>
-          <span class="visibl-gear" title="Trépied">
-            <svg viewBox="0 0 24 24">
-              <rect x="8" y="4" width="8" height="5" rx="1.5"></rect>
-              <path d="M12 9v3M12 12l-5 8M12 12l5 8M12 12v8"></path>
-            </svg>
-          </span>
-          <span class="visibl-gear" title="Panneau LED">
-            <svg viewBox="0 0 24 24">
-              <rect x="4" y="4" width="14" height="10" rx="2"></rect>
-              <path d="M7 7h1M11 7h1M15 7h1M7 11h1M11 11h1M15 11h1M11 14v6M8 20h6"></path>
-            </svg>
-          </span>
-        </span>
-        <span class="visibl-loader-dots" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </span>
-        <span class="visibl-loader-message"></span>
-      `;
-
-      const anchor = q("[data-loading-anchor]", scope) || scope.firstElementChild;
-
-      if (anchor && anchor.parentNode === scope) {
-        scope.insertBefore(loader, anchor.nextSibling);
-      } else {
-        scope.insertBefore(loader, scope.firstChild);
-      }
-    }
-
-    const text = q(".visibl-loader-message", loader);
-    if (text) text.textContent = message || DEFAULTS.message;
-
-    return loader;
-  }
-
   function getColumnCount(tbody) {
+    if (!tbody) return 6;
     const table = tbody.closest("table");
     const headerCells = table ? table.querySelectorAll("thead th") : [];
-
     if (headerCells.length) return headerCells.length;
-
     const firstRow = tbody.querySelector("tr");
     return firstRow ? firstRow.children.length : 6;
   }
@@ -118,25 +66,187 @@
     tbody.querySelectorAll(".visibl-skeleton-row").forEach(row => row.remove());
   }
 
+  function inferFromMessage(message) {
+    const m = String(message || "").toLowerCase();
+
+    if (m.includes("client")) return {
+      title: "Chargement des clients…",
+      icon: "👥",
+      tip: "Des données bien organisées pour une activité plus performante."
+    };
+
+    if (m.includes("livreur")) return {
+      title: "Chargement des livreurs…",
+      icon: "🚚",
+      tip: "Vos livreurs et leurs performances sont en cours de synchronisation."
+    };
+
+    if (m.includes("commande")) return {
+      title: "Chargement des commandes…",
+      icon: "📦",
+      tip: "Vos commandes sont en cours de préparation."
+    };
+
+    if (m.includes("vente")) return {
+      title: "Chargement des ventes…",
+      icon: "🛒",
+      tip: "Vos données de vente sont en cours de synchronisation."
+    };
+
+    if (m.includes("produit")) return {
+      title: "Chargement des produits…",
+      icon: "🏷️",
+      tip: "Votre catalogue produits est en cours de préparation."
+    };
+
+    if (m.includes("stock")) return {
+      title: "Chargement du stock…",
+      icon: "📚",
+      tip: "Vos niveaux de stock sont en cours de calcul."
+    };
+
+    if (m.includes("facture")) return {
+      title: "Chargement des factures…",
+      icon: "🧾",
+      tip: "Vos factures sont en cours de préparation."
+    };
+
+    if (m.includes("caisse")) return {
+      title: "Chargement de la caisse…",
+      icon: "💵",
+      tip: "Vos mouvements de caisse sont en cours de calcul."
+    };
+
+    if (m.includes("paiement")) return {
+      title: "Chargement des paiements…",
+      icon: "💳",
+      tip: "Vos paiements sont en cours de préparation."
+    };
+
+    if (m.includes("rapport")) return {
+      title: "Chargement des rapports…",
+      icon: "📈",
+      tip: "Vos indicateurs sont en cours de génération."
+    };
+
+    return {};
+  }
+
+  function ensureOverlay() {
+    if (overlay && document.body.contains(overlay)) return overlay;
+
+    overlay = document.createElement("div");
+    overlay.id = "visibl-central-loader";
+    overlay.setAttribute("aria-hidden", "true");
+
+    overlay.innerHTML = `
+      <div class="vl-card" role="status" aria-live="polite" aria-busy="true">
+        <span class="vl-glow vl-glow-a"></span>
+        <span class="vl-glow vl-glow-b"></span>
+
+        <div class="vl-brand">
+          <span class="vl-bars" aria-hidden="true">
+            <i></i><i></i><i></i>
+          </span>
+          <span>
+            <span class="vl-brand-main">VISIBL</span>
+            <span class="vl-brand-sub">ERP</span>
+          </span>
+        </div>
+
+        <div class="vl-orbit-wrap" aria-hidden="true">
+          <div class="vl-orbit"></div>
+          <div class="vl-ring"></div>
+          <div class="vl-icon-box">
+            <span class="vl-icon">✨</span>
+          </div>
+        </div>
+
+        <h2 class="vl-title">Chargement des données…</h2>
+        <p class="vl-message">
+          Nous récupérons vos données, veuillez patienter quelques instants.
+        </p>
+
+        <div class="vl-progress" aria-hidden="true"></div>
+
+        <div class="vl-dots" aria-hidden="true">
+          <i></i><i></i><i></i>
+        </div>
+
+        <div class="vl-tip">
+          <span class="vl-tip-icon" aria-hidden="true">💡</span>
+          <span class="vl-tip-text">Préparation de vos données en cours.</span>
+        </div>
+
+        <div class="vl-footer">
+          <strong>VISIBL ERP</strong>
+          <span>SIMPLE · EFFICACE · POUR VOUS</span>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
   function start(options) {
     options = Object.assign({}, DEFAULTS, options || {});
+
     const scope = getScope(options);
+    const inferred = inferFromMessage(options.message);
+    const central = ensureOverlay();
 
     scope.classList.add("visibl-loading-scope");
-    scope.classList.remove("is-ready");
     scope.classList.add("is-loading");
     scope.setAttribute("aria-busy", "true");
 
-    ensureLoader(scope, options.message);
-
     const tbody = q(options.tableBody, scope);
     if (tbody) buildSkeletonRows(tbody, options.rows);
+
+    const title = central.querySelector(".vl-title");
+    const message = central.querySelector(".vl-message");
+    const icon = central.querySelector(".vl-icon");
+    const tip = central.querySelector(".vl-tip-text");
+
+    if (title) {
+      title.textContent =
+        options.title !== DEFAULTS.title
+          ? options.title
+          : (inferred.title || options.title);
+    }
+
+    if (message) {
+      const raw = String(options.message || "");
+      message.textContent =
+        raw && !/^chargement\b/i.test(raw)
+          ? raw
+          : DEFAULTS.message;
+    }
+
+    if (icon) {
+      icon.textContent =
+        options.icon !== DEFAULTS.icon
+          ? options.icon
+          : (inferred.icon || options.icon);
+    }
+
+    if (tip) {
+      tip.textContent =
+        options.tip !== DEFAULTS.tip
+          ? options.tip
+          : (inferred.tip || options.tip);
+    }
+
+    central.classList.add("is-visible");
+    central.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
 
     return scope;
   }
 
   function stop(options) {
     options = Object.assign({}, DEFAULTS, options || {});
+
     const scope = getScope(options);
     const tbody = q(options.tableBody, scope);
 
@@ -147,6 +257,13 @@
         scope.classList.remove("is-loading");
         scope.classList.add("is-ready");
         scope.setAttribute("aria-busy", "false");
+
+        if (overlay) {
+          overlay.classList.remove("is-visible");
+          overlay.setAttribute("aria-hidden", "true");
+        }
+
+        document.body.style.overflow = "";
       });
     });
   }
@@ -158,7 +275,6 @@
       if (typeof promiseOrFactory === "function") {
         return await promiseOrFactory();
       }
-
       return await promiseOrFactory;
     } finally {
       stop(options);

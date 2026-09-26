@@ -1468,6 +1468,41 @@
     </div>
 </div>
 
+<!-- ===== Avertissement : livreur requis avant confirmation ===== -->
+<div
+    class="modal-overlay order-driver-required-overlay"
+    id="order-driver-required-modal"
+    aria-hidden="true"
+>
+    <div
+        class="order-driver-required-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="order-driver-required-title"
+        aria-describedby="order-driver-required-text"
+    >
+        <div class="order-driver-required-icon" aria-hidden="true">
+            <i class="fa-solid fa-truck-fast"></i>
+        </div>
+
+        <h2 id="order-driver-required-title">
+            Livreur requis
+        </h2>
+
+        <p id="order-driver-required-text">
+            Veuillez affecter un livreur à cette commande.
+        </p>
+
+        <button
+            type="button"
+            class="btn-primary order-driver-required-btn"
+            id="order-driver-required-understood-btn"
+        >
+            J’ai compris
+        </button>
+    </div>
+</div>
+
 <!-- Conteneur des notifications -->
 <div id="toast-container"></div>
 
@@ -1478,8 +1513,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="../js/modules/notifications.js"></script>
+<script src="../js/visibl-loading.js"></script>
 <script src="../js/modules/commandes.js"></script>
-    <script src="../js/visibl-loading.js" defer></script>
 
 </body>
 

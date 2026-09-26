@@ -158,9 +158,7 @@ const commandesSelectionnees = new Set();
 
 /* ===========================================================
    LOADER GLOBAL VISIBL — COMMANDES
-   Utilise visibl-loading.css + visibl-loading.js.
-   Aucun changement de mise en page : le loader remplace
-   temporairement les valeurs KPI et les lignes du tableau.
+   Utilise le composant global visibl-loading.js / .css
 =========================================================== */
 
 function preparerLoaderCommandes() {
@@ -169,13 +167,6 @@ function preparerLoaderCommandes() {
     if (zonePage) {
         zonePage.setAttribute("data-visibl-page", "");
         zonePage.classList.add("visibl-loading-scope");
-
-        const ancre =
-            zonePage.querySelector(".welcome-section");
-
-        if (ancre) {
-            ancre.setAttribute("data-loading-anchor", "");
-        }
     }
 
     [
@@ -194,7 +185,6 @@ function preparerLoaderCommandes() {
         ?.setAttribute("data-loading-table-body", "");
 }
 
-
 function demarrerLoaderCommandes(
     message = "Chargement des commandes…"
 ) {
@@ -208,11 +198,13 @@ function demarrerLoaderCommandes(
             scope: ".content",
             tableBody: "#orders-table-body",
             rows: taillePageCommandes,
-            message: message
+            title: "Chargement des commandes…",
+            message: message,
+            icon: "📦",
+            tip: "Vos commandes sont en cours de préparation."
         });
     }
 }
-
 
 function terminerLoaderCommandes() {
     if (
@@ -252,6 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserSelectionCommandes();
     initialiserMenuActionsCommandes();
     initialiserVenteLieeCommande();
+    initialiserModalLivreurRequisCommande();
 });
 
 
@@ -1466,7 +1459,16 @@ function initialiserListeCommandes() {
         .getElementById("refresh-orders-btn")
         ?.addEventListener(
             "click",
-            chargerCommandes
+            async () => {
+                fermerMenuActionsCommandes();
+
+                // Actualisation manuelle = vrai rechargement serveur.
+                try {
+                    sessionStorage.removeItem(COMMANDES_NAV_CACHE_KEY);
+                } catch (error) {}
+
+                await chargerCommandes({ forcer: true });
+            }
         );
 
     document
@@ -2430,13 +2432,14 @@ async function revaliderCommandesDepuisServeurApresCache() {
 }
 
 
-async function chargerCommandes() {
+async function chargerCommandes(options = {}) {
     const tbody = document.getElementById("orders-table-body");
+    const forcer = options?.forcer === true;
 
     // Si les Commandes ont déjà été chargées dans cet onglet, on les réaffiche
     // immédiatement. Aucun gros rechargement n’est lancé tant que la vérification
     // légère ne détecte pas une modification côté serveur.
-    if (restaurerCacheNavigationCommandes()) {
+    if (!forcer && restaurerCacheNavigationCommandes()) {
         // Le cache s'affiche tout de suite, mais la source de vérité
         // est relue immédiatement depuis le serveur.
         revaliderCommandesDepuisServeurApresCache();
@@ -2789,27 +2792,126 @@ function mettreAJourCommandeLocale(commande) {
         liste.unshift(commande);
         p1.commandes = liste.slice(0, taillePageCommandes);
     }
-    totalCommandesServeur = Math.max(totalCommandesServeur, commandesChargees.length);
-    totalPagesCommandesServeur = Math.max(1, Math.ceil(totalCommandesServeur / taillePageCommandes));
+    /*
+     * Après une création, commandesChargees peut ne contenir que les pages
+     * déjà chargées. On ne peut donc pas déduire le nouveau total global de
+     * sa longueur. Si l'ID n'existait pas avant la mutation locale, le total
+     * serveur connu augmente exactement d'une commande.
+     */
+    if (index < 0) {
+        totalCommandesServeur = Math.max(0, Number(totalCommandesServeur) || 0) + 1;
+    }
+
+    totalPagesCommandesServeur = Math.max(
+        1,
+        Math.ceil(totalCommandesServeur / taillePageCommandes)
+    );
 
     actualiserFiltreCommunesCommandes();
-    if (toutesPagesCommandesChargees()) mettreAJourKPICommandes();
+
+    if (toutesPagesCommandesChargees()) {
+        mettreAJourKPICommandes();
+    } else {
+        /*
+         * Les autres KPI nécessitent toutes les pages. Le total, lui, est
+         * certain après une création réussie et peut être affiché tout de suite.
+         */
+        const totalKpi = document.getElementById("total-orders-value");
+        if (totalKpi) {
+            totalKpi.textContent = String(totalCommandesServeur);
+            totalKpi.classList.remove("is-loading");
+        }
+    }
+
     appliquerFiltresCommandes(true);
     sauvegarderCacheNavigationCommandes();
 }
 
 
 function retirerCommandeLocale(idCommande) {
+    const id =
+        String(idCommande || "").trim();
+
     commandesChargees =
         commandesChargees.filter(
             commande =>
-                String(commande.idCommande) !==
-                String(idCommande)
+                String(commande.idCommande) !== id
         );
 
+    /*
+     * FIX SUPPRESSION + PAGINATION SERVEUR
+     * La commande doit aussi disparaître des pages déjà en mémoire.
+     * Sinon le compteur et la pagination peuvent temporairement rester
+     * sur l'ancien état jusqu'à la prochaine synchronisation.
+     */
+    let retireeDesPages = false;
+
+    pagesCommandesServeur.forEach(paquet => {
+        if (!Array.isArray(paquet?.commandes)) return;
+
+        const avant = paquet.commandes.length;
+
+        paquet.commandes =
+            paquet.commandes.filter(
+                commande =>
+                    String(commande.idCommande) !== id
+            );
+
+        if (paquet.commandes.length < avant) {
+            retireeDesPages = true;
+        }
+    });
+
+    if (retireeDesPages) {
+        totalCommandesServeur =
+            Math.max(
+                0,
+                totalCommandesServeur - 1
+            );
+
+        totalPagesCommandesServeur =
+            Math.max(
+                1,
+                Math.ceil(
+                    totalCommandesServeur /
+                    taillePageCommandes
+                )
+            );
+
+        if (
+            pageCommandesActuelle >
+            totalPagesCommandesServeur
+        ) {
+            pageCommandesActuelle =
+                totalPagesCommandesServeur;
+        }
+
+        reconstruireCommandesDepuisPagesServeur();
+    }
+
     actualiserFiltreCommunesCommandes();
-    mettreAJourKPICommandes();
+
+    /*
+     * Ne recalcule les KPI depuis la RAM que si toutes les pages sont
+     * réellement chargées. Sinon on conserve les KPI serveur et on
+     * corrige seulement le total, qui est certain après suppression.
+     */
+    if (toutesPagesCommandesChargees()) {
+        mettreAJourKPICommandes();
+    } else {
+        const totalKpi =
+            document.getElementById(
+                "total-orders-value"
+            );
+
+        if (totalKpi) {
+            totalKpi.textContent =
+                String(totalCommandesServeur);
+        }
+    }
+
     appliquerFiltresCommandes(true);
+    sauvegarderCacheNavigationCommandes();
 }
 
 
@@ -2873,24 +2975,41 @@ function appliquerFiltresCommandes(
             )
         );
 
-    if (
-        (
+    const filtresDemandes =
+        Boolean(
             rechercheDemandee ||
             statutDemande ||
             paiementDemande ||
             communeDemandee
-        ) &&
-        !toutesPagesCommandesChargees()
+        );
+
+    /*
+     * FIX RÉACTIVITÉ FILTRES
+     * Avant, un changement de statut pouvait attendre silencieusement
+     * la fin du préchargement de toutes les pages.
+     *
+     * Désormais on filtre immédiatement les commandes déjà en mémoire,
+     * puis le résultat se complète automatiquement quand le
+     * préchargement en arrière-plan se termine.
+     */
+    if (
+        filtresDemandes &&
+        !toutesPagesCommandesChargees() &&
+        prechargementCommandesPromise
     ) {
-        if (prechargementCommandesPromise) {
-            prechargementCommandesPromise.then(
-                () =>
-                    appliquerFiltresCommandes(
-                        conserverPage
-                    )
-            );
-        }
-        return;
+        const promesseEnCours =
+            prechargementCommandesPromise;
+
+        promesseEnCours.then(() => {
+            if (
+                prechargementCommandesPromise ===
+                promesseEnCours
+            ) {
+                appliquerFiltresCommandes(
+                    conserverPage
+                );
+            }
+        });
     }
 
     const recherche =
@@ -3118,7 +3237,14 @@ function afficherTableauCommandes() {
         : `<tr><td colspan="13" class="empty-table">Aucune commande enregistrée.</td></tr>`;
 
     const compteur = document.getElementById("filtered-order-count");
-    if (compteur) compteur.textContent = String(total);
+    if (compteur) {
+        compteur.textContent =
+            String(
+                filtresActifs
+                    ? total
+                    : totalCommandesServeur
+            );
+    }
     synchroniserSelectionCommandes();
     afficherPaginationCommandes(totalPages, total, debut, Math.min(fin, total));
 }
@@ -5047,6 +5173,937 @@ function terminerFeedbackConfirmationCommande() {
 }
 
 
+/* ===========================================================
+   CONFIRMATION VISUELLE — ANNULATION COMMANDE
+   Remplace le window.confirm natif du navigateur.
+=========================================================== */
+
+function obtenirModalConfirmationAnnulationCommande() {
+    let overlay =
+        document.getElementById(
+            "order-cancel-confirm-modal"
+        );
+
+    if (overlay) {
+        return overlay;
+    }
+
+    const styleId =
+        "order-cancel-confirm-modal-style";
+
+    if (!document.getElementById(styleId)) {
+        const style =
+            document.createElement("style");
+
+        style.id = styleId;
+
+        style.textContent = `
+            #order-cancel-confirm-modal {
+                position: fixed;
+                inset: 0;
+                z-index: 100000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: rgba(15, 23, 42, .32);
+                backdrop-filter: blur(3px);
+                -webkit-backdrop-filter: blur(3px);
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity .18s ease, visibility .18s ease;
+            }
+
+            #order-cancel-confirm-modal.is-visible {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: all;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-card {
+                width: min(420px, 100%);
+                padding: 26px 24px 22px;
+                border: 1px solid rgba(148, 163, 184, .22);
+                border-radius: 18px;
+                background: #fff;
+                box-shadow: 0 22px 60px rgba(15, 23, 42, .22);
+                text-align: center;
+                transform: translateY(8px) scale(.98);
+                transition: transform .2s ease;
+            }
+
+            #order-cancel-confirm-modal.is-visible .cancel-confirm-card {
+                transform: translateY(0) scale(1);
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 66px;
+                height: 66px;
+                margin: 0 auto 15px;
+                border-radius: 50%;
+                background: #fef2f2;
+                color: #dc2626;
+                font-size: 32px;
+                font-weight: 800;
+                box-shadow: 0 0 0 9px rgba(220, 38, 38, .06);
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-title {
+                display: block;
+                margin-bottom: 8px;
+                color: #0f172a;
+                font-size: 20px;
+                line-height: 1.3;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-text {
+                display: block;
+                color: #64748b;
+                font-size: 13px;
+                line-height: 1.55;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-ref {
+                margin-top: 14px;
+                padding: 10px 12px;
+                border: 1px solid #fee2e2;
+                border-radius: 10px;
+                background: #fffafa;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-ref span {
+                display: block;
+                margin-bottom: 2px;
+                color: #94a3b8;
+                font-size: 11px;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-ref strong {
+                color: #0f172a;
+                font-size: 14px;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-actions {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-top: 20px;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-btn {
+                min-width: 145px;
+                padding: 10px 16px;
+                border-radius: 9px;
+                font-size: 13px;
+                font-weight: 800;
+                cursor: pointer;
+                transition: transform .15s ease, box-shadow .15s ease;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-btn:hover {
+                transform: translateY(-1px);
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-no {
+                border: 1px solid #e2e8f0;
+                background: #fff;
+                color: #475569;
+            }
+
+            #order-cancel-confirm-modal .cancel-confirm-yes {
+                border: 1px solid #dc2626;
+                background: #dc2626;
+                color: #fff;
+                box-shadow: 0 8px 18px rgba(220, 38, 38, .18);
+            }
+
+            @media (max-width: 520px) {
+                #order-cancel-confirm-modal {
+                    padding: 16px;
+                }
+
+                #order-cancel-confirm-modal .cancel-confirm-card {
+                    padding: 23px 18px 18px;
+                }
+
+                #order-cancel-confirm-modal .cancel-confirm-actions {
+                    flex-direction: column-reverse;
+                }
+
+                #order-cancel-confirm-modal .cancel-confirm-btn {
+                    width: 100%;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    overlay = document.createElement("div");
+    overlay.id = "order-cancel-confirm-modal";
+    overlay.setAttribute("aria-hidden", "true");
+
+    overlay.innerHTML = `
+        <div
+            class="cancel-confirm-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-confirm-title"
+        >
+            <div class="cancel-confirm-icon" aria-hidden="true">!</div>
+
+            <strong
+                id="cancel-confirm-title"
+                class="cancel-confirm-title"
+            >
+                Annuler cette commande ?
+            </strong>
+
+            <span class="cancel-confirm-text">
+                Êtes-vous sûr de vouloir annuler cette commande ?
+                Cette action libérera les réservations associées.
+            </span>
+
+            <div class="cancel-confirm-ref">
+                <span>N° de commande</span>
+                <strong class="cancel-confirm-ref-value"></strong>
+            </div>
+
+            <div class="cancel-confirm-actions">
+                <button
+                    type="button"
+                    class="cancel-confirm-btn cancel-confirm-no"
+                >
+                    Non, revenir
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-confirm-btn cancel-confirm-yes"
+                >
+                    Oui, annuler
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+
+function demanderConfirmationAnnulationCommande(
+    commande
+) {
+    return new Promise(resolve => {
+        const overlay =
+            obtenirModalConfirmationAnnulationCommande();
+
+        const reference =
+            overlay.querySelector(
+                ".cancel-confirm-ref-value"
+            );
+
+        if (reference) {
+            reference.textContent =
+                String(
+                    commande?.numeroCommande ||
+                    commande?.idCommande ||
+                    ""
+                );
+        }
+
+        const boutonOui =
+            overlay.querySelector(
+                ".cancel-confirm-yes"
+            );
+
+        const boutonNon =
+            overlay.querySelector(
+                ".cancel-confirm-no"
+            );
+
+        let termine = false;
+
+        const fermer = valeur => {
+            if (termine) {
+                return;
+            }
+
+            termine = true;
+
+            overlay.classList.remove(
+                "is-visible"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            boutonOui?.removeEventListener(
+                "click",
+                confirmer
+            );
+
+            boutonNon?.removeEventListener(
+                "click",
+                refuser
+            );
+
+            overlay.removeEventListener(
+                "click",
+                clicFond
+            );
+
+            document.removeEventListener(
+                "keydown",
+                toucheClavier
+            );
+
+            setTimeout(
+                () => resolve(valeur),
+                120
+            );
+        };
+
+        const confirmer = () =>
+            fermer(true);
+
+        const refuser = () =>
+            fermer(false);
+
+        const clicFond = event => {
+            if (event.target === overlay) {
+                fermer(false);
+            }
+        };
+
+        const toucheClavier = event => {
+            if (event.key === "Escape") {
+                fermer(false);
+            }
+        };
+
+        boutonOui?.addEventListener(
+            "click",
+            confirmer
+        );
+
+        boutonNon?.addEventListener(
+            "click",
+            refuser
+        );
+
+        overlay.addEventListener(
+            "click",
+            clicFond
+        );
+
+        document.addEventListener(
+            "keydown",
+            toucheClavier
+        );
+
+        overlay.classList.add(
+            "is-visible"
+        );
+
+        overlay.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        setTimeout(
+            () => boutonNon?.focus(),
+            80
+        );
+    });
+}
+
+
+/* ===========================================================
+   FEEDBACK SOFT — ANNULATION COMMANDE
+   Le navigateur demande d'abord confirmation.
+   Le loader apparaît uniquement après validation de l'utilisateur
+   et disparaît dès que l'opération serveur est terminée avec succès
+   (ou immédiatement en cas d'erreur).
+=========================================================== */
+
+function obtenirFeedbackAnnulationCommande() {
+    let overlay =
+        document.getElementById(
+            "order-cancel-soft-feedback"
+        );
+
+    if (overlay) {
+        return overlay;
+    }
+
+    const styleId =
+        "order-cancel-soft-feedback-style";
+
+    if (!document.getElementById(styleId)) {
+        const style =
+            document.createElement("style");
+
+        style.id = styleId;
+
+        style.textContent = `
+            #order-cancel-soft-feedback {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: rgba(15, 23, 42, 0.18);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition:
+                    opacity .18s ease,
+                    visibility .18s ease;
+            }
+
+            #order-cancel-soft-feedback.is-visible {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: all;
+            }
+
+            #order-cancel-soft-feedback .cancel-soft-card {
+                width: min(390px, 100%);
+                padding: 22px 24px;
+                border: 1px solid rgba(148, 163, 184, .24);
+                border-radius: 16px;
+                background: rgba(255, 255, 255, .98);
+                box-shadow: 0 18px 48px rgba(15, 23, 42, .18);
+            }
+
+            #order-cancel-soft-feedback .cancel-loading-view {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                text-align: left;
+            }
+
+            #order-cancel-soft-feedback .cancel-spinner {
+                width: 30px;
+                height: 30px;
+                flex: 0 0 30px;
+                border: 3px solid rgba(220, 38, 38, .14);
+                border-top-color: #dc2626;
+                border-radius: 50%;
+                animation: visibl-cancel-spin .75s linear infinite;
+            }
+
+            #order-cancel-soft-feedback .cancel-copy {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+            }
+
+            #order-cancel-soft-feedback .cancel-title {
+                color: #0f172a;
+                font-size: 15px;
+                line-height: 1.35;
+            }
+
+            #order-cancel-soft-feedback .cancel-text {
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.45;
+            }
+
+            #order-cancel-soft-feedback .cancel-success-view {
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                text-align: center;
+            }
+
+            #order-cancel-soft-feedback.is-success .cancel-loading-view {
+                display: none;
+            }
+
+            #order-cancel-soft-feedback.is-success .cancel-success-view {
+                display: flex;
+            }
+
+            #order-cancel-soft-feedback .cancel-success-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 64px;
+                height: 64px;
+                margin-bottom: 3px;
+                border-radius: 50%;
+                background: #10b981;
+                color: #fff;
+                font-size: 35px;
+                font-weight: 800;
+                box-shadow:
+                    0 0 0 9px rgba(16, 185, 129, .08),
+                    0 10px 24px rgba(16, 185, 129, .22);
+                animation: visibl-cancel-pop .32s ease-out both;
+            }
+
+            #order-cancel-soft-feedback .cancel-success-title {
+                margin-top: 5px;
+                color: #059669;
+                font-size: 20px;
+                line-height: 1.25;
+            }
+
+            #order-cancel-soft-feedback .cancel-success-text {
+                color: #64748b;
+                font-size: 13px;
+                line-height: 1.5;
+            }
+
+            #order-cancel-soft-feedback .cancel-success-ref {
+                width: 100%;
+                margin-top: 7px;
+                padding: 10px 12px;
+                border: 1px solid #d1fae5;
+                border-radius: 10px;
+                background: #f0fdf4;
+            }
+
+            #order-cancel-soft-feedback .cancel-success-ref span {
+                display: block;
+                margin-bottom: 2px;
+                color: #64748b;
+                font-size: 11px;
+            }
+
+            #order-cancel-soft-feedback .cancel-success-ref strong {
+                color: #0f172a;
+                font-size: 14px;
+            }
+
+            #order-cancel-soft-feedback .cancel-success-btn {
+                min-width: 165px;
+                margin-top: 8px;
+                padding: 10px 18px;
+                border: 0;
+                border-radius: 9px;
+                background: #10b981;
+                color: #fff;
+                font-size: 13px;
+                font-weight: 800;
+                cursor: pointer;
+                box-shadow: 0 8px 18px rgba(16, 185, 129, .20);
+            }
+
+            @keyframes visibl-cancel-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @keyframes visibl-cancel-pop {
+                0% {
+                    transform: scale(.72);
+                    opacity: 0;
+                }
+
+                72% {
+                    transform: scale(1.07);
+                    opacity: 1;
+                }
+
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            @media (max-width: 640px) {
+                #order-cancel-soft-feedback {
+                    padding: 16px;
+                }
+
+                #order-cancel-soft-feedback .cancel-soft-card {
+                    padding: 20px 18px;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                #order-cancel-soft-feedback .cancel-spinner,
+                #order-cancel-soft-feedback .cancel-success-icon {
+                    animation: none;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    overlay =
+        document.createElement("div");
+
+    overlay.id =
+        "order-cancel-soft-feedback";
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    overlay.innerHTML = `
+        <div
+            class="cancel-soft-card"
+            role="status"
+            aria-live="polite"
+        >
+            <div class="cancel-loading-view">
+                <span
+                    class="cancel-spinner"
+                    aria-hidden="true"
+                ></span>
+
+                <div class="cancel-copy">
+                    <strong class="cancel-title">
+                        Annulation de la commande…
+                    </strong>
+
+                    <span class="cancel-text">
+                        Mise à jour de la commande et libération des réservations en cours.
+                    </span>
+                </div>
+            </div>
+
+            <div class="cancel-success-view">
+                <div
+                    class="cancel-success-icon"
+                    aria-hidden="true"
+                >
+                    ✓
+                </div>
+
+                <strong class="cancel-success-title">
+                    Commande annulée !
+                </strong>
+
+                <span class="cancel-success-text">
+                    La commande a été annulée avec succès.
+                </span>
+
+                <div class="cancel-success-ref">
+                    <span>N° de commande</span>
+                    <strong class="cancel-success-ref-value"></strong>
+                </div>
+
+                <button
+                    type="button"
+                    class="cancel-success-btn"
+                >
+                    ✓ Parfait !
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(
+        overlay
+    );
+
+    return overlay;
+}
+
+
+function demarrerFeedbackAnnulationCommande() {
+    const overlay =
+        obtenirFeedbackAnnulationCommande();
+
+    overlay.classList.remove(
+        "is-success"
+    );
+
+    overlay.classList.add(
+        "is-visible"
+    );
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+}
+
+
+function afficherSuccesAnnulationCommande(
+    commande
+) {
+    return new Promise(resolve => {
+        const overlay =
+            obtenirFeedbackAnnulationCommande();
+
+        const reference =
+            overlay.querySelector(
+                ".cancel-success-ref-value"
+            );
+
+        if (reference) {
+            reference.textContent =
+                String(
+                    commande?.numeroCommande ||
+                    commande?.idCommande ||
+                    ""
+                );
+        }
+
+        overlay.classList.add(
+            "is-success"
+        );
+
+        const bouton =
+            overlay.querySelector(
+                ".cancel-success-btn"
+            );
+
+        const terminer = () => {
+            bouton?.removeEventListener(
+                "click",
+                terminer
+            );
+
+            terminerFeedbackAnnulationCommande();
+            resolve();
+        };
+
+        bouton?.addEventListener(
+            "click",
+            terminer,
+            { once: true }
+        );
+
+        setTimeout(
+            () => bouton?.focus(),
+            80
+        );
+    });
+}
+
+function terminerFeedbackAnnulationCommande() {
+    const overlay =
+        document.getElementById(
+            "order-cancel-soft-feedback"
+        );
+
+    if (!overlay) {
+        return;
+    }
+
+    overlay.classList.remove(
+        "is-visible",
+        "is-success"
+    );
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+}
+
+
+
+function attendreConversionCommandeLocaleEtNotifier(
+    idCommande,
+    options = {}
+) {
+    const intervalleMs =
+        Math.max(
+            100,
+            Number(options.intervalleMs) || 150
+        );
+
+    const timeoutMs =
+        Math.max(
+            5000,
+            Number(options.timeoutMs) || 120000
+        );
+
+    let terminee = false;
+
+    let resolvePromise;
+
+    const promesse =
+        new Promise(resolve => {
+            resolvePromise = resolve;
+        });
+
+    const terminer = valeur => {
+        if (terminee) {
+            return;
+        }
+
+        terminee = true;
+
+        clearInterval(timer);
+        clearTimeout(timeout);
+
+        resolvePromise(
+            Boolean(valeur)
+        );
+    };
+
+    const verifier = () => {
+        const commandeCourante =
+            commandesChargees.find(
+                element =>
+                    String(element.idCommande) ===
+                    String(idCommande)
+            );
+
+        if (!commandeCourante) {
+            return;
+        }
+
+        if (
+            normaliserTexteCommande(
+                commandeCourante.statut || ""
+            ) === "convertie-en-vente"
+        ) {
+            if (
+                typeof showToast === "function"
+            ) {
+                showToast(
+                    "Commande convertie en vente avec succès.",
+                    "success"
+                );
+            }
+
+            terminer(true);
+        }
+    };
+
+    const timer =
+        setInterval(
+            verifier,
+            intervalleMs
+        );
+
+    const timeout =
+        setTimeout(
+            () => terminer(false),
+            timeoutMs
+        );
+
+    // Vérifie immédiatement au cas où la synchronisation locale
+    // aurait déjà appliqué le nouveau statut.
+    verifier();
+
+    return {
+        promesse: promesse,
+        annuler: () => terminer(false)
+    };
+}
+
+
+function initialiserModalLivreurRequisCommande() {
+    const modal =
+        document.getElementById(
+            "order-driver-required-modal"
+        );
+
+    const bouton =
+        document.getElementById(
+            "order-driver-required-understood-btn"
+        );
+
+    if (!modal || !bouton) {
+        return;
+    }
+
+    if (modal.dataset.initialized === "true") {
+        return;
+    }
+
+    modal.dataset.initialized = "true";
+
+    bouton.addEventListener(
+        "click",
+        fermerModalLivreurRequisCommande
+    );
+
+    modal.addEventListener(
+        "click",
+        event => {
+            if (event.target === modal) {
+                fermerModalLivreurRequisCommande();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        event => {
+            if (
+                event.key === "Escape" &&
+                modal.classList.contains("active")
+            ) {
+                fermerModalLivreurRequisCommande();
+            }
+        }
+    );
+}
+
+
+function ouvrirModalLivreurRequisCommande() {
+    const modal =
+        document.getElementById(
+            "order-driver-required-modal"
+        );
+
+    if (!modal) {
+        return;
+    }
+
+    initialiserModalLivreurRequisCommande();
+
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+
+    window.setTimeout(
+        () => {
+            document
+                .getElementById(
+                    "order-driver-required-understood-btn"
+                )
+                ?.focus();
+        },
+        50
+    );
+}
+
+
+function fermerModalLivreurRequisCommande() {
+    const modal =
+        document.getElementById(
+            "order-driver-required-modal"
+        );
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+}
+
+
 async function changerStatutCommandeFrontend(
     idCommande,
     action
@@ -5059,6 +6116,24 @@ async function changerStatutCommandeFrontend(
         );
 
     if (!commande) {
+        return;
+    }
+
+    /*
+     * Confirmation d'une commande en livraison :
+     * avertir immédiatement si aucun livreur n'est affecté,
+     * avant de lancer le loader et l'appel backend.
+     */
+    if (
+        action === "confirmer" &&
+        normaliserTexteCommande(
+            commande.modeReception || ""
+        ) === "livraison" &&
+        !String(
+            commande.idLivreur || ""
+        ).trim()
+    ) {
+        ouvrirModalLivreurRequisCommande();
         return;
     }
 
@@ -5113,11 +6188,8 @@ async function changerStatutCommandeFrontend(
         action === "annuler"
     ) {
         const confirme =
-            window.confirm(
-                `Annuler la commande ${
-                    commande.numeroCommande ||
-                    commande.idCommande
-                } ?`
+            await demanderConfirmationAnnulationCommande(
+                commande
             );
 
         if (!confirme) {
@@ -5130,8 +6202,42 @@ async function changerStatutCommandeFrontend(
             demarrerFeedbackConfirmationCommande();
         }
 
+        if (action === "annuler") {
+            demarrerFeedbackAnnulationCommande();
+        }
+
         const debutActionStatutNavigateur =
             performance.now();
+
+        /*
+         * UX conversion Vente :
+         * la synchronisation peut afficher "Convertie en vente"
+         * avant que apiPost ne termine les écritures secondaires
+         * (Paiement, Caisse, Facture, notifications...).
+         *
+         * Dès que le statut local devient réellement
+         * "convertie-en-vente", on affiche immédiatement le succès,
+         * sans attendre la fin complète du backend.
+         *
+         * Le backend continue exactement comme avant.
+         */
+        let surveillanceConversion = null;
+        let succesConversionAffiche = false;
+
+        if (
+            action === "finaliser-retrait"
+        ) {
+            surveillanceConversion =
+                attendreConversionCommandeLocaleEtNotifier(
+                    commande.idCommande
+                );
+
+            surveillanceConversion.promesse
+                .then(affiche => {
+                    succesConversionAffiche =
+                        Boolean(affiche);
+                });
+        }
 
         const debutApiStatut =
             performance.now();
@@ -5179,6 +6285,77 @@ async function changerStatutCommandeFrontend(
             "Diagnostic notifications :",
             resultat?.diagnosticNotifications || null
         );
+
+        if (
+            action === "finaliser-retrait" &&
+            resultat?.diagnosticVenteAuto
+        ) {
+            console.log(
+                "Diagnostic création Vente automatique :",
+                resultat.diagnosticVenteAuto
+            );
+            console.table(
+                resultat.diagnosticVenteAuto
+            );
+
+            if (resultat.diagnosticVenteAuto.diagnosticPaiement) {
+                console.log(
+                    "Diagnostic détaillé Paiement → Caisse :",
+                    resultat.diagnosticVenteAuto.diagnosticPaiement
+                );
+                console.table(
+                    resultat.diagnosticVenteAuto.diagnosticPaiement
+                );
+
+                if (
+                    resultat.diagnosticVenteAuto
+                      .diagnosticPaiement
+                      .diagnosticCaisse
+                ) {
+                    console.log(
+                        "Diagnostic détaillé Caisse :",
+                        resultat.diagnosticVenteAuto
+                          .diagnosticPaiement
+                          .diagnosticCaisse
+                    );
+                    console.table(
+                        resultat.diagnosticVenteAuto
+                          .diagnosticPaiement
+                          .diagnosticCaisse
+                    );
+                }
+            }
+
+            if (resultat.diagnosticVenteAuto.diagnosticFacture) {
+                console.log(
+                    "Diagnostic détaillé Vente → Facture :",
+                    resultat.diagnosticVenteAuto.diagnosticFacture
+                );
+                console.table(
+                    resultat.diagnosticVenteAuto.diagnosticFacture
+                );
+            }
+        }
+
+        if (action === "annuler") {
+            console.log(
+                "Diagnostic annulation ciblé :",
+                {
+                    annulationLivraisonMs:
+                        resultat?.diagnosticTemps?.annulationLivraisonMs || 0,
+                    liberationReservationMs:
+                        resultat?.diagnosticTemps?.liberationReservationMs || 0,
+                    annulationAvoirMs:
+                        resultat?.diagnosticTemps?.annulationAvoirMs || 0,
+                    ecritureStatutMs:
+                        resultat?.diagnosticTemps?.ecritureStatutMs || 0,
+                    flushStatutMs:
+                        resultat?.diagnosticTemps?.flushStatutMs || 0,
+                    totalBackendMs:
+                        resultat?.diagnosticTemps?.totalBackendMs || 0
+                }
+            );
+        }
         if (resultat?.diagnosticTemps) {
             console.table(
                 resultat.diagnosticTemps
@@ -5191,6 +6368,8 @@ async function changerStatutCommandeFrontend(
         }
 
         if (!resultat?.success) {
+            surveillanceConversion?.annuler?.();
+
             throw new Error(
                 resultat?.message ||
                 "Impossible de modifier le statut de la commande."
@@ -5214,6 +6393,30 @@ async function changerStatutCommandeFrontend(
             }
         );
 
+        if (
+            action === "finaliser-retrait" &&
+            !succesConversionAffiche &&
+            normaliserTexteCommande(
+                (
+                    miseAJour.statut ||
+                    resultat.statut ||
+                    ""
+                )
+            ) === "convertie-en-vente"
+        ) {
+            if (
+                typeof showToast === "function"
+            ) {
+                showToast(
+                    "Commande convertie en vente avec succès.",
+                    "success"
+                );
+            }
+
+            succesConversionAffiche = true;
+            surveillanceConversion?.annuler?.();
+        }
+
         chargerProduitsCommande()
             .catch(error => {
                 console.warn(
@@ -5223,7 +6426,11 @@ async function changerStatutCommandeFrontend(
             });
 
         if (
-            typeof showToast === "function"
+            typeof showToast === "function" &&
+            !(
+                action === "finaliser-retrait" &&
+                succesConversionAffiche
+            )
         ) {
             showToast(
                 resultat.message,
@@ -5268,9 +6475,26 @@ async function changerStatutCommandeFrontend(
             terminerFeedbackConfirmationCommande();
         }
 
+        if (action === "annuler") {
+            await afficherSuccesAnnulationCommande(
+                {
+                    ...commande,
+                    ...miseAJour
+                }
+            );
+        }
+
     } catch (error) {
+        try {
+            surveillanceConversion?.annuler?.();
+        } catch (e) {}
+
         if (action === "confirmer") {
             terminerFeedbackConfirmationCommande();
+        }
+
+        if (action === "annuler") {
+            terminerFeedbackAnnulationCommande();
         }
 
         console.error(
@@ -5295,6 +6519,687 @@ async function changerStatutCommandeFrontend(
 }
 
 
+function obtenirModalConfirmationSuppressionCommande() {
+    let overlay =
+        document.getElementById(
+            "order-delete-confirm-modal"
+        );
+
+    if (overlay) {
+        return overlay;
+    }
+
+    const styleId =
+        "order-delete-confirm-modal-style";
+
+    if (!document.getElementById(styleId)) {
+        const style =
+            document.createElement("style");
+
+        style.id = styleId;
+
+        style.textContent = `
+            #order-delete-confirm-modal {
+                position: fixed;
+                inset: 0;
+                z-index: 100050;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                background: rgba(15, 23, 42, .46);
+                backdrop-filter: blur(3px);
+                -webkit-backdrop-filter: blur(3px);
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity .18s ease, visibility .18s ease;
+            }
+
+            #order-delete-confirm-modal.is-visible {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-card {
+                width: min(430px, calc(100vw - 32px));
+                padding: 24px;
+                border-radius: 18px;
+                background: #fff;
+                box-shadow: 0 24px 70px rgba(15, 23, 42, .22);
+                text-align: center;
+                transform: translateY(8px) scale(.98);
+                transition: transform .18s ease;
+            }
+
+            #order-delete-confirm-modal.is-visible .delete-confirm-card {
+                transform: translateY(0) scale(1);
+            }
+
+            #order-delete-confirm-modal .delete-confirm-icon {
+                width: 58px;
+                height: 58px;
+                margin: 0 auto 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                background: #fee2e2;
+                color: #dc2626;
+                font-size: 28px;
+                font-weight: 900;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-title {
+                margin: 0;
+                color: #111827;
+                font-size: 19px;
+                font-weight: 900;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-text {
+                margin: 9px auto 0;
+                max-width: 340px;
+                color: #64748b;
+                font-size: 13px;
+                line-height: 1.55;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-ref {
+                margin: 16px auto 0;
+                padding: 10px 12px;
+                border-radius: 11px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-ref span {
+                display: block;
+                color: #64748b;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .04em;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-ref strong {
+                display: block;
+                margin-top: 3px;
+                color: #0f172a;
+                font-size: 14px;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-actions {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-top: 19px;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-btn {
+                min-width: 135px;
+                padding: 11px 15px;
+                border: 0;
+                border-radius: 10px;
+                font-size: 13px;
+                font-weight: 800;
+                cursor: pointer;
+                transition: transform .15s ease, filter .15s ease;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-btn:hover {
+                transform: translateY(-1px);
+            }
+
+            #order-delete-confirm-modal .delete-confirm-no {
+                background: #f1f5f9;
+                color: #334155;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-yes {
+                background: #dc2626;
+                color: #fff;
+            }
+
+            #order-delete-confirm-modal .delete-confirm-yes:hover {
+                filter: brightness(.96);
+            }
+
+            @media (max-width: 520px) {
+                #order-delete-confirm-modal .delete-confirm-actions {
+                    flex-direction: column-reverse;
+                }
+
+                #order-delete-confirm-modal .delete-confirm-btn {
+                    width: 100%;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    overlay =
+        document.createElement("div");
+
+    overlay.id =
+        "order-delete-confirm-modal";
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    overlay.innerHTML = `
+        <div
+            class="delete-confirm-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-delete-confirm-title"
+        >
+            <div class="delete-confirm-icon" aria-hidden="true">!</div>
+
+            <h3
+                class="delete-confirm-title"
+                id="order-delete-confirm-title"
+            >
+                Supprimer cette commande ?
+            </h3>
+
+            <p class="delete-confirm-text">
+                Cette suppression est définitive. La commande et ses détails seront retirés de VISIBL.
+            </p>
+
+            <div class="delete-confirm-ref">
+                <span>N° de commande</span>
+                <strong class="delete-confirm-ref-value"></strong>
+            </div>
+
+            <div class="delete-confirm-actions">
+                <button
+                    type="button"
+                    class="delete-confirm-btn delete-confirm-no"
+                >
+                    Non, revenir
+                </button>
+
+                <button
+                    type="button"
+                    class="delete-confirm-btn delete-confirm-yes"
+                >
+                    Oui, supprimer
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(
+        overlay
+    );
+
+    return overlay;
+}
+
+
+function demanderConfirmationSuppressionCommande(
+    commande
+) {
+    return new Promise(resolve => {
+        const overlay =
+            obtenirModalConfirmationSuppressionCommande();
+
+        const ref =
+            overlay.querySelector(
+                ".delete-confirm-ref-value"
+            );
+
+        const boutonNon =
+            overlay.querySelector(
+                ".delete-confirm-no"
+            );
+
+        const boutonOui =
+            overlay.querySelector(
+                ".delete-confirm-yes"
+            );
+
+        if (ref) {
+            ref.textContent =
+                commande?.numeroCommande ||
+                commande?.idCommande ||
+                "—";
+        }
+
+        let termine = false;
+
+        const finaliser = valeur => {
+            if (termine) {
+                return;
+            }
+
+            termine = true;
+
+            overlay.classList.remove(
+                "is-visible"
+            );
+
+            overlay.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            document.removeEventListener(
+                "keydown",
+                gererClavier
+            );
+
+            resolve(valeur);
+        };
+
+        const gererClavier = event => {
+            if (event.key === "Escape") {
+                finaliser(false);
+            }
+        };
+
+        boutonNon?.addEventListener(
+            "click",
+            () => finaliser(false),
+            { once: true }
+        );
+
+        boutonOui?.addEventListener(
+            "click",
+            () => finaliser(true),
+            { once: true }
+        );
+
+        overlay.addEventListener(
+            "click",
+            event => {
+                if (event.target === overlay) {
+                    finaliser(false);
+                }
+            },
+            { once: true }
+        );
+
+        document.addEventListener(
+            "keydown",
+            gererClavier
+        );
+
+        overlay.classList.add(
+            "is-visible"
+        );
+
+        overlay.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        setTimeout(() => {
+            boutonNon?.focus();
+        }, 70);
+    });
+}
+
+
+function obtenirFeedbackSuppressionCommande() {
+    let overlay =
+        document.getElementById(
+            "order-delete-soft-feedback"
+        );
+
+    if (overlay) {
+        return overlay;
+    }
+
+    const styleId =
+        "order-delete-soft-feedback-style";
+
+    if (!document.getElementById(styleId)) {
+        const style =
+            document.createElement("style");
+
+        style.id = styleId;
+
+        style.textContent = `
+            #order-delete-soft-feedback {
+                position: fixed;
+                inset: 0;
+                z-index: 100060;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                background: rgba(248, 250, 252, .76);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity .18s ease, visibility .18s ease;
+            }
+
+            #order-delete-soft-feedback.is-visible {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+
+            #order-delete-soft-feedback .delete-soft-card {
+                width: min(390px, calc(100vw - 32px));
+                min-height: 178px;
+                padding: 24px;
+                border-radius: 18px;
+                background: #fff;
+                border: 1px solid rgba(148, 163, 184, .20);
+                box-shadow: 0 20px 58px rgba(15, 23, 42, .16);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            #order-delete-soft-feedback .delete-loading-view,
+            #order-delete-soft-feedback .delete-success-view {
+                width: 100%;
+            }
+
+            #order-delete-soft-feedback .delete-spinner {
+                width: 36px;
+                height: 36px;
+                margin: 0 auto 14px;
+                border: 4px solid #fee2e2;
+                border-top-color: #dc2626;
+                border-radius: 50%;
+                animation: visibl-delete-spin .78s linear infinite;
+            }
+
+            #order-delete-soft-feedback .delete-title {
+                display: block;
+                color: #0f172a;
+                font-size: 16px;
+                font-weight: 900;
+            }
+
+            #order-delete-soft-feedback .delete-text {
+                display: block;
+                margin-top: 5px;
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            #order-delete-soft-feedback .delete-success-view {
+                display: none;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+            }
+
+            #order-delete-soft-feedback.is-success .delete-loading-view {
+                display: none;
+            }
+
+            #order-delete-soft-feedback.is-success .delete-success-view {
+                display: flex;
+            }
+
+            #order-delete-soft-feedback .delete-success-icon {
+                width: 54px;
+                height: 54px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                background: #d1fae5;
+                color: #059669;
+                font-size: 27px;
+                font-weight: 900;
+                margin-bottom: 12px;
+                animation: visibl-delete-success-pop .24s ease-out;
+            }
+
+            #order-delete-soft-feedback .delete-success-title {
+                color: #047857;
+                font-size: 17px;
+                font-weight: 900;
+            }
+
+            #order-delete-soft-feedback .delete-success-text {
+                margin-top: 5px;
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            #order-delete-soft-feedback .delete-success-ref {
+                width: 100%;
+                margin-top: 13px;
+                padding: 9px 12px;
+                border-radius: 10px;
+                background: #f0fdf4;
+                border: 1px solid #bbf7d0;
+            }
+
+            #order-delete-soft-feedback .delete-success-ref span {
+                display: block;
+                color: #64748b;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .04em;
+            }
+
+            #order-delete-soft-feedback .delete-success-ref strong {
+                display: block;
+                margin-top: 2px;
+                color: #065f46;
+                font-size: 14px;
+            }
+
+            #order-delete-soft-feedback .delete-success-btn {
+                min-width: 165px;
+                margin-top: 15px;
+                padding: 11px 18px;
+                border: 0;
+                border-radius: 10px;
+                background: #10b981;
+                color: #fff;
+                font-size: 13px;
+                font-weight: 900;
+                cursor: pointer;
+            }
+
+            @keyframes visibl-delete-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @keyframes visibl-delete-success-pop {
+                from {
+                    transform: scale(.75);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    overlay =
+        document.createElement("div");
+
+    overlay.id =
+        "order-delete-soft-feedback";
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    overlay.innerHTML = `
+        <div
+            class="delete-soft-card"
+            role="status"
+            aria-live="polite"
+        >
+            <div class="delete-loading-view">
+                <div
+                    class="delete-spinner"
+                    aria-hidden="true"
+                ></div>
+
+                <strong class="delete-title">
+                    Suppression de la commande…
+                </strong>
+
+                <span class="delete-text">
+                    Suppression de la commande et de ses détails en cours.
+                </span>
+            </div>
+
+            <div class="delete-success-view">
+                <div
+                    class="delete-success-icon"
+                    aria-hidden="true"
+                >
+                    ✓
+                </div>
+
+                <strong class="delete-success-title">
+                    Commande supprimée !
+                </strong>
+
+                <span class="delete-success-text">
+                    La commande a été supprimée avec succès.
+                </span>
+
+                <div class="delete-success-ref">
+                    <span>N° de commande</span>
+                    <strong class="delete-success-ref-value"></strong>
+                </div>
+
+                <button
+                    type="button"
+                    class="delete-success-btn"
+                >
+                    ✓ Parfait !
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(
+        overlay
+    );
+
+    return overlay;
+}
+
+
+function demarrerFeedbackSuppressionCommande() {
+    const overlay =
+        obtenirFeedbackSuppressionCommande();
+
+    overlay.classList.remove(
+        "is-success"
+    );
+
+    overlay.classList.add(
+        "is-visible"
+    );
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+}
+
+
+function terminerFeedbackSuppressionCommande() {
+    const overlay =
+        document.getElementById(
+            "order-delete-soft-feedback"
+        );
+
+    if (!overlay) {
+        return;
+    }
+
+    overlay.classList.remove(
+        "is-visible",
+        "is-success"
+    );
+
+    overlay.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+}
+
+
+function afficherSuccesSuppressionCommande(
+    commande
+) {
+    return new Promise(resolve => {
+        const overlay =
+            obtenirFeedbackSuppressionCommande();
+
+        const ref =
+            overlay.querySelector(
+                ".delete-success-ref-value"
+            );
+
+        const bouton =
+            overlay.querySelector(
+                ".delete-success-btn"
+            );
+
+        if (ref) {
+            ref.textContent =
+                commande?.numeroCommande ||
+                commande?.idCommande ||
+                "—";
+        }
+
+        overlay.classList.add(
+            "is-visible",
+            "is-success"
+        );
+
+        overlay.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        const fermer = () => {
+            terminerFeedbackSuppressionCommande();
+            resolve();
+        };
+
+        bouton?.addEventListener(
+            "click",
+            fermer,
+            { once: true }
+        );
+
+        setTimeout(() => {
+            bouton?.focus();
+        }, 80);
+    });
+}
+
+
 async function supprimerCommandeFrontend(
     idCommande
 ) {
@@ -5310,18 +7215,23 @@ async function supprimerCommandeFrontend(
     }
 
     const confirme =
-        window.confirm(
-            `Supprimer définitivement la commande ${
-                commande.numeroCommande ||
-                commande.idCommande
-            } ?`
+        await demanderConfirmationSuppressionCommande(
+            commande
         );
 
     if (!confirme) {
         return;
     }
 
+    const debutSuppressionNavigateur =
+        performance.now();
+
+    demarrerFeedbackSuppressionCommande();
+
     try {
+        const debutApiSuppression =
+            performance.now();
+
         const resultat =
             await apiPost(
                 "deleteCommande",
@@ -5331,6 +7241,60 @@ async function supprimerCommandeFrontend(
                 }
             );
 
+        const tempsApiSuppression =
+            Math.round(
+                performance.now() -
+                debutApiSuppression
+            );
+
+        console.group(
+            "VISIBL — DIAGNOSTIC SUPPRESSION COMMANDE"
+        );
+
+        console.log(
+            "Temps navigateur apiPost :",
+            tempsApiSuppression,
+            "ms"
+        );
+
+        console.log(
+            "Diagnostic backend suppression :",
+            resultat?.diagnosticTemps || null
+        );
+
+        console.log(
+            "Diagnostic routeur suppression :",
+            resultat?.diagnosticRouteurSuppression || null
+        );
+
+        console.log(
+            "Diagnostic notifications :",
+            resultat?.diagnosticNotifications || null
+        );
+
+        console.log(
+            "Diagnostic doPost global :",
+            resultat?.diagnosticDoPost || null
+        );
+
+        if (resultat?.diagnosticTemps) {
+            console.table(
+                resultat.diagnosticTemps
+            );
+        }
+
+        if (resultat?.diagnosticRouteurSuppression) {
+            console.table(
+                resultat.diagnosticRouteurSuppression
+            );
+        }
+
+        if (resultat?.diagnosticDoPost) {
+            console.table(
+                resultat.diagnosticDoPost
+            );
+        }
+
         if (!resultat?.success) {
             throw new Error(
                 resultat?.message ||
@@ -5338,18 +7302,44 @@ async function supprimerCommandeFrontend(
             );
         }
 
+        const debutRetraitLocal =
+            performance.now();
+
         retirerCommandeLocale(
             commande.idCommande
         );
 
-        if (typeof showToast === "function") {
-            showToast(
-                resultat.message,
-                "success"
-            );
-        }
+        console.log(
+            "Retrait local commande :",
+            Math.round(
+                performance.now() -
+                debutRetraitLocal
+            ),
+            "ms"
+        );
+
+        console.log(
+            "Temps total clic → fin traitement :",
+            Math.round(
+                performance.now() -
+                debutSuppressionNavigateur
+            ),
+            "ms"
+        );
+
+        console.groupEnd();
+
+        await afficherSuccesSuppressionCommande({
+            ...commande,
+            ...resultat
+        });
 
     } catch (error) {
+        terminerFeedbackSuppressionCommande();
+        try {
+            console.groupEnd();
+        } catch (e) {}
+
         console.error(
             "Erreur de suppression de la commande :",
             error

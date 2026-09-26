@@ -29,6 +29,9 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/livreurs.css">
+    <link rel="stylesheet" href="../css/visibl-loading.css">
+    <link rel="stylesheet" href="../css/kpi.css">
+    <link rel="stylesheet" href="../css/header.css">
 
     <link
         rel="stylesheet"
@@ -222,156 +225,64 @@ html.visibl-auth-pending body{visibility:hidden!important}
          CONTENU PRINCIPAL
     ====================================================== -->
     <main class="main-content">
-
-        <!-- =================================================
-             HEADER
-        ================================================== -->
-        <header class="header">
-
-            <div class="header-left">
-
-                <button
-                    id="sidebar-toggle"
-                    class="sidebar-toggle"
-                    type="button"
-                    aria-label="Ouvrir le menu"
-                >
-                    ☰
-                </button>
-
-                <a href="dashboard.html" class="logo">
-                    <img src="../logo-vizibl.png" alt="Logo VISIBL">
+        <!-- ===== Header global VISIBL ===== -->
+        <header class="header visibl-header" data-visibl-header>
+            <div class="header-left visibl-header-left">
+                <a href="dashboard.html" class="visibl-header-brand" aria-label="Accueil VISIBL">
+                    <img src="../logo-vizibl.png" alt="VISIBL">
                 </a>
-
-                <h2>Livreurs</h2>
-
+                <span class="visibl-header-separator" aria-hidden="true"></span>
+                <h2 class="visibl-header-page-title">Livreurs</h2>
             </div>
 
-            <div class="header-right">
-
-                <div class="search-box">
-
-                    <button
-                        class="icon-btn"
-                        id="mobile-search-btn"
-                        type="button"
-                        aria-label="Afficher la recherche"
-                    >
-                        🔍
+            <div class="header-right visibl-header-right">
+                <div class="search-box visibl-search" data-header-panel="search">
+                    <button class="visibl-header-btn visibl-mobile-search-btn" id="mobile-search-btn" type="button" aria-label="Rechercher" aria-expanded="false">
+                        <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
-
-                    <div class="search-container">
-
-                        <input
-                            type="search"
-                            class="search-input"
-                            id="header-drivers-search-input"
-                            placeholder="Rechercher un livreur..."
-                        >
-
-                        <button
-                            class="search-btn"
-                            id="header-drivers-search-btn"
-                            type="button"
-                            aria-label="Lancer la recherche"
-                        >
-                            🔍
+                    <div class="search-container visibl-search-container">
+                        <i class="fa-solid fa-magnifying-glass visibl-search-icon" aria-hidden="true"></i>
+                        <input type="text" class="search-input visibl-search-input" id="header-drivers-search-input" placeholder="Rechercher un livreur..." autocomplete="off">
+                        <button class="search-btn visibl-search-submit" id="header-drivers-search-btn" type="button" aria-label="Lancer la recherche">
+                            <i class="fa-solid fa-arrow-right"></i>
                         </button>
-
                     </div>
-
                 </div>
 
-                <div class="header-icons">
-
-                    <div class="notification-menu">
-
-                        <button
-                            id="notification-button"
-                            class="icon-btn notifications"
-                            type="button"
-                            aria-label="Afficher les notifications"
-                            aria-expanded="false"
-                        >
-                            🔔
-                            <span class="notification-badge">3</span>
+                <div class="header-icons visibl-header-actions">
+                    <div class="notification-menu visibl-header-menu" data-header-panel="notifications">
+                        <button id="notification-button" class="visibl-header-btn visibl-notification-btn notifications" type="button" aria-label="Afficher les notifications" aria-expanded="false">
+                            <span class="visibl-action-icon visibl-action-icon-notification" aria-hidden="true"><i class="fa-regular fa-bell"></i></span>
+                            <span class="notification-badge" hidden>0</span>
                         </button>
-
-                        <div
-                            id="notification-panel"
-                            class="notification-panel"
-                            hidden
-                        >
-
+                        <div id="notification-panel" class="notification-panel visibl-header-dropdown visibl-notification-panel" hidden>
                             <div class="notification-panel-header">
-                                <h3>Notifications</h3>
+                                <div><span class="visibl-dropdown-kicker">Centre d’activité</span><h3>Notifications</h3></div>
+                                <span class="visibl-live-dot" aria-hidden="true"></span>
                             </div>
-
-                            <div class="notification-item">
-                                <span class="notification-item-icon">🚚</span>
-                                <div>
-                                    <strong>Nouveau livreur</strong>
-                                    <p>Un nouveau livreur a été enregistré.</p>
-                                    <small>Il y a quelques minutes</small>
-                                </div>
+                            <div class="notification-empty-state">
+                                <span class="visibl-empty-icon" aria-hidden="true"><i class="fa-regular fa-bell"></i></span>
+                                <p>Aucune notification pour le moment.</p>
                             </div>
-
-                            <div class="notification-item">
-                                <span class="notification-item-icon">📦</span>
-                                <div>
-                                    <strong>Charge élevée</strong>
-                                    <p>Un livreur approche de sa capacité maximale.</p>
-                                    <small>Aujourd’hui</small>
-                                </div>
-                            </div>
-
-                            <div class="notification-item">
-                                <span class="notification-item-icon">⚠️</span>
-                                <div>
-                                    <strong>Écart d’encaissement</strong>
-                                    <p>Un écart doit être vérifié.</p>
-                                    <small>Aujourd’hui</small>
-                                </div>
-                            </div>
-
                         </div>
-
                     </div>
 
-                    <div class="profile-menu">
-
-                        <button
-                            class="icon-btn"
-                            type="button"
-                            aria-label="Afficher le menu du profil"
-                        >
-                            👤
+                    <div class="visibl-profile-menu visibl-header-menu" data-header-panel="profile">
+                        <button id="profile-button" class="visibl-header-btn visibl-profile-btn" type="button" aria-label="Ouvrir le profil" aria-expanded="false">
+                            <span class="visibl-action-icon visibl-action-icon-profile" aria-hidden="true"><i class="fa-solid fa-user"></i></span>
                         </button>
-
-                        <div class="dropdown-menu">
-
-                            <a href="moncompte.html">
-                                Mon compte
-                            </a>
-
+                        <div id="profile-panel" class="visibl-header-dropdown visibl-profile-panel" hidden>
+                            <div class="visibl-profile-heading">
+                                <span class="visibl-profile-avatar"><i class="fa-regular fa-user"></i></span>
+                                <div><strong>Mon profil</strong><small>Compte VISIBL</small></div>
+                            </div>
+                            <a href="moncompte.html"><i class="fa-regular fa-user"></i><span>Mon compte</span></a>
                             <hr>
-
-                            <a
-                                href="#"
-                                class="logout"
-                                id="logout-button"
-                            >
-                                Déconnexion
-                            </a>
-
+                            <a href="#" class="logout" id="logout-button"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Déconnexion</span></a>
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
-
         </header>
 
 
@@ -384,11 +295,6 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
                 <div>
                     <h2>Gestion des livreurs</h2>
-
-                    <p>
-                        Enregistrez, consultez et gérez les livreurs,
-                        leurs zones, leur capacité et leurs performances.
-                    </p>
                 </div>
 
                 <button
@@ -400,83 +306,38 @@ html.visibl-auth-pending body{visibility:hidden!important}
                 </button>
 
             </div>
-
-
-            <!-- =================================================
-                 KPI
-            ================================================== -->
-            <div class="kpi-grid drivers-kpi-grid">
-
-                <article class="kpi-card">
-
-                    <div class="kpi-card-header">
-                        <span class="kpi-icon">🚚</span>
-                        <span class="kpi-title">Total livreurs</span>
-                    </div>
-
-                    <h3 class="kpi-value" id="total-drivers-value">
-                        0
-                    </h3>
-
-                    <p class="kpi-description">
-                        Livreurs enregistrés
-                    </p>
-
+            <!-- ===== KPI Livreurs — composant global VISIBL ===== -->
+            <div class="visibl-kpi-grid drivers-kpi-grid">
+                <article class="visibl-kpi-card is-loading" data-kpi-id="drivers-total" data-theme="blue">
+                    <div class="visibl-kpi-top"><div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-truck-fast"></i></div><div class="visibl-kpi-trend" data-kpi-trend hidden></div></div>
+                    <div class="visibl-kpi-label" data-kpi-label>Total livreurs</div>
+                    <div class="visibl-kpi-value-row"><div class="visibl-kpi-value" id="total-drivers-value" data-kpi-value data-current-value="0">—</div></div>
+                    <div class="visibl-kpi-subtitle" data-kpi-subtitle>Livreurs enregistrés</div>
+                    <div class="visibl-kpi-body"></div><div class="visibl-kpi-footer" data-kpi-footer>Base livreurs</div>
                 </article>
-
-                <article class="kpi-card">
-
-                    <div class="kpi-card-header">
-                        <span class="kpi-icon">✅</span>
-                        <span class="kpi-title">Livreurs actifs</span>
-                    </div>
-
-                    <h3 class="kpi-value" id="active-drivers-value">
-                        0
-                    </h3>
-
-                    <p class="kpi-description" id="active-drivers-description">
-                        0 % des livreurs
-                    </p>
-
+                <article class="visibl-kpi-card is-loading" data-kpi-id="drivers-active" data-theme="green">
+                    <div class="visibl-kpi-top"><div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></div><div class="visibl-kpi-trend" data-kpi-trend hidden></div></div>
+                    <div class="visibl-kpi-label" data-kpi-label>Livreurs actifs</div>
+                    <div class="visibl-kpi-value-row"><div class="visibl-kpi-value" id="active-drivers-value" data-kpi-value data-current-value="0">—</div></div>
+                    <div class="visibl-kpi-subtitle" id="active-drivers-description" data-kpi-subtitle>—</div>
+                    <div class="visibl-kpi-body"><div class="visibl-kpi-ring" data-kpi-ring hidden><svg viewBox="0 0 72 72" aria-hidden="true"><circle class="ring-track" cx="36" cy="36" r="28"></circle><circle class="ring-value" cx="36" cy="36" r="28"></circle></svg><span class="ring-label">—</span></div></div>
+                    <div class="visibl-kpi-footer" data-kpi-footer>En activité</div>
                 </article>
-
-                <article class="kpi-card">
-
-                    <div class="kpi-card-header">
-                        <span class="kpi-icon">📦</span>
-                        <span class="kpi-title">Livraisons réalisées</span>
-                    </div>
-
-                    <h3 class="kpi-value" id="total-deliveries-value">
-                        0
-                    </h3>
-
-                    <p class="kpi-description">
-                        Total cumulé
-                    </p>
-
+                <article class="visibl-kpi-card is-loading" data-kpi-id="drivers-deliveries" data-theme="purple">
+                    <div class="visibl-kpi-top"><div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-box"></i></div><div class="visibl-kpi-trend" data-kpi-trend hidden></div></div>
+                    <div class="visibl-kpi-label" data-kpi-label>Livraisons réalisées</div>
+                    <div class="visibl-kpi-value-row"><div class="visibl-kpi-value" id="total-deliveries-value" data-kpi-value data-current-value="0">—</div></div>
+                    <div class="visibl-kpi-subtitle" data-kpi-subtitle>Total cumulé des livraisons réussies</div>
+                    <div class="visibl-kpi-body"></div><div class="visibl-kpi-footer" data-kpi-footer>Performance</div>
                 </article>
-
-                <article class="kpi-card">
-
-                    <div class="kpi-card-header">
-                        <span class="kpi-icon">💰</span>
-                        <span class="kpi-title">Montant encaissé</span>
-                    </div>
-
-                    <h3 class="kpi-value" id="total-collected-value">
-                        0 FCFA
-                    </h3>
-
-                    <p class="kpi-description">
-                        Total encaissé par les livreurs
-                    </p>
-
+                <article class="visibl-kpi-card is-loading" data-kpi-id="drivers-collected" data-theme="orange">
+                    <div class="visibl-kpi-top"><div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-coins"></i></div><div class="visibl-kpi-trend" data-kpi-trend hidden></div></div>
+                    <div class="visibl-kpi-label" data-kpi-label>Montant encaissé</div>
+                    <div class="visibl-kpi-value-row"><div class="visibl-kpi-value" id="total-collected-value" data-kpi-value data-current-value="0">—</div><span class="visibl-kpi-unit">FCFA</span></div>
+                    <div class="visibl-kpi-subtitle" data-kpi-subtitle>Total encaissé par les livreurs</div>
+                    <div class="visibl-kpi-body"></div><div class="visibl-kpi-footer" data-kpi-footer>Encaissements</div>
                 </article>
-
             </div>
-
 
             <!-- =================================================
                  BARRE D'ACTIONS
@@ -495,10 +356,19 @@ html.visibl-auth-pending body{visibility:hidden!important}
                         </button>
                         <div class="drivers-actions-dropdown" id="drivers-actions-dropdown" hidden>
                             <button type="button" id="export-drivers-btn">📤 <span>Exporter CSV</span></button>
+                            <button type="button" id="export-drivers-pdf-btn">📄 <span>Télécharger en PDF</span></button>
                             <button type="button" id="print-drivers-btn">🖨️ <span>Imprimer</span></button>
-                            <button type="button" id="refresh-drivers-btn">🔄 <span>Actualiser</span></button>
                         </div>
                     </div>
+
+                    <button
+                        type="button"
+                        class="btn-secondary drivers-refresh-btn"
+                        id="refresh-drivers-btn"
+                        title="Actualiser la liste des livreurs"
+                    >
+                        🔄 <span>Actualiser</span>
+                    </button>
                 </div>
             </div>
 
@@ -606,16 +476,7 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
                     <div class="pagination-info">
 
-                        <span>Afficher</span>
-
-                        <select id="drivers-per-page">
-                            <option value="10">10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-
-                        <span>éléments par page</span>
+                        <span>10 livreurs par page</span>
 
                     </div>
 
@@ -1287,6 +1148,9 @@ html.visibl-auth-pending body{visibility:hidden!important}
 <script src="../js/auth.js"></script>
 <script src="../js/app.js"></script>
 <script src="../js/modules/notifications.js"></script>
+<script src="../js/visibl-loading.js"></script>
+<script src="../js/kpi.js"></script>
+<script src="../js/header.js"></script>
 <script src="../js/modules/livreurs.js"></script>
 
 </body>

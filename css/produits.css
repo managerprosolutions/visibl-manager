@@ -2237,14 +2237,15 @@ body.modal-open {
 ========================================================= */
 
 #product-form input[type="number"] {
-    appearance: textfield;
-    -moz-appearance: textfield;
+    appearance: auto;
+    -moz-appearance: auto;
 }
 
 #product-form input[type="number"]::-webkit-outer-spin-button,
 #product-form input[type="number"]::-webkit-inner-spin-button {
     margin: 0;
-    -webkit-appearance: none;
+    -webkit-appearance: auto;
+    opacity: 1;
 }
 
 #product-form .form-help {
@@ -3858,5 +3859,700 @@ body:not(.visibl-selection-mode) td:has(input[type="checkbox"][class*="select"])
 @media (prefers-reduced-motion: reduce) {
     #product-view-modal .product-view-stock-section.is-loading .product-stock-card strong::after {
         animation: none;
+    }
+}
+
+/* =========================================================
+   ADAPTATION PRODUITS — BASE VISUELLE CLIENTS / LIVREURS
+   Étape 1 : toolbar, filtres et responsive communs
+========================================================= */
+.products-advanced-toolbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
+    min-height: 58px;
+    padding: 10px 12px 10px 16px !important;
+    background: #fff;
+    border: 1px solid #e7ecf3 !important;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .035);
+}
+
+.products-toolbar-left {
+    display: none !important;
+}
+
+.products-toolbar-summary,
+.products-toolbar-right {
+    order: 1;
+    margin: 0 !important;
+    min-width: 0;
+}
+
+.products-toolbar-controls {
+    order: 2;
+    display: flex !important;
+    align-items: center;
+    gap: 8px !important;
+    width: auto !important;
+    margin: 0 0 0 auto !important;
+}
+
+.products-toolbar-controls > .btn-secondary,
+.products-main-actions-menu,
+.products-main-actions-menu > .btn-secondary {
+    width: auto !important;
+}
+
+#selection-products-btn,
+#products-main-actions-trigger {
+    min-height: 38px !important;
+    height: 38px !important;
+    padding: 0 13px !important;
+    white-space: nowrap;
+}
+
+.sales-filters.products-simple-filters {
+    display: grid !important;
+    grid-template-columns: minmax(150px, 1fr) !important;
+    gap: 10px;
+    padding: 13px;
+}
+
+.sales-filters.products-simple-filters > select {
+    width: 100%;
+    min-height: 43px;
+}
+
+/* Même comportement validé que Clients/Livreurs :
+   les filtres restent alignés et glissent horizontalement sur mobile/tablette. */
+@media (max-width: 900px) {
+    .sales-filters.products-simple-filters {
+        display: flex !important;
+        width: 100%;
+        max-width: 100%;
+        flex-wrap: nowrap !important;
+        gap: 10px;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        padding: 13px;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: x proximity;
+        scrollbar-width: thin;
+        touch-action: pan-x;
+    }
+
+    .sales-filters.products-simple-filters > * {
+        flex: 0 0 auto !important;
+        scroll-snap-align: start;
+    }
+
+    .sales-filters.products-simple-filters select {
+        width: auto !important;
+        min-width: 155px !important;
+    }
+
+    .products-advanced-toolbar {
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+
+    .products-toolbar-controls {
+        display: flex !important;
+        grid-template-columns: none !important;
+        width: auto !important;
+        flex-wrap: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .sales-filters.products-simple-filters {
+        margin-right: 0;
+        margin-left: 0;
+        padding: 11px;
+    }
+
+    .sales-filters.products-simple-filters select {
+        min-width: 145px !important;
+    }
+
+    .products-advanced-toolbar {
+        gap: 10px !important;
+        padding: 10px 11px !important;
+    }
+
+    .products-visible-count {
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    #selection-products-btn,
+    #products-main-actions-trigger {
+        min-height: 42px !important;
+        height: 42px !important;
+        padding: 0 11px !important;
+    }
+}
+\n\n/* =========================================================\n   ADAPTATION PRODUITS — TABLEAU + PAGINATION VISIBL\n   Alignement visuel sur Clients / Livreurs sans toucher\n   à la logique métier ni aux identifiants JavaScript.\n========================================================= */\n.products-table-container {\n    width: 100%;\n    max-width: 100%;\n    overflow: visible !important;\n    background: #fff;\n    border: 1px solid #e7ecf3;\n    border-radius: 12px;\n    box-shadow: 0 3px 12px rgba(15, 23, 42, .035);\n}\n\n.products-table-responsive {\n    width: 100%;\n    max-width: 100%;\n    overflow-x: auto;\n    overflow-y: visible;\n    -webkit-overflow-scrolling: touch;\n}\n\n.products-table-responsive .products-advanced-table {\n    width: 100%;\n    min-width: 980px;\n    margin: 0;\n    border: 0;\n    border-collapse: separate;\n    border-spacing: 0;\n}\n\n.products-table-responsive .products-advanced-table thead th {\n    height: 48px;\n    padding: 0 14px;\n    color: #475569;\n    font-size: 12px;\n    font-weight: 700;\n    white-space: nowrap;\n    background: #f8fafc;\n    border-bottom: 1px solid #e7ecf3;\n}\n\n.products-table-responsive .products-advanced-table tbody td {\n    padding: 13px 14px;\n    vertical-align: middle;\n    border-bottom: 1px solid #eef2f7;\n}\n\n.products-table-responsive .products-advanced-table tbody tr:last-child td {\n    border-bottom: 0;\n}\n\n.products-table-responsive .products-advanced-table tbody tr:hover td {\n    background: #fbfdff;\n}\n\n.products-pagination.table-pagination {\n    display: grid;\n    grid-template-columns: auto 1fr auto;\n    align-items: center;\n    gap: 18px;\n    width: 100%;\n    padding: 14px 16px;\n    background: #fff;\n    border-top: 1px solid #e7ecf3;\n    border-radius: 0 0 12px 12px;\n}\n\n.products-pagination-size {\n    display: flex;\n    align-items: center;\n    gap: 8px;\n    white-space: nowrap;\n}\n\n.products-pagination-size select {\n    min-width: 64px;\n    height: 36px;\n    padding: 0 28px 0 10px;\n    background: #fff;\n    border: 1px solid #d8e0ea;\n    border-radius: 8px;\n}\n\n.products-page-btn {\n    min-width: 36px;\n    height: 36px;\n    border-radius: 8px;\n}\n\n@media (max-width: 900px) {\n    .products-table-container {\n        border-radius: 10px;\n    }\n\n    .products-table-responsive {\n        overflow-x: auto !important;\n        overflow-y: visible !important;\n        overscroll-behavior-inline: contain;\n        touch-action: pan-x;\n    }\n\n    .products-table-responsive .products-advanced-table {\n        min-width: 920px;\n    }\n\n    .products-pagination.table-pagination {\n        display: flex;\n        align-items: center;\n        flex-wrap: wrap;\n        gap: 10px 14px;\n        padding: 12px;\n    }\n\n    .products-pagination-size {\n        order: 1;\n    }\n\n    .products-pagination-summary {\n        order: 2;\n        flex: 1 1 auto;\n        text-align: right;\n    }\n\n    .products-pagination-controls {\n        order: 3;\n        width: 100%;\n        justify-content: flex-start;\n        flex-wrap: nowrap;\n        overflow-x: auto;\n        padding-bottom: 2px;\n        -webkit-overflow-scrolling: touch;\n    }\n}\n\n@media (max-width: 520px) {\n    .products-table-responsive .products-advanced-table {\n        min-width: 860px;\n    }\n\n    .products-pagination.table-pagination {\n        align-items: flex-start;\n    }\n\n    .products-pagination-summary {\n        flex: 1 1 100%;\n        text-align: left;\n    }\n}\n
+/* =========================================================
+   ADAPTATION PRODUITS — MODALES VISIBL
+   Harmonisation avec Clients / Livreurs sans toucher au métier
+========================================================= */
+#product-modal .modal-container,
+#view-product-modal .modal-container,
+#delete-product-modal .modal-container,
+#bulk-delete-products-modal .modal-container {
+    border-radius: 16px !important;
+    border: 1px solid #e7ecf3 !important;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .18) !important;
+}
+
+#product-modal .modal-header,
+#view-product-modal .modal-header,
+#delete-product-modal .modal-header,
+#bulk-delete-products-modal .modal-header {
+    padding: 20px 22px !important;
+    border-bottom: 1px solid #edf1f6 !important;
+}
+
+#product-modal .modal-body,
+#view-product-modal .modal-body {
+    padding: 20px 22px !important;
+}
+
+#product-modal .modal-footer,
+#view-product-modal .modal-footer {
+    padding: 14px 22px 18px !important;
+    border-top: 1px solid #edf1f6 !important;
+    background: #fff !important;
+}
+
+#product-modal .form-section,
+#view-product-modal .product-view-section {
+    border: 1px solid #e8edf4 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+}
+
+#product-modal .form-group input,
+#product-modal .form-group select,
+#product-modal .form-group textarea {
+    border-radius: 9px !important;
+    border-color: #dce3ec !important;
+}
+
+#product-modal .form-group input:focus,
+#product-modal .form-group select:focus,
+#product-modal .form-group textarea:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .10) !important;
+}
+
+#product-modal .modal-close,
+#view-product-modal .modal-close,
+#delete-product-modal .modal-close,
+#bulk-delete-products-modal .modal-close {
+    border-radius: 9px !important;
+}
+
+@media (max-width: 768px) {
+    #product-modal .modal-container,
+    #view-product-modal .modal-container {
+        width: calc(100% - 20px) !important;
+        max-height: calc(100dvh - 20px) !important;
+        margin: 10px auto !important;
+        border-radius: 14px !important;
+    }
+
+    #product-modal .modal-header,
+    #view-product-modal .modal-header,
+    #product-modal .modal-body,
+    #view-product-modal .modal-body,
+    #product-modal .modal-footer,
+    #view-product-modal .modal-footer {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    #product-modal .form-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* =========================================================
+   CORRECTIFS MODALE PRODUIT — 18/09/2026
+========================================================= */
+#product-modal .image-preview-wrapper {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+#product-modal .image-preview-wrapper[hidden] {
+    display: none !important;
+}
+
+#product-modal #product-image-preview {
+    display: block;
+    width: 92px !important;
+    height: 92px !important;
+    max-width: 92px !important;
+    max-height: 92px !important;
+    object-fit: contain;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+}
+
+#product-modal .image-preview-info {
+    min-width: 0;
+}
+
+#product-modal .image-preview-info strong,
+#product-modal .image-preview-info span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    #product-modal .image-preview-wrapper {
+        grid-template-columns: 72px minmax(0, 1fr);
+    }
+    #product-modal #product-image-preview {
+        width: 72px !important;
+        height: 72px !important;
+        max-width: 72px !important;
+        max-height: 72px !important;
+    }
+    #product-modal .remove-image-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   CORRECTIF SUPPRESSION V2 — overlay réellement inactif
+========================================================= */
+.modal-overlay[hidden],
+#delete-product-modal[hidden],
+#bulk-delete-products-modal[hidden] {
+    display: none !important;
+}
+
+#delete-product-modal:not(.active):not(.show),
+#bulk-delete-products-modal:not(.active):not(.show) {
+    pointer-events: none !important;
+}
+
+#delete-product-modal.active,
+#delete-product-modal.show,
+#bulk-delete-products-modal.active,
+#bulk-delete-products-modal.show {
+    pointer-events: auto !important;
+}
+
+
+/* =========================================================
+   CORRECTIF SUPPRESSION PRODUIT — PRIORITÉ D'AFFICHAGE
+========================================================= */
+#delete-product-modal {
+    z-index: 20000 !important;
+}
+#delete-product-modal.active,
+#delete-product-modal.show {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+#delete-product-modal .delete-product-modal-container,
+#delete-product-modal #confirm-delete-product-btn,
+#delete-product-modal #cancel-delete-product-btn {
+    pointer-events: auto !important;
+}
+
+
+/* ==========================================================
+   FEEDBACK SOFT — ENREGISTREMENT / MODIFICATION PRODUIT
+   Même expérience visuelle que le module Commandes.
+========================================================== */
+
+#product-form {
+    position: relative;
+}
+
+.product-save-soft-loader {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.68);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .18s ease, visibility .18s ease;
+}
+
+.product-save-soft-loader.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.product-save-soft-loader-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    min-width: min(330px, 100%);
+    max-width: 430px;
+    padding: 16px 18px;
+    background: rgba(255,255,255,.98);
+    border: 1px solid rgba(148,163,184,.28);
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(15,23,42,.16);
+}
+
+.product-save-soft-spinner {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    border: 3px solid rgba(37,99,235,.16);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: product-save-spin .75s linear infinite;
+}
+
+.product-save-soft-loader-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.product-save-soft-loader-title {
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.product-save-soft-loader-text {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+@keyframes product-save-spin {
+    to { transform: rotate(360deg); }
+}
+
+.product-save-loading-view {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+}
+
+.product-save-loading-view[aria-hidden="true"] {
+    display: none;
+}
+
+.product-save-success-view {
+    position: relative;
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 4px 2px 2px;
+    overflow: hidden;
+}
+
+.product-save-success-view:not([aria-hidden="true"]) {
+    display: flex;
+}
+
+.product-save-soft-loader.is-success .product-save-soft-loader-card {
+    min-width: min(390px, 100%);
+    max-width: 430px;
+    padding: 24px 26px 20px;
+    border-color: rgba(16,185,129,.18);
+    box-shadow: 0 18px 46px rgba(15,23,42,.16);
+}
+
+.product-save-success-icon {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    margin-bottom: 3px;
+    border-radius: 50%;
+    background: #10b981;
+    color: #fff;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow:
+        0 0 0 9px rgba(16,185,129,.08),
+        0 10px 24px rgba(16,185,129,.22);
+    animation: product-save-success-pop .32s ease-out both;
+}
+
+.product-save-success-title {
+    margin-top: 5px;
+    color: #059669;
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.product-save-success-text {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.product-save-success-reference {
+    width: 100%;
+    margin-top: 7px;
+    padding: 11px 14px;
+    background: #f0f9ff;
+    border: 1px solid #dbeafe;
+    border-radius: 11px;
+}
+
+.product-save-success-reference-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.product-save-success-reference-value {
+    display: block;
+    color: #0f172a;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.product-save-success-btn {
+    min-width: 166px;
+    margin-top: 8px;
+    padding: 10px 18px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    background: #10b981;
+    border: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(16,185,129,.20);
+    transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+}
+
+.product-save-success-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(.98);
+    box-shadow: 0 10px 22px rgba(16,185,129,.25);
+}
+
+.product-save-success-btn:active {
+    transform: translateY(0);
+}
+
+.product-save-success-confetti {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 95px;
+    pointer-events: none;
+}
+
+.product-save-success-confetti span {
+    position: absolute;
+    font-size: 8px;
+    opacity: 0;
+    animation: product-save-confetti .75s ease-out forwards;
+}
+
+.product-save-success-confetti span:nth-child(1) { left:17%; top:18%; color:#2563eb; animation-delay:.04s; }
+.product-save-success-confetti span:nth-child(2) { left:29%; top:7%; color:#10b981; animation-delay:.10s; }
+.product-save-success-confetti span:nth-child(3) { right:18%; top:15%; color:#f59e0b; animation-delay:.06s; }
+.product-save-success-confetti span:nth-child(4) { right:29%; top:5%; color:#10b981; animation-delay:.12s; }
+.product-save-success-confetti span:nth-child(5) { left:11%; top:48%; color:#8b5cf6; animation-delay:.08s; }
+.product-save-success-confetti span:nth-child(6) { right:11%; top:43%; color:#2563eb; animation-delay:.14s; }
+
+@keyframes product-save-success-pop {
+    from { opacity:0; transform:scale(.72); }
+    to { opacity:1; transform:scale(1); }
+}
+
+@keyframes product-save-confetti {
+    0% { opacity:0; transform:translateY(-3px) scale(.7) rotate(0); }
+    35% { opacity:1; }
+    100% { opacity:0; transform:translateY(24px) scale(1.08) rotate(120deg); }
+}
+
+/* Bouton d'enregistrement : retour visuel immédiat pendant la requête */
+#save-product-btn:disabled,
+#save-product-btn.is-processing {
+    cursor: wait;
+    opacity: .78;
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .product-save-soft-loader {
+        padding: 16px;
+    }
+
+    .product-save-soft-loader-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .product-save-soft-loader.is-success .product-save-soft-loader-card {
+        width: 100%;
+        min-width: 0;
+        padding: 22px 18px 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .product-save-soft-spinner,
+    .product-save-success-icon,
+    .product-save-success-confetti span {
+        animation: none !important;
+    }
+}
+
+
+
+/* ==========================================================
+   PRODUITS — SUCCÈS SUPPRESSION CENTRÉ
+========================================================== */
+.product-delete-success-overlay { position:fixed; inset:0; z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.30); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease, visibility .18s ease; }
+.product-delete-success-overlay.is-visible { opacity:1; visibility:visible; pointer-events:all; }
+.product-delete-success-card { display:flex; width:min(390px,100%); flex-direction:column; align-items:center; gap:8px; padding:24px 26px 20px; text-align:center; background:#fff; border:1px solid rgba(16,185,129,.18); border-radius:14px; box-shadow:0 18px 46px rgba(15,23,42,.16); }
+.product-delete-success-icon { display:flex; align-items:center; justify-content:center; width:62px; height:62px; margin-bottom:3px; color:#fff; font-size:34px; font-weight:800; background:#10b981; border-radius:50%; box-shadow:0 0 0 9px rgba(16,185,129,.08),0 10px 24px rgba(16,185,129,.22); }
+.product-delete-success-title { margin-top:5px; color:#059669; font-size:20px; line-height:1.25; }
+.product-delete-success-text { color:#64748b; font-size:13px; line-height:1.5; }
+.product-delete-success-reference { width:100%; margin-top:7px; padding:11px 14px; background:#f0f9ff; border:1px solid #dbeafe; border-radius:11px; }
+.product-delete-success-reference-label { display:block; margin-bottom:2px; color:#64748b; font-size:11px; }
+.product-delete-success-reference-value { display:block; color:#0f172a; font-size:15px; overflow-wrap:anywhere; }
+.product-delete-success-btn { min-width:166px; margin-top:8px; padding:10px 18px; color:#fff; font-size:13px; font-weight:800; background:#10b981; border:0; border-radius:9px; cursor:pointer; box-shadow:0 8px 18px rgba(16,185,129,.20); }
+#confirm-delete-product-btn.is-loading { cursor:wait; opacity:.82; pointer-events:none; }
+
+
+/* =========================================================
+   PRODUITS — BARRE DE STATUTS HORIZONTALE / SLIDER
+========================================================= */
+.products-simple-filters {
+    display: block !important;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.products-simple-filters #product-status-filter[hidden] {
+    display: none !important;
+}
+
+.product-status-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 1px 8px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    touch-action: pan-x;
+}
+
+.product-status-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.product-status-tab {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    min-height: 40px;
+    padding: 0 18px;
+    border: 1px solid #dbe2ea;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #475569;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+}
+
+.product-status-tab:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.product-status-tab.active,
+.product-status-tab[aria-pressed="true"] {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, .08);
+}
+
+.product-status-tab:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .product-status-tab {
+        min-height: 42px;
+        padding: 0 16px;
+    }
+}
+
+
+/* =========================================================
+   PRODUITS — ACTUALISER RESPONSIVE TÉLÉPHONE
+   Correction visuelle uniquement.
+========================================================= */
+@media (max-width: 560px) {
+    #refresh-products-btn {
+        width: auto !important;
+        min-width: 0 !important;
+        min-height: 38px;
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        line-height: 1.1;
+        white-space: nowrap;
+        flex: 0 0 auto;
     }
 }

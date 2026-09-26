@@ -3655,3 +3655,111 @@ body.orders-selection-mode .orders-table td.order-selection-column{display:table
         opacity: 1;
     }
 }
+
+/* ==========================================================
+   MODALE — LIVREUR REQUIS AVANT CONFIRMATION COMMANDE
+========================================================== */
+
+#order-driver-required-modal {
+    z-index: 12000;
+}
+
+#order-driver-required-modal.active,
+#order-driver-required-modal[aria-hidden="false"] {
+    display: flex;
+}
+
+.order-driver-required-modal {
+    width: min(430px, 100%);
+    padding: 30px 28px 24px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
+    animation: orderDriverRequiredIn 0.18s ease-out;
+}
+
+.order-driver-required-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    height: 68px;
+    margin-bottom: 18px;
+    color: #d97706;
+    font-size: 28px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 50%;
+}
+
+.order-driver-required-modal h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 21px;
+    font-weight: 850;
+    line-height: 1.25;
+}
+
+.order-driver-required-modal p {
+    max-width: 340px;
+    margin: 11px auto 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.order-driver-required-btn {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 22px;
+    justify-content: center;
+    border-radius: 11px;
+}
+
+@keyframes orderDriverRequiredIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 480px) {
+    #order-driver-required-modal {
+        padding: 14px;
+    }
+
+    .order-driver-required-modal {
+        width: 100%;
+        padding: 26px 20px 20px;
+        border-radius: 18px;
+    }
+
+    .order-driver-required-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 15px;
+        font-size: 24px;
+    }
+
+    .order-driver-required-modal h2 {
+        font-size: 19px;
+    }
+
+    .order-driver-required-modal p {
+        font-size: 13.5px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .order-driver-required-modal {
+        animation: none;
+    }
+}
+

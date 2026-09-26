@@ -39,65 +39,6 @@
     margin-bottom: 24px;
 }
 
-.kpi-card {
-    min-width: 0;
-    padding: 20px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-}
-
-.kpi-card-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-}
-
-.kpi-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    flex: 0 0 38px;
-    background: #eff6ff;
-    border-radius: 10px;
-    font-size: 18px;
-}
-
-.kpi-title {
-    color: #64748b;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.kpi-value {
-    margin-bottom: 8px;
-    color: #0f172a;
-    font-size: clamp(22px, 2vw, 29px);
-    line-height: 1.2;
-    overflow-wrap: anywhere;
-}
-
-.kpi-trend,
-.kpi-description {
-    color: #64748b;
-    font-size: 12px;
-    line-height: 1.5;
-}
-
-.kpi-trend.up {
-    color: #15803d;
-    font-weight: 700;
-}
 
 /* ===== BARRE D'ACTIONS ===== */
 
@@ -302,122 +243,15 @@
 
 /* ===== IDENTITÉ CLIENT ===== */
 
-.client-identity {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-width: 0;
-}
-
-.client-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    flex: 0 0 38px;
-    color: #1d4ed8;
-    font-size: 12px;
-    font-weight: 800;
-    background: #dbeafe;
-    border-radius: 11px;
-}
-
-.client-avatar.company-avatar {
-    color: #7e22ce;
-    background: #f3e8ff;
-}
-
-.client-name-block {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.client-name-block strong {
-    color: #0f172a;
-    font-size: 13px;
-}
-
-.client-name-block > span {
-    color: #94a3b8;
-    font-size: 11px;
-}
-
-.client-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 2px;
-}
-
-.client-tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 7px;
-    font-size: 10px;
-    font-weight: 800;
-    border-radius: 999px;
-    white-space: nowrap;
-}
-
-.client-tag.vip {
-    color: #92400e;
-    background: #fef3c7;
-}
-
-.client-tag.company {
-    color: #6b21a8;
-    background: #f3e8ff;
-}
-
-.client-contact {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    color: #64748b;
-    font-size: 11.5px;
-    line-height: 1.35;
-}
-
-.client-contact span {
-    max-width: 190px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
 
 /* ===== BADGES ET SOLDES ===== */
 
-.type-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 9px;
-    color: #1e40af;
-    font-size: 11px;
-    font-weight: 700;
-    background: #dbeafe;
-    border-radius: 999px;
-    white-space: nowrap;
-}
 
 .status-active {
     color: #166534;
     background: #dcfce7;
 }
 
-.balance-positive {
-    color: #15803d;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.balance-negative {
-    color: #dc2626;
-    font-weight: 800;
-    white-space: nowrap;
-}
 
 /* ===== ACTIONS DU TABLEAU ===== */
 
@@ -425,30 +259,6 @@
     flex-wrap: nowrap;
 }
 
-.action-btn {
-    flex: 0 0 32px;
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
-}
-
-.view-btn:hover {
-    color: #1d4ed8;
-    background: #dbeafe;
-    border-color: #bfdbfe;
-}
-
-.whatsapp-btn:hover {
-    color: #15803d;
-    background: #dcfce7;
-    border-color: #bbf7d0;
-}
-
-.edit-btn:hover {
-    color: #a16207;
-    background: #fef3c7;
-    border-color: #fde68a;
-}
 
 /* ===== ÉTAT VIDE ===== */
 
@@ -877,9 +687,6 @@
         justify-content: flex-start;
     }
 
-    .kpi-card {
-        padding: 17px;
-    }
 
     .clients-table {
         min-width: 980px;
@@ -1922,7 +1729,6 @@
     align-items: center;
     gap: 8px;
 }
-.clients-actions-menu { position: relative; }
 .selection-clients-trigger,
 .clients-actions-trigger {
     min-height: 38px;
@@ -2063,12 +1869,7 @@ body.clients-selection-mode .clients-table tbody tr:has(.client-checkbox:checked
 .client-row-menu-dropdown button:hover { background:#f1f5f9; }
 .client-row-menu-dropdown .danger-action { color:#b91c1c; }
 
-/* Notification : mêmes dimensions que Ventes/Commandes */
-.header .notification-panel {
-    width:min(330px,calc(100vw - 28px));
-    max-height:min(420px,calc(100vh - 110px));
-    overflow-y:auto;
-}
+/* Le header global gère désormais seul le panneau Notifications. */
 .notification-empty-state {
     display:flex;
     flex-direction:column;
@@ -2120,19 +1921,6 @@ body.clients-selection-mode .clients-table tbody tr:has(.client-checkbox:checked
     .client-row-menu-dropdown button {
         min-height:48px !important;
     }
-
-    .header .notification-panel {
-        position:fixed !important;
-        top:66px !important;
-        right:max(12px,env(safe-area-inset-right)) !important;
-        left:auto !important;
-        bottom:auto !important;
-        width:min(310px,calc(100vw - 24px)) !important;
-        max-width:calc(100vw - 24px) !important;
-        max-height:min(340px,calc(100dvh - 90px)) !important;
-        overflow-y:auto !important;
-        z-index:10001 !important;
-    }
 }
 
 @media(max-width:420px) {
@@ -2150,12 +1938,6 @@ body.clients-selection-mode .clients-table tbody tr:has(.client-checkbox:checked
     .selection-clients-trigger,
     .clients-actions-trigger {
         width:100%;
-    }
-    .header .notification-panel {
-        top:62px !important;
-        right:10px !important;
-        width:min(290px,calc(100vw - 20px)) !important;
-        max-height:min(320px,calc(100dvh - 82px)) !important;
     }
 }
 
@@ -2260,3 +2042,527 @@ body.clients-selection-mode .clients-table tbody tr:has(.client-checkbox:checked
     }
 }
 
+/* ==========================================================
+   FILTRES CLIENTS — DÉFILEMENT HORIZONTAL MOBILE / TABLETTE
+========================================================== */
+@media (max-width: 900px) {
+    .clients-filters {
+        display: flex !important;
+        width: 100%;
+        max-width: 100%;
+        flex-wrap: nowrap !important;
+        gap: 10px;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        padding: 13px;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: x proximity;
+        scrollbar-width: thin;
+        touch-action: pan-x;
+    }
+
+    .clients-filters > * {
+        flex: 0 0 auto !important;
+        scroll-snap-align: start;
+    }
+
+    .clients-filters select {
+        width: auto !important;
+        min-width: 155px !important;
+    }
+
+    .clients-filters .btn-filter-reset {
+        width: auto !important;
+        min-width: max-content;
+    }
+}
+
+@media (max-width: 480px) {
+    .clients-filters {
+        margin-right: 0;
+        margin-left: 0;
+        padding: 11px;
+    }
+
+    .clients-filters select {
+        min-width: 145px !important;
+    }
+}
+
+/* ==========================================================
+   FEEDBACK SOFT — ENREGISTREMENT / MODIFICATION CLIENT
+   Même expérience visuelle que le module Commandes.
+========================================================== */
+
+#client-form {
+    position: relative;
+}
+
+.client-save-soft-loader {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.68);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .18s ease, visibility .18s ease;
+}
+
+.client-save-soft-loader.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.client-save-soft-loader-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    min-width: min(330px, 100%);
+    max-width: 430px;
+    padding: 16px 18px;
+    background: rgba(255,255,255,.98);
+    border: 1px solid rgba(148,163,184,.28);
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(15,23,42,.16);
+}
+
+.client-save-soft-spinner {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    border: 3px solid rgba(37,99,235,.16);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: client-save-spin .75s linear infinite;
+}
+
+.client-save-soft-loader-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.client-save-soft-loader-title {
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.client-save-soft-loader-text {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+@keyframes client-save-spin {
+    to { transform: rotate(360deg); }
+}
+
+.client-save-loading-view {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+}
+
+.client-save-loading-view[aria-hidden="true"] {
+    display: none;
+}
+
+.client-save-success-view {
+    position: relative;
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 4px 2px 2px;
+    overflow: hidden;
+}
+
+.client-save-success-view:not([aria-hidden="true"]) {
+    display: flex;
+}
+
+.client-save-soft-loader.is-success .client-save-soft-loader-card {
+    min-width: min(390px, 100%);
+    max-width: 430px;
+    padding: 24px 26px 20px;
+    border-color: rgba(16,185,129,.18);
+    box-shadow: 0 18px 46px rgba(15,23,42,.16);
+}
+
+.client-save-success-icon {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    margin-bottom: 3px;
+    border-radius: 50%;
+    background: #10b981;
+    color: #fff;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow:
+        0 0 0 9px rgba(16,185,129,.08),
+        0 10px 24px rgba(16,185,129,.22);
+    animation: client-save-success-pop .32s ease-out both;
+}
+
+.client-save-success-title {
+    margin-top: 5px;
+    color: #059669;
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.client-save-success-text {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.client-save-success-reference {
+    width: 100%;
+    margin-top: 7px;
+    padding: 11px 14px;
+    background: #f0f9ff;
+    border: 1px solid #dbeafe;
+    border-radius: 11px;
+}
+
+.client-save-success-reference-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.client-save-success-reference-value {
+    display: block;
+    color: #0f172a;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.client-save-success-btn {
+    min-width: 166px;
+    margin-top: 8px;
+    padding: 10px 18px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    background: #10b981;
+    border: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(16,185,129,.20);
+    transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+}
+
+.client-save-success-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(.98);
+    box-shadow: 0 10px 22px rgba(16,185,129,.25);
+}
+
+.client-save-success-btn:active {
+    transform: translateY(0);
+}
+
+.client-save-success-confetti {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 95px;
+    pointer-events: none;
+}
+
+.client-save-success-confetti span {
+    position: absolute;
+    font-size: 8px;
+    opacity: 0;
+    animation: client-save-confetti .75s ease-out forwards;
+}
+
+.client-save-success-confetti span:nth-child(1) { left:17%; top:18%; color:#2563eb; animation-delay:.04s; }
+.client-save-success-confetti span:nth-child(2) { left:29%; top:7%; color:#10b981; animation-delay:.10s; }
+.client-save-success-confetti span:nth-child(3) { right:18%; top:15%; color:#f59e0b; animation-delay:.06s; }
+.client-save-success-confetti span:nth-child(4) { right:29%; top:5%; color:#10b981; animation-delay:.12s; }
+.client-save-success-confetti span:nth-child(5) { left:11%; top:48%; color:#8b5cf6; animation-delay:.08s; }
+.client-save-success-confetti span:nth-child(6) { right:11%; top:43%; color:#2563eb; animation-delay:.14s; }
+
+@keyframes client-save-success-pop {
+    from { opacity:0; transform:scale(.72); }
+    to { opacity:1; transform:scale(1); }
+}
+
+@keyframes client-save-confetti {
+    0% { opacity:0; transform:translateY(-3px) scale(.7) rotate(0); }
+    35% { opacity:1; }
+    100% { opacity:0; transform:translateY(24px) scale(1.08) rotate(120deg); }
+}
+
+/* Bouton d'enregistrement : retour visuel immédiat pendant la requête */
+#save-client-btn:disabled,
+#save-client-btn.is-processing {
+    cursor: wait;
+    opacity: .78;
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .client-save-soft-loader {
+        padding: 16px;
+    }
+
+    .client-save-soft-loader-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .client-save-soft-loader.is-success .client-save-soft-loader-card {
+        width: 100%;
+        min-width: 0;
+        padding: 22px 18px 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .client-save-soft-spinner,
+    .client-save-success-icon,
+    .client-save-success-confetti span {
+        animation: none !important;
+    }
+}
+
+/* ==========================================================
+   CLIENTS — SUCCÈS SUPPRESSION CENTRÉ
+========================================================== */
+.client-delete-success-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15,23,42,.28);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .18s ease, visibility .18s ease;
+}
+
+.client-delete-success-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.client-delete-success-card {
+    position: relative;
+    display: flex;
+    width: min(430px, 100%);
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 26px 20px;
+    overflow: hidden;
+    text-align: center;
+    background: #fff;
+    border: 1px solid rgba(16,185,129,.18);
+    border-radius: 14px;
+    box-shadow: 0 18px 46px rgba(15,23,42,.18);
+}
+
+.client-delete-success-icon {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    margin-bottom: 3px;
+    color: #fff;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 9px rgba(16,185,129,.08),
+        0 10px 24px rgba(16,185,129,.22);
+    animation: client-save-success-pop .32s ease-out both;
+}
+
+.client-delete-success-title {
+    margin-top: 5px;
+    color: #059669;
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.client-delete-success-text {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.client-delete-success-reference {
+    width: 100%;
+    margin-top: 7px;
+    padding: 11px 14px;
+    background: #f0f9ff;
+    border: 1px solid #dbeafe;
+    border-radius: 11px;
+}
+
+.client-delete-success-reference-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.client-delete-success-reference-value {
+    display: block;
+    color: #0f172a;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.client-delete-success-btn {
+    min-width: 166px;
+    margin-top: 8px;
+    padding: 10px 18px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    background: #10b981;
+    border: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(16,185,129,.20);
+    transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.client-delete-success-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(16,185,129,.25);
+}
+
+.client-delete-success-confetti {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 95px;
+    pointer-events: none;
+}
+
+.client-delete-success-confetti span {
+    position: absolute;
+    font-size: 8px;
+    opacity: 0;
+    animation: client-save-confetti .75s ease-out forwards;
+}
+
+.client-delete-success-confetti span:nth-child(1) { left:17%; top:18%; color:#2563eb; animation-delay:.04s; }
+.client-delete-success-confetti span:nth-child(2) { left:29%; top:7%; color:#10b981; animation-delay:.10s; }
+.client-delete-success-confetti span:nth-child(3) { right:18%; top:15%; color:#f59e0b; animation-delay:.06s; }
+.client-delete-success-confetti span:nth-child(4) { right:29%; top:5%; color:#10b981; animation-delay:.12s; }
+.client-delete-success-confetti span:nth-child(5) { left:11%; top:48%; color:#8b5cf6; animation-delay:.08s; }
+.client-delete-success-confetti span:nth-child(6) { right:11%; top:43%; color:#2563eb; animation-delay:.14s; }
+
+@media (max-width: 640px) {
+    .client-delete-success-card {
+        padding: 22px 18px 18px;
+    }
+}
+
+/* ==========================================================
+   CLIENTS — ACTIONS ⋮ V3
+   Desktop : menu fixé au viewport pour ne jamais être coupé
+   par le tableau (overflow:hidden / overflow:auto).
+========================================================== */
+@media (min-width: 901px) {
+    .client-row-menu-dropdown {
+        width: 220px !important;
+        max-width: calc(100vw - 24px) !important;
+        max-height: calc(100vh - 24px) !important;
+        overflow-y: auto !important;
+        z-index: 20000 !important;
+    }
+
+    .client-row-menu-dropdown.open-up,
+    .client-row-menu-dropdown.open-down {
+        bottom: auto !important;
+    }
+}
+
+/* Mobile : le comportement "bottom sheet" existant reste intact. */
+
+
+/* ==========================================================
+   CLIENTS — DISPOSITION MOBILE ACTIONS + ACTUALISER
+   Alignée sur le module Livreurs validé
+========================================================== */
+
+.clients-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 38px;
+    padding: 0 13px;
+    white-space: nowrap;
+}
+
+.clients-refresh-btn.is-loading {
+    opacity: .72;
+    cursor: wait;
+    pointer-events: none;
+}
+
+.clients-refresh-btn.is-loading > span {
+    opacity: .85;
+}
+
+@media (max-width: 640px) {
+    .clients-toolbar-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        gap: 8px !important;
+        justify-content: stretch !important;
+    }
+
+    .clients-actions-menu,
+    .clients-actions-trigger,
+    .clients-refresh-btn {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .clients-actions-trigger,
+    .clients-refresh-btn {
+        min-height: 42px !important;
+        touch-action: manipulation;
+    }
+}

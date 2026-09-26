@@ -11,6 +11,350 @@ let filtresClients = {
     commune: ""
 };
 
+
+/* ===========================================================
+   LOADER GLOBAL VISIBL — CLIENTS
+   Même fonctionnement que Commandes.
+=========================================================== */
+
+const CLIENTS_NAV_CACHE_KEY = "visibl:clients:nav-cache:v1";
+
+// Signature légère renvoyée par le backend.
+// Elle permet de savoir si le cache local est encore à jour.
+let signatureSyncClients = null;
+let verificationSyncClientsEnCours = null;
+
+// Synchronisation automatique légère.
+// On vérifie uniquement la signature toutes les 10 secondes.
+// getClients() n'est appelé que si cette signature a réellement changé.
+const CLIENTS_SYNC_INTERVAL_MS = 10000;
+let intervalleSyncClients = null;
+let synchronisationAutoClientsInitialisee = false;
+
+// Pagination serveur Clients.
+let totalClientsFiltresServeur = 0;
+let totalPagesClientsServeur = 1;
+let totalClientsGlobalServeur = 0;
+let kpisClientsServeur = null;
+let chargementPageClientsEnCours = null;
+let generationChargementClients = 0;
+let timerRechercheClientsServeur = null;
+
+// Conserve les objets sélectionnés pendant la navigation entre les pages.
+const cacheClientsSelectionnes = new Map();
+
+function sauvegarderCacheNavigationClients() {
+    try {
+        sessionStorage.setItem(
+            CLIENTS_NAV_CACHE_KEY,
+            JSON.stringify({
+                clients: Array.isArray(clientsCharges) ? clientsCharges : [],
+                signature: signatureSyncClients,
+                page: typeof pageClientsCourante !== "undefined"
+                    ? pageClientsCourante
+                    : 1,
+                limite: 10,
+                total: totalClientsFiltresServeur,
+                totalPages: totalPagesClientsServeur,
+                totalGlobal: totalClientsGlobalServeur,
+                kpis: kpisClientsServeur,
+                recherche: rechercheClients,
+                filtres: filtresClients,
+                tri: typeof triClients !== "undefined"
+                    ? triClients
+                    : { cle: "", direction: "asc" },
+                savedAt: Date.now()
+            })
+        );
+    } catch (error) {
+        console.warn("Cache navigation Clients indisponible :", error);
+    }
+}
+
+function restaurerCacheNavigationClients() {
+    try {
+        const brut = sessionStorage.getItem(CLIENTS_NAV_CACHE_KEY);
+        if (!brut) return false;
+
+        const cache = JSON.parse(brut);
+        if (!Array.isArray(cache?.clients)) return false;
+
+        clientsCharges = cache.clients;
+        clientsAffiches = cache.clients.slice();
+
+        signatureSyncClients =
+            cache.signature != null
+                ? String(cache.signature)
+                : null;
+
+        if (typeof pageClientsCourante !== "undefined") {
+            pageClientsCourante =
+                Number(cache.page) > 0
+                    ? Number(cache.page)
+                    : 1;
+        }
+
+        totalClientsFiltresServeur =
+            Number(cache.total) >= 0
+                ? Number(cache.total)
+                : clientsCharges.length;
+
+        totalPagesClientsServeur =
+            Number(cache.totalPages) > 0
+                ? Number(cache.totalPages)
+                : 1;
+
+        totalClientsGlobalServeur =
+            Number(cache.totalGlobal) >= 0
+                ? Number(cache.totalGlobal)
+                : totalClientsFiltresServeur;
+
+        kpisClientsServeur =
+            cache.kpis && typeof cache.kpis === "object"
+                ? cache.kpis
+                : null;
+
+        if (cache.recherche != null) {
+            rechercheClients = String(cache.recherche);
+        }
+
+        if (cache.filtres && typeof cache.filtres === "object") {
+            filtresClients = Object.assign(
+                { typeClient: "", statut: "", commune: "" },
+                cache.filtres
+            );
+        }
+
+        if (
+            typeof triClients !== "undefined" &&
+            cache.tri &&
+            typeof cache.tri === "object"
+        ) {
+            triClients = {
+                cle: String(cache.tri.cle || ""),
+                direction:
+                    String(cache.tri.direction || "").toLowerCase() === "desc"
+                        ? "desc"
+                        : "asc"
+            };
+        }
+
+        clientsCharges.forEach(function(client) {
+            if (client && client.idClient != null) {
+                cacheClientsSelectionnes.set(
+                    String(client.idClient),
+                    client
+                );
+            }
+        });
+
+        mettreAJourKPIsClients();
+        afficherClients(clientsAffiches);
+        mettreAJourCompteurClients(totalClientsFiltresServeur);
+        mettreAJourEtatBoutonEffacer();
+        definirEtatChargementKPIsClients(false);
+        return true;
+    } catch (error) {
+        console.warn("Restauration cache navigation Clients impossible :", error);
+        return false;
+    }
+}
+
+
+async function obtenirSignatureSyncClients() {
+    try {
+        const resultat = await apiGet("getEtatSyncClients", { _ts: Date.now() });
+
+        if (
+            !resultat ||
+            resultat.success !== true ||
+            resultat.signature == null
+        ) {
+            return null;
+        }
+
+        return String(resultat.signature);
+
+    } catch (error) {
+        console.warn(
+            "Vérification légère Clients indisponible :",
+            error
+        );
+        return null;
+    }
+}
+
+
+/**
+ * Vérifie en arrière-plan si les données Clients ont changé.
+ *
+ * - le cache reste affiché immédiatement ;
+ * - aucune animation de loader n'est lancée ;
+ * - getClients() n'est rappelé que si la signature serveur diffère.
+ */
+async function verifierSynchronisationClients() {
+
+    if (verificationSyncClientsEnCours) {
+        return verificationSyncClientsEnCours;
+    }
+
+    verificationSyncClientsEnCours = (async function () {
+
+        const signatureServeur =
+            await obtenirSignatureSyncClients();
+
+        if (signatureServeur == null) {
+            return false;
+        }
+
+        const signatureLocale =
+            signatureSyncClients == null
+                ? null
+                : String(signatureSyncClients);
+
+        if (
+            signatureLocale !== null &&
+            signatureLocale === signatureServeur
+        ) {
+            return false;
+        }
+
+        /*
+         * Cache ancien sans signature OU données réellement modifiées :
+         * on recharge silencieusement les données fraîches.
+         */
+        await chargerClients({
+            forcer: true,
+            silencieux: true,
+            verifierSync: false
+        });
+
+        return true;
+
+    })().finally(function () {
+        verificationSyncClientsEnCours = null;
+    });
+
+    return verificationSyncClientsEnCours;
+}
+
+
+
+function demanderVerificationSyncClients() {
+
+    // Pas d'appel périodique inutile quand l'onglet n'est pas visible.
+    if (document.visibilityState === "hidden") {
+        return;
+    }
+
+    verifierSynchronisationClients();
+}
+
+
+function initialiserSynchronisationAutomatiqueClients() {
+
+    if (synchronisationAutoClientsInitialisee) {
+        return;
+    }
+
+    synchronisationAutoClientsInitialisee = true;
+
+    // Vérification régulière légère.
+    intervalleSyncClients = window.setInterval(
+        demanderVerificationSyncClients,
+        CLIENTS_SYNC_INTERVAL_MS
+    );
+
+    // Retour sur l'onglet : contrôle immédiat.
+    document.addEventListener(
+        "visibilitychange",
+        function () {
+            if (document.visibilityState === "visible") {
+                demanderVerificationSyncClients();
+            }
+        }
+    );
+
+    // Retour sur la fenêtre : contrôle immédiat.
+    window.addEventListener(
+        "focus",
+        demanderVerificationSyncClients
+    );
+
+    // Nettoyage si la page est réellement quittée.
+    window.addEventListener(
+        "pagehide",
+        function () {
+            if (intervalleSyncClients) {
+                window.clearInterval(intervalleSyncClients);
+                intervalleSyncClients = null;
+            }
+        },
+        { once: true }
+    );
+}
+
+
+function preparerLoaderClients() {
+    const zonePage = document.querySelector(".content");
+
+    if (zonePage) {
+        zonePage.setAttribute("data-visibl-page", "");
+        zonePage.classList.add("visibl-loading-scope");
+
+        const ancre = zonePage.querySelector(".welcome-section");
+        if (ancre) {
+            ancre.setAttribute("data-loading-anchor", "");
+        }
+    }
+
+    [
+        "total-clients-value",
+        "active-clients-value",
+        "new-clients-value",
+        "client-revenue-value"
+    ].forEach(id => {
+        document
+            .getElementById(id)
+            ?.setAttribute("data-kpi-value", "");
+    });
+
+    document
+        .getElementById("clients-table-body")
+        ?.setAttribute("data-loading-table-body", "");
+}
+
+function demarrerLoaderClients(
+    message = "Chargement des clients…"
+) {
+    preparerLoaderClients();
+
+    if (
+        window.VisiblLoading &&
+        typeof window.VisiblLoading.start === "function"
+    ) {
+        window.VisiblLoading.start({
+            scope: ".content",
+            tableBody: "#clients-table-body",
+            rows: 10,
+            message: message
+        });
+    }
+}
+
+function terminerLoaderClients() {
+    if (
+        window.VisiblLoading &&
+        typeof window.VisiblLoading.stop === "function"
+    ) {
+        window.VisiblLoading.stop({
+            scope: ".content",
+            tableBody: "#clients-table-body"
+        });
+    }
+}
+
+
 // ========================================
 // INITIALISATION
 // ========================================
@@ -213,10 +557,19 @@ openToolbarBtn?.addEventListener(
             }
 
             const idClient = clientASupprimer.idClient;
+
+            // On conserve les infos avant que la suppression ne réinitialise l'état.
+            const clientSupprime = { ...clientASupprimer };
+
             let suppressionReussie = false;
+
+            const texteInitialSuppression =
+                confirmDeleteBtn.innerHTML;
 
             confirmDeleteBtn.disabled = true;
             confirmDeleteBtn.classList.add("is-loading");
+            confirmDeleteBtn.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin"></i><span>Suppression...</span>';
 
             try {
 
@@ -227,10 +580,15 @@ openToolbarBtn?.addEventListener(
 
                 confirmDeleteBtn.disabled = false;
                 confirmDeleteBtn.classList.remove("is-loading");
+                confirmDeleteBtn.innerHTML =
+                    texteInitialSuppression;
             }
 
             if (suppressionReussie) {
                 fermerModalSuppression();
+
+                // Confirmation centrale, identique au modèle Enregistrer / Modifier.
+                await afficherSuccesSuppressionClient(clientSupprime);
             }
         }
     );
@@ -420,8 +778,13 @@ if (deleteButton) {
     );
 
 
-    // Charger les clients au démarrage
-    chargerClients();
+    // Charger les clients au démarrage, puis activer la
+    // synchronisation légère automatique toutes les 10 secondes.
+    Promise.resolve(
+        chargerClients()
+    ).finally(function () {
+        initialiserSynchronisationAutomatiqueClients();
+    });
 }
 
 
@@ -443,6 +806,485 @@ if (document.readyState === "loading") {
 
 
 // ========================================
+// MISE À JOUR LOCALE APRÈS CRUD CLIENTS
+// ========================================
+
+function finaliserMutationLocaleClients(signature) {
+    if (signature != null) {
+        signatureSyncClients = String(signature);
+    }
+
+    /*
+     * Mise à jour immédiate locale pour garder l'UX instantanée,
+     * puis revalidation silencieuse de la page serveur afin de corriger
+     * automatiquement l'ordre, le total, les KPI et les filtres.
+     */
+    clientsAffiches = clientsCharges.slice();
+    afficherClients(clientsAffiches);
+    mettreAJourKPIsClients();
+    sauvegarderCacheNavigationClients();
+
+    Promise.resolve().then(function() {
+        return chargerClients({
+            forcer: true,
+            silencieux: true,
+            verifierSync: false
+        });
+    }).catch(function(error) {
+        console.warn(
+            "Revalidation Clients après mutation indisponible :",
+            error
+        );
+    });
+}
+
+function ajouterClientLocal(client, signature) {
+    if (!client || !client.idClient) return false;
+
+    const existe = clientsCharges.some(function (element) {
+        return String(element.idClient) === String(client.idClient);
+    });
+
+    if (!existe) {
+        clientsCharges.unshift(client);
+    }
+
+    finaliserMutationLocaleClients(signature);
+    return true;
+}
+
+function modifierClientLocal(client, signature) {
+    if (!client || !client.idClient) return false;
+
+    const index = clientsCharges.findIndex(function (element) {
+        return String(element.idClient) === String(client.idClient);
+    });
+
+    if (index === -1) return false;
+
+    // On conserve les champs calculés par getClients() :
+    // date d'inscription, nombre de commandes, achats et avoirs.
+    clientsCharges[index] = Object.assign(
+        {},
+        clientsCharges[index],
+        client
+    );
+
+    finaliserMutationLocaleClients(signature);
+    return true;
+}
+
+function supprimerClientLocal(idClient, signature) {
+    const longueurAvant = clientsCharges.length;
+
+    idsClientsSelectionnes.delete(String(idClient));
+    cacheClientsSelectionnes.delete(String(idClient));
+
+    clientsCharges = clientsCharges.filter(function (element) {
+        return String(element.idClient) !== String(idClient);
+    });
+
+    if (clientsCharges.length === longueurAvant) {
+        return false;
+    }
+
+    finaliserMutationLocaleClients(signature);
+    return true;
+}
+
+
+
+/* ===========================================================
+   FEEDBACK SOFT — ENREGISTREMENT / MODIFICATION CLIENT
+   Même principe que Commandes : blocage anti double-clic,
+   loader centré puis confirmation de succès au même endroit.
+=========================================================== */
+
+function obtenirLoaderEnregistrementClient() {
+    const formulaire = document.getElementById("client-form");
+    if (!formulaire) return null;
+
+    let loader = formulaire.querySelector(".client-save-soft-loader");
+    if (loader) return loader;
+
+    loader = document.createElement("div");
+    loader.className = "client-save-soft-loader";
+    loader.setAttribute("aria-hidden", "true");
+
+    loader.innerHTML = `
+        <div class="client-save-soft-loader-card" role="status" aria-live="polite">
+            <div class="client-save-loading-view">
+                <span class="client-save-soft-spinner" aria-hidden="true"></span>
+
+                <div class="client-save-soft-loader-copy">
+                    <strong class="client-save-soft-loader-title">
+                        Enregistrement du client…
+                    </strong>
+                    <span class="client-save-soft-loader-text">
+                        Quelques secondes, s’il vous plaît.
+                    </span>
+                </div>
+            </div>
+
+            <div class="client-save-success-view" aria-hidden="true">
+                <div class="client-save-success-icon" aria-hidden="true">✓</div>
+
+                <div class="client-save-success-confetti" aria-hidden="true">
+                    <span>◆</span><span>●</span><span>◆</span>
+                    <span>●</span><span>◆</span><span>●</span>
+                </div>
+
+                <strong class="client-save-success-title">
+                    Client enregistré !
+                </strong>
+
+                <span class="client-save-success-text">
+                    Le client a été enregistré avec succès.
+                </span>
+
+                <div class="client-save-success-reference" hidden>
+                    <span class="client-save-success-reference-label">Client</span>
+                    <strong class="client-save-success-reference-value"></strong>
+                </div>
+
+                <button type="button" class="client-save-success-btn">
+                    ✓ Parfait !
+                </button>
+            </div>
+        </div>
+    `;
+
+    formulaire.appendChild(loader);
+    return loader;
+}
+
+function demarrerLoaderEnregistrementClient(modification = false) {
+    const loader = obtenirLoaderEnregistrementClient();
+    if (!loader) return;
+
+    loader.classList.remove("is-success");
+
+    const loadingView = loader.querySelector(".client-save-loading-view");
+    const successView = loader.querySelector(".client-save-success-view");
+    const titre = loader.querySelector(".client-save-soft-loader-title");
+
+    loadingView?.removeAttribute("aria-hidden");
+    successView?.setAttribute("aria-hidden", "true");
+
+    if (titre) {
+        titre.textContent = modification
+            ? "Modification du client…"
+            : "Enregistrement du client…";
+    }
+
+    loader.classList.add("is-visible");
+    loader.setAttribute("aria-hidden", "false");
+}
+
+function terminerLoaderEnregistrementClient() {
+    const loader = document.querySelector("#client-form .client-save-soft-loader");
+    if (!loader) return;
+
+    loader.classList.remove("is-visible", "is-success");
+    loader.setAttribute("aria-hidden", "true");
+}
+
+function afficherSuccesEnregistrementClient(client, modification = false) {
+    return new Promise(resolve => {
+        const loader = obtenirLoaderEnregistrementClient();
+        if (!loader) {
+            resolve();
+            return;
+        }
+
+        const loadingView = loader.querySelector(".client-save-loading-view");
+        const successView = loader.querySelector(".client-save-success-view");
+        const titre = loader.querySelector(".client-save-success-title");
+        const texte = loader.querySelector(".client-save-success-text");
+        const blocReference = loader.querySelector(".client-save-success-reference");
+        const valeurReference = loader.querySelector(".client-save-success-reference-value");
+        const bouton = loader.querySelector(".client-save-success-btn");
+
+        loadingView?.setAttribute("aria-hidden", "true");
+        successView?.removeAttribute("aria-hidden");
+
+        if (titre) {
+            titre.textContent = modification
+                ? "Client modifié !"
+                : "Client enregistré !";
+        }
+
+        if (texte) {
+            texte.textContent = modification
+                ? "Les modifications ont été enregistrées avec succès."
+                : "Le client a été enregistré avec succès.";
+        }
+
+        const nomClient = [
+            client?.nom || "",
+            client?.prenom || ""
+        ].filter(Boolean).join(" ").trim();
+
+        if (blocReference && valeurReference && nomClient) {
+            valeurReference.textContent = nomClient;
+            blocReference.hidden = false;
+        } else if (blocReference) {
+            blocReference.hidden = true;
+        }
+
+        loader.classList.add("is-success");
+
+        const terminer = () => resolve();
+
+        if (bouton) {
+            bouton.addEventListener("click", terminer, { once: true });
+            window.setTimeout(() => bouton.focus(), 80);
+        } else {
+            resolve();
+        }
+    });
+}
+
+
+
+
+function obtenirTitreErreurClientCentre(message) {
+    const texte = String(message || "").toLowerCase();
+
+    if (
+        texte.includes("connexion impossible") ||
+        texte.includes("failed to fetch") ||
+        texte.includes("network")
+    ) return "Connexion impossible";
+
+    if (texte.includes("téléphone") || texte.includes("telephone")) {
+        if (texte.includes("déjà utilisé") || texte.includes("deja utilise")) {
+            return "Numéro déjà utilisé";
+        }
+        return "Numéro de téléphone invalide";
+    }
+
+    if (texte.includes("email") || texte.includes("e-mail")) {
+        if (texte.includes("déjà") || texte.includes("deja") || texte.includes("existe déjà")) {
+            return "Email déjà utilisé";
+        }
+        return "Email invalide";
+    }
+
+    if (
+        texte.includes("historique") ||
+        texte.includes("traçabilité") ||
+        texte.includes("tracabilite") ||
+        texte.includes("supprimer") ||
+        texte.includes("suppression")
+    ) return "Suppression impossible";
+
+    if (texte.includes("type de client")) return "Type de client invalide";
+    if (texte.includes("statut")) return "Statut invalide";
+
+    return "Action impossible";
+}
+
+
+function afficherErreurClientCentre(message) {
+    return new Promise(resolve => {
+        let overlay = document.getElementById("client-error-center-overlay");
+
+        if (!overlay) {
+            overlay = document.createElement("div");
+            overlay.id = "client-error-center-overlay";
+            overlay.setAttribute("aria-hidden", "true");
+
+            overlay.innerHTML = `
+                <div class="client-error-center-card" role="alertdialog"
+                     aria-modal="true"
+                     aria-labelledby="client-error-center-title">
+                    <div class="client-error-center-icon" aria-hidden="true">!</div>
+                    <strong id="client-error-center-title"
+                            class="client-error-center-title"></strong>
+                    <span class="client-error-center-message"></span>
+                    <button type="button" class="client-error-center-btn">
+                        Compris
+                    </button>
+                </div>
+            `;
+
+            const style = document.createElement("style");
+            style.id = "client-error-center-style";
+            style.textContent = `
+                #client-error-center-overlay {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 100000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    background: rgba(15,23,42,.30);
+                    backdrop-filter: blur(2px);
+                    -webkit-backdrop-filter: blur(2px);
+                    opacity: 0;
+                    visibility: hidden;
+                    pointer-events: none;
+                    transition: opacity .18s ease, visibility .18s ease;
+                }
+
+                #client-error-center-overlay.is-visible {
+                    opacity: 1;
+                    visibility: visible;
+                    pointer-events: auto;
+                }
+
+                .client-error-center-card {
+                    width: min(420px, 100%);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 26px 24px 22px;
+                    text-align: center;
+                    background: #fff;
+                    border: 1px solid rgba(239,68,68,.16);
+                    border-radius: 16px;
+                    box-shadow: 0 22px 55px rgba(15,23,42,.20);
+                    transform: translateY(8px) scale(.98);
+                    transition: transform .20s ease;
+                }
+
+                #client-error-center-overlay.is-visible
+                .client-error-center-card {
+                    transform: translateY(0) scale(1);
+                }
+
+                .client-error-center-icon {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 62px;
+                    height: 62px;
+                    margin-bottom: 2px;
+                    color: #fff;
+                    font-size: 34px;
+                    font-weight: 800;
+                    line-height: 1;
+                    background: #ef4444;
+                    border-radius: 50%;
+                    box-shadow:
+                        0 0 0 9px rgba(239,68,68,.08),
+                        0 10px 24px rgba(239,68,68,.20);
+                }
+
+                .client-error-center-title {
+                    margin-top: 5px;
+                    color: #dc2626;
+                    font-size: 20px;
+                    line-height: 1.25;
+                }
+
+                .client-error-center-message {
+                    max-width: 340px;
+                    color: #64748b;
+                    font-size: 13px;
+                    line-height: 1.55;
+                }
+
+                .client-error-center-btn {
+                    min-width: 150px;
+                    margin-top: 9px;
+                    padding: 10px 20px;
+                    color: #fff;
+                    font-size: 13px;
+                    font-weight: 800;
+                    background: #ef4444;
+                    border: 0;
+                    border-radius: 9px;
+                    cursor: pointer;
+                    box-shadow: 0 8px 18px rgba(239,68,68,.18);
+                    transition: transform .16s ease, box-shadow .16s ease;
+                }
+
+                .client-error-center-btn:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 10px 22px rgba(239,68,68,.24);
+                }
+
+                @media (max-width: 480px) {
+                    #client-error-center-overlay {
+                        padding: 16px;
+                    }
+
+                    .client-error-center-card {
+                        padding: 23px 18px 19px;
+                    }
+                }
+            `;
+
+            document.head.appendChild(style);
+            document.body.appendChild(overlay);
+        }
+
+        const titreElement =
+            overlay.querySelector(".client-error-center-title");
+        const messageElement =
+            overlay.querySelector(".client-error-center-message");
+        const bouton =
+            overlay.querySelector(".client-error-center-btn");
+
+        if (titreElement) {
+            titreElement.textContent =
+                obtenirTitreErreurClientCentre(message);
+        }
+
+        if (messageElement) {
+            messageElement.textContent =
+                message ||
+                "Une erreur est survenue. Veuillez réessayer.";
+        }
+
+        overlay.classList.add("is-visible");
+        overlay.setAttribute("aria-hidden", "false");
+
+        const fermer = () => {
+            overlay.classList.remove("is-visible");
+            overlay.setAttribute("aria-hidden", "true");
+            resolve();
+        };
+
+        bouton?.addEventListener("click", fermer, { once: true });
+        setTimeout(() => bouton?.focus(), 80);
+    });
+}
+
+
+function obtenirMessageErreurEnregistrementClient(error) {
+    const messageBrut = String(
+        error?.message ||
+        error ||
+        ""
+    ).trim();
+
+    const messageNormalise = messageBrut.toLowerCase();
+
+    const erreurReseau =
+        navigator.onLine === false ||
+        messageNormalise.includes("failed to fetch") ||
+        messageNormalise.includes("networkerror") ||
+        messageNormalise.includes("network error") ||
+        messageNormalise.includes("load failed") ||
+        messageNormalise.includes("fetch failed") ||
+        messageNormalise.includes("connexion") && messageNormalise.includes("réseau");
+
+    if (erreurReseau) {
+        return "Connexion impossible. Vérifiez votre connexion Internet puis réessayez.";
+    }
+
+    return (
+        messageBrut ||
+        "Impossible d’enregistrer le client. Veuillez réessayer."
+    );
+}
+
+// ========================================
 // ENREGISTREMENT D'UN CLIENT
 // ========================================
 
@@ -450,129 +1292,151 @@ async function enregistrerClient(event) {
 
     event.preventDefault();
 
-    const clientForm =
-        document.getElementById("client-form");
+    const clientForm = document.getElementById("client-form");
+    const saveButton = document.getElementById("save-client-btn");
+
+    if (!clientForm) {
+        return;
+    }
+
+    // Anti double-clic / double soumission.
+    if (clientForm.dataset.processing === "true") {
+        return;
+    }
+
+    // Validation HTML native avant toute requête.
+    if (!clientForm.checkValidity()) {
+        clientForm.reportValidity();
+        return;
+    }
+
+    /*
+     * Si le navigateur sait déjà qu'il est hors connexion,
+     * on n'affiche même pas le loader et aucune requête n'est lancée.
+     */
+    if (navigator.onLine === false) {
+        terminerLoaderEnregistrementClient();
+
+        await afficherErreurClientCentre(
+            "Connexion impossible. Vérifiez votre connexion Internet puis réessayez."
+        );
+
+        return;
+    }
+
+    const estModification = Boolean(clientEnModificationId);
 
     const data = {
-
-        nom: document
-            .getElementById("client-lastname")
-            .value
-            .trim(),
-
-        prenom: document
-            .getElementById("client-firstname")
-            .value
-            .trim(),
-
-        telephone: document
-            .getElementById("client-phone")
-            .value
-            .trim(),
-
-        email: document
-            .getElementById("client-email")
-            .value
-            .trim(),
-
-        commune: document
-            .getElementById("client-commune")
-            .value,
-
-        quartier: document
-            .getElementById("client-neighborhood")
-            .value
-            .trim(),
-
-        typeClient: document
-            .getElementById("client-type")
-            .value,
-
-        statut: document
-            .getElementById("client-status")
-            .value,
-
-        commentaire: document
-            .getElementById("client-comment")
-            .value
-            .trim()
+        nom: document.getElementById("client-lastname").value.trim(),
+        prenom: document.getElementById("client-firstname").value.trim(),
+        telephone: document.getElementById("client-phone").value.trim(),
+        email: document.getElementById("client-email").value.trim(),
+        commune: document.getElementById("client-commune").value,
+        quartier: document.getElementById("client-neighborhood").value.trim(),
+        typeClient: document.getElementById("client-type").value,
+        statut: document.getElementById("client-status").value,
+        commentaire: document.getElementById("client-comment").value.trim()
     };
 
+    clientForm.dataset.processing = "true";
 
     try {
+        demarrerLoaderEnregistrementClient(estModification);
+
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.classList.add("is-processing");
+            saveButton.dataset.originalText = saveButton.textContent.trim();
+            saveButton.textContent = estModification
+                ? "Modification..."
+                : "Enregistrement...";
+        }
 
         let resultat;
 
-if (clientEnModificationId) {
-
-    data.idClient =
-        clientEnModificationId;
-
-    resultat =
-        await apiPost(
-            "updateClient",
-            data
-        );
-
-} else {
-
-    resultat =
-        await apiPost(
-            "createClient",
-            data
-        );
-}
-
-
-        if (resultat.success) {
-
-            showToast(
-                resultat.message,
-                "success"
-            );
-
-            clientForm?.reset();
-
-            clientEnModificationId = null;
-
-document.getElementById("client-modal-title").textContent =
-    "Nouveau client";
-
-document.getElementById("save-client-btn").textContent =
-    "Enregistrer";
-
-            await chargerClients();
-
-            const clientModal =
-                document.getElementById("client-modal");
-
-            clientModal?.classList.remove("active");
-
-            clientModal?.setAttribute(
-                "aria-hidden",
-                "true"
-            );
-
+        if (estModification) {
+            data.idClient = clientEnModificationId;
+            resultat = await apiPost("updateClient", data);
         } else {
+            resultat = await apiPost("createClient", data);
+        }
 
-            showToast(
-                resultat.message,
-                "error"
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                (estModification
+                    ? "Impossible de modifier le client."
+                    : "Impossible d'enregistrer le client.")
             );
         }
 
-    } catch (error) {
+        let miseAJourLocaleOk = false;
 
-        console.error(error);
+        if (estModification) {
+            miseAJourLocaleOk = modifierClientLocal(
+                resultat.client,
+                resultat.signature
+            );
+        } else {
+            miseAJourLocaleOk = ajouterClientLocal(
+                resultat.client,
+                resultat.signature
+            );
+        }
 
-        showToast(
-            "Impossible de communiquer avec le serveur.",
-            "error"
+        if (!miseAJourLocaleOk) {
+            await chargerClients({
+                forcer: true,
+                silencieux: true
+            });
+        }
+
+        // Même expérience que Commandes :
+        // le loader devient une carte de succès centrée.
+        await afficherSuccesEnregistrementClient(
+            resultat.client || data,
+            estModification
         );
+
+        clientForm.reset();
+        clientEnModificationId = null;
+
+        const modalTitle = document.getElementById("client-modal-title");
+        if (modalTitle) {
+            modalTitle.textContent = "Nouveau client";
+        }
+
+        const clientModal = document.getElementById("client-modal");
+        clientModal?.classList.remove("active");
+        clientModal?.setAttribute("aria-hidden", "true");
+
+    } catch (error) {
+        console.error("Erreur d'enregistrement client :", error);
+
+        // Le loader disparaît dès que l'échec est capturé.
+        terminerLoaderEnregistrementClient();
+
+        const messageErreur =
+            obtenirMessageErreurEnregistrementClient(error);
+
+        await afficherErreurClientCentre(
+            messageErreur
+        );
+
+    } finally {
+        terminerLoaderEnregistrementClient();
+
+        clientForm.dataset.processing = "false";
+
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.classList.remove("is-processing");
+            saveButton.textContent = clientEnModificationId
+                ? "Enregistrer les modifications"
+                : "Enregistrer le client";
+        }
     }
 }
-
-
 
 
 // ========================================
@@ -660,6 +1524,177 @@ function fermerModalSuppression() {
 }
 
 
+
+/* ===========================================================
+   SUCCÈS — SUPPRESSION CLIENT
+   Même modèle centré que l'enregistrement / modification.
+=========================================================== */
+function afficherSuccesSuppressionClient(client) {
+    return new Promise(resolve => {
+        let overlay = document.getElementById("client-delete-success-overlay");
+
+        if (!overlay) {
+            overlay = document.createElement("div");
+            overlay.id = "client-delete-success-overlay";
+            overlay.className = "client-delete-success-overlay";
+            overlay.setAttribute("aria-hidden", "true");
+
+            overlay.innerHTML = `
+                <div class="client-delete-success-card" role="status" aria-live="polite">
+                    <div class="client-delete-success-icon" aria-hidden="true">✓</div>
+
+                    <div class="client-delete-success-confetti" aria-hidden="true">
+                        <span>◆</span><span>●</span><span>◆</span>
+                        <span>●</span><span>◆</span><span>●</span>
+                    </div>
+
+                    <strong class="client-delete-success-title">
+                        Client supprimé !
+                    </strong>
+
+                    <span class="client-delete-success-text">
+                        Le client a été supprimé avec succès.
+                    </span>
+
+                    <div class="client-delete-success-reference" hidden>
+                        <span class="client-delete-success-reference-label">Client</span>
+                        <strong class="client-delete-success-reference-value"></strong>
+                    </div>
+
+                    <button type="button" class="client-delete-success-btn">
+                        ✓ Parfait !
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+        }
+
+        if (!document.getElementById("client-delete-success-style-inline")) {
+            const style = document.createElement("style");
+            style.id = "client-delete-success-style-inline";
+            style.textContent = `
+                #client-delete-success-overlay {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 100000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    background: rgba(15,23,42,.30);
+                    backdrop-filter: blur(2px);
+                    -webkit-backdrop-filter: blur(2px);
+                    opacity: 0;
+                    visibility: hidden;
+                    pointer-events: none;
+                    transition: opacity .18s ease, visibility .18s ease;
+                }
+                #client-delete-success-overlay.is-visible {
+                    opacity: 1;
+                    visibility: visible;
+                    pointer-events: auto;
+                }
+                #client-delete-success-overlay .client-delete-success-card {
+                    width: min(420px, 100%);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 28px 24px 22px;
+                    text-align: center;
+                    background: #fff;
+                    border-radius: 16px;
+                    box-shadow: 0 22px 55px rgba(15,23,42,.20);
+                }
+                #client-delete-success-overlay .client-delete-success-icon {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 64px;
+                    height: 64px;
+                    color: #fff;
+                    font-size: 32px;
+                    font-weight: 900;
+                    background: #22c55e;
+                    border-radius: 50%;
+                    box-shadow: 0 0 0 9px rgba(34,197,94,.08), 0 10px 24px rgba(34,197,94,.20);
+                }
+                #client-delete-success-overlay .client-delete-success-title {
+                    margin-top: 6px;
+                    font-size: 21px;
+                    color: #0f172a;
+                }
+                #client-delete-success-overlay .client-delete-success-text {
+                    color: #64748b;
+                    font-size: 13px;
+                    line-height: 1.55;
+                }
+                #client-delete-success-overlay .client-delete-success-reference {
+                    margin-top: 3px;
+                    padding: 8px 12px;
+                    border-radius: 10px;
+                    background: #f8fafc;
+                    color: #334155;
+                }
+                #client-delete-success-overlay .client-delete-success-reference-label {
+                    margin-right: 6px;
+                    color: #94a3b8;
+                    font-size: 12px;
+                }
+                #client-delete-success-overlay .client-delete-success-btn {
+                    min-width: 150px;
+                    margin-top: 8px;
+                    padding: 10px 20px;
+                    border: 0;
+                    border-radius: 9px;
+                    color: #fff;
+                    font-size: 13px;
+                    font-weight: 800;
+                    background: #22c55e;
+                    cursor: pointer;
+                }
+                #client-delete-success-overlay .client-delete-success-confetti {
+                    display: none;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        const valeur = overlay.querySelector(".client-delete-success-reference-value");
+        const bloc = overlay.querySelector(".client-delete-success-reference");
+        const bouton = overlay.querySelector(".client-delete-success-btn");
+
+        const nomClient = [
+            client?.nom || "",
+            client?.prenom || ""
+        ].filter(Boolean).join(" ").trim();
+
+        if (bloc && valeur && nomClient) {
+            valeur.textContent = nomClient;
+            bloc.hidden = false;
+        } else if (bloc) {
+            bloc.hidden = true;
+        }
+
+        overlay.classList.add("is-visible");
+        overlay.setAttribute("aria-hidden", "false");
+
+        const terminer = () => {
+            overlay.classList.remove("is-visible");
+            overlay.setAttribute("aria-hidden", "true");
+            resolve();
+        };
+
+        if (bouton) {
+            bouton.addEventListener("click", terminer, { once: true });
+            setTimeout(() => bouton.focus(), 80);
+        } else {
+            resolve();
+        }
+    });
+}
+
 // ========================================
 // SUPPRESSION D'UN CLIENT
 // ========================================
@@ -678,21 +1713,36 @@ async function supprimerClient(idClient) {
 
         if (resultat.success) {
 
+            /*
+             * Suppression locale immédiate :
+             * aucun getClients() complet n'est nécessaire.
+             */
+            const suppressionLocaleOk =
+                supprimerClientLocal(
+                    idClient,
+                    resultat.signature
+                );
+
+            // Fallback uniquement si l'état local était incohérent.
+            if (!suppressionLocaleOk) {
+                await chargerClients({
+                    forcer: true,
+                    silencieux: true
+                });
+            }
+
             showToast(
                 resultat.message,
                 "success"
             );
 
-            await chargerClients();
-
             return true;
 
         } else {
 
-            showToast(
+            await afficherErreurClientCentre(
                 resultat.message ||
-                "Impossible de supprimer le client.",
-                "error"
+                "Impossible de supprimer le client."
             );
 
             return false;
@@ -705,65 +1755,200 @@ async function supprimerClient(idClient) {
             error
         );
 
-        showToast(
-            "Impossible de communiquer avec le serveur.",
-            "error"
+        await afficherErreurClientCentre(
+            obtenirMessageErreurEnregistrementClient(error)
         );
 
         return false;
     }
 }
 
+
 // ========================================
 // CHARGEMENT DES CLIENTS
 // ========================================
 
-async function chargerClients() {
+async function chargerClients(options = {}) {
 
-    definirEtatChargementKPIsClients(true);
+    const forcer = options?.forcer === true;
+    const silencieux = options?.silencieux === true;
+    const verifierSync = options?.verifierSync !== false;
 
-    try {
+    // Retour sur Clients : page en cache immédiatement, puis vérification légère.
+    if (!forcer && restaurerCacheNavigationClients()) {
 
-        const resultat =
-            await apiGet("getClients");
+        if (verifierSync) {
+            verifierSynchronisationClients();
+        }
 
+        return;
+    }
 
-        if (!resultat.success) {
+    /*
+     * Une nouvelle recherche / un nouveau filtre ne doit jamais attendre
+     * une requête lancée avec d'anciens critères.
+     * Chaque appel reçoit une génération ; seule la réponse la plus récente
+     * est autorisée à mettre à jour l'interface.
+     */
+    const generationCourante =
+        ++generationChargementClients;
+
+    if (!silencieux) {
+        demarrerLoaderClients("Chargement des clients…");
+        definirEtatChargementKPIsClients(true);
+    }
+
+    chargementPageClientsEnCours = (async function () {
+        try {
+
+            const resultat =
+                await apiGet(
+                    "getClientsPage",
+                    {
+                        page:
+                            typeof pageClientsCourante !== "undefined"
+                                ? pageClientsCourante
+                                : 1,
+                        limite: 10,
+                        recherche: rechercheClients || "",
+                        typeClient: filtresClients.typeClient || "",
+                        statut: filtresClients.statut || "",
+                        commune: filtresClients.commune || "",
+                        tri:
+                            typeof triClients !== "undefined"
+                                ? (triClients.cle || "")
+                                : "",
+                        direction:
+                            typeof triClients !== "undefined"
+                                ? (triClients.direction || "asc")
+                                : "asc",
+                        _ts: Date.now()
+                    }
+                );
+
+            if (!resultat || resultat.success === false) {
+
+                /*
+                 * Une ancienne requête peut revenir après une nouvelle recherche.
+                 * Dans ce cas, on ignore silencieusement sa réponse.
+                 */
+                if (generationCourante !== generationChargementClients) {
+                    return;
+                }
+
+                showToast(
+                    resultat?.message ||
+                    "Impossible de charger les clients.",
+                    "error"
+                );
+
+                return;
+            }
+
+            if (generationCourante !== generationChargementClients) {
+                return;
+            }
+
+            clientsCharges =
+                Array.isArray(resultat.clients)
+                    ? resultat.clients
+                    : [];
+
+            clientsAffiches = clientsCharges.slice();
+
+            if (resultat.signature != null) {
+                signatureSyncClients =
+                    String(resultat.signature);
+            }
+
+            if (typeof pageClientsCourante !== "undefined") {
+                pageClientsCourante =
+                    Number(resultat.page) > 0
+                        ? Number(resultat.page)
+                        : 1;
+            }
+
+            totalClientsFiltresServeur =
+                Number(resultat.total) >= 0
+                    ? Number(resultat.total)
+                    : clientsCharges.length;
+
+            totalPagesClientsServeur =
+                Number(resultat.totalPages) > 0
+                    ? Number(resultat.totalPages)
+                    : 1;
+
+            totalClientsGlobalServeur =
+                Number(resultat.totalGlobal) >= 0
+                    ? Number(resultat.totalGlobal)
+                    : totalClientsFiltresServeur;
+
+            kpisClientsServeur =
+                resultat.kpis && typeof resultat.kpis === "object"
+                    ? resultat.kpis
+                    : null;
+
+            clientsCharges.forEach(function(client) {
+                if (client && client.idClient != null) {
+                    cacheClientsSelectionnes.set(
+                        String(client.idClient),
+                        client
+                    );
+                }
+            });
+
+            mettreAJourKPIsClients();
+            afficherClients(clientsAffiches);
+            mettreAJourCompteurClients(
+                totalClientsFiltresServeur
+            );
+            mettreAJourEtatBoutonEffacer();
+            sauvegarderCacheNavigationClients();
+
+            if (
+                signatureSyncClients == null &&
+                verifierSync
+            ) {
+                obtenirSignatureSyncClients()
+                    .then(function(signature) {
+                        if (signature == null) return;
+                        signatureSyncClients = signature;
+                        sauvegarderCacheNavigationClients();
+                    });
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Erreur chargement clients :",
+                error
+            );
 
             showToast(
-                resultat.message ||
-                "Impossible de charger les clients.",
+                "Impossible de charger la liste des clients.",
                 "error"
             );
 
-            return;
+        } finally {
+
+            definirEtatChargementKPIsClients(false);
+
+            if (!silencieux) {
+                terminerLoaderClients();
+            }
         }
+    })().finally(function() {
+        /*
+         * Ne pas effacer la référence d'une requête plus récente
+         * si une ancienne requête se termine après elle.
+         */
+        if (generationCourante === generationChargementClients) {
+            chargementPageClientsEnCours = null;
+        }
+    });
 
-
-        clientsCharges =
-            Array.isArray(resultat.clients)
-                ? resultat.clients
-                : [];
-
-        mettreAJourKPIsClients();
-        definirEtatChargementKPIsClients(false);
-        appliquerRechercheEtFiltresClients();
-
-    } catch (error) {
-
-        console.error(
-            "Erreur chargement clients :",
-            error
-        );
-
-        showToast(
-            "Impossible de charger la liste des clients.",
-            "error"
-        );
-        definirEtatChargementKPIsClients(false);
-    }
+    return chargementPageClientsEnCours;
 }
-
 
 
 function definirEtatChargementKPIsClients(actif) {
@@ -785,55 +1970,147 @@ function definirEtatChargementKPIsClients(actif) {
 
 function mettreAJourKPIsClients() {
 
-    const totalClients = clientsCharges.length;
+    const kpis =
+        kpisClientsServeur &&
+        typeof kpisClientsServeur === "object"
+            ? kpisClientsServeur
+            : null;
 
-    const clientsActifs = clientsCharges.filter(function (client) {
-        return normaliserValeurRecherche(client.statut) === "actif";
-    }).length;
+    const totalClients =
+        kpis
+            ? Number(kpis.totalClients || 0)
+            : clientsCharges.length;
 
-    const pourcentageActifs = totalClients > 0
-        ? Math.round((clientsActifs / totalClients) * 100)
-        : 0;
+    const clientsActifs =
+        kpis
+            ? Number(kpis.clientsActifs || 0)
+            : clientsCharges.filter(function (client) {
+                return normaliserValeurRecherche(client.statut) === "actif";
+            }).length;
 
-    const maintenant = new Date();
-    const moisActuel = maintenant.getMonth();
-    const anneeActuelle = maintenant.getFullYear();
+    const pourcentageActifs =
+        totalClients > 0
+            ? Math.round((clientsActifs / totalClients) * 100)
+            : 0;
 
-    const nouveauxCeMois = clientsCharges.filter(function (client) {
+    let nouveauxCeMois = 0;
+    let achatsCumules = 0;
+    let moyenneAchats = 0;
 
-        const dateInscription = convertirDateClient(client.dateInscription);
+    if (kpis) {
+        nouveauxCeMois =
+            Number(kpis.nouveauxCeMois || 0);
 
-        return dateInscription &&
-            dateInscription.getMonth() === moisActuel &&
-            dateInscription.getFullYear() === anneeActuelle;
-    }).length;
+        achatsCumules =
+            convertirMontantClient(
+                kpis.achatsCumules || 0
+            );
 
-    const achatsCumules = clientsCharges.reduce(function (total, client) {
-        return total + convertirMontantClient(client.montantTotalAchats);
-    }, 0);
+        moyenneAchats =
+            convertirMontantClient(
+                kpis.moyenneAchats || 0
+            );
 
-    const moyenneAchats = totalClients > 0
-        ? achatsCumules / totalClients
-        : 0;
+    } else {
+        const maintenant = new Date();
+        const moisActuel = maintenant.getMonth();
+        const anneeActuelle = maintenant.getFullYear();
 
-    definirTexteKPI("total-clients-value",
-        totalClients.toLocaleString("fr-FR"));
+        nouveauxCeMois =
+            clientsCharges.filter(function (client) {
+                const dateInscription =
+                    convertirDateClient(client.dateInscription);
+
+                return (
+                    dateInscription &&
+                    dateInscription.getMonth() === moisActuel &&
+                    dateInscription.getFullYear() === anneeActuelle
+                );
+            }).length;
+
+        achatsCumules =
+            clientsCharges.reduce(function (total, client) {
+                return total +
+                    convertirMontantClient(
+                        client.montantTotalAchats
+                    );
+            }, 0);
+
+        moyenneAchats =
+            totalClients > 0
+                ? achatsCumules / totalClients
+                : 0;
+    }
+
+    /*
+     * Nouveau composant KPI global.
+     * Les valeurs proviennent exclusivement des données déjà calculées
+     * par le module / backend. Rien n'est codé en dur dans kpi.js.
+     */
+    if (
+        window.VisiblKPI &&
+        typeof window.VisiblKPI.update === "function"
+    ) {
+        window.VisiblKPI.update("clients-total", {
+            value: totalClients,
+            subtitle:
+                `${nouveauxCeMois.toLocaleString("fr-FR")} nouveau${nouveauxCeMois > 1 ? "x" : ""} client${nouveauxCeMois > 1 ? "s" : ""} ce mois`,
+            theme: "blue"
+        });
+
+        window.VisiblKPI.update("clients-actifs", {
+            value: clientsActifs,
+            subtitle:
+                `${pourcentageActifs.toLocaleString("fr-FR")} % des clients`,
+            ring: pourcentageActifs,
+            theme: "green"
+        });
+
+        window.VisiblKPI.update("clients-nouveaux", {
+            value: nouveauxCeMois,
+            subtitle: "Inscrits durant le mois en cours",
+            theme: "purple"
+        });
+
+        window.VisiblKPI.update("clients-achats", {
+            value: achatsCumules,
+            unit: "FCFA",
+            subtitle:
+                `Moyenne : ${formaterMontantClient(moyenneAchats)} / client`,
+            theme: "orange"
+        });
+
+        return;
+    }
+
+    /*
+     * Fallback : si kpi.js n'est pas chargé, l'ancien affichage
+     * continue à fonctionner au lieu de casser le module.
+     */
+    definirTexteKPI(
+        "total-clients-value",
+        totalClients.toLocaleString("fr-FR")
+    );
 
     definirTexteKPI(
         "total-clients-description",
         `${nouveauxCeMois.toLocaleString("fr-FR")} nouveau${nouveauxCeMois > 1 ? "x" : ""} client${nouveauxCeMois > 1 ? "s" : ""} ce mois`
     );
 
-    definirTexteKPI("active-clients-value",
-        clientsActifs.toLocaleString("fr-FR"));
+    definirTexteKPI(
+        "active-clients-value",
+        clientsActifs.toLocaleString("fr-FR")
+    );
 
     definirTexteKPI(
         "active-clients-description",
         `${pourcentageActifs.toLocaleString("fr-FR")} % des clients`
     );
 
-    definirTexteKPI("new-clients-value",
-        nouveauxCeMois.toLocaleString("fr-FR"));
+    definirTexteKPI(
+        "new-clients-value",
+        nouveauxCeMois.toLocaleString("fr-FR")
+    );
 
     definirTexteKPI(
         "new-clients-description",
@@ -850,7 +2127,6 @@ function mettreAJourKPIsClients() {
         `Moyenne : ${formaterMontantClient(moyenneAchats)} / client`
     );
 }
-
 
 function definirTexteKPI(idElement, texte) {
 
@@ -896,6 +2172,118 @@ function convertirDateClient(date) {
 }
 
 
+// ========================================
+// DONNÉES COMPLÈTES POUR IMPRESSION / EXPORT
+// ========================================
+
+async function obtenirTousClientsPourSortie_() {
+
+    /*
+     * Si le snapshot complet est déjà disponible et correspond
+     * à la signature courante, on réutilise les données locales :
+     * aucun appel serveur supplémentaire.
+     */
+    if (
+        Array.isArray(snapshotClientsComplet_) &&
+        snapshotClientsSignature_ ===
+            String(signatureSyncClients || "")
+    ) {
+        return filtrerEtTrierSnapshotClients_().slice();
+    }
+
+    const options = {
+        recherche: rechercheClients || "",
+        typeClient: filtresClients.typeClient || "",
+        statut: filtresClients.statut || "",
+        commune: filtresClients.commune || "",
+        tri: triClients?.cle || "",
+        direction: triClients?.direction || "asc"
+    };
+
+    const premierePage = await apiGet(
+        "getClientsPage",
+        {
+            page: 1,
+            limite: 10,
+            ...options,
+            _ts: Date.now()
+        }
+    );
+
+    if (
+        !premierePage ||
+        premierePage.success === false
+    ) {
+        throw new Error(
+            premierePage?.message ||
+            "Impossible de récupérer tous les clients."
+        );
+    }
+
+    const totalPages =
+        Math.max(
+            1,
+            Number(premierePage.totalPages) || 1
+        );
+
+    const pages = [
+        Array.isArray(premierePage.clients)
+            ? premierePage.clients
+            : []
+    ];
+
+    if (totalPages > 1) {
+        const appels = [];
+
+        for (let page = 2; page <= totalPages; page++) {
+            appels.push(
+                apiGet(
+                    "getClientsPage",
+                    {
+                        page: page,
+                        limite: 10,
+                        ...options,
+                        _ts: Date.now()
+                    }
+                )
+            );
+        }
+
+        const resultats =
+            await Promise.all(appels);
+
+        resultats.forEach(function(resultat) {
+            if (
+                resultat &&
+                resultat.success !== false &&
+                Array.isArray(resultat.clients)
+            ) {
+                pages.push(resultat.clients);
+            }
+        });
+    }
+
+    const clients = pages.flat();
+
+    /*
+     * Sécurité contre un doublon éventuel entre deux pages.
+     */
+    const uniques = new Map();
+
+    clients.forEach(function(client) {
+        if (!client) return;
+
+        const cle = String(
+            client.idClient ?? ""
+        ).trim();
+
+        if (!cle) return;
+
+        uniques.set(cle, client);
+    });
+
+    return [...uniques.values()];
+}
 
 
 // ========================================
@@ -911,49 +2299,114 @@ function initialiserImpressionClients() {
     });
 }
 
-function imprimerClients() {
-    if (!Array.isArray(clientsAffiches) || clientsAffiches.length === 0) {
-        showToast("Aucun client à imprimer.", "error");
-        return;
-    }
+async function imprimerClients() {
 
-    const fenetreImpression = window.open("", "_blank", "width=1200,height=800");
+    /*
+     * Ouvrir immédiatement la fenêtre afin que le navigateur
+     * ne la bloque pas pendant la récupération asynchrone.
+     */
+    const fenetreImpression =
+        window.open(
+            "",
+            "_blank",
+            "width=1200,height=800"
+        );
+
     if (!fenetreImpression) {
-        showToast("Autorisez les fenêtres contextuelles pour lancer l’impression.", "error");
+        showToast(
+            "Autorisez les fenêtres contextuelles pour lancer l’impression.",
+            "error"
+        );
         return;
     }
-
-    const echapperHTML = function (valeur) {
-        return String(valeur ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    };
-
-    const lignes = clientsAffiches.map(function (client, index) {
-        const nomComplet = `${client.nom || ""} ${client.prenom || ""}`.trim();
-        return `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${echapperHTML(client.idClient || "")}</td>
-                <td>${echapperHTML(nomComplet)}</td>
-                <td>${echapperHTML(formaterTelephone(client.telephone))}</td>
-                <td>${echapperHTML(client.email || "")}</td>
-                <td>${echapperHTML(mettreMajuscule(client.commune))}</td>
-                <td>${echapperHTML(mettreMajuscule(client.typeClient))}</td>
-                <td>${echapperHTML(formaterDateClient(client.dateInscription))}</td>
-                <td>${echapperHTML(client.nombreCommandes || 0)}</td>
-                <td>${echapperHTML(formaterMontantClient(convertirMontantClient(client.montantTotalAchats)))}</td>
-                <td>${echapperHTML(mettreMajuscule(client.statut))}</td>
-            </tr>`;
-    }).join("");
-
-    const dateImpression = new Date().toLocaleString("fr-FR");
 
     fenetreImpression.document.open();
-    fenetreImpression.document.write(`<!DOCTYPE html>
+    fenetreImpression.document.write(`
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <title>Préparation de l’impression…</title>
+        </head>
+        <body style="font-family:Arial,sans-serif;padding:24px;">
+            Préparation de la liste complète des clients…
+        </body>
+        </html>
+    `);
+    fenetreImpression.document.close();
+
+    try {
+        const clientsAImprimer =
+            await obtenirTousClientsPourSortie_();
+
+        if (
+            !Array.isArray(clientsAImprimer) ||
+            clientsAImprimer.length === 0
+        ) {
+            fenetreImpression.close();
+
+            showToast(
+                "Aucun client à imprimer.",
+                "error"
+            );
+            return;
+        }
+
+        const echapperHTML = function (valeur) {
+            return String(valeur ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        };
+
+        const lignes =
+            clientsAImprimer.map(
+                function (client, index) {
+
+                    const nomComplet =
+                        `${client.nom || ""} ${client.prenom || ""}`.trim();
+
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${echapperHTML(client.idClient || "")}</td>
+                            <td>${echapperHTML(nomComplet)}</td>
+                            <td>${echapperHTML(formaterTelephone(client.telephone))}</td>
+                            <td>${echapperHTML(client.email || "")}</td>
+                            <td>${echapperHTML(mettreMajuscule(client.commune))}</td>
+                            <td>${echapperHTML(mettreMajuscule(client.typeClient))}</td>
+                            <td>${echapperHTML(formaterDateClient(client.dateInscription))}</td>
+                            <td>${echapperHTML(client.nombreCommandes || 0)}</td>
+                            <td>${echapperHTML(
+                                formaterMontantClient(
+                                    convertirMontantClient(
+                                        client.montantTotalAchats
+                                    )
+                                )
+                            )}</td>
+                            <td>${echapperHTML(
+                                formaterMontantClient(
+                                    convertirMontantClient(
+                                        client.creditClient ??
+                                        client.soldeAvoir ??
+                                        0
+                                    )
+                                )
+                            )}</td>
+                            <td>${echapperHTML(
+                                mettreMajuscule(client.statut)
+                            )}</td>
+                        </tr>`;
+                }
+            ).join("");
+
+        const dateImpression =
+            new Date().toLocaleString("fr-FR");
+
+        fenetreImpression.document.open();
+        fenetreImpression.document.write(`<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -979,7 +2432,8 @@ function imprimerClients() {
         th:nth-child(8), td:nth-child(8) { width: 10%; }
         th:nth-child(9), td:nth-child(9) { width: 6%; text-align: center; }
         th:nth-child(10), td:nth-child(10) { width: 10%; text-align: right; }
-        th:nth-child(11), td:nth-child(11) { width: 8%; }
+        th:nth-child(11), td:nth-child(11) { width: 9%; text-align: right; }
+        th:nth-child(12), td:nth-child(12) { width: 7%; }
         thead { display: table-header-group; }
         tr { break-inside: avoid; }
         .no-print { margin-top: 12px; font-size: 11px; color: #6b7280; }
@@ -989,29 +2443,65 @@ function imprimerClients() {
 <body>
     <div class="print-header">
         <h1>VISIBL — Liste des clients</h1>
-        <div class="meta">Imprimé le ${echapperHTML(dateImpression)} • ${clientsAffiches.length} client(s)</div>
+        <div class="meta">
+            Imprimé le ${echapperHTML(dateImpression)}
+            • ${clientsAImprimer.length} client(s)
+        </div>
     </div>
+
     <table>
         <thead>
             <tr>
-                <th>N°</th><th>ID</th><th>Client</th><th>Téléphone</th><th>Email</th>
-                <th>Commune</th><th>Type</th><th>Inscription</th><th>Cmd.</th><th>Achats</th><th>Crédit</th><th>Statut</th>
+                <th>N°</th>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Commune</th>
+                <th>Type</th>
+                <th>Inscription</th>
+                <th>Cmd.</th>
+                <th>Achats</th>
+                <th>Crédit</th>
+                <th>Statut</th>
             </tr>
         </thead>
         <tbody>${lignes}</tbody>
     </table>
-    <p class="no-print">La fenêtre d’impression va s’ouvrir automatiquement.</p>
+
+    <p class="no-print">
+        La fenêtre d’impression va s’ouvrir automatiquement.
+    </p>
 </body>
 </html>`);
-    fenetreImpression.document.close();
 
-    fenetreImpression.onload = function () {
-        fenetreImpression.focus();
-        fenetreImpression.print();
-        fenetreImpression.onafterprint = function () {
-            fenetreImpression.close();
+        fenetreImpression.document.close();
+
+        fenetreImpression.onload = function () {
+            fenetreImpression.focus();
+            fenetreImpression.print();
+
+            fenetreImpression.onafterprint =
+                function () {
+                    fenetreImpression.close();
+                };
         };
-    };
+
+    } catch (error) {
+        console.error(
+            "Erreur impression complète Clients :",
+            error
+        );
+
+        try {
+            fenetreImpression.close();
+        } catch (e) {}
+
+        showToast(
+            "Impossible de préparer l’impression complète.",
+            "error"
+        );
+    }
 }
 
 
@@ -1058,9 +2548,9 @@ function initialiserExportsClients() {
         }
 
         try {
-            if (format === "pdf") exporterClientsPDF();
-            if (format === "xlsx") exporterClientsExcel();
-            if (format === "csv") exporterClientsCSV();
+            if (format === "pdf") await exporterClientsPDF();
+            if (format === "xlsx") await exporterClientsExcel();
+            if (format === "csv") await exporterClientsCSV();
         } catch (error) {
             console.error("Erreur export clients :", error);
             showToast("Impossible de générer le fichier d’export.", "error");
@@ -1079,8 +2569,10 @@ function initialiserExportsClients() {
     });
 }
 
-function obtenirDonneesExportClients() {
-    return clientsAffiches.map(function (client) {
+function obtenirDonneesExportClients(clients = clientsAffiches) {
+    const liste = Array.isArray(clients) ? clients : [];
+
+    return liste.map(function (client) {
         return {
             "Identifiant": client.idClient || "",
             "Nom": client.nom || "",
@@ -1111,72 +2603,186 @@ function obtenirNomFichierExport(extension) {
     return `VISIBL_clients_${estampille}.${extension}`;
 }
 
-function exporterClientsCSV() {
-    const donnees = obtenirDonneesExportClients();
+async function exporterClientsCSV() {
+    const clients =
+        await obtenirTousClientsPourSortie_();
+
+    if (!clients.length) {
+        showToast(
+            "Aucun client à exporter.",
+            "error"
+        );
+        return;
+    }
+
+    const donnees =
+        obtenirDonneesExportClients(clients);
+
     const colonnes = Object.keys(donnees[0]);
     const separateur = ";";
 
     const protegerCSV = function (valeur) {
-        const texte = String(valeur ?? "").replace(/"/g, '""');
+        const texte =
+            String(valeur ?? "")
+                .replace(/"/g, '""');
+
         return `"${texte}"`;
     };
 
     const lignes = [
-        colonnes.map(protegerCSV).join(separateur),
+        colonnes
+            .map(protegerCSV)
+            .join(separateur),
+
         ...donnees.map(function (ligne) {
-            return colonnes.map(function (colonne) {
-                return protegerCSV(ligne[colonne]);
-            }).join(separateur);
+            return colonnes
+                .map(function (colonne) {
+                    return protegerCSV(
+                        ligne[colonne]
+                    );
+                })
+                .join(separateur);
         })
     ];
 
     telechargerBlob(
-        new Blob(["\ufeff" + lignes.join("\r\n")], { type: "text/csv;charset=utf-8;" }),
+        new Blob(
+            ["\ufeff" + lignes.join("\r\n")],
+            {
+                type: "text/csv;charset=utf-8;"
+            }
+        ),
         obtenirNomFichierExport("csv")
     );
 
-    showToast(`${donnees.length} client(s) exporté(s) en CSV.`, "success");
+    showToast(
+        `${donnees.length} client(s) exporté(s) en CSV.`,
+        "success"
+    );
 }
 
-function exporterClientsExcel() {
+
+async function exporterClientsExcel() {
     if (typeof XLSX === "undefined") {
-        throw new Error("La bibliothèque Excel n’est pas chargée.");
+        throw new Error(
+            "La bibliothèque Excel n’est pas chargée."
+        );
     }
 
-    const donnees = obtenirDonneesExportClients();
-    const feuille = XLSX.utils.json_to_sheet(donnees);
+    const clients =
+        await obtenirTousClientsPourSortie_();
+
+    if (!clients.length) {
+        showToast(
+            "Aucun client à exporter.",
+            "error"
+        );
+        return;
+    }
+
+    const donnees =
+        obtenirDonneesExportClients(clients);
+
+    const feuille =
+        XLSX.utils.json_to_sheet(donnees);
+
     feuille["!cols"] = [
-        { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
-        { wch: 28 }, { wch: 16 }, { wch: 22 }, { wch: 14 },
-        { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 18 }, { wch: 14 }
+        { wch: 16 }, { wch: 18 }, { wch: 18 },
+        { wch: 18 }, { wch: 28 }, { wch: 16 },
+        { wch: 22 }, { wch: 14 }, { wch: 18 },
+        { wch: 12 }, { wch: 22 }, { wch: 18 },
+        { wch: 14 }
     ];
-    feuille["!autofilter"] = { ref: feuille["!ref"] };
 
-    const classeur = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(classeur, feuille, "Clients");
-    XLSX.writeFile(classeur, obtenirNomFichierExport("xlsx"));
+    feuille["!autofilter"] = {
+        ref: feuille["!ref"]
+    };
 
-    showToast(`${donnees.length} client(s) exporté(s) vers Excel.`, "success");
+    const classeur =
+        XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        classeur,
+        feuille,
+        "Clients"
+    );
+
+    XLSX.writeFile(
+        classeur,
+        obtenirNomFichierExport("xlsx")
+    );
+
+    showToast(
+        `${donnees.length} client(s) exporté(s) vers Excel.`,
+        "success"
+    );
 }
 
-function exporterClientsPDF() {
+
+async function exporterClientsPDF() {
     if (!window.jspdf?.jsPDF) {
-        throw new Error("La bibliothèque PDF n’est pas chargée.");
+        throw new Error(
+            "La bibliothèque PDF n’est pas chargée."
+        );
     }
 
-    const donnees = obtenirDonneesExportClients();
+    const clients =
+        await obtenirTousClientsPourSortie_();
+
+    if (!clients.length) {
+        showToast(
+            "Aucun client à exporter.",
+            "error"
+        );
+        return;
+    }
+
+    const donnees =
+        obtenirDonneesExportClients(clients);
+
     const { jsPDF } = window.jspdf;
-    const documentPDF = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const dateExport = new Date().toLocaleString("fr-FR");
+
+    const documentPDF =
+        new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4"
+        });
+
+    const dateExport =
+        new Date().toLocaleString("fr-FR");
 
     documentPDF.setFontSize(18);
-    documentPDF.text("VISIBL — Liste des clients", 14, 16);
+    documentPDF.text(
+        "VISIBL — Liste des clients",
+        14,
+        16
+    );
+
     documentPDF.setFontSize(9);
-    documentPDF.text(`Exporté le ${dateExport} • ${donnees.length} client(s)`, 14, 23);
+    documentPDF.text(
+        `Exporté le ${dateExport} • ${donnees.length} client(s)`,
+        14,
+        23
+    );
 
     documentPDF.autoTable({
         startY: 29,
-        head: [["ID", "Client", "Téléphone", "Email", "Commune", "Type", "Inscription", "Cmd.", "Achats", "Crédit", "Statut"]],
+
+        head: [[
+            "ID",
+            "Client",
+            "Téléphone",
+            "Email",
+            "Commune",
+            "Type",
+            "Inscription",
+            "Cmd.",
+            "Achats",
+            "Crédit",
+            "Statut"
+        ]],
+
         body: donnees.map(function (client) {
             return [
                 client["Identifiant"],
@@ -1187,30 +2793,67 @@ function exporterClientsPDF() {
                 client["Type"],
                 client["Date d’inscription"],
                 client["Commandes"],
-                formaterMontantClient(client["Total achats (FCFA)"]),
-                formaterMontantClient(client["Crédit client (FCFA)"]),
+                formaterMontantClient(
+                    client["Total achats (FCFA)"]
+                ),
+                formaterMontantClient(
+                    client["Crédit client (FCFA)"]
+                ),
                 client["Statut"]
             ];
         }),
-        styles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" },
-        headStyles: { fillColor: [30, 64, 175] },
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-        margin: { left: 10, right: 10 },
+
+        styles: {
+            fontSize: 7,
+            cellPadding: 2,
+            overflow: "linebreak"
+        },
+
+        headStyles: {
+            fillColor: [30, 64, 175]
+        },
+
+        alternateRowStyles: {
+            fillColor: [245, 247, 250]
+        },
+
+        margin: {
+            left: 10,
+            right: 10
+        },
+
         didDrawPage: function () {
-            const numeroPage = documentPDF.internal.getNumberOfPages();
+            const numeroPage =
+                documentPDF.internal
+                    .getNumberOfPages();
+
             documentPDF.setFontSize(8);
+
             documentPDF.text(
                 `VISIBL • Page ${numeroPage}`,
-                documentPDF.internal.pageSize.getWidth() - 10,
-                documentPDF.internal.pageSize.getHeight() - 6,
-                { align: "right" }
+                documentPDF.internal
+                    .pageSize
+                    .getWidth() - 10,
+                documentPDF.internal
+                    .pageSize
+                    .getHeight() - 6,
+                {
+                    align: "right"
+                }
             );
         }
     });
 
-    documentPDF.save(obtenirNomFichierExport("pdf"));
-    showToast(`${donnees.length} client(s) exporté(s) en PDF.`, "success");
+    documentPDF.save(
+        obtenirNomFichierExport("pdf")
+    );
+
+    showToast(
+        `${donnees.length} client(s) exporté(s) en PDF.`,
+        "success"
+    );
 }
+
 
 function telechargerBlob(blob, nomFichier) {
     const url = URL.createObjectURL(blob);
@@ -1330,7 +2973,7 @@ function initialiserRechercheEtFiltresClients() {
         boutonActualiser.classList.add("is-loading");
 
         try {
-            await chargerClients();
+            await chargerClients({ forcer: true, silencieux: false });
             showToast("Liste des clients actualisée.", "success");
         } finally {
             boutonActualiser.disabled = false;
@@ -1340,51 +2983,30 @@ function initialiserRechercheEtFiltresClients() {
 }
 
 
+function programmerChargementClientsServeur(delai = 220) {
+    if (timerRechercheClientsServeur) {
+        window.clearTimeout(timerRechercheClientsServeur);
+    }
+
+    timerRechercheClientsServeur =
+        window.setTimeout(function() {
+            timerRechercheClientsServeur = null;
+
+            chargerClients({
+                forcer: true,
+                silencieux: true
+            });
+        }, delai);
+}
+
 function appliquerRechercheEtFiltresClients() {
 
-    const terme = normaliserValeurRecherche(rechercheClients);
+    if (typeof pageClientsCourante !== "undefined") {
+        pageClientsCourante = 1;
+    }
 
-    const clientsFiltres = clientsCharges.filter(function (client) {
-
-        const correspondRecherche = !terme || [
-            client.idClient,
-            client.nom,
-            client.prenom,
-            client.telephone,
-            client.email,
-            client.commune,
-            client.quartier,
-            client.typeClient,
-            client.statut
-        ].some(function (valeur) {
-            return normaliserValeurRecherche(valeur).includes(terme);
-        });
-
-        const correspondType =
-            !filtresClients.typeClient ||
-            normaliserValeurRecherche(client.typeClient) ===
-            normaliserValeurRecherche(filtresClients.typeClient);
-
-        const correspondStatut =
-            !filtresClients.statut ||
-            normaliserValeurRecherche(client.statut) ===
-            normaliserValeurRecherche(filtresClients.statut);
-
-        const correspondCommune =
-            !filtresClients.commune ||
-            normaliserValeurRecherche(client.commune) ===
-            normaliserValeurRecherche(filtresClients.commune);
-
-        return correspondRecherche &&
-            correspondType &&
-            correspondStatut &&
-            correspondCommune;
-    });
-
-    clientsAffiches = clientsFiltres.slice();
-    afficherClients(clientsAffiches);
-    mettreAJourCompteurClients(clientsFiltres.length);
     mettreAJourEtatBoutonEffacer();
+    programmerChargementClientsServeur();
 }
 
 
@@ -1907,6 +3529,11 @@ function formaterTelephone(telephone) {
         return "";
     }
 
+    // Anciennes cellules Google Sheets numériques : le zéro initial a pu disparaître.
+    if (/^\d{9}$/.test(numero)) {
+        numero = "0" + numero;
+    }
+
 
     // Cas : +225XXXXXXXXXX
     if (numero.startsWith("+225")) {
@@ -1982,37 +3609,78 @@ const colonnesClients = [
 
 function initialiserFonctionsAvanceesClients() {
     const selectParPage = document.getElementById("clients-per-page");
-    clientsParPage = Number(selectParPage?.value) || 10;
-    selectParPage?.addEventListener("change", function () {
-        clientsParPage = Number(selectParPage.value) || 10;
-        pageClientsCourante = 1;
-        afficherClients(clientsAffiches);
-    });
+    if (selectParPage) {
+        selectParPage.value = "10";
+        selectParPage.disabled = true;
+        selectParPage.hidden = true;
+    }
 
-    document.getElementById("previous-page-btn")?.addEventListener("click", function () {
-        if (pageClientsCourante > 1) { pageClientsCourante--; afficherClients(clientsAffiches); }
-    });
-    document.getElementById("next-page-btn")?.addEventListener("click", function () {
-        const totalPages = Math.max(1, Math.ceil(clientsAffiches.length / clientsParPage));
-        if (pageClientsCourante < totalPages) { pageClientsCourante++; afficherClients(clientsAffiches); }
-    });
+    document.getElementById("previous-page-btn")
+        ?.addEventListener("click", function () {
+            if (pageClientsCourante <= 1) return;
 
-    document.querySelector(".clients-table thead")?.addEventListener("click", function (event) {
-        const entete = event.target.closest("th[data-sort-key]");
-        if (!entete) return;
-        const cle = entete.dataset.sortKey;
-        triClients.direction = triClients.cle === cle && triClients.direction === "asc" ? "desc" : "asc";
-        triClients.cle = cle;
-        pageClientsCourante = 1;
-        afficherClients(clientsAffiches);
-    });
+            pageClientsCourante--;
+
+            chargerClients({
+                forcer: true,
+                silencieux: true
+            });
+        });
+
+    document.getElementById("next-page-btn")
+        ?.addEventListener("click", function () {
+            if (pageClientsCourante >= totalPagesClientsServeur) return;
+
+            pageClientsCourante++;
+
+            chargerClients({
+                forcer: true,
+                silencieux: true
+            });
+        });
+
+    document.querySelector(".clients-table thead")
+        ?.addEventListener("click", function (event) {
+            const entete = event.target.closest("th[data-sort-key]");
+            if (!entete) return;
+
+            const cle = entete.dataset.sortKey;
+
+            triClients.direction =
+                triClients.cle === cle &&
+                triClients.direction === "asc"
+                    ? "desc"
+                    : "asc";
+
+            triClients.cle = cle;
+            pageClientsCourante = 1;
+
+            chargerClients({
+                forcer: true,
+                silencieux: true
+            });
+        });
 
     const tbody = document.getElementById("clients-table-body");
     tbody?.addEventListener("change", function (event) {
         const checkbox = event.target.closest(".client-checkbox");
         if (!checkbox) return;
         const id = String(checkbox.value);
-        checkbox.checked ? idsClientsSelectionnes.add(id) : idsClientsSelectionnes.delete(id);
+
+        if (checkbox.checked) {
+            idsClientsSelectionnes.add(id);
+
+            const client = clientsPageCourante.find(function(item) {
+                return String(item.idClient) === id;
+            });
+
+            if (client) {
+                cacheClientsSelectionnes.set(id, client);
+            }
+        } else {
+            idsClientsSelectionnes.delete(id);
+            cacheClientsSelectionnes.delete(id);
+        }
         checkbox.closest("tr")?.classList.toggle("is-selected", checkbox.checked);
         mettreAJourSelectionClients();
     });
@@ -2021,7 +3689,14 @@ function initialiserFonctionsAvanceesClients() {
         const cocher = event.target.checked;
         clientsPageCourante.forEach(function (client) {
             const id = String(client.idClient);
-            cocher ? idsClientsSelectionnes.add(id) : idsClientsSelectionnes.delete(id);
+
+            if (cocher) {
+                idsClientsSelectionnes.add(id);
+                cacheClientsSelectionnes.set(id, client);
+            } else {
+                idsClientsSelectionnes.delete(id);
+                cacheClientsSelectionnes.delete(id);
+            }
         });
         afficherClients(clientsAffiches);
     });
@@ -2054,50 +3729,8 @@ function comparerClients(a, b, cle) {
     return va.localeCompare(vb, "fr", { numeric: true });
 }
 
+// Renderer de base conservé pour le rendu des lignes.
 const afficherClientsOriginal = afficherClients;
-afficherClients = function (clients) {
-    const liste = Array.isArray(clients) ? clients.slice() : [];
-    if (triClients.cle) {
-        liste.sort(function (a, b) {
-            const valeur = comparerClients(a, b, triClients.cle);
-            return triClients.direction === "asc" ? valeur : -valeur;
-        });
-    }
-    const totalPages = Math.max(1, Math.ceil(liste.length / clientsParPage));
-    pageClientsCourante = Math.min(Math.max(1, pageClientsCourante), totalPages);
-    const debut = (pageClientsCourante - 1) * clientsParPage;
-    clientsPageCourante = liste.slice(debut, debut + clientsParPage);
-    afficherClientsOriginal(clientsPageCourante);
-    restaurerSelectionDansTableau();
-    appliquerVisibiliteColonnes();
-    mettreAJourPagination(liste.length, totalPages);
-    mettreAJourIndicateursTri();
-    mettreAJourSelectionClients();
-};
-
-function mettreAJourPagination(total, totalPages) {
-    const zone = document.getElementById("clients-page-buttons");
-    if (zone) {
-        zone.innerHTML = "";
-        const pages = [];
-        for (let p = 1; p <= totalPages; p++) {
-            if (p === 1 || p === totalPages || Math.abs(p - pageClientsCourante) <= 1) pages.push(p);
-        }
-        let precedente = 0;
-        pages.forEach(function (p) {
-            if (precedente && p - precedente > 1) { const dots=document.createElement("span"); dots.textContent="…"; zone.appendChild(dots); }
-            const bouton=document.createElement("button"); bouton.type="button"; bouton.className="pagination-btn"+(p===pageClientsCourante?" active":""); bouton.textContent=String(p);
-            bouton.addEventListener("click", function(){ pageClientsCourante=p; afficherClients(clientsAffiches); }); zone.appendChild(bouton); precedente=p;
-        });
-    }
-    const debut = total ? (pageClientsCourante - 1) * clientsParPage + 1 : 0;
-    const fin = Math.min(pageClientsCourante * clientsParPage, total);
-    const resume = document.getElementById("clients-pagination-summary");
-    if (resume) resume.textContent = `${debut}–${fin} sur ${total}`;
-    const precedent=document.getElementById("previous-page-btn"), suivant=document.getElementById("next-page-btn");
-    if (precedent) precedent.disabled = pageClientsCourante <= 1;
-    if (suivant) suivant.disabled = pageClientsCourante >= totalPages;
-}
 
 function mettreAJourIndicateursTri() {
     document.querySelectorAll("th[data-sort-key]").forEach(function(th){
@@ -2115,22 +3748,54 @@ function restaurerSelectionDansTableau() {
 }
 
 function mettreAJourSelectionClients() {
-    const selectionValide = new Set(clientsCharges.map(c => String(c.idClient)));
-    [...idsClientsSelectionnes].forEach(id => { if (!selectionValide.has(id)) idsClientsSelectionnes.delete(id); });
     const nombre = idsClientsSelectionnes.size;
-    const barre=document.getElementById("bulk-clients-bar"), compteur=document.getElementById("selected-clients-count");
-    if (barre) barre.hidden = nombre === 0;
-    if (compteur) compteur.textContent = String(nombre);
-    const selectAll=document.getElementById("select-all-clients");
+
+    const barre =
+        document.getElementById("bulk-clients-bar");
+
+    const compteur =
+        document.getElementById("selected-clients-count");
+
+    if (barre) {
+        barre.hidden = nombre === 0;
+    }
+
+    if (compteur) {
+        compteur.textContent = String(nombre);
+    }
+
+    const selectAll =
+        document.getElementById("select-all-clients");
+
     if (selectAll) {
-        const coches=clientsPageCourante.filter(c=>idsClientsSelectionnes.has(String(c.idClient))).length;
-        selectAll.checked = clientsPageCourante.length > 0 && coches === clientsPageCourante.length;
-        selectAll.indeterminate = coches > 0 && coches < clientsPageCourante.length;
+        const coches =
+            clientsPageCourante.filter(function(client) {
+                return idsClientsSelectionnes.has(
+                    String(client.idClient)
+                );
+            }).length;
+
+        selectAll.checked =
+            clientsPageCourante.length > 0 &&
+            coches === clientsPageCourante.length;
+
+        selectAll.indeterminate =
+            coches > 0 &&
+            coches < clientsPageCourante.length;
     }
 }
 
 function obtenirClientsSelectionnes() {
-    return clientsCharges.filter(c => idsClientsSelectionnes.has(String(c.idClient)));
+    return [...idsClientsSelectionnes]
+        .map(function(id) {
+            return (
+                cacheClientsSelectionnes.get(String(id)) ||
+                clientsCharges.find(function(client) {
+                    return String(client.idClient) === String(id);
+                })
+            );
+        })
+        .filter(Boolean);
 }
 
 function exporterSelectionClients(format) {
@@ -2151,20 +3816,100 @@ function ouvrirModalSuppressionMultiple() {
 function fermerModalSuppressionMultiple() { const modal=document.getElementById("bulk-delete-client-modal"); modal?.classList.remove("active"); modal?.setAttribute("aria-hidden","true"); }
 
 async function supprimerClientsSelectionnes() {
-    const bouton=document.getElementById("confirm-bulk-delete-client-btn");
-    const ids=[...idsClientsSelectionnes]; if(!ids.length || bouton?.disabled) return;
-    if(bouton){ bouton.disabled=true; bouton.classList.add("is-loading"); }
-    let succes=0, echecs=0;
+    const bouton = document.getElementById("confirm-bulk-delete-client-btn");
+    const ids = [...idsClientsSelectionnes]
+        .map(id => String(id || "").trim())
+        .filter(Boolean);
+
+    if (!ids.length || bouton?.disabled) return;
+
+    if (bouton) {
+        bouton.disabled = true;
+        bouton.classList.add("is-loading");
+    }
+
     try {
-        for (const idClient of ids) {
-            try { const r=await apiPost("deleteClient",{idClient}); r?.success ? succes++ : echecs++; } catch(e){ echecs++; }
+        // Un seul appel API, quel que soit le nombre de clients sélectionnés.
+        const resultat = await apiPost("deleteClientsBulk", {
+            idsClients: ids
+        });
+
+        if (!resultat || resultat.success !== true) {
+            showToast(
+                resultat?.message || "La suppression multiple a échoué.",
+                "error"
+            );
+            return;
         }
-        idsClientsSelectionnes.clear();
-        await chargerClients();
+
+        const idsSupprimes = Array.isArray(resultat.idsSupprimes)
+            ? resultat.idsSupprimes.map(String)
+            : [];
+
+        const idsIntrouvables = Array.isArray(resultat.idsIntrouvables)
+            ? resultat.idsIntrouvables.map(String)
+            : [];
+
+        // Mise à jour immédiate de l'état local.
+        const supprimesSet = new Set(idsSupprimes);
+
+        clientsCharges = clientsCharges.filter(
+            client => !supprimesSet.has(String(client?.idClient))
+        );
+
+        clientsAffiches = clientsAffiches.filter(
+            client => !supprimesSet.has(String(client?.idClient))
+        );
+
+        idsSupprimes.forEach(id => {
+            idsClientsSelectionnes.delete(String(id));
+            cacheClientsSelectionnes.delete(String(id));
+        });
+
+        // Si tout s'est bien passé, aucune sélection ne doit rester.
+        if (!idsIntrouvables.length) {
+            idsClientsSelectionnes.clear();
+        }
+
+        if (resultat.signature != null) {
+            signatureSyncClients = String(resultat.signature);
+        }
+
+        // Revalidation unique après la mutation pour total/KPI/pagination.
+        await chargerClients({
+            forcer: true,
+            silencieux: true,
+            verifierSync: false
+        });
+
         fermerModalSuppressionMultiple();
-        if(succes) showToast(`${succes} client(s) supprimé(s).`,"success");
-        if(echecs) showToast(`${echecs} suppression(s) ont échoué.`,"error");
-    } finally { if(bouton){ bouton.disabled=false; bouton.classList.remove("is-loading"); } }
+
+        if (idsSupprimes.length) {
+            showToast(
+                `${idsSupprimes.length} client(s) supprimé(s).`,
+                "success"
+            );
+        }
+
+        if (idsIntrouvables.length) {
+            showToast(
+                `${idsIntrouvables.length} client(s) n'ont pas été trouvés.`,
+                "error"
+            );
+        }
+
+    } catch (error) {
+        console.error("Erreur suppression multiple Clients :", error);
+        showToast(
+            "Impossible de supprimer les clients sélectionnés.",
+            "error"
+        );
+    } finally {
+        if (bouton) {
+            bouton.disabled = false;
+            bouton.classList.remove("is-loading");
+        }
+    }
 }
 
 function initialiserMenuColonnesClients() {
@@ -2182,9 +3927,7 @@ function appliquerVisibiliteColonnes() {
     });
 }
 
-// Réinitialiser la page lors d'une nouvelle recherche ou d'un nouveau filtre.
-const appliquerRechercheEtFiltresClientsOriginal = appliquerRechercheEtFiltresClients;
-appliquerRechercheEtFiltresClients = function () { pageClientsCourante = 1; appliquerRechercheEtFiltresClientsOriginal(); };
+// Recherche et filtres sont maintenant exécutés côté serveur.
 
 // L'initialisation principale a déjà été enregistrée : ajouter nos fonctions après le chargement du DOM.
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialiserFonctionsAvanceesClients);
@@ -2293,9 +4036,7 @@ function initialiserToolbarClientsReference() {
 
     document.getElementById("clients-action-refresh")
         ?.addEventListener("click", async () => {
-            if (menuActions) menuActions.hidden = true;
-            declencheurActions?.setAttribute("aria-expanded", "false");
-            await chargerClients();
+            await chargerClients({ forcer: true, silencieux: false });
         });
 
     menuActions?.querySelectorAll("button").forEach(button => {
@@ -2323,9 +4064,99 @@ mettreAJourSelectionClients = function () {
 appliquerVisibiliteColonnes = function () {};
 
 /* Menus ⋮ de chaque ligne. */
+
+function positionnerMenuActionsClient(menu, trigger) {
+    if (!menu || !trigger) return;
+
+    menu.classList.remove("open-up", "open-down");
+
+    /*
+     * Desktop/tablette large :
+     * le menu devient FIXED afin de sortir complètement de
+     * .clients-table-container / .table-responsive qui utilisent overflow.
+     * Ainsi, même sur la dernière ligne, aucune partie n'est coupée.
+     */
+    if (window.innerWidth > 900) {
+        const rectTrigger = trigger.getBoundingClientRect();
+        const margeEcran = 12;
+        const ecart = 7;
+
+        menu.style.setProperty("position", "fixed", "important");
+        menu.style.setProperty("right", "auto", "important");
+        menu.style.setProperty("bottom", "auto", "important");
+        menu.style.setProperty("z-index", "20000", "important");
+
+        // Mesure réelle une fois visible.
+        const rectMenu = menu.getBoundingClientRect();
+        const largeurMenu = Math.max(rectMenu.width || 0, 210);
+        const hauteurMenu = Math.max(rectMenu.height || 0, 145);
+
+        // Alignement à droite du bouton, sans sortir de l'écran.
+        let left = rectTrigger.right - largeurMenu;
+        left = Math.max(
+            margeEcran,
+            Math.min(left, window.innerWidth - largeurMenu - margeEcran)
+        );
+
+        const espaceDessous =
+            window.innerHeight - rectTrigger.bottom - margeEcran;
+
+        const espaceDessus =
+            rectTrigger.top - margeEcran;
+
+        let top;
+
+        if (
+            espaceDessous < hauteurMenu + ecart &&
+            espaceDessus >= hauteurMenu + ecart
+        ) {
+            // Dernières lignes : le menu monte juste au-dessus du bouton.
+            top = rectTrigger.top - hauteurMenu - ecart;
+            menu.classList.add("open-up");
+        } else {
+            // Cas normal : sous le bouton.
+            top = rectTrigger.bottom + ecart;
+
+            // Sécurité si l'écran est très bas.
+            if (top + hauteurMenu > window.innerHeight - margeEcran) {
+                top = Math.max(
+                    margeEcran,
+                    window.innerHeight - hauteurMenu - margeEcran
+                );
+            }
+
+            menu.classList.add("open-down");
+        }
+
+        menu.style.setProperty("left", `${Math.round(left)}px`, "important");
+        menu.style.setProperty("top", `${Math.round(top)}px`, "important");
+        return;
+    }
+
+    /*
+     * Mobile :
+     * on conserve le panneau bas plein largeur déjà prévu par le CSS.
+     */
+    menu.style.removeProperty("position");
+    menu.style.removeProperty("top");
+    menu.style.removeProperty("left");
+    menu.style.removeProperty("right");
+    menu.style.removeProperty("bottom");
+    menu.style.removeProperty("z-index");
+}
+
 function fermerMenusActionsClients() {
     document.querySelectorAll("[data-client-actions-menu]").forEach(menu => {
         menu.hidden = true;
+        menu.classList.remove("open-up", "open-down");
+
+        // Nettoyage complet du positionnement FIXED desktop.
+        menu.style.removeProperty("position");
+        menu.style.removeProperty("top");
+        menu.style.removeProperty("left");
+        menu.style.removeProperty("right");
+        menu.style.removeProperty("bottom");
+        menu.style.removeProperty("z-index");
     });
     document.querySelectorAll("[data-client-actions-toggle]").forEach(button => {
         button.setAttribute("aria-expanded", "false");
@@ -2346,8 +4177,14 @@ document.getElementById("clients-table-body")?.addEventListener("click", event =
         const ouvrir = Boolean(menu?.hidden);
         fermerMenusActionsClients();
 
-        if (menu) {
-            menu.hidden = !ouvrir;
+        if (menu && ouvrir) {
+            // On l'affiche d'abord, puis on calcule immédiatement
+            // s'il doit s'ouvrir vers le haut ou vers le bas.
+            menu.hidden = false;
+            positionnerMenuActionsClient(menu, trigger);
+        } else if (menu) {
+            menu.hidden = true;
+            menu.classList.remove("open-up", "open-down");
         }
 
         trigger.setAttribute("aria-expanded", String(ouvrir));
@@ -2365,50 +4202,783 @@ document.addEventListener("click", event => {
     }
 });
 
-/* Header : recherche et notifications mutuellement exclusives,
-   avec le même fonctionnement que Ventes et Commandes. */
-function initialiserHeaderClientsReference() {
-    const boutonRecherche = document.getElementById("mobile-search-btn");
-    const conteneurRecherche = document.querySelector(".header .search-container");
-    const boutonNotification = document.getElementById("notification-button");
-    const panneauNotification = document.getElementById("notification-panel");
-
-    const fermerRecherche = () => {
-        conteneurRecherche?.classList.remove("active");
-    };
-
-    const fermerNotifications = () => {
-        if (panneauNotification) panneauNotification.hidden = true;
-        boutonNotification?.setAttribute("aria-expanded", "false");
-    };
-
-    boutonRecherche?.addEventListener("click", () => {
-        fermerNotifications();
-    });
-
-    boutonNotification?.addEventListener("click", () => {
-        fermerRecherche();
-    });
-
-    document.addEventListener("click", event => {
-        const dansRecherche = event.target.closest(".header .search-box");
-        const dansNotifications = event.target.closest(".header .notification-menu");
-
-        if (!dansRecherche && !dansNotifications) {
-            fermerRecherche();
-            fermerNotifications();
-        }
-    });
-}
+/* Header global : géré exclusivement par header.js. */
 
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
         initialiserToolbarClientsReference();
-        initialiserHeaderClientsReference();
         definirModeSelectionClients(false);
     });
 } else {
     initialiserToolbarClientsReference();
-    initialiserHeaderClientsReference();
     definirModeSelectionClients(false);
 }
+
+
+
+// ============================================================
+// PAGINATION SERVEUR CLIENTS
+// 10 clients fixes par page + navigation sur toutes les pages.
+// ============================================================
+
+
+/*
+ * Le serveur renvoie déjà uniquement les 10 clients de la page demandée.
+ * On force ici le renderer historique à considérer cette liste comme
+ * "une page complète", sans refaire un slice avec pageClientsCourante.
+ */
+function rendrePageClientsServeur_(clients) {
+    const liste = Array.isArray(clients) ? clients.slice(0, 10) : [];
+
+    clientsPageCourante = liste;
+
+    /*
+     * L'ancien afficherClientsOriginal peut encore contenir une pagination
+     * locale. On lui présente donc temporairement la page comme page 1,
+     * puis on restaure le vrai numéro de page serveur.
+     */
+    const vraiePage = pageClientsCourante;
+
+    pageClientsCourante = 1;
+    afficherClientsOriginal(liste);
+    pageClientsCourante = vraiePage;
+
+    restaurerSelectionDansTableau();
+    appliquerVisibiliteColonnes();
+
+    mettreAJourPagination(
+        totalClientsFiltresServeur,
+        totalPagesClientsServeur
+    );
+
+    mettreAJourIndicateursTri();
+    mettreAJourSelectionClients();
+}
+
+afficherClients = function (clients) {
+    rendrePageClientsServeur_(clients);
+};
+
+/*
+ * Pagination construite exclusivement à partir des métadonnées serveur.
+ * Avec 24 clients : totalPagesClientsServeur = 3.
+ */
+mettreAJourPagination = function (total, totalPages) {
+    total = Number(total);
+    totalPages = Number(totalPages);
+
+    if (!Number.isFinite(total) || total < 0) {
+        total = 0;
+    }
+
+    if (!Number.isFinite(totalPages) || totalPages < 1) {
+        totalPages = Math.max(
+            1,
+            Math.ceil(total / 10)
+        );
+    }
+
+    // Sécurité : si le backend donne le total mais pas totalPages correctement.
+    const pagesCalculees = Math.max(
+        1,
+        Math.ceil(total / 10)
+    );
+
+    totalPages = Math.max(
+        totalPages,
+        pagesCalculees
+    );
+
+    totalClientsFiltresServeur = total;
+    totalPagesClientsServeur = totalPages;
+
+    if (pageClientsCourante > totalPages) {
+        pageClientsCourante = totalPages;
+    }
+
+    if (pageClientsCourante < 1) {
+        pageClientsCourante = 1;
+    }
+
+    const zone =
+        document.getElementById("clients-page-buttons");
+
+    if (zone) {
+        zone.innerHTML = "";
+
+        const pages = [];
+
+        for (let p = 1; p <= totalPages; p++) {
+            if (
+                p === 1 ||
+                p === totalPages ||
+                Math.abs(p - pageClientsCourante) <= 1
+            ) {
+                pages.push(p);
+            }
+        }
+
+        let precedente = 0;
+
+        pages.forEach(function (p) {
+            if (precedente && p - precedente > 1) {
+                const dots =
+                    document.createElement("span");
+
+                dots.textContent = "…";
+                zone.appendChild(dots);
+            }
+
+            const bouton =
+                document.createElement("button");
+
+            bouton.type = "button";
+            bouton.className =
+                "pagination-btn" +
+                (p === pageClientsCourante ? " active" : "");
+
+            bouton.textContent = String(p);
+
+            bouton.addEventListener(
+                "click",
+                function () {
+                    if (p === pageClientsCourante) {
+                        return;
+                    }
+
+                    pageClientsCourante = p;
+
+                    chargerClients({
+                        forcer: true,
+                        silencieux: true
+                    });
+                }
+            );
+
+            zone.appendChild(bouton);
+            precedente = p;
+        });
+    }
+
+    const debut =
+        total > 0
+            ? ((pageClientsCourante - 1) * 10) + 1
+            : 0;
+
+    const fin =
+        total > 0
+            ? Math.min(
+                debut + clientsPageCourante.length - 1,
+                total
+            )
+            : 0;
+
+    const resume =
+        document.getElementById(
+            "clients-pagination-summary"
+        );
+
+    if (resume) {
+        resume.textContent =
+            `${debut}–${fin} sur ${total}`;
+    }
+
+    const precedent =
+        document.getElementById("previous-page-btn");
+
+    const suivant =
+        document.getElementById("next-page-btn");
+
+    if (precedent) {
+        precedent.disabled =
+            pageClientsCourante <= 1;
+    }
+
+    if (suivant) {
+        suivant.disabled =
+            pageClientsCourante >= totalPages;
+    }
+};
+
+
+
+// ============================================================
+// CACHE RAPIDE — PAGINATION + FILTRES CLIENTS
+// ============================================================
+// Stratégie hybride :
+// - jusqu'à 200 clients : préchargement silencieux de toutes les pages,
+//   puis pagination/recherche/filtres/tri instantanés côté navigateur ;
+// - au-delà : pagination serveur conservée, avec cache des pages visitées
+//   et préchargement de la page suivante/précédente.
+//
+// La synchronisation serveur toutes les 10 s reste l'autorité :
+// lorsqu'une nouvelle signature est détectée, les caches rapides sont vidés.
+
+const CLIENTS_PREFETCH_TOTAL_MAX = 200;
+
+let snapshotClientsComplet_ = null;
+let snapshotClientsSignature_ = null;
+let prechargementSnapshotClients_ = null;
+const cachePagesClientsRapide_ = new Map();
+
+const chargerClientsServeurReference_ = chargerClients;
+
+function viderCachesRapidesClients_() {
+    snapshotClientsComplet_ = null;
+    snapshotClientsSignature_ = null;
+    cachePagesClientsRapide_.clear();
+}
+
+function cleEtatClientsRapide_(page = pageClientsCourante) {
+    return JSON.stringify({
+        page: Number(page) || 1,
+        recherche: String(rechercheClients || ""),
+        typeClient: String(filtresClients?.typeClient || ""),
+        statut: String(filtresClients?.statut || ""),
+        commune: String(filtresClients?.commune || ""),
+        tri: String(triClients?.cle || ""),
+        direction: String(triClients?.direction || "asc"),
+        signature: String(signatureSyncClients || "")
+    });
+}
+
+function enregistrerPageCouranteDansCacheRapide_() {
+    cachePagesClientsRapide_.set(
+        cleEtatClientsRapide_(pageClientsCourante),
+        {
+            clients: Array.isArray(clientsCharges)
+                ? clientsCharges.slice()
+                : [],
+            page: pageClientsCourante,
+            total: totalClientsFiltresServeur,
+            totalPages: totalPagesClientsServeur,
+            totalGlobal: totalClientsGlobalServeur,
+            kpis: kpisClientsServeur,
+            signature: signatureSyncClients
+        }
+    );
+}
+
+function appliquerResultatRapideClients_(resultat) {
+    if (!resultat) return false;
+
+    clientsCharges =
+        Array.isArray(resultat.clients)
+            ? resultat.clients.slice()
+            : [];
+
+    clientsAffiches = clientsCharges.slice();
+
+    pageClientsCourante =
+        Number(resultat.page) > 0
+            ? Number(resultat.page)
+            : 1;
+
+    totalClientsFiltresServeur =
+        Number(resultat.total) >= 0
+            ? Number(resultat.total)
+            : clientsCharges.length;
+
+    totalPagesClientsServeur =
+        Number(resultat.totalPages) > 0
+            ? Number(resultat.totalPages)
+            : Math.max(
+                1,
+                Math.ceil(totalClientsFiltresServeur / 10)
+            );
+
+    if (Number(resultat.totalGlobal) >= 0) {
+        totalClientsGlobalServeur =
+            Number(resultat.totalGlobal);
+    }
+
+    if (resultat.kpis) {
+        kpisClientsServeur = resultat.kpis;
+    }
+
+    if (resultat.signature != null) {
+        signatureSyncClients =
+            String(resultat.signature);
+    }
+
+    clientsCharges.forEach(function(client) {
+        if (client?.idClient != null) {
+            cacheClientsSelectionnes.set(
+                String(client.idClient),
+                client
+            );
+        }
+    });
+
+    mettreAJourKPIsClients();
+    afficherClients(clientsAffiches);
+    mettreAJourCompteurClients(
+        totalClientsFiltresServeur
+    );
+    mettreAJourEtatBoutonEffacer();
+    sauvegarderCacheNavigationClients();
+
+    return true;
+}
+
+function filtrerEtTrierSnapshotClients_() {
+    if (!Array.isArray(snapshotClientsComplet_)) {
+        return [];
+    }
+
+    const terme =
+        normaliserValeurRecherche(
+            rechercheClients
+        );
+
+    let liste =
+        snapshotClientsComplet_.filter(function(client) {
+
+            const correspondRecherche =
+                !terme ||
+                [
+                    client.idClient,
+                    client.nom,
+                    client.prenom,
+                    client.telephone,
+                    client.email,
+                    client.commune,
+                    client.quartier,
+                    client.typeClient,
+                    client.statut
+                ].some(function(valeur) {
+                    return normaliserValeurRecherche(valeur)
+                        .includes(terme);
+                });
+
+            const correspondType =
+                !filtresClients.typeClient ||
+                normaliserValeurRecherche(client.typeClient) ===
+                normaliserValeurRecherche(
+                    filtresClients.typeClient
+                );
+
+            const correspondStatut =
+                !filtresClients.statut ||
+                normaliserValeurRecherche(client.statut) ===
+                normaliserValeurRecherche(
+                    filtresClients.statut
+                );
+
+            const correspondCommune =
+                !filtresClients.commune ||
+                normaliserValeurRecherche(client.commune) ===
+                normaliserValeurRecherche(
+                    filtresClients.commune
+                );
+
+            return (
+                correspondRecherche &&
+                correspondType &&
+                correspondStatut &&
+                correspondCommune
+            );
+        });
+
+    if (triClients?.cle) {
+        liste = liste.slice().sort(function(a, b) {
+            const valeur =
+                comparerClients(
+                    a,
+                    b,
+                    triClients.cle
+                );
+
+            return triClients.direction === "desc"
+                ? -valeur
+                : valeur;
+        });
+    }
+
+    return liste;
+}
+
+function rendreDepuisSnapshotClients_() {
+    if (
+        !Array.isArray(snapshotClientsComplet_) ||
+        snapshotClientsSignature_ !==
+            String(signatureSyncClients || "")
+    ) {
+        return false;
+    }
+
+    const liste =
+        filtrerEtTrierSnapshotClients_();
+
+    const total = liste.length;
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(total / 10)
+        );
+
+    pageClientsCourante =
+        Math.min(
+            Math.max(
+                1,
+                Number(pageClientsCourante) || 1
+            ),
+            totalPages
+        );
+
+    const debut =
+        (pageClientsCourante - 1) * 10;
+
+    const page =
+        liste.slice(
+            debut,
+            debut + 10
+        );
+
+    appliquerResultatRapideClients_({
+        clients: page,
+        page: pageClientsCourante,
+        total: total,
+        totalPages: totalPages,
+        totalGlobal: snapshotClientsComplet_.length,
+        kpis: kpisClientsServeur,
+        signature: signatureSyncClients
+    });
+
+    return true;
+}
+
+async function recupererPageClientsSilencieuse_(page, options = {}) {
+    const resultat =
+        await apiGet(
+            "getClientsPage",
+            {
+                page: page,
+                limite: 10,
+                recherche: options.recherche ?? "",
+                typeClient: options.typeClient ?? "",
+                statut: options.statut ?? "",
+                commune: options.commune ?? "",
+                tri: options.tri ?? "",
+                direction: options.direction ?? "asc",
+                _ts: Date.now()
+            }
+        );
+
+    if (
+        !resultat ||
+        resultat.success === false
+    ) {
+        return null;
+    }
+
+    return resultat;
+}
+
+async function prechargerSnapshotClientsComplet_() {
+    if (
+        prechargementSnapshotClients_ ||
+        !Number.isFinite(
+            Number(totalClientsGlobalServeur)
+        ) ||
+        Number(totalClientsGlobalServeur) <= 0 ||
+        Number(totalClientsGlobalServeur) >
+            CLIENTS_PREFETCH_TOTAL_MAX
+    ) {
+        return prechargementSnapshotClients_;
+    }
+
+    const signatureDepart =
+        String(signatureSyncClients || "");
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                Number(totalClientsGlobalServeur) / 10
+            )
+        );
+
+    prechargementSnapshotClients_ =
+        (async function() {
+
+            const appels = [];
+
+            for (
+                let page = 1;
+                page <= totalPages;
+                page++
+            ) {
+                appels.push(
+                    recupererPageClientsSilencieuse_(
+                        page,
+                        {
+                            recherche: "",
+                            typeClient: "",
+                            statut: "",
+                            commune: "",
+                            tri: "",
+                            direction: "asc"
+                        }
+                    )
+                );
+            }
+
+            const resultats =
+                await Promise.all(appels);
+
+            if (
+                String(signatureSyncClients || "") !==
+                signatureDepart
+            ) {
+                return false;
+            }
+
+            const parId = new Map();
+
+            resultats.forEach(function(resultat) {
+                if (!resultat) return;
+
+                (resultat.clients || [])
+                    .forEach(function(client) {
+                        if (client?.idClient == null) {
+                            return;
+                        }
+
+                        parId.set(
+                            String(client.idClient),
+                            client
+                        );
+                    });
+            });
+
+            if (
+                parId.size !==
+                Number(totalClientsGlobalServeur)
+            ) {
+                return false;
+            }
+
+            snapshotClientsComplet_ =
+                [...parId.values()];
+
+            snapshotClientsSignature_ =
+                signatureDepart;
+
+            return true;
+
+        })()
+        .catch(function(error) {
+            console.warn(
+                "Préchargement rapide Clients indisponible :",
+                error
+            );
+
+            return false;
+        })
+        .finally(function() {
+            prechargementSnapshotClients_ = null;
+        });
+
+    return prechargementSnapshotClients_;
+}
+
+async function prechargerPagesVoisinesClients_() {
+    if (
+        Array.isArray(snapshotClientsComplet_) &&
+        snapshotClientsSignature_ ===
+            String(signatureSyncClients || "")
+    ) {
+        return;
+    }
+
+    const pages = [
+        pageClientsCourante - 1,
+        pageClientsCourante + 1
+    ].filter(function(page) {
+        return (
+            page >= 1 &&
+            page <= totalPagesClientsServeur
+        );
+    });
+
+    const options = {
+        recherche: rechercheClients || "",
+        typeClient: filtresClients.typeClient || "",
+        statut: filtresClients.statut || "",
+        commune: filtresClients.commune || "",
+        tri: triClients?.cle || "",
+        direction: triClients?.direction || "asc"
+    };
+
+    pages.forEach(async function(page) {
+        const cle =
+            cleEtatClientsRapide_(page);
+
+        if (cachePagesClientsRapide_.has(cle)) {
+            return;
+        }
+
+        try {
+            const resultat =
+                await recupererPageClientsSilencieuse_(
+                    page,
+                    options
+                );
+
+            if (!resultat) return;
+
+            cachePagesClientsRapide_.set(
+                cle,
+                {
+                    clients:
+                        Array.isArray(resultat.clients)
+                            ? resultat.clients.slice()
+                            : [],
+                    page:
+                        Number(resultat.page) || page,
+                    total:
+                        Number(resultat.total) || 0,
+                    totalPages:
+                        Number(resultat.totalPages) || 1,
+                    totalGlobal:
+                        Number(resultat.totalGlobal) || 0,
+                    kpis:
+                        resultat.kpis || kpisClientsServeur,
+                    signature:
+                        resultat.signature ||
+                        signatureSyncClients
+                }
+            );
+
+        } catch (error) {
+            // Le préchargement est facultatif.
+        }
+    });
+}
+
+/*
+ * Nouvelle couche de chargement rapide.
+ * Les appels de synchronisation (verifierSync:false) et Actualiser
+ * restent toujours des appels serveur frais.
+ */
+chargerClients = async function(options = {}) {
+    const silencieux =
+        options?.silencieux === true;
+
+    const verifierSync =
+        options?.verifierSync !== false;
+
+    const doitForcerServeur =
+        verifierSync === false ||
+        silencieux === false;
+
+    if (doitForcerServeur) {
+        viderCachesRapidesClients_();
+
+        const resultat =
+            await chargerClientsServeurReference_(
+                options
+            );
+
+        enregistrerPageCouranteDansCacheRapide_();
+
+        prechargerSnapshotClientsComplet_();
+        prechargerPagesVoisinesClients_();
+
+        return resultat;
+    }
+
+    /*
+     * Petit jeu de données : filtres, tri et pagination instantanés.
+     */
+    if (rendreDepuisSnapshotClients_()) {
+        return;
+    }
+
+    /*
+     * Sinon, utiliser une page déjà visitée/préchargée.
+     */
+    const cle =
+        cleEtatClientsRapide_(
+            pageClientsCourante
+        );
+
+    const cache =
+        cachePagesClientsRapide_.get(cle);
+
+    if (
+        cache &&
+        String(cache.signature || "") ===
+            String(signatureSyncClients || "")
+    ) {
+        appliquerResultatRapideClients_(cache);
+        prechargerPagesVoisinesClients_();
+        return;
+    }
+
+    /*
+     * Premier accès à cette combinaison : serveur.
+     */
+    const resultat =
+        await chargerClientsServeurReference_(
+            options
+        );
+
+    enregistrerPageCouranteDansCacheRapide_();
+
+    // Dès que la première page est affichée, préparer le reste en arrière-plan.
+    prechargerSnapshotClientsComplet_();
+    prechargerPagesVoisinesClients_();
+
+    return resultat;
+};
+
+/*
+ * Filtres/recherche :
+ * - si le snapshot complet est prêt => réaction immédiate ;
+ * - sinon délai réduit à 40 ms avant le serveur.
+ */
+programmerChargementClientsServeur = function(delai = 40) {
+    if (timerRechercheClientsServeur) {
+        window.clearTimeout(
+            timerRechercheClientsServeur
+        );
+    }
+
+    timerRechercheClientsServeur =
+        window.setTimeout(function() {
+            timerRechercheClientsServeur = null;
+
+            if (rendreDepuisSnapshotClients_()) {
+                return;
+            }
+
+            chargerClients({
+                forcer: true,
+                silencieux: true
+            });
+
+        }, delai);
+};
+
+appliquerRechercheEtFiltresClients = function() {
+    pageClientsCourante = 1;
+    mettreAJourEtatBoutonEffacer();
+
+    if (rendreDepuisSnapshotClients_()) {
+        return;
+    }
+
+    programmerChargementClientsServeur(40);
+};
+
+/*
+ * Lancement du préchargement après l'initialisation.
+ * Il est non bloquant et ne déclenche aucun loader.
+ */
+window.setTimeout(function() {
+    enregistrerPageCouranteDansCacheRapide_();
+    prechargerSnapshotClientsComplet_();
+    prechargerPagesVoisinesClients_();
+}, 250);
