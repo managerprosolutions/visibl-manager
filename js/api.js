@@ -1,5 +1,5 @@
 const API_CONFIG = {
-  BASE_URL: "https://script.google.com/macros/s/AKfycbxgOvB6OlS8KRY00UrJgUGCIx5NZ--APxySVorSQL0mZHPA2CxNPg1r0yFN8E0byFWb/exec"
+  BASE_URL: "https://script.google.com/macros/s/AKfycby9oFIInHTN0xywR8pSvyewr-uIkx6exuZ4scr227Yke9X_mNPO5i5_EdhTlk9sxTgOMA/exec"
 };
 
 
@@ -63,7 +63,10 @@ async function apiGet(action, params = {}) {
     "getRapportsVersion",
     "getRapportsPatch",
     "getClients",
-    "getEtatSyncClients"
+    "getEtatSyncClients",
+    "getProduits",
+    "getProduitsPage",
+    "getEtatSyncProduits"
   ]);
 
   const sansCache = ACTIONS_GET_SANS_CACHE.has(action);
