@@ -16,8 +16,239 @@ let analyseFournisseursDisponible = false;
 let pageFournisseursCourante = 1;
 let fournisseursParPage = 10;
 
+const FOURNISSEURS_CACHE_NAVIGATION_KEY = "visibl_fournisseurs_cache_navigation_v1";
+const FOURNISSEURS_SYNC_INTERVAL_MS = 10000;
+const FOURNISSEURS_SYNC_COOLDOWN_MS = 5000;
+
+let signatureSyncFournisseurs = "";
+let synchronisationFournisseursEnCours = false;
+let dernierControleSyncFournisseurs = 0;
+let timerSyncFournisseurs = null;
+
 let idFournisseurEnModification = "";
 let idFournisseurASupprimer = "";
+
+
+
+/* ===========================================================
+   VISUEL FOURNISSEURS — LOADER STANDARD VISIBL
+=========================================================== */
+const FOURNISSEURS_LOADER_SESSION_KEY = "visibl_fournisseurs_loader_deja_affiche";
+let chargementFournisseursAvecLoader = false;
+
+function preparerLoaderFournisseurs() {
+    const zone = document.querySelector(".content");
+    if (zone) {
+        zone.setAttribute("data-visibl-page", "");
+        zone.classList.add("visibl-loading-scope");
+        zone.querySelector(".welcome-section")?.setAttribute("data-loading-anchor", "");
+    }
+
+    [
+        "kpi-total-suppliers",
+        "kpi-international-suppliers",
+        "kpi-active-suppliers",
+        "kpi-suppliers-debt"
+    ].forEach(id => {
+        const element = document.getElementById(id);
+        element?.setAttribute("data-kpi-value", "");
+    });
+
+    document.getElementById("suppliers-table-body")
+        ?.setAttribute("data-loading-table-body", "");
+}
+
+function doitAfficherLoaderInitialFournisseurs() {
+    try {
+        return sessionStorage.getItem(FOURNISSEURS_LOADER_SESSION_KEY) !== "1";
+    } catch (_) {
+        return true;
+    }
+}
+
+function marquerLoaderInitialFournisseursAffiche() {
+    try {
+        sessionStorage.setItem(FOURNISSEURS_LOADER_SESSION_KEY, "1");
+    } catch (_) {}
+}
+
+function demarrerLoaderFournisseurs(message = "Chargement des fournisseurs…") {
+    preparerLoaderFournisseurs();
+    chargementFournisseursAvecLoader = true;
+
+    [
+        "kpi-total-suppliers",
+        "kpi-international-suppliers",
+        "kpi-active-suppliers",
+        "kpi-suppliers-debt"
+    ].forEach(id => {
+        document.getElementById(id)
+            ?.closest(".visibl-kpi-card")
+            ?.classList.add("is-loading");
+    });
+
+    if (window.VisiblLoading?.start) {
+        window.VisiblLoading.start({
+            scope: ".content",
+            tableBody: "#suppliers-table-body",
+            rows: 10,
+            message
+        });
+    }
+
+    /* Le composant global peut avoir déjà injecté son libellé par défaut.
+       On force donc le texte spécifique du module Fournisseurs. */
+    const forcerLibelle = () => {
+        const libelle = document.querySelector(
+            ".content .visibl-page-loader .visibl-loader-message"
+        );
+        if (libelle) libelle.textContent = message;
+    };
+
+    forcerLibelle();
+    requestAnimationFrame(forcerLibelle);
+    setTimeout(forcerLibelle, 0);
+}
+
+function terminerLoaderFournisseurs() {
+    if (!chargementFournisseursAvecLoader) return;
+
+    if (window.VisiblLoading?.stop) {
+        window.VisiblLoading.stop({
+            scope: ".content",
+            tableBody: "#suppliers-table-body"
+        });
+    }
+
+    [
+        "kpi-total-suppliers",
+        "kpi-international-suppliers",
+        "kpi-active-suppliers",
+        "kpi-suppliers-debt"
+    ].forEach(id => {
+        document.getElementById(id)
+            ?.closest(".visibl-kpi-card")
+            ?.classList.remove("is-loading");
+    });
+
+    chargementFournisseursAvecLoader = false;
+}
+
+/* ===========================================================
+   FEEDBACK SOFT — FOURNISSEURS
+   Même comportement validé sur Clients :
+   loader centré -> succès -> bouton "Parfait !"
+=========================================================== */
+function obtenirLoaderEnregistrementFournisseur() {
+    const formulaire = document.getElementById("supplier-form");
+    if (!formulaire) return null;
+
+    let loader = formulaire.querySelector(".supplier-save-soft-loader");
+    if (loader) return loader;
+
+    loader = document.createElement("div");
+    loader.className = "supplier-save-soft-loader";
+    loader.setAttribute("aria-hidden", "true");
+    loader.innerHTML = `
+        <div class="supplier-save-soft-loader-card" role="status" aria-live="polite">
+            <div class="supplier-save-loading-view">
+                <span class="supplier-save-soft-spinner" aria-hidden="true"></span>
+                <div class="supplier-save-soft-loader-copy">
+                    <strong class="supplier-save-soft-loader-title">Enregistrement du fournisseur…</strong>
+                    <span class="supplier-save-soft-loader-text">Quelques secondes, s’il vous plaît.</span>
+                </div>
+            </div>
+            <div class="supplier-save-success-view" aria-hidden="true">
+                <div class="supplier-save-success-icon" aria-hidden="true">✓</div>
+                <div class="supplier-save-success-confetti" aria-hidden="true">
+                    <span>◆</span><span>●</span><span>◆</span><span>●</span><span>◆</span><span>●</span>
+                </div>
+                <strong class="supplier-save-success-title">Fournisseur enregistré !</strong>
+                <span class="supplier-save-success-text">Le fournisseur a été enregistré avec succès.</span>
+                <div class="supplier-save-success-reference" hidden>
+                    <span>Fournisseur</span>
+                    <strong class="supplier-save-success-reference-value"></strong>
+                </div>
+                <button type="button" class="supplier-save-success-btn">✓ Parfait !</button>
+            </div>
+        </div>`;
+    formulaire.appendChild(loader);
+    return loader;
+}
+
+function demarrerLoaderEnregistrementFournisseur(modification = false) {
+    const loader = obtenirLoaderEnregistrementFournisseur();
+    if (!loader) return;
+    loader.classList.remove("is-success");
+    loader.querySelector(".supplier-save-loading-view")?.removeAttribute("aria-hidden");
+    loader.querySelector(".supplier-save-success-view")?.setAttribute("aria-hidden", "true");
+    const titre = loader.querySelector(".supplier-save-soft-loader-title");
+    if (titre) titre.textContent = modification
+        ? "Modification du fournisseur…"
+        : "Enregistrement du fournisseur…";
+    loader.classList.add("is-visible");
+    loader.setAttribute("aria-hidden", "false");
+}
+
+function terminerLoaderEnregistrementFournisseur() {
+    const loader = document.querySelector("#supplier-form .supplier-save-soft-loader");
+    if (!loader) return;
+    loader.classList.remove("is-visible", "is-success");
+    loader.setAttribute("aria-hidden", "true");
+}
+
+function afficherSuccesEnregistrementFournisseur(fournisseur, modification = false) {
+    return new Promise(resolve => {
+        const loader = obtenirLoaderEnregistrementFournisseur();
+        if (!loader) return resolve();
+
+        loader.querySelector(".supplier-save-loading-view")?.setAttribute("aria-hidden", "true");
+        loader.querySelector(".supplier-save-success-view")?.removeAttribute("aria-hidden");
+
+        const titre = loader.querySelector(".supplier-save-success-title");
+        const texte = loader.querySelector(".supplier-save-success-text");
+        const reference = loader.querySelector(".supplier-save-success-reference");
+        const valeur = loader.querySelector(".supplier-save-success-reference-value");
+        const bouton = loader.querySelector(".supplier-save-success-btn");
+
+        if (titre) titre.textContent = modification ? "Fournisseur modifié !" : "Fournisseur enregistré !";
+        if (texte) texte.textContent = modification
+            ? "Les modifications ont été enregistrées avec succès."
+            : "Le fournisseur a été enregistré avec succès.";
+
+        const nom = lireValeurFournisseur(fournisseur, ["nomFournisseur", "Nom Fournisseur"]) || "";
+        if (nom && reference && valeur) {
+            valeur.textContent = nom;
+            reference.hidden = false;
+        } else if (reference) {
+            reference.hidden = true;
+        }
+
+        loader.classList.add("is-visible", "is-success");
+        loader.setAttribute("aria-hidden", "false");
+
+        const finir = () => {
+            bouton?.removeEventListener("click", finir);
+            terminerLoaderEnregistrementFournisseur();
+            resolve();
+        };
+        bouton?.addEventListener("click", finir, { once: true });
+        if (!bouton) resolve();
+    });
+}
+
+function demarrerPetitLoaderBouton(bouton, texte = "Traitement…") {
+    if (!bouton) return null;
+    const original = bouton.innerHTML;
+    bouton.disabled = true;
+    bouton.classList.add("is-processing");
+    bouton.innerHTML = `<span class="supplier-button-spinner" aria-hidden="true"></span><span>${texte}</span>`;
+    return () => {
+        bouton.disabled = false;
+        bouton.classList.remove("is-processing");
+        bouton.innerHTML = original;
+    };
+}
 
 
 /* ===========================================================
@@ -45,15 +276,31 @@ document.addEventListener("DOMContentLoaded", () => {
         .getElementById("refresh-suppliers-btn")
         ?.addEventListener(
             "click",
-            chargerFournisseursDepuisAPI
+            () => chargerFournisseursDepuisAPI({ afficherLoader: true })
         );
 });
 
 
 function initialiserModuleFournisseurs() {
 
+    preparerLoaderFournisseurs();
     mettreAJourKPIsFournisseurs();
-    chargerFournisseursDepuisAPI();
+
+    const cacheRestaure =
+        restaurerCacheNavigationFournisseurs();
+
+    if (cacheRestaure) {
+        marquerLoaderInitialFournisseursAffiche();
+        verifierSynchronisationFournisseurs({ force: true });
+    } else {
+        chargerFournisseursDepuisAPI({
+            afficherLoader: doitAfficherLoaderInitialFournisseurs()
+        }).finally(() => {
+            marquerLoaderInitialFournisseursAffiche();
+        });
+    }
+
+    demarrerSynchronisationFournisseurs();
     chargerAnalyseFournisseursDepuisAPI();
 }
 
@@ -132,6 +379,16 @@ function definirTexteElement(id, valeur) {
             valeur === ""
                 ? "—"
                 : String(valeur);
+
+        /* Dès qu'une vraie valeur KPI est injectée, on retire
+           le skeleton de sa carte. Important lors d'un retour
+           sur le module depuis le cache de navigation. */
+        if (element.hasAttribute("data-kpi-value")) {
+            element.classList.remove("is-loading");
+            element
+                .closest(".visibl-kpi-card")
+                ?.classList.remove("is-loading");
+        }
     }
 }
 
@@ -256,14 +513,158 @@ function obtenirInitialesFournisseur(nom) {
 
 
 /* ===========================================================
+   CACHE NAVIGATION + SYNCHRONISATION LÉGÈRE
+=========================================================== */
+
+function sauvegarderCacheNavigationFournisseurs() {
+    try {
+        sessionStorage.setItem(
+            FOURNISSEURS_CACHE_NAVIGATION_KEY,
+            JSON.stringify({
+                fournisseurs,
+                signature: signatureSyncFournisseurs,
+                page: pageFournisseursCourante,
+                savedAt: Date.now()
+            })
+        );
+    } catch (_) {}
+}
+
+function restaurerCacheNavigationFournisseurs() {
+    try {
+        const brut = sessionStorage.getItem(
+            FOURNISSEURS_CACHE_NAVIGATION_KEY
+        );
+        if (!brut) return false;
+
+        const cache = JSON.parse(brut);
+        if (!Array.isArray(cache?.fournisseurs)) return false;
+
+        fournisseurs = cache.fournisseurs;
+        signatureSyncFournisseurs = String(cache.signature || "");
+        pageFournisseursCourante = Math.max(
+            1,
+            Number(cache.page) || 1
+        );
+
+        nettoyerSelectionFournisseurs();
+        mettreAJourOptionsFiltresFournisseurs();
+        mettreAJourKPIsFournisseurs();
+        appliquerFiltresFournisseurs();
+
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function accepterSignatureFournisseurs(resultat) {
+    const signature = String(resultat?.signature || "").trim();
+    if (!signature) return false;
+
+    signatureSyncFournisseurs = signature;
+    sauvegarderCacheNavigationFournisseurs();
+    return true;
+}
+
+async function verifierSynchronisationFournisseurs(options = {}) {
+    const force = Boolean(options.force);
+    const maintenant = Date.now();
+
+    if (
+        synchronisationFournisseursEnCours ||
+        (!force &&
+            maintenant - dernierControleSyncFournisseurs <
+                FOURNISSEURS_SYNC_COOLDOWN_MS)
+    ) {
+        return;
+    }
+
+    synchronisationFournisseursEnCours = true;
+    dernierControleSyncFournisseurs = maintenant;
+
+    try {
+        const resultat = await apiGet("getEtatSyncFournisseurs");
+
+        if (!resultat?.success) return;
+
+        const signatureServeur = String(
+            resultat.signature || ""
+        ).trim();
+
+        if (!signatureServeur) return;
+
+        if (!signatureSyncFournisseurs) {
+            signatureSyncFournisseurs = signatureServeur;
+            sauvegarderCacheNavigationFournisseurs();
+            return;
+        }
+
+        if (signatureServeur !== signatureSyncFournisseurs) {
+            await chargerFournisseursDepuisAPI({
+                afficherLoader: false
+            });
+        }
+    } catch (error) {
+        console.warn(
+            "Synchronisation fournisseurs indisponible :",
+            error
+        );
+    } finally {
+        synchronisationFournisseursEnCours = false;
+    }
+}
+
+function demarrerSynchronisationFournisseurs() {
+    if (timerSyncFournisseurs) {
+        clearInterval(timerSyncFournisseurs);
+    }
+
+    timerSyncFournisseurs = setInterval(() => {
+        if (document.visibilityState === "visible") {
+            verifierSynchronisationFournisseurs();
+        }
+    }, FOURNISSEURS_SYNC_INTERVAL_MS);
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            verifierSynchronisationFournisseurs();
+        }
+    });
+}
+
+/* ===========================================================
    CHARGEMENT DEPUIS L'API
 =========================================================== */
 
-async function chargerFournisseursDepuisAPI() {
+async function chargerFournisseursDepuisAPI(options = {}) {
 
-    afficherEtatChargementFournisseurs();
+    const afficherLoader = Boolean(options.afficherLoader);
+
+    if (afficherLoader) {
+        demarrerLoaderFournisseurs("Chargement des fournisseurs…");
+    }
 
     try {
+
+        // Affichage progressif : une première page est reçue rapidement.
+        // Le chargement intégral suit pour préserver les KPI, filtres,
+        // recherches, exports et actions qui reposent sur la liste complète.
+        // En cas d'échec de l'API paginée, l'ancien flux reste opérationnel.
+        if (fournisseurs.length === 0 && pageFournisseursCourante === 1) {
+            try {
+                const apercu = await apiGet("getFournisseursPage", {
+                    page: 1,
+                    pageSize: fournisseursParPage
+                });
+                if (apercu?.success && Array.isArray(apercu.data)) {
+                    // On affiche un aperçu sans déclencher les calculs globaux.
+                    afficherFournisseurs(apercu.data);
+                }
+            } catch (erreurApercu) {
+                console.warn("Aperçu paginé indisponible :", erreurApercu);
+            }
+        }
 
         const resultat =
             await apiGet("getFournisseurs");
@@ -280,10 +681,17 @@ async function chargerFournisseursDepuisAPI() {
             ? resultat.data
             : [];
 
+        if (!accepterSignatureFournisseurs(resultat)) {
+            sauvegarderCacheNavigationFournisseurs();
+        }
+
         nettoyerSelectionFournisseurs();
         mettreAJourOptionsFiltresFournisseurs();
         mettreAJourKPIsFournisseurs();
         appliquerFiltresFournisseurs();
+        sauvegarderCacheNavigationFournisseurs();
+
+        terminerLoaderFournisseurs();
 
         console.log(
             `${fournisseurs.length} fournisseur(s) chargé(s) depuis Google Sheets.`
@@ -296,6 +704,7 @@ async function chargerFournisseursDepuisAPI() {
             error
         );
 
+        terminerLoaderFournisseurs();
         afficherErreurChargementFournisseurs(
             error?.message ||
             "Une erreur est survenue."
@@ -1808,16 +2217,10 @@ async function enregistrerFournisseur(event) {
 
         if (boutonEnregistrer) {
             boutonEnregistrer.disabled = true;
-            boutonEnregistrer.textContent =
-                "Enregistrement...";
         }
 
-        afficherMessageFormulaireFournisseur(
-            estModification
-                ? "Enregistrement des modifications..."
-                : "Enregistrement du fournisseur...",
-            "info"
-        );
+        masquerMessageFormulaireFournisseur();
+        demarrerLoaderEnregistrementFournisseur(estModification);
 
         const resultat =
             await apiPost(
@@ -1905,6 +2308,16 @@ async function enregistrerFournisseur(event) {
 
         mettreAJourKPIsFournisseurs();
         appliquerFiltresFournisseurs();
+
+        if (!accepterSignatureFournisseurs(resultat)) {
+            sauvegarderCacheNavigationFournisseurs();
+        }
+
+        await afficherSuccesEnregistrementFournisseur(
+            fournisseurEnregistre,
+            estModification
+        );
+
         fermerModaleFournisseur();
 
         idFournisseurEnModification = "";
@@ -1921,6 +2334,7 @@ async function enregistrerFournisseur(event) {
             error
         );
 
+        terminerLoaderEnregistrementFournisseur();
         afficherMessageFormulaireFournisseur(
             error?.message ||
             "Une erreur est survenue.",
@@ -2766,11 +3180,12 @@ async function confirmerSuppressionFournisseur() {
             "delete-supplier-message"
         );
 
+    let restaurerBoutonSuppression = null;
+
     try {
 
-        if (bouton) {
-            bouton.disabled = true;
-        }
+        restaurerBoutonSuppression =
+            demarrerPetitLoaderBouton(bouton, "Suppression…");
 
         if (message) {
             message.hidden = true;
@@ -2823,6 +3238,10 @@ async function confirmerSuppressionFournisseur() {
         mettreAJourKPIsFournisseurs();
         appliquerFiltresFournisseurs();
 
+        if (!accepterSignatureFournisseurs(resultat)) {
+            sauvegarderCacheNavigationFournisseurs();
+        }
+
     } catch (error) {
 
         console.error(
@@ -2838,10 +3257,7 @@ async function confirmerSuppressionFournisseur() {
         }
 
     } finally {
-
-        if (bouton) {
-            bouton.disabled = false;
-        }
+        restaurerBoutonSuppression?.();
     }
 }
 
@@ -3286,9 +3702,7 @@ function fermerSuppressionEnMasseFournisseurs() {
 
 async function confirmerSuppressionEnMasseFournisseurs() {
 
-    const ids = [
-        ...fournisseursSelectionnes
-    ];
+    const ids = [...fournisseursSelectionnes];
 
     if (!ids.length) {
         return;
@@ -3309,108 +3723,79 @@ async function confirmerSuppressionEnMasseFournisseurs() {
             "bulk-delete-suppliers-message"
         );
 
-    const supprimes = [];
-    const erreurs = [];
+    let restaurerBoutonSuppressionMasse = null;
 
     try {
-
-        if (bouton) {
-            bouton.disabled = true;
-            bouton.textContent =
-                "Suppression...";
-        }
+        restaurerBoutonSuppressionMasse =
+            demarrerPetitLoaderBouton(
+                bouton,
+                "Suppression…"
+            );
 
         if (annuler) {
             annuler.disabled = true;
         }
 
-        for (
-            const idFournisseur of ids
-        ) {
-
-            try {
-
-                const resultat =
-                    await apiPost(
-                        "deleteFournisseur",
-                        { idFournisseur }
-                    );
-
-                if (!resultat?.success) {
-
-                    throw new Error(
-                        resultat?.message ||
-                        "Suppression refusée."
-                    );
-                }
-
-                supprimes.push(
-                    idFournisseur
-                );
-
-            } catch (error) {
-
-                erreurs.push({
-                    idFournisseur,
-                    message:
-                        error?.message ||
-                        "Erreur inconnue"
-                });
-            }
+        if (message) {
+            message.hidden = true;
+            message.textContent = "";
         }
 
-        if (supprimes.length) {
+        const resultat = await apiPost(
+            "deleteFournisseursBulk",
+            { idsFournisseurs: ids }
+        );
 
-            fournisseurs =
-                fournisseurs.filter(
-                    fournisseur => {
-
-                        const id = String(
-                            lireValeurFournisseur(
-                                fournisseur,
-                                [
-                                    "ID Fournisseur",
-                                    "idFournisseur"
-                                ]
-                            ) || ""
-                        ).trim();
-
-                        return (
-                            !supprimes.includes(id)
-                        );
-                    }
-                );
-
-            supprimes.forEach(id =>
-                fournisseursSelectionnes
-                    .delete(id)
+        if (!resultat?.success) {
+            throw new Error(
+                resultat?.message ||
+                "Impossible de supprimer les fournisseurs."
             );
-
-            mettreAJourKPIsFournisseurs();
-            appliquerFiltresFournisseurs();
         }
 
-        if (erreurs.length) {
+        fournisseurs = fournisseurs.filter(
+            fournisseur => {
+                const id = String(
+                    lireValeurFournisseur(
+                        fournisseur,
+                        [
+                            "ID Fournisseur",
+                            "idFournisseur"
+                        ]
+                    ) || ""
+                ).trim();
 
-            if (message) {
-                message.hidden = false;
-                message.textContent =
-                    `${supprimes.length} fournisseur(s) supprimé(s), ` +
-                    `${erreurs.length} échec(s).`;
+                return !ids.includes(id);
             }
+        );
 
-            return;
+        ids.forEach(id =>
+            fournisseursSelectionnes.delete(id)
+        );
+
+        mettreAJourKPIsFournisseurs();
+        appliquerFiltresFournisseurs();
+
+        if (!accepterSignatureFournisseurs(resultat)) {
+            sauvegarderCacheNavigationFournisseurs();
         }
 
         fermerSuppressionEnMasseFournisseurs();
 
-    } finally {
+    } catch (error) {
+        console.error(
+            "Erreur de suppression en masse :",
+            error
+        );
 
-        if (bouton) {
-            bouton.disabled = false;
-            bouton.textContent =
-                "Supprimer définitivement";
+        if (message) {
+            message.hidden = false;
+            message.textContent =
+                error?.message ||
+                "Une erreur est survenue.";
         }
+    } finally {
+        restaurerBoutonSuppressionMasse?.();
 
         if (annuler) {
             annuler.disabled = false;
@@ -3665,10 +4050,11 @@ function exporterFournisseurs(format) {
 }
 
 
-function exporterFournisseursExcel(
+async function exporterFournisseursExcel(
     donnees
 ) {
 
+    await chargerBibliothequeExport("excel");
     if (typeof XLSX === "undefined") {
 
         alert(
@@ -3734,12 +4120,12 @@ function exporterFournisseursCSV(
 }
 
 
-function exporterFournisseursPDF(
+async function exporterFournisseursPDF(
     donnees
 ) {
 
-    const jsPDF =
-        window.jspdf?.jsPDF;
+    const bibliothequePrete = await chargerBibliothequeExport("pdf");
+    const jsPDF = bibliothequePrete ? window.jspdf.jsPDF : null;
 
     if (!jsPDF) {
 
@@ -4082,6 +4468,10 @@ function initialiserHeaderFournisseurs() {
             "profile-dropdown"
         );
 
+    /* Le nouveau header global VISIBL utilise #profile-button / #profile-panel
+       et est piloté par header.js. Les sélecteurs legacy restent volontairement
+       ici uniquement pour compatibilité avec une ancienne maquette. */
+
     boutonProfil?.addEventListener(
         "click",
         event => {
@@ -4130,29 +4520,6 @@ function initialiserHeaderFournisseurs() {
         }
     );
 
-    document
-        .getElementById("logout-button")
-        ?.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-
-                if (
-                    typeof logoutUser ===
-                    "function"
-                ) {
-                    logoutUser();
-                    return;
-                }
-
-                sessionStorage.clear();
-                localStorage.clear();
-
-                window.location.href =
-                    "connexion.html";
-            }
-        );
 }
 
 
@@ -4467,7 +4834,7 @@ function initialiserMenusLignesFournisseurs() {
 }
 
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
     document.addEventListener("DOMContentLoaded", () => {
         initialiserToolbarFournisseursUI();
         initialiserMenusLignesFournisseurs();
@@ -4496,7 +4863,7 @@ if (document.readyState === "loading") {
         }
     };
 
-    if (document.readyState === "loading") {
+    if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
         document.addEventListener("DOMContentLoaded", lancer);
     } else {
         lancer();
@@ -4545,6 +4912,6 @@ if (document.readyState === "loading") {
         });
         if (searchContainer) observateur.observe(searchContainer,{attributes:true,attributeFilter:["class"]});
     };
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", lancer, {once:true});
+    if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) document.addEventListener("DOMContentLoaded", lancer, {once:true});
     else lancer();
 })();

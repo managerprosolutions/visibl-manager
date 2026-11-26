@@ -1,10 +1,12 @@
 
 let facturesChargees=[],facturesFiltrees=[],factureSelectionnee=null,pageFacturesActuelle=1,facturesParPage=10,ventesFacturesCache=[],ventesFacturesPromise=null,filtreRapideFacture="",historiqueFacturesCache=new Map();
 
+let venteFactureOuverte = null;
+
 document.addEventListener("DOMContentLoaded",()=>{if(typeof requireAuth==="function"&&!requireAuth())return;initFactures();chargerFactures();});
 
 function initFactures(){
-  initHeaderFactures();initLogoutFactures();
+  initHeaderFactures();
   ["invoices-search-input","invoice-type-filter","invoice-status-filter"].forEach(id=>{
     const e=document.getElementById(id);if(!e)return;e.addEventListener(id==="invoices-search-input"?"input":"change",appliquerFiltresFactures);
   });
@@ -46,19 +48,20 @@ function initHeaderFactures(){
   document.getElementById("mobile-search-btn")?.addEventListener("click",()=>{document.querySelector(".search-container")?.classList.toggle("active");setTimeout(()=>hs?.focus(),50);});
 }
 
-function initLogoutFactures(){
-  document.getElementById("logout-button")?.addEventListener("click",e=>{e.preventDefault();try{if(typeof logoutUser==="function")logoutUser();else{sessionStorage.clear();["user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"].forEach(k=>localStorage.removeItem(k));}}catch(err){}setTimeout(()=>window.location.replace("connexion.html"),50);});
+
+function chargerFactures(...args) {
+    return chargerEcranVisibl("Chargement des factures…", () => chargerFacturesDonnees(...args));
 }
 
-async function chargerFactures(){
+async function chargerFacturesDonnees(){
   try{
     const r=await apiGet("getFactures");if(!r?.success)throw new Error(r?.message||"Impossible de charger les factures.");
     facturesChargees=Array.isArray(r.factures)?r.factures:(Array.isArray(r.data)?r.data:[]);
     const x=r.resume||{};
     t("total-invoices-value",nf(x.nombreFactures));t("invoiced-amount-value",fcfa(x.montantFacture));t("invoice-paid-value",fcfa(x.montantEncaisse));t("invoice-balance-value",fcfa(x.resteAEncaisser));t("credit-notes-value",nf(x.nombreAvoirs));t("credit-notes-description",fcfa(x.montantAvoirs)+" en avoirs");
     appliquerFiltresFactures();
-    setTimeout(()=>chargerVentesFacturesEnArrierePlan(),0);
-  }catch(e){facturesChargees=[];facturesFiltrees=[];afficherTableauFactures();toastFac(e.message||"Erreur de chargement.","error");}
+    historiqueFacturesCache.clear();
+  }catch(e){facturesChargees=[];facturesFiltrees=[];afficherTableauFactures();toastFac("Impossible d’actualiser les factures. Réessayez dans un instant.","error");}
 }
 
 function appliquerFiltresFactures(){
@@ -154,10 +157,16 @@ function ouvrirFacture(f){
 }
 async function chargerHistoriqueFacture(f){const k=String(f.idFacture||"");if(historiqueFacturesCache.has(k))return historiqueFacturesCache.get(k);const r=await apiGet("getHistoriqueFacture",{idFacture:k});if(!r?.success)throw new Error(r?.message||"Historique indisponible.");const h=r.historique||r.data||r;historiqueFacturesCache.set(k,h);return h;}
 function afficherHistoriqueFactureCharge(h){const b=document.getElementById("invoice-history"),c=document.getElementById("invoice-history-count");if(!b)return;if(!h){b.innerHTML='<div class="invoice-history-loading">Chargement de l’historique…</div>';if(c)c.textContent="…";return}if(h.erreur){b.innerHTML='<div class="invoice-history-empty">Historique momentanément indisponible.</div>';if(c)c.textContent="—";return}const e=Array.isArray(h.evenements)?h.evenements:[];if(c)c.textContent=`${e.length} événement${e.length>1?"s":""}`;b.innerHTML=e.map(x=>`<div class="invoice-history-item type-${esc(x.type||"info")}"><span class="invoice-history-dot"></span><div class="invoice-history-content"><div><strong>${esc(x.titre||"Événement")}</strong><span>${esc([x.date,x.heure].filter(Boolean).join(" "))}</span></div><p>${esc(x.description||"")}</p>${x.montant!=null?`<b>${esc(fcfa(x.montant))}</b>`:""}</div></div>`).join("")||'<div class="invoice-history-empty">Aucun événement.</div>';}
-async function ouvrirPaiementsFacture(f){let h=historiqueFacturesCache.get(String(f.idFacture||""));if(!h){try{h=await chargerHistoriqueFacture(f)}catch(e){return toastFac(e.message,"error")}}const ps=Array.isArray(h.paiements)?h.paiements:[];if(!ps.length)return toastFac("Aucun paiement lié.","info");t("invoice-payments-subtitle",f.numeroFacture||f.idFacture);t("invoice-payments-count",ps.length);t("invoice-payments-total",fcfa(ps.filter(p=>!["annule","annulee","rejete","rejetee"].includes(norm(p.statut))).reduce((s,p)=>s+(norm(p.naturePaiement).includes("remboursement")?-Number(p.montant||0):Number(p.montant||0)),0)));const l=document.getElementById("invoice-payments-list");if(l)l.innerHTML=ps.map(p=>`<article class="invoice-payment-card"><div class="invoice-payment-card-top"><div><span>${esc(p.datePaiement||"—")} ${esc(p.heurePaiement||"")}</span><strong>${esc(fcfa(p.montant))}</strong></div><span class="invoice-status-badge status-${statutClasse(p.statut)}">${esc(p.statut||"—")}</span></div><div class="invoice-payment-meta"><span><b>Mode</b>${esc(p.modePaiement||"—")}</span><span><b>Origine</b>${esc(p.origine||"—")}</span><span><b>Référence</b>${esc(p.referencePaiement||p.idPaiement||"—")}</span></div>${p.commentaire?`<p>${esc(p.commentaire)}</p>`:""}</article>`).join("");document.getElementById("invoice-payments-modal")?.classList.add("active");}
-function fermerPaiementsFacture(){document.getElementById("invoice-payments-modal")?.classList.remove("active")}
-async function ouvrirRetourFacture(f){let h=historiqueFacturesCache.get(String(f.idFacture||""));if(!h){try{h=await chargerHistoriqueFacture(f)}catch(e){return toastFac(e.message,"error")}}const r=h.retour;if(!r)return toastFac("Retour lié introuvable.","info");t("invoice-return-subtitle",`Origine de ${f.numeroFacture||"la facture d’avoir"}`);t("invoice-return-id",r.idRetour||"—");t("invoice-return-date",[r.dateRetour||r.date,r.heureRetour||r.heure].filter(Boolean).join(" ")||"—");t("invoice-return-sale",r.idVente||f.idVente||"—");t("invoice-return-reason-text",r.motif||f.motifAvoir||"Retour client");const st=document.getElementById("invoice-return-status");if(st)st.textContent=r.etat||r.statut||"Enregistré";const a=Array.isArray(r.lignes)?r.lignes:(Array.isArray(r.details)?r.details:[]),b=document.getElementById("invoice-return-lines-body");if(b)b.innerHTML=a.length?a.map(x=>`<tr><td>${esc(x.designation||x.nomProduit||x.idProduit||"Article")}</td><td>${esc(nf(x.quantiteRetournee??x.quantite??0))}</td><td>${esc(fcfa(x.montantRetour??x.valeurRetour??x.sousTotalTTC??0))}</td></tr>`).join(""):'<tr><td colspan="3" class="empty-table">Aucun détail produit disponible.</td></tr>';document.getElementById("invoice-return-modal")?.classList.add("active");}
-function fermerRetourFacture(){document.getElementById("invoice-return-modal")?.classList.remove("active")}
+async function ouvrirPaiementsFacture(f){let h=historiqueFacturesCache.get(String(f.idFacture||""));if(!h){try{h=await chargerHistoriqueFacture(f)}catch(e){return toastFac(e.message,"error")}}const ps=Array.isArray(h.paiements)?h.paiements:[];if(!ps.length)return toastFac("Aucun paiement lié.","info");t("invoice-payments-subtitle",f.numeroFacture||f.idFacture);t("invoice-payments-count",ps.length);t("invoice-payments-total",fcfa(ps.filter(p=>!["annule","annulee","rejete","rejetee"].includes(norm(p.statut))).reduce((s,p)=>s+(norm(p.naturePaiement).includes("remboursement")?-Number(p.montant||0):Number(p.montant||0)),0)));const l=document.getElementById("invoice-payments-list");if(l)l.innerHTML=ps.map(p=>`<article class="invoice-payment-card"><div class="invoice-payment-card-top"><div><span>${esc(p.datePaiement||"—")} ${esc(p.heurePaiement||"")}</span><strong>${esc(fcfa(p.montant))}</strong></div><span class="invoice-status-badge status-${statutClasse(p.statut)}">${esc(p.statut||"—")}</span></div><div class="invoice-payment-meta"><span><b>Mode</b>${esc(p.modePaiement||"—")}</span><span><b>Origine</b>${esc(p.origine||"—")}</span><span><b>Référence</b>${esc(p.referencePaiement||p.idPaiement||"—")}</span></div>${p.commentaire?`<p>${esc(p.commentaire)}</p>`:""}</article>`).join("");definirVisibiliteDetailFacture("invoice-payments-modal", true);}
+function fermerPaiementsFacture(){definirVisibiliteDetailFacture("invoice-payments-modal", false)}
+async function ouvrirRetourFacture(f){let h=historiqueFacturesCache.get(String(f.idFacture||""));if(!h){try{h=await chargerHistoriqueFacture(f)}catch(e){return toastFac(e.message,"error")}}const r=h.retour;if(!r)return toastFac("Retour lié introuvable.","info");t("invoice-return-subtitle",`Origine de ${f.numeroFacture||"la facture d’avoir"}`);t("invoice-return-id",r.idRetour||"—");t("invoice-return-date",[r.dateRetour||r.date,r.heureRetour||r.heure].filter(Boolean).join(" ")||"—");t("invoice-return-sale",r.idVente||f.idVente||"—");t("invoice-return-reason-text",r.motif||f.motifAvoir||"Retour client");const st=document.getElementById("invoice-return-status");if(st)st.textContent=r.etat||r.statut||"Enregistré";const a=Array.isArray(r.lignes)?r.lignes:(Array.isArray(r.details)?r.details:[]),b=document.getElementById("invoice-return-lines-body");if(b)b.innerHTML=a.length?a.map(x=>`<tr><td>${esc(x.designation||x.nomProduit||x.idProduit||"Article")}</td><td>${esc(nf(x.quantiteRetournee??x.quantite??0))}</td><td>${esc(fcfa(x.montantRetour??x.valeurRetour??x.sousTotalTTC??0))}</td></tr>`).join(""):'<tr><td colspan="3" class="empty-table">Aucun détail produit disponible.</td></tr>';definirVisibiliteDetailFacture("invoice-return-modal", true);}
+function fermerRetourFacture(){definirVisibiliteDetailFacture("invoice-return-modal", false)}
+
+function definirVisibiliteDetailFacture(id, ouvert) {
+  const modal = document.getElementById(id);
+  modal?.classList.toggle("active", ouvert);
+  modal?.setAttribute("aria-hidden", String(!ouvert));
+}
 
 function fermerFacture(){const m=document.getElementById("invoice-modal");m?.classList.remove("active");m?.setAttribute("aria-hidden","true");document.body.classList.remove("modal-open");}
 async function copierNumeroFacture(){if(!factureSelectionnee?.numeroFacture)return;try{await navigator.clipboard.writeText(factureSelectionnee.numeroFacture);toastFac("Numéro de facture copié.","success");}catch(e){toastFac("Impossible de copier le numéro.","error");}}
@@ -180,7 +189,7 @@ function afficherVenteDansFactures(vente,f){
     const reste=Math.max(0,Number(vente.resteAPayer ?? f.resteAPayer ?? (montantTotal-montantRegle))||0);
 
     t("invoice-sale-subtitle",`Vente liée à ${f.numeroFacture||f.idFacture||"la facture"}`);
-    t("invoice-sale-id",vente.idVente||f.idVente);
+    t("invoice-linked-sale-id",vente.idVente||f.idVente);
     t("invoice-sale-client",vente.clientNom||f.clientNom||vente.idClient||f.idClient||"Client");
     t("invoice-sale-client-contact",[vente.clientTelephone||f.clientTelephone,vente.clientEmail||f.clientEmail].filter(Boolean).join(" · ")||vente.idClient||f.idClient||"—");
     t("invoice-sale-date",[vente.dateVente||vente.date||f.dateEmission,vente.heureVente||vente.heure||""].filter(Boolean).join(" ")||"—");
@@ -220,18 +229,20 @@ async function ouvrirVenteFacture(f){
     statut:f.statut,details:Array.isArray(f.details)?f.details:[]
   };
   fermerFacture();
+  venteFactureOuverte = f;
   afficherVenteDansFactures(provisoire,f);
 
   /* Enrichissement silencieux avec la vente complète. */
   if(!cachee){
     const ventes=await chargerVentesFacturesEnArrierePlan();
     const complete=ventes.find(x=>String(x.idVente)===String(f.idVente));
-    if(complete && document.getElementById("invoice-sale-modal")?.classList.contains("active")){
+    if(complete && venteFactureOuverte === f && document.getElementById("invoice-sale-modal")?.classList.contains("active")){
       afficherVenteDansFactures(complete,f);
     }
   }
 }
 function fermerVenteFacture(){
+  venteFactureOuverte = null;
   const m=document.getElementById("invoice-sale-modal");m?.classList.remove("active");m?.setAttribute("aria-hidden","true");document.body.classList.remove("modal-open");
 }
 
@@ -253,7 +264,7 @@ function exporterFacturesCSV(){
 
 function v(id){return document.getElementById(id)?.value||""}function t(id,x){const e=document.getElementById(id);if(e)e.textContent=x==null?"":String(x)}
 function norm(x){return String(x==null?"":x).trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
-function statutClasse(x){x=norm(x);if(x.includes("partiellement"))return"partiellement-payee";if(x==="payee")return"payee";if(x.includes("annul"))return"annule";if(x==="emise"||x==="emis")return"emise";return x||"autre"}
+function statutClasse(x){x=norm(x);if(x.includes("partiellement"))return"partiellement-payee";if(x==="payee")return"payee";if(x.includes("annul"))return"annule";if(x==="emise"||x==="emis")return"emise";return x.replace(/[^a-z0-9-]/g,"-")||"autre"}
 function num(x){const n=Number(String(x??0).replace(/\s/g,"").replace(",","."));return Number.isFinite(n)?n:0}function nf(x){return num(x).toLocaleString("fr-FR",{maximumFractionDigits:2})}function fcfa(x){return num(x).toLocaleString("fr-FR",{maximumFractionDigits:0})+" FCFA"}
 function esc(x){return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
 function toastFac(m,type="info"){if(typeof showToast==="function")return showToast(m,type);const c=document.getElementById("toast-container");if(!c)return;const e=document.createElement("div");e.className="toast "+type;e.textContent=m;c.appendChild(e);setTimeout(()=>e.remove(),3500)}
@@ -286,16 +297,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 
   /* Déconnexion robuste et redirection directe. */
-  q("#logout-button")?.addEventListener("click",e=>{
-    e.preventDefault();e.stopImmediatePropagation();
-    try{ if(typeof logoutUser==="function") logoutUser(); }catch(_){}
-    try{
-      sessionStorage.clear();
-      ["visibl_user","user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"]
-        .forEach(k=>localStorage.removeItem(k));
-    }catch(_){}
-    location.replace("connexion.html");
-  },true);
 
   /* Supprime les notifications de démonstration, conserve une cloche vide. */
   if(notif){

@@ -29,7 +29,20 @@ const ETAT_COMPTA = {
    INITIALISATION
 =========================================================== */
 
+let pageComptabilite = 1;
+const taillePageComptabilite = 50;
+
 function initialiserComptabilite() {
+    window.addEventListener("beforeprint", () => afficherTableauCompta(true));
+    window.addEventListener("afterprint", () => afficherTableauCompta());
+    document.getElementById("accounting-previous-page")?.addEventListener("click", () => {
+        pageComptabilite--;
+        afficherTableauCompta();
+    });
+    document.getElementById("accounting-next-page")?.addEventListener("click", () => {
+        pageComptabilite++;
+        afficherTableauCompta();
+    });
     if (
         typeof requireAuth === "function" &&
         !requireAuth()
@@ -37,7 +50,7 @@ function initialiserComptabilite() {
         return;
     }
 
-    initialiserDeconnexionCompta();
+
     initialiserFiltresCompta();
     initialiserActionsCompta();
     initialiserRechercheHeaderCompta();
@@ -46,7 +59,7 @@ function initialiserComptabilite() {
 }
 
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
     document.addEventListener(
         "DOMContentLoaded",
         initialiserComptabilite
@@ -60,28 +73,6 @@ if (document.readyState === "loading") {
    AUTH / HEADER
 =========================================================== */
 
-function initialiserDeconnexionCompta() {
-    const bouton =
-        document.getElementById(
-            "logout-button"
-        );
-
-    if (!bouton) return;
-
-    bouton.addEventListener(
-        "click",
-        function(event) {
-            event.preventDefault();
-
-            if (
-                typeof logoutUser ===
-                "function"
-            ) {
-                logoutUser();
-            }
-        }
-    );
-}
 
 
 function initialiserRechercheHeaderCompta() {
@@ -129,7 +120,11 @@ function initialiserRechercheHeaderCompta() {
    CHARGEMENT
 =========================================================== */
 
-async function chargerComptabilite() {
+function chargerComptabilite(...args) {
+    return chargerEcranVisibl("Chargement des écritures comptables…", () => chargerComptabiliteDonnees(...args));
+}
+
+async function chargerComptabiliteDonnees() {
     try {
         const resultat =
             await apiGet(
@@ -456,6 +451,7 @@ function appliquerFiltresCompta() {
             }
         );
 
+    pageComptabilite = 1;
     afficherTableauCompta();
     mettreAJourCompteurCompta();
 }
@@ -465,13 +461,22 @@ function appliquerFiltresCompta() {
    TABLEAU
 =========================================================== */
 
-function afficherTableauCompta() {
+function afficherTableauCompta(impression = false) {
     const tbody =
         document.getElementById(
             "accounting-table-body"
         );
 
     if (!tbody) return;
+
+    const totalPages = Math.max(1, Math.ceil(ecrituresComptaAffichees.length / taillePageComptabilite));
+    pageComptabilite = Math.max(1, Math.min(pageComptabilite, totalPages));
+    const status = document.getElementById("accounting-page-status");
+    const previous = document.getElementById("accounting-previous-page");
+    const next = document.getElementById("accounting-next-page");
+    if (status) status.textContent = "Page " + pageComptabilite + " sur " + totalPages;
+    if (previous) previous.disabled = pageComptabilite === 1;
+    if (next) next.disabled = pageComptabilite === totalPages;
 
     if (
         !ecrituresComptaAffichees.length
@@ -486,9 +491,11 @@ function afficherTableauCompta() {
         return;
     }
 
+    const debut = (pageComptabilite - 1) * taillePageComptabilite;
+    const lignes = impression ? ecrituresComptaAffichees :
+        ecrituresComptaAffichees.slice(debut, debut + taillePageComptabilite);
     tbody.innerHTML =
-        ecrituresComptaAffichees
-            .map(
+        lignes.map(
                 construireLigneCompta
             )
             .join("");
@@ -1212,7 +1219,7 @@ function initialiserInteractionsHeaderCompta() {
  * Cette initialisation est donc ajoutée après les interactions
  * générales du header, exactement comme pour la page Ventes.
  */
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
     document.addEventListener(
         "DOMContentLoaded",
         initialiserInteractionsHeaderCompta

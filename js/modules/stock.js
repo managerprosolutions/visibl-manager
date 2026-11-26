@@ -63,7 +63,11 @@ function initialiserModuleStock() {
     chargerStock();
 }
 
-async function chargerStock() {
+function chargerStock(...args) {
+    return chargerEcranVisibl("Chargement des niveaux de stock…", () => chargerStockDonnees(...args));
+}
+
+async function chargerStockDonnees() {
     const tbody = document.getElementById("stock-table-body");
     if (!tbody) return;
 
@@ -114,19 +118,22 @@ function normaliserProduitStock(produit) {
     };
 }
 
+function normaliserRechercheStock(valeur) {
+    return String(valeur).normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+}
+
 function appliquerFiltresStock() {
-    const recherche = String(
+    const recherche = normaliserRechercheStock(
         document.getElementById("stock-search-input")?.value ||
         document.getElementById("header-stock-search-input")?.value || ""
-    ).trim().toLowerCase();
+    );
 
     const etat = String(
         document.getElementById("stock-status-filter")?.value || ""
     ).trim().toLowerCase();
 
     stockProduitsFiltres = stockProduits.filter(produit => {
-        const texte = [produit.reference, produit.produit, produit.idProduit]
-            .join(" ").toLowerCase();
+        const texte = normaliserRechercheStock([produit.reference, produit.produit, produit.idProduit].join(" "));
         return (!recherche || texte.includes(recherche)) &&
                (!etat || produit.etat === etat);
     });
@@ -207,7 +214,7 @@ function afficherPaginationStock() {
 }
 
 
-function exporterStockExcel() {
+async function exporterStockExcel() {
     const lignes = stockProduitsFiltres.length ? stockProduitsFiltres : stockProduits;
     if (!lignes.length) {
         afficherMessageStock("Aucune donnée de stock à exporter.");
@@ -227,6 +234,7 @@ function exporterStockExcel() {
         "Dernière mise à jour": p.derniereMiseAJour
     }));
 
+    await chargerBibliothequeExport("excel");
     if (window.XLSX?.utils) {
         const feuille = XLSX.utils.json_to_sheet(donnees);
         const classeur = XLSX.utils.book_new();

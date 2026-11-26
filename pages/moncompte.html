@@ -1,16 +1,55 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-visibl-session-locked>
 
 <head>
+    <script id="visibl-session-early">
+        (() => {
+            try {
+                const session = JSON.parse(localStorage.getItem("visibl_user"));
+                if (typeof session?.sessionToken === "string" && session.sessionToken.trim() &&
+                    typeof session.roleId === "string" && session.roleId.trim()) return;
+            } catch {}
+            location.replace("connexion.html");
+        })();
+    </script>
+    <script id="visibl-session-fallback">
+        (() => {
+            const recuperer = () => {
+                if (document.documentElement.hasAttribute("data-visibl-session-started")) return;
+                const status = document.getElementById("visibl-session-status");
+                if (!status || status.getAttribute("aria-busy") === "false") return;
+                document.getElementById("visibl-session-message").textContent = "Vérification indisponible. Réessayez.";
+                const retry = document.getElementById("visibl-session-retry");
+                retry.hidden = false;
+                retry.addEventListener("click", () => location.reload(), { once: true });
+                status.setAttribute("aria-busy", "false");
+            };
+            document.addEventListener("DOMContentLoaded", recuperer, { once: true });
+            window.setTimeout(recuperer, 12000);
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Mon compte | VISIBL</title>
 
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/visibl-ui.css">
+
+    <link rel="stylesheet" href="../css/visibl-loading.css">
+    <link rel="stylesheet" href="../css/visibl-session.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/visibl-loading.js" defer></script>
+    <script src="../js/visibl-session-page.js" defer></script>
 </head>
 
 <body>
+<section id="visibl-session-status" aria-label="Chargement" aria-busy="true">
+    <p id="visibl-session-message" role="status"></p>
+    <button type="button" id="visibl-session-retry" hidden>Réessayer</button>
+</section>
+<template id="visibl-private-content">
 
     <div class="container">
 
@@ -215,7 +254,7 @@
                             title="Notifications"
                         >
                             🔔
-                            <span class="notification-badge">3</span>
+                            <span class="notification-badge" hidden>0</span>
                         </button>
 
                         <!-- Menu du compte -->
@@ -317,8 +356,8 @@
          SCRIPTS
     ======================================== -->
 
-    <script src="../js/api.js"></script>
-    <script src="../js/auth.js"></script>
+
+
     <script src="../js/app.js"></script>
 
     <script>
@@ -368,21 +407,10 @@
                     "Non renseigné";
             }
 
-            const logoutButton =
-                document.getElementById("logout-button");
 
-            if (logoutButton) {
-                logoutButton.addEventListener(
-                    "click",
-                    function (event) {
-                        event.preventDefault();
-                        logoutUser();
-                    }
-                );
-            }
         }
 
-        if (document.readyState === "loading") {
+        if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
             document.addEventListener(
                 "DOMContentLoaded",
                 initialiserPageMonCompte
@@ -392,6 +420,8 @@
         }
     </script>
 
+<script src="../js/visibl-ui.js" defer></script>
+</template>
 </body>
 
 </html>

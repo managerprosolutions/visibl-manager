@@ -359,38 +359,6 @@ function terminerLoaderClients() {
 // INITIALISATION
 // ========================================
 
-function initialiserDeconnexion() {
-    const logoutButton = document.getElementById("logout-button");
-    if (!logoutButton) return;
-
-    logoutButton.addEventListener("click", function (event) {
-        event.preventDefault();
-
-        try {
-            if (typeof logoutUser === "function") {
-                logoutUser();
-            }
-        } catch (error) {
-            console.warn("Erreur pendant la déconnexion :", error);
-        }
-
-        try {
-            sessionStorage.clear();
-            [
-                "visibl_user",
-                "user",
-                "utilisateur",
-                "currentUser",
-                "authUser",
-                "isAuthenticated",
-                "token",
-                "authToken"
-            ].forEach(cle => localStorage.removeItem(cle));
-        } catch (error) {}
-
-        window.location.replace("connexion.html");
-    });
-}
 
 
 function initialiserClients() {
@@ -402,7 +370,7 @@ function initialiserClients() {
         return;
     }
 
-    initialiserDeconnexion();
+
 
     // ========================================
     // FENÊTRE NOUVEAU CLIENT
@@ -691,7 +659,7 @@ clientsTableBody?.addEventListener(
             }
 
 clientEnModificationId = client.idClient;
-            
+
             remplirFormulaireClient(client);
 openModal();
 
@@ -792,7 +760,7 @@ if (deleteButton) {
 // DÉMARRAGE DE LA PAGE
 // ========================================
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
 
     document.addEventListener(
         "DOMContentLoaded",
@@ -2663,6 +2631,7 @@ async function exporterClientsCSV() {
 
 
 async function exporterClientsExcel() {
+    await chargerBibliothequeExport("excel");
     if (typeof XLSX === "undefined") {
         throw new Error(
             "La bibliothèque Excel n’est pas chargée."
@@ -2720,7 +2689,7 @@ async function exporterClientsExcel() {
 
 
 async function exporterClientsPDF() {
-    if (!window.jspdf?.jsPDF) {
+    if (!await chargerBibliothequeExport("pdf")) {
         throw new Error(
             "La bibliothèque PDF n’est pas chargée."
         );
@@ -3930,7 +3899,7 @@ function appliquerVisibiliteColonnes() {
 // Recherche et filtres sont maintenant exécutés côté serveur.
 
 // L'initialisation principale a déjà été enregistrée : ajouter nos fonctions après le chargement du DOM.
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialiserFonctionsAvanceesClients);
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) document.addEventListener("DOMContentLoaded", initialiserFonctionsAvanceesClients);
 else initialiserFonctionsAvanceesClients();
 
 
@@ -4204,7 +4173,7 @@ document.addEventListener("click", event => {
 
 /* Header global : géré exclusivement par header.js. */
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
     document.addEventListener("DOMContentLoaded", () => {
         initialiserToolbarClientsReference();
         definirModeSelectionClients(false);

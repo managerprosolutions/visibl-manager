@@ -28,6 +28,7 @@ const pagesCommandesServeur = new Map();
 let totalCommandesServeur = 0;
 let totalPagesCommandesServeur = 1;
 let prechargementCommandesPromise = null;
+let chargementCompletCommandes = null;
 let generationChargementCommandes = 0;
 
 
@@ -158,7 +159,9 @@ const commandesSelectionnees = new Set();
 
 /* ===========================================================
    LOADER GLOBAL VISIBL — COMMANDES
-   Utilise le composant global visibl-loading.js / .css
+   Utilise visibl-loading.css + visibl-loading.js.
+   Aucun changement de mise en page : le loader remplace
+   temporairement les valeurs KPI et les lignes du tableau.
 =========================================================== */
 
 function preparerLoaderCommandes() {
@@ -167,6 +170,13 @@ function preparerLoaderCommandes() {
     if (zonePage) {
         zonePage.setAttribute("data-visibl-page", "");
         zonePage.classList.add("visibl-loading-scope");
+
+        const ancre =
+            zonePage.querySelector(".welcome-section");
+
+        if (ancre) {
+            ancre.setAttribute("data-loading-anchor", "");
+        }
     }
 
     [
@@ -185,39 +195,18 @@ function preparerLoaderCommandes() {
         ?.setAttribute("data-loading-table-body", "");
 }
 
-function demarrerLoaderCommandes(
-    message = "Chargement des commandes…"
-) {
-    preparerLoaderCommandes();
 
-    if (
-        window.VisiblLoading &&
-        typeof window.VisiblLoading.start === "function"
-    ) {
-        window.VisiblLoading.start({
-            scope: ".content",
-            tableBody: "#orders-table-body",
-            rows: taillePageCommandes,
-            title: "Chargement des commandes…",
-            message: message,
-            icon: "📦",
-            tip: "Vos commandes sont en cours de préparation."
-        });
-    }
+const chargementsEcranCommandes = [];
+function demarrerLoaderCommandes(message = "Chargement des commandes…") {
+    preparerLoaderCommandes();
+    chargementsEcranCommandes.push(window.VisiblLoading?.open({
+        scope: ".content", tableBody: null, message
+    }));
 }
 
 function terminerLoaderCommandes() {
-    if (
-        window.VisiblLoading &&
-        typeof window.VisiblLoading.stop === "function"
-    ) {
-        window.VisiblLoading.stop({
-            scope: ".content",
-            tableBody: "#orders-table-body"
-        });
-    }
+    chargementsEcranCommandes.pop()?.();
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
     if (
@@ -244,7 +233,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initialiserSelectionCommandes();
     initialiserMenuActionsCommandes();
     initialiserVenteLieeCommande();
-    initialiserModalLivreurRequisCommande();
 });
 
 
@@ -1428,12 +1416,18 @@ function initialiserEnregistrementCommande() {
 
 
 function initialiserListeCommandes() {
+    document.querySelector(".visibl-header .search-btn")
+        ?.addEventListener("click", () => appliquerFiltresCommandes());
     document
         .getElementById("orders-header-search-input")
         ?.addEventListener(
             "input",
             appliquerFiltresCommandes
         );
+
+    document.getElementById("order-commune-filter")?.addEventListener("focus", () => {
+        void completerPagesCommandes();
+    });
 
     [
         "order-status-filter",
@@ -1459,16 +1453,7 @@ function initialiserListeCommandes() {
         .getElementById("refresh-orders-btn")
         ?.addEventListener(
             "click",
-            async () => {
-                fermerMenuActionsCommandes();
-
-                // Actualisation manuelle = vrai rechargement serveur.
-                try {
-                    sessionStorage.removeItem(COMMANDES_NAV_CACHE_KEY);
-                } catch (error) {}
-
-                await chargerCommandes({ forcer: true });
-            }
+            chargerCommandes
         );
 
     document
@@ -2345,11 +2330,7 @@ async function rafraichirCommandesApresSynchronisation(
         if (
             nouveauNombrePages > 1
         ) {
-            prechargementCommandesPromise =
-                prechargerPagesCommandesEnCascade(
-                    2,
-                    generationChargementCommandes
-                );
+            planifierPrechargementCommandesEnArrierePlan(2, generationChargementCommandes);
         }
     }
 
@@ -2432,14 +2413,13 @@ async function revaliderCommandesDepuisServeurApresCache() {
 }
 
 
-async function chargerCommandes(options = {}) {
+async function chargerCommandes() {
     const tbody = document.getElementById("orders-table-body");
-    const forcer = options?.forcer === true;
 
     // Si les Commandes ont déjà été chargées dans cet onglet, on les réaffiche
     // immédiatement. Aucun gros rechargement n’est lancé tant que la vérification
     // légère ne détecte pas une modification côté serveur.
-    if (!forcer && restaurerCacheNavigationCommandes()) {
+    if (restaurerCacheNavigationCommandes()) {
         // Le cache s'affiche tout de suite, mais la source de vérité
         // est relue immédiatement depuis le serveur.
         revaliderCommandesDepuisServeurApresCache();
@@ -2519,6 +2499,9 @@ async function chargerCommandes(options = {}) {
         commandesChargees = [];
         commandesFiltrees = [];
         afficherTableauCommandes();
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="13" class="empty-table">Impossible de charger les commandes. Réessayez avec Actualiser.</td></tr>';
+        }
         if (typeof showToast === "function") {
             showToast(error.message || "Impossible de charger les commandes.", "error");
         }
@@ -2572,6 +2555,8 @@ function appliquerPageCommandesServeur(resultat) {
 
     if (resultat?.kpi) {
         afficherKPICommandesServeur(resultat.kpi);
+    } else if (totalCommandesServeur === 0 && pagesCommandesServeur.has(1)) {
+        afficherKPICommandesServeur({ total: 0 });
     } else {
         const totalKpi = document.getElementById("total-orders-value");
         if (totalKpi) {
@@ -2655,7 +2640,7 @@ function afficherKPICommandesServeur(kpi) {
 
 function planifierPrechargementCommandesEnArrierePlan(debutPage, generation) {
     const lancer = () => {
-        if (generation !== generationChargementCommandes) return;
+        if (generation !== generationChargementCommandes || chargementCompletCommandes?.generation === generation) return;
         if (document.hidden) {
             // Si l'utilisateur a déjà quitté l'onglet, inutile de solliciter le
             // backend immédiatement. On réessaie plus tard sans bloquer la navigation.
@@ -2664,7 +2649,7 @@ function planifierPrechargementCommandesEnArrierePlan(debutPage, generation) {
         }
 
         prechargementCommandesPromise =
-            prechargerPagesCommandesEnCascade(debutPage, generation);
+            prechargerPagesCommandesEnCascade(debutPage, generation, debutPage + 1);
     };
 
     if (typeof window.requestIdleCallback === "function") {
@@ -2675,9 +2660,10 @@ function planifierPrechargementCommandesEnArrierePlan(debutPage, generation) {
 }
 
 
-async function prechargerPagesCommandesEnCascade(debutPage, generation) {
-    for (let page = debutPage; page <= totalPagesCommandesServeur; page++) {
+async function prechargerPagesCommandesEnCascade(debutPage, generation, dernierePage = Infinity) {
+    for (let page = debutPage; page <= Math.min(totalPagesCommandesServeur, dernierePage); page++) {
         if (generation !== generationChargementCommandes) return;
+        if (pagesCommandesServeur.has(page)) continue;
         try {
             const resultat = await chargerPageCommandesServeur(page);
             if (generation !== generationChargementCommandes) return;
@@ -2695,6 +2681,22 @@ async function prechargerPagesCommandesEnCascade(debutPage, generation) {
         reconstruireCommandesDepuisPagesServeur();
         actualiserFiltreCommunesCommandes();
     }
+}
+
+function completerPagesCommandes() {
+    const generation = generationChargementCommandes;
+    if (toutesPagesCommandesChargees()) return Promise.resolve(true);
+    if (chargementCompletCommandes?.generation === generation) return chargementCompletCommandes.promise;
+
+    const promise = Promise.resolve(prechargementCommandesPromise).then(async () => {
+        if (generation !== generationChargementCommandes) return false;
+        await prechargerPagesCommandesEnCascade(1, generation);
+        return generation === generationChargementCommandes && toutesPagesCommandesChargees();
+    }).finally(() => {
+        if (chargementCompletCommandes?.promise === promise) chargementCompletCommandes = null;
+    });
+    chargementCompletCommandes = { generation, promise };
+    return promise;
 }
 
 function toutesPagesCommandesChargees() {
@@ -2792,37 +2794,11 @@ function mettreAJourCommandeLocale(commande) {
         liste.unshift(commande);
         p1.commandes = liste.slice(0, taillePageCommandes);
     }
-    /*
-     * Après une création, commandesChargees peut ne contenir que les pages
-     * déjà chargées. On ne peut donc pas déduire le nouveau total global de
-     * sa longueur. Si l'ID n'existait pas avant la mutation locale, le total
-     * serveur connu augmente exactement d'une commande.
-     */
-    if (index < 0) {
-        totalCommandesServeur = Math.max(0, Number(totalCommandesServeur) || 0) + 1;
-    }
-
-    totalPagesCommandesServeur = Math.max(
-        1,
-        Math.ceil(totalCommandesServeur / taillePageCommandes)
-    );
+    totalCommandesServeur = Math.max(totalCommandesServeur, commandesChargees.length);
+    totalPagesCommandesServeur = Math.max(1, Math.ceil(totalCommandesServeur / taillePageCommandes));
 
     actualiserFiltreCommunesCommandes();
-
-    if (toutesPagesCommandesChargees()) {
-        mettreAJourKPICommandes();
-    } else {
-        /*
-         * Les autres KPI nécessitent toutes les pages. Le total, lui, est
-         * certain après une création réussie et peut être affiché tout de suite.
-         */
-        const totalKpi = document.getElementById("total-orders-value");
-        if (totalKpi) {
-            totalKpi.textContent = String(totalCommandesServeur);
-            totalKpi.classList.remove("is-loading");
-        }
-    }
-
+    if (toutesPagesCommandesChargees()) mettreAJourKPICommandes();
     appliquerFiltresCommandes(true);
     sauvegarderCacheNavigationCommandes();
 }
@@ -2945,7 +2921,7 @@ function normaliserStatutPaiementCommandeFiltre(valeur) {
 
 
 function appliquerFiltresCommandes(
-    conserverPage = false
+    conserverPage = false, chargerPages = true
 ) {
     const rechercheDemandee =
         normaliserTexteCommande(
@@ -2983,35 +2959,11 @@ function appliquerFiltresCommandes(
             communeDemandee
         );
 
-    /*
-     * FIX RÉACTIVITÉ FILTRES
-     * Avant, un changement de statut pouvait attendre silencieusement
-     * la fin du préchargement de toutes les pages.
-     *
-     * Désormais on filtre immédiatement les commandes déjà en mémoire,
-     * puis le résultat se complète automatiquement quand le
-     * préchargement en arrière-plan se termine.
-     */
-    if (
-        filtresDemandes &&
-        !toutesPagesCommandesChargees() &&
-        prechargementCommandesPromise
-    ) {
-        const promesseEnCours =
-            prechargementCommandesPromise;
-
-        promesseEnCours.then(() => {
-            if (
-                prechargementCommandesPromise ===
-                promesseEnCours
-            ) {
-                appliquerFiltresCommandes(
-                    conserverPage
-                );
-            }
+    if (filtresDemandes && chargerPages && !toutesPagesCommandesChargees()) {
+        void completerPagesCommandes().then(termine => {
+            if (termine) appliquerFiltresCommandes(true, false);
         });
     }
-
     const recherche =
         rechercheDemandee;
 
@@ -3085,9 +3037,7 @@ function appliquerFiltresCommandes(
             }
         );
 
-    if (!conserverPage) {
-        pageCommandesActuelle = 1;
-    }
+    if (conserverPage !== true) pageCommandesActuelle = 1;
 
     afficherTableauCommandes();
 }
@@ -3208,7 +3158,9 @@ function afficherTableauCommandes() {
 
         tbody.innerHTML = page.length
             ? page.map(creerLigneCommandeHTML).join("")
-            : `<tr><td colspan="13" class="empty-table">Chargement de cette page...</td></tr>`;
+            : `<tr><td colspan="13" class="empty-table">${paquet
+                ? "Aucune commande enregistrée."
+                : "Chargement de cette page…"}</td></tr>`;
 
         const compteur = document.getElementById("filtered-order-count");
         if (compteur) compteur.textContent = String(totalCommandesServeur);
@@ -6010,100 +5962,6 @@ function attendreConversionCommandeLocaleEtNotifier(
 }
 
 
-function initialiserModalLivreurRequisCommande() {
-    const modal =
-        document.getElementById(
-            "order-driver-required-modal"
-        );
-
-    const bouton =
-        document.getElementById(
-            "order-driver-required-understood-btn"
-        );
-
-    if (!modal || !bouton) {
-        return;
-    }
-
-    if (modal.dataset.initialized === "true") {
-        return;
-    }
-
-    modal.dataset.initialized = "true";
-
-    bouton.addEventListener(
-        "click",
-        fermerModalLivreurRequisCommande
-    );
-
-    modal.addEventListener(
-        "click",
-        event => {
-            if (event.target === modal) {
-                fermerModalLivreurRequisCommande();
-            }
-        }
-    );
-
-    document.addEventListener(
-        "keydown",
-        event => {
-            if (
-                event.key === "Escape" &&
-                modal.classList.contains("active")
-            ) {
-                fermerModalLivreurRequisCommande();
-            }
-        }
-    );
-}
-
-
-function ouvrirModalLivreurRequisCommande() {
-    const modal =
-        document.getElementById(
-            "order-driver-required-modal"
-        );
-
-    if (!modal) {
-        return;
-    }
-
-    initialiserModalLivreurRequisCommande();
-
-    modal.classList.add("active");
-    modal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("modal-open");
-
-    window.setTimeout(
-        () => {
-            document
-                .getElementById(
-                    "order-driver-required-understood-btn"
-                )
-                ?.focus();
-        },
-        50
-    );
-}
-
-
-function fermerModalLivreurRequisCommande() {
-    const modal =
-        document.getElementById(
-            "order-driver-required-modal"
-        );
-
-    if (!modal) {
-        return;
-    }
-
-    modal.classList.remove("active");
-    modal.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("modal-open");
-}
-
-
 async function changerStatutCommandeFrontend(
     idCommande,
     action
@@ -6116,24 +5974,6 @@ async function changerStatutCommandeFrontend(
         );
 
     if (!commande) {
-        return;
-    }
-
-    /*
-     * Confirmation d'une commande en livraison :
-     * avertir immédiatement si aucun livreur n'est affecté,
-     * avant de lancer le loader et l'appel backend.
-     */
-    if (
-        action === "confirmer" &&
-        normaliserTexteCommande(
-            commande.modeReception || ""
-        ) === "livraison" &&
-        !String(
-            commande.idLivreur || ""
-        ).trim()
-    ) {
-        ouvrirModalLivreurRequisCommande();
         return;
     }
 
@@ -7719,7 +7559,12 @@ window.addEventListener("resize", fermerMenusActionsLigneCommande);
 window.addEventListener("scroll", fermerMenusActionsLigneCommande, true);
 
 
-function exporterCommandesFiltreesCSV() {
+async function exporterCommandesFiltreesCSV() {
+    if (!await completerPagesCommandes()) {
+        if (typeof showToast === "function") showToast("Impossible de charger toutes les commandes.", "error");
+        return;
+    }
+    appliquerFiltresCommandes(true, false);
     if (!Array.isArray(commandesFiltrees) || !commandesFiltrees.length) {
         if (typeof showToast === "function") showToast("Aucune commande à exporter.", "info");
         return;
@@ -9943,19 +9788,6 @@ function modeFinanceCommandeActif(mode) {
     return false;
 }
 
-function appliquerModesPaiementFinanceCommande() {
-    ["order-payment-method", "order-payment-method-real"].forEach((id) => {
-        const select = document.getElementById(id);
-        if (!select) return;
-        Array.from(select.options).forEach((option) => {
-            if (!option.value) return;
-            const actif = modeFinanceCommandeActif(option.value);
-            option.hidden = !actif;
-            option.disabled = !actif;
-            if (!actif && select.value === option.value) select.value = "";
-        });
-    });
-}
 
 function validerReglesFinanceCommandeFront(data) {
     const p = parametresFinanceCommande || {};
@@ -9989,4 +9821,4 @@ function validerReglesFinanceCommandeFront(data) {
 
 
 /* ===== FINANCE DYNAMIQUE — COMMANDES ===== */
-function appliquerModesPaiementFinanceCommande(){const modes=Array.isArray(parametresFinanceCommande?.modesPaiement)?parametresFinanceCommande.modesPaiement.filter(m=>m&&m.actif!==false):[];["order-payment-method","order-payment-method-real"].forEach(id=>{const select=document.getElementById(id);if(!select)return;const courant=select.value;let liste=modes.map(m=>({value:m.id,label:m.libelle||m.id}));if(parametresFinanceCommande?.autoriserVentesCredit===true)liste.push({value:"credit",label:"Crédit"});select.innerHTML='<option value="">Sélectionner</option>'+liste.map(x=>`<option value="${String(x.value).replace(/"/g,"&quot;")}">${String(x.label)}</option>`).join("");if(Array.from(select.options).some(o=>o.value===courant))select.value=courant;});}
+function appliquerModesPaiementFinanceCommande(){const modes=Array.isArray(parametresFinanceCommande?.modesPaiement)?parametresFinanceCommande.modesPaiement.filter(m=>m&&m.actif!==false):[];["order-payment-method","order-payment-method-real"].forEach(id=>{const select=document.getElementById(id);if(!select)return;const courant=select.value;let liste=modes.map(m=>({value:m.id,label:m.libelle||m.id}));if(parametresFinanceCommande?.autoriserVentesCredit===true)liste.push({value:"credit",label:"Crédit"});select.innerHTML='<option value="">Sélectionner</option>'+liste.map(x=>`<option value="${String(x.value).replace(/"/g,"&quot;")}">${echapperHTMLCommande(x.label)}</option>`).join("");if(Array.from(select.options).some(o=>o.value===courant))select.value=courant;});}

@@ -435,7 +435,7 @@
 
     window.visiblNotificationsRefresh = chargerNotificationsVisibl;
 
-    if (document.readyState === "loading") {
+    if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
         document.addEventListener("DOMContentLoaded", initialiserNotificationsVisibl);
     } else {
         initialiserNotificationsVisibl();

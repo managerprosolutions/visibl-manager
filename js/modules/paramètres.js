@@ -10,6 +10,7 @@ let logoEntrepriseASupprimer = false;
 document.addEventListener("DOMContentLoaded", initialiserParametres);
 
 function initialiserParametres() {
+    if (typeof requireAuth === "function" && !requireAuth()) return;
     initialiserNavigationParametres();
     initialiserParametresEntreprise();
     initialiserParametresUtilisateurs();
@@ -66,7 +67,11 @@ function initialiserParametresEntreprise() {
     chargerParametresEntreprise();
 }
 
-async function chargerParametresEntreprise() {
+function chargerParametresEntreprise(...args) {
+    return chargerEcranVisibl("Chargement des paramètres de l’entreprise…", () => chargerParametresEntrepriseDonnees(...args));
+}
+
+async function chargerParametresEntrepriseDonnees() {
     definirChargementEntreprise(true);
     afficherMessageEntreprise("Chargement des informations de l'entreprise...", "info");
 
@@ -432,7 +437,11 @@ function initialiserParametresUtilisateurs() {
 }
 
 
-async function chargerRolesParametres() {
+function chargerRolesParametres(...args) {
+    return chargerEcranVisibl("Chargement des rôles…", () => chargerRolesParametresDonnees(...args));
+}
+
+async function chargerRolesParametresDonnees() {
     const select = document.getElementById("user-role");
     if (select) {
         select.disabled = true;
@@ -477,7 +486,11 @@ function nomRoleParametres(idRole) {
     return role?.nomRole || id || "—";
 }
 
-async function chargerUtilisateursParametres() {
+function chargerUtilisateursParametres(...args) {
+    return chargerEcranVisibl("Chargement des utilisateurs…", () => chargerUtilisateursParametresDonnees(...args));
+}
+
+async function chargerUtilisateursParametresDonnees() {
     afficherMessageUtilisateurs("Chargement des utilisateurs...", "info");
     try {
         const resultat = await apiGet("getParametresUtilisateurs");
@@ -884,7 +897,11 @@ function initialiserParametresRolesAutorisations() {
     chargerRolesParametresGestion();
 }
 
-async function chargerRolesParametresGestion() {
+function chargerRolesParametresGestion(...args) {
+    return chargerEcranVisibl("Chargement des autorisations…", () => chargerRolesParametresGestionDonnees(...args));
+}
+
+async function chargerRolesParametresGestionDonnees() {
     afficherMessageRoles("Chargement des rôles...", "info");
 
     try {
@@ -1347,7 +1364,11 @@ function initialiserParametresVentes() {
     chargerParametresVentes();
 }
 
-async function chargerParametresVentes() {
+function chargerParametresVentes(...args) {
+    return chargerEcranVisibl("Chargement des paramètres des ventes…", () => chargerParametresVentesDonnees(...args));
+}
+
+async function chargerParametresVentesDonnees() {
     definirChargementVentes(true);
     afficherMessageVentes("Chargement des paramètres des ventes...", "info");
     try {
@@ -1481,7 +1502,11 @@ function initialiserParametresStock() {
     chargerParametresStock();
 }
 
-async function chargerParametresStock() {
+function chargerParametresStock(...args) {
+    return chargerEcranVisibl("Chargement des paramètres de stock…", () => chargerParametresStockDonnees(...args));
+}
+
+async function chargerParametresStockDonnees() {
     definirChargementStock(true);
     afficherMessageStock("Chargement des paramètres du stock...", "info");
     try {
@@ -1575,7 +1600,11 @@ function initialiserParametresFinance() {
     chargerParametresFinance();
 }
 
-async function chargerParametresFinance() {
+function chargerParametresFinance(...args) {
+    return chargerEcranVisibl("Chargement des paramètres financiers…", () => chargerParametresFinanceDonnees(...args));
+}
+
+async function chargerParametresFinanceDonnees() {
     definirChargementFinance(true); afficherMessageFinance("Chargement des paramètres financiers...", "info");
     try { const resultat=await apiGet("getParametresFinance"); if(!resultat?.success)throw new Error(resultat?.message||"Impossible de charger les paramètres financiers."); parametresFinanceCharges=normaliserParametresFinance(resultat.data||resultat.parametres||{}); appliquerParametresFinance(parametresFinanceCharges); masquerMessageFinance(); }
     catch(error){console.error("Paramètres finance — chargement :",error);afficherMessageFinance(error.message||"Impossible de charger les paramètres financiers.","error");}
@@ -1648,7 +1677,11 @@ function initialiserParametresNotifications() {
     chargerParametresNotifications();
 }
 
-async function chargerParametresNotifications() {
+function chargerParametresNotifications(...args) {
+    return chargerEcranVisibl("Chargement des préférences de notification…", () => chargerParametresNotificationsDonnees(...args));
+}
+
+async function chargerParametresNotificationsDonnees() {
     definirChargementNotifications(true);
     afficherMessageNotifications("Chargement des paramètres de notifications...", "info");
 

@@ -45,7 +45,7 @@ function initialiserTransitaires() {
         requireAuth();
     }
 
-    initialiserDeconnexionTransitaires();
+
     initialiserModalesTransitaires();
     initialiserFormulaireTransitaire();
     initialiserActionsTableauTransitaires();
@@ -60,7 +60,7 @@ function initialiserTransitaires() {
 }
 
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
     document.addEventListener(
         "DOMContentLoaded",
         initialiserTransitaires
@@ -74,28 +74,6 @@ if (document.readyState === "loading") {
    DÉCONNEXION
 =========================================================== */
 
-function initialiserDeconnexionTransitaires() {
-    const bouton =
-        document.getElementById(
-            "logout-button"
-        );
-
-    bouton?.addEventListener(
-        "click",
-        function (event) {
-            event.preventDefault();
-
-            if (typeof logoutUser === "function") {
-                logoutUser();
-                return;
-            }
-
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = "connexion.html";
-        }
-    );
-}
 
 
 /* ===========================================================
@@ -785,7 +763,11 @@ async function confirmerSuppressionTransitaire() {
    CHARGEMENT
 =========================================================== */
 
-async function chargerTransitaires() {
+function chargerTransitaires(...args) {
+    return chargerEcranVisibl("Chargement des transitaires…", () => chargerTransitairesDonnees(...args));
+}
+
+async function chargerTransitairesDonnees() {
     afficherEtatChargementTransitaires();
 
     try {
@@ -3627,16 +3609,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 
   /* Déconnexion robuste et redirection directe. */
-  q("#logout-button")?.addEventListener("click",e=>{
-    e.preventDefault();e.stopImmediatePropagation();
-    try{ if(typeof logoutUser==="function") logoutUser(); }catch(_){}
-    try{
-      sessionStorage.clear();
-      ["visibl_user","user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"]
-        .forEach(k=>localStorage.removeItem(k));
-    }catch(_){}
-    location.replace("connexion.html");
-  },true);
 
   /* Supprime les notifications de démonstration, conserve une cloche vide. */
   if(notif){

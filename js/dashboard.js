@@ -49,7 +49,7 @@ function viderDashboardSession_() {
 }
 
 async function initialiserDashboard() {
-    if (typeof requireAuth === "function") requireAuth();
+    if (!requireAuth()) return;
 
     const utilisateurConnecte =
         typeof getCurrentUser === "function" ? getCurrentUser() : null;
@@ -57,7 +57,8 @@ async function initialiserDashboard() {
     if (typeof getCurrentUser === "function" && !utilisateurConnecte) return;
 
     afficherInformationsUtilisateur(utilisateurConnecte);
-    initialiserDeconnexion();
+
+    document.getElementById("retry-dashboard-btn")?.addEventListener("click", chargerDashboard);
 
     document.getElementById("periode-revenus")?.addEventListener(
         "change",
@@ -93,7 +94,7 @@ async function initialiserDashboard() {
     });
 }
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
     document.addEventListener("DOMContentLoaded", initialiserDashboard);
 } else {
     initialiserDashboard();
@@ -239,6 +240,7 @@ function afficherDashboardCharge() {
 }
 
 async function chargerDashboard() {
+    const status = document.getElementById("dashboard-load-status");
     try {
         const resultat = await apiGet("getDashboard", { _dashboard: Date.now() });
 
@@ -255,7 +257,9 @@ async function chargerDashboard() {
 
         enregistrerDashboardSession_();
         afficherDashboardCharge();
+        if (status) status.hidden = true;
     } catch (error) {
+        if (status) status.hidden = false;
         console.error("Erreur chargement Dashboard :", error);
     }
 }
@@ -427,6 +431,10 @@ function afficherGraphiqueRevenus() {
                                 "Revenus nets",
                             data:
                                 valeurs,
+                            borderColor: "#2459c9",
+                            backgroundColor: "rgba(36, 89, 201, .12)",
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
                             borderWidth:
                                 3,
                             tension:
@@ -628,12 +636,7 @@ function afficherGraphiqueVentes() {
 function afficherNotificationsDashboard() {
     const panneau =
         document.getElementById(
-            "notification-panel"
-        );
-
-    const badge =
-        document.querySelector(
-            ".notification-badge"
+            "dashboard-alerts"
         );
 
     if (!panneau) {
@@ -649,7 +652,7 @@ function afficherNotificationsDashboard() {
 
     panneau.innerHTML = `
         <div class="notification-panel-header">
-            <h3>Notifications</h3>
+            <h3>Alertes du tableau de bord</h3>
         </div>
         ${
             notifications.length
@@ -658,7 +661,7 @@ function afficherNotificationsDashboard() {
                         function(n) {
                             return `
                                 <div class="notification-item">
-                                    <span class="notification-item-icon">${n.icone || "ℹ️"}</span>
+                                    <span class="notification-item-icon">${echapperHTMLDashboard(n.icone || "ℹ️")}</span>
                                     <div>
                                         <strong>${echapperHTMLDashboard(n.titre || "")}</strong>
                                         <p>${echapperHTMLDashboard(n.texte || "")}</p>
@@ -682,15 +685,6 @@ function afficherNotificationsDashboard() {
         }
     `;
 
-    if (badge) {
-        badge.textContent =
-            String(
-                notifications.length
-            );
-
-        badge.hidden =
-            notifications.length === 0;
-    }
 }
 
 
@@ -791,32 +785,6 @@ function afficherInformationsUtilisateur(
 }
 
 
-function initialiserDeconnexion() {
-    const logoutButton =
-        document.getElementById(
-            "logout-button"
-        );
-
-    if (!logoutButton) {
-        return;
-    }
-
-    logoutButton.addEventListener(
-        "click",
-        function(event) {
-            event.preventDefault();
-
-            viderDashboardSession_();
-
-            if (
-                typeof logoutUser ===
-                "function"
-            ) {
-                logoutUser();
-            }
-        }
-    );
-}
 
 
 /* ===========================================================
@@ -970,3 +938,9 @@ function echapperHTMLDashboard(valeur) {
             "&#039;"
         );
 }
+
+window.addEventListener("visibl:optional-script-ready", () => {
+    if (!requireAuth() || !dashboardCharge) return;
+    afficherGraphiqueRevenus();
+    afficherGraphiqueVentes();
+});

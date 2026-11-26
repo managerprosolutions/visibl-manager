@@ -429,7 +429,7 @@
     typeof document !== "undefined"
   ) {
     if (
-      document.readyState === "loading"
+      (document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))
     ) {
       document.addEventListener(
         "DOMContentLoaded",

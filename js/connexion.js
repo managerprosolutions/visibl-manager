@@ -1,9 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    if (redirectAuthenticatedUser()) {
-        return;
-    }
-    
     const loginForm = document.getElementById("login-form");
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
@@ -14,6 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const alertText = document.getElementById("alert-text");
     const alertIcon = document.getElementById("alert-icon");
     const forgotPasswordLink = document.getElementById("forgot-password-link");
+    let connexionDemandee = false;
 
     passwordToggle.addEventListener("click", function () {
         const passwordIsHidden = passwordInput.type === "password";
@@ -51,6 +48,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     loginForm.addEventListener("submit", async function (event) {
         event.preventDefault();
+        if (loginButton.disabled) return;
+        connexionDemandee = true;
 
         const email = emailInput.value.trim();
         const motDePasse = passwordInput.value.trim();
@@ -95,132 +94,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            /*
-             * Ne pas rediriger immédiatement vers dashboard.html.
-             * On charge d'abord les permissions du rôle afin d'envoyer
-             * l'utilisateur directement vers son premier module autorisé.
-             */
-            localStorage.setItem(
-                "visibl_user",
-                JSON.stringify(result.user)
-            );
-
-            let permissionsResult = null;
-
-            try {
-                permissionsResult = await apiPost(
-                    "getPermissions",
-                    {
-                        roleId: result.user.roleId
-                    }
-                );
-            } catch (permissionsError) {
-                console.error(
-                    "Erreur de chargement des permissions :",
-                    permissionsError
-                );
-            }
-
-            if (
-                !permissionsResult ||
-                permissionsResult.success !== true
-            ) {
-                localStorage.removeItem("visibl_user");
-
-                showAlert(
-                    permissionsResult?.message ||
-                    "Impossible de charger les autorisations de ce compte.",
-                    "error"
-                );
-
+            const user = profilSessionVisibl(result.user);
+            if (!user) {
+                showAlert("Le serveur n’a pas délivré de session valide.", "error");
                 return;
             }
-
-            const userAvecPermissions = {
-                ...result.user,
-                permissions: Array.isArray(
-                    permissionsResult.permissions
-                )
-                    ? permissionsResult.permissions
-                    : [],
-                permissionsLoaded: true,
-                permissionsLoadedAt:
-                    new Date().toISOString()
-            };
-
-            localStorage.setItem(
-                "visibl_user",
-                JSON.stringify(userAvecPermissions)
-            );
-
-            const ordreModules = [
-                ["dashboard", "dashboard.html"],
-                ["ventes", "ventes.html"],
-                ["commandes", "commandes.html"],
-                ["clients", "clients.html"],
-                ["livraisons", "livraisons.html"],
-                ["livreurs", "livreurs.html"],
-                ["produits", "produits.html"],
-                ["stock", "stock.html"],
-                ["mouvements_stock", "mouvements-stock.html"],
-                ["approvisionnements", "approvisionnements.html"],
-                ["fournisseurs", "fournisseurs.html"],
-                ["transitaires", "transitaires.html"],
-                ["caisse", "caisse.html"],
-                ["paiements", "paiements.html"],
-                ["factures", "factures.html"],
-                ["comptabilite", "comptabilité.html"],
-                ["rapports", "rapports.html"],
-                ["parametres", "paramètres.html"]
-            ];
-
-            const normaliser = (valeur) =>
-                String(valeur || "")
-                    .trim()
-                    .toLowerCase()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "")
-                    .replace(/[^a-z0-9]+/g, "_")
-                    .replace(/^_+|_+$/g, "");
-
-            const estAdministrateur =
-                String(userAvecPermissions.roleId || "")
-                    .trim()
-                    .toUpperCase() === "ROL0001";
-
-            const modulesVisibles = new Set(
-                userAvecPermissions.permissions
-                    .filter(
-                        (permission) =>
-                            normaliser(permission.action) ===
-                            "voir"
-                    )
-                    .map(
-                        (permission) =>
-                            normaliser(permission.module)
-                    )
-            );
-
-            const destination =
-                estAdministrateur
-                    ? "dashboard.html"
-                    : (
-                        ordreModules.find(
-                            ([module]) =>
-                                modulesVisibles.has(module)
-                        ) || []
-                    )[1];
-
+            const verified = await verifierSessionVisibl(user);
+            const destination = getFirstAuthorizedPageFromStoredUser(verified);
             if (!destination) {
-                localStorage.removeItem("visibl_user");
-
-                showAlert(
-                    "Ce compte ne dispose d'aucun module accessible. Contactez l'administrateur.",
-                    "error"
-                );
-
+                showAlert("Ce compte ne dispose d’aucun module accessible.", "error");
                 return;
             }
+            ouvrirSessionVisibl(verified);
 
             showAlert(
                 result.message || "Connexion réussie.",
@@ -245,6 +130,24 @@ document.addEventListener("DOMContentLoaded", function () {
             setLoadingState(false);
         }
     });
+
+    const raisonSession = new URLSearchParams(location.search).get("session");
+    if (raisonSession === "locale") {
+        showAlert("Vous êtes déconnecté sur ce navigateur. La révocation côté serveur ne peut pas être confirmée.", "info");
+        history.replaceState(null, "", "connexion.html");
+    } else if (raisonSession === "change") {
+        showAlert("La session a changé dans un autre onglet. Connectez-vous pour reprendre.", "info");
+        history.replaceState(null, "", "connexion.html");
+    } else {
+        const candidate = lireSessionVisibl();
+        if (candidate) {
+            verifierSessionVisibl(candidate).then(verified => {
+                if (connexionDemandee || !memeSessionVisibl(candidate, lireSessionVisibl())) return;
+                const destination = getFirstAuthorizedPageFromStoredUser(verified);
+                if (destination) location.replace(destination);
+            }).catch(() => {});
+        }
+    }
 
     forgotPasswordLink.addEventListener("click", function (event) {
         event.preventDefault();

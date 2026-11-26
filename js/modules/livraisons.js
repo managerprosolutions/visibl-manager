@@ -4,7 +4,14 @@ let catalogueClientsLivraisons=[],catalogueLivreursLivraisons=[];
 let parametresAlertesLivraison={delaiJours:1,heure:"09:00"};
 let parametresFinanceLivraisons={formatMontant:"nombre-devise",nombreDecimales:0,libelleDevise:"FCFA",modeEspeces:true,modeMobileMoney:true,modeVirement:true,modeCheque:true,modeCarteBancaire:true,autoriserPaiementsPartiels:true,autoriserVentesCredit:true};
 
-document.addEventListener("DOMContentLoaded",async()=>{initLivraisons();await chargerParametresFinanceLivraisons();chargerLivraisons();});
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof requireAuth === "function" && !requireAuth()) return;
+    initLivraisons();
+    void chargerEcranVisibl("Chargement des livraisons…", async () => {
+        await chargerParametresFinanceLivraisons();
+        await chargerLivraisons();
+    });
+});
 
 function initLivraisons(){
 initialiserMenuActionsLivraisons();
@@ -199,7 +206,11 @@ panel.appendChild(d);
 if(badge){const autres=panel.querySelectorAll(".notification-item:not(.delivery-alert-notification)").length,total=autres+alertes.length;badge.textContent=String(total);badge.hidden=!total;}
 }
 
-async function chargerLivraisons(){
+function chargerLivraisons(...args) {
+    return chargerEcranVisibl("Chargement des livraisons…", () => chargerLivraisonsDonnees(...args));
+}
+
+async function chargerLivraisonsDonnees(){
 definirEtatChargementKPILivraisons(true);
 try{
 const [r,rc,rl,rp]=await Promise.all([
@@ -302,7 +313,9 @@ afficherPagination(totalPages);
 function afficherPagination(totalPages){
 text("deliveries-pagination-summary",`Page ${pageLivraisonsActuelle} / ${totalPages}`);
 const prev=document.getElementById("previous-delivery-page-btn"),next=document.getElementById("next-delivery-page-btn");if(prev)prev.disabled=pageLivraisonsActuelle<=1;if(next)next.disabled=pageLivraisonsActuelle>=totalPages;
-const z=document.getElementById("deliveries-page-buttons");if(!z)return;z.innerHTML=Array.from({length:totalPages},(_,i)=>i+1).slice(0,10).map(p=>`<button class="pagination-btn ${p===pageLivraisonsActuelle?"active":""}" data-page="${p}">${p}</button>`).join("");z.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>{pageLivraisonsActuelle=Number(b.dataset.page);afficherTableau();}));
+const z=document.getElementById("deliveries-page-buttons");if(!z)return;
+const debut=Math.max(1,Math.min(pageLivraisonsActuelle-4,totalPages-9));
+z.innerHTML=Array.from({length:Math.min(10,totalPages)},(_,i)=>debut+i).map(p=>`<button class="pagination-btn ${p===pageLivraisonsActuelle?"active":""}" data-page="${p}">${p}</button>`).join("");z.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>{pageLivraisonsActuelle=Number(b.dataset.page);afficherTableau();}));
 }
 
 function fermerMenusActionsLivraisons(){
@@ -618,16 +631,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 
   /* Déconnexion robuste et redirection directe. */
-  q("#logout-button")?.addEventListener("click",e=>{
-    e.preventDefault();e.stopImmediatePropagation();
-    try{ if(typeof logoutUser==="function") logoutUser(); }catch(_){}
-    try{
-      sessionStorage.clear();
-      ["visibl_user","user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"]
-        .forEach(k=>localStorage.removeItem(k));
-    }catch(_){}
-    location.replace("connexion.html");
-  },true);
 
   /* Supprime les notifications de démonstration, conserve une cloche vide. */
   if(notif){
@@ -677,7 +680,6 @@ appliquerModesPaiementFinanceLivraisons();
 }
 function groupeModeFinanceLivraisons(v){const t=norm(v).replace(/_/g,"-").replace(/\s+/g,"-");if(["especes","espece","cash"].includes(t))return"especes";if(t.includes("mobile")||t.includes("wave")||t.includes("orange")||t.includes("mtn")||t.includes("moov"))return"mobile-money";if(t.includes("virement")||t.includes("transfer"))return"virement";if(t.includes("cheque"))return"cheque";if(t.includes("carte")||t.includes("card"))return"carte-bancaire";return t;}
 function modeFinanceLivraisonsActif(v){const g=groupeModeFinanceLivraisons(v),p=parametresFinanceLivraisons||{};if(!g)return true;if(g==="especes")return p.modeEspeces!==false;if(g==="mobile-money")return p.modeMobileMoney!==false;if(g==="virement")return p.modeVirement!==false;if(g==="cheque")return p.modeCheque!==false;if(g==="carte-bancaire")return p.modeCarteBancaire!==false;return false;}
-function appliquerModesPaiementFinanceLivraisons(){["delivery-payment-method","return-payment-method"].forEach(id=>{const s=document.getElementById(id);if(!s)return;Array.from(s.options).forEach(o=>{if(!o.value)return;const a=modeFinanceLivraisonsActif(o.value);o.hidden=!a;o.disabled=!a;if(!a&&s.value===o.value)s.value=""});});}
 
 
 /* ===== FINANCE DYNAMIQUE — LIVRAISONS ===== */

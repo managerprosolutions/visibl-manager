@@ -113,11 +113,17 @@ function initialiserCaisse() {
     initialiserRechercheFiltresCaisse();
     initialiserActionsCaisse();
 
-    chargerParametresFinanceCaisse().finally(chargerOperationsCaisse);
+    void chargerEcranVisibl("Chargement des opérations de caisse…", async () => {
+        try {
+            await chargerParametresFinanceCaisse();
+        } finally {
+            await chargerOperationsCaisse();
+        }
+    });
 }
 
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
     document.addEventListener(
         "DOMContentLoaded",
         initialiserCaisse
@@ -1535,7 +1541,11 @@ function estJustificatifCaisseEnErreur(valeur) {
    CHARGEMENT API
 =========================================================== */
 
-async function chargerOperationsCaisse() {
+function chargerOperationsCaisse(...args) {
+    return chargerEcranVisibl("Chargement des opérations de caisse…", () => chargerOperationsCaisseDonnees(...args));
+}
+
+async function chargerOperationsCaisseDonnees() {
     try {
         const resultat =
             await apiGet(
@@ -1602,71 +1612,6 @@ async function chargerOperationsCaisse() {
    KPI — DONNÉES BACKEND
 =========================================================== */
 
-function mettreAJourKpisCaisse() {
-    const resume =
-        ETAT_CAISSE.resumeMois ||
-        {};
-
-    const soldes =
-        ETAT_CAISSE.soldesParCompte ||
-        {};
-
-    definirTexteCaisse(
-        "cash-balance-value",
-        formaterMontantCaisseFront(
-            ETAT_CAISSE.soldeGlobal
-        )
-    );
-
-    definirTexteCaisse(
-        "cash-income-value",
-        formaterMontantCaisseFront(
-            resume.entrees || 0
-        )
-    );
-
-    definirTexteCaisse(
-        "cash-expense-value",
-        formaterMontantCaisseFront(
-            resume.sorties || 0
-        )
-    );
-
-    definirTexteCaisse(
-        "cash-operations-value",
-        String(
-            resume.operations || 0
-        )
-    );
-
-    definirTexteCaisse(
-        "cash-account-main-value",
-        formaterMontantCaisseFront(
-            soldes["Caisse principale"] || 0
-        )
-    );
-
-    definirTexteCaisse(
-        "cash-account-bank-value",
-        formaterMontantCaisseFront(
-            soldes["Banque"] || 0
-        )
-    );
-
-    definirTexteCaisse(
-        "cash-account-wave-value",
-        formaterMontantCaisseFront(
-            soldes["Wave Business"] || 0
-        )
-    );
-
-    definirTexteCaisse(
-        "cash-account-orange-value",
-        formaterMontantCaisseFront(
-            soldes["Orange Money Business"] || 0
-        )
-    );
-}
 
 
 /* ===========================================================
@@ -3692,16 +3637,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 
   /* Déconnexion robuste et redirection directe. */
-  q("#logout-button")?.addEventListener("click",e=>{
-    e.preventDefault();e.stopImmediatePropagation();
-    try{ if(typeof logoutUser==="function") logoutUser(); }catch(_){}
-    try{
-      sessionStorage.clear();
-      ["visibl_user","user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"]
-        .forEach(k=>localStorage.removeItem(k));
-    }catch(_){}
-    location.replace("connexion.html");
-  },true);
 
   /* Supprime les notifications de démonstration, conserve une cloche vide. */
   if(notif){
@@ -3795,7 +3730,6 @@ document.addEventListener("DOMContentLoaded",()=>{
 async function chargerParametresFinanceCaisse(){try{const r=await apiGet("getParametresFinance");if(r?.success)parametresFinanceCaisse={...parametresFinanceCaisse,...(r.data||r.parametres||{})};}catch(e){console.warn("Paramètres finance indisponibles dans Caisse :",e)}appliquerModesPaiementFinanceCaisse();}
 function groupeModeFinanceCaisse(mode){const t=String(mode??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/_/g,"-").replace(/\s+/g,"-");if(["especes","espece","cash"].includes(t))return"especes";if(t.includes("mobile")||t.includes("wave")||t.includes("orange")||t.includes("mtn")||t.includes("moov"))return"mobile-money";if(t.includes("virement")||t.includes("transfer"))return"virement";if(t.includes("cheque"))return"cheque";if(t.includes("carte")||t.includes("card"))return"carte-bancaire";return t;}
 function modeFinanceCaisseActif(mode){const g=groupeModeFinanceCaisse(mode),p=parametresFinanceCaisse||{};if(!g)return true;if(g==="especes")return p.modeEspeces!==false;if(g==="mobile-money")return p.modeMobileMoney!==false;if(g==="virement")return p.modeVirement!==false;if(g==="cheque")return p.modeCheque!==false;if(g==="carte-bancaire")return p.modeCarteBancaire!==false;return false;}
-function appliquerModesPaiementFinanceCaisse(){const s=document.getElementById("cash-operation-method");if(!s)return;if(!Array.from(s.options).some(o=>o.value==="carte-bancaire")){const o=document.createElement("option");o.value="carte-bancaire";o.textContent="Carte bancaire";s.appendChild(o);}Array.from(s.options).forEach(o=>{if(!o.value)return;const a=modeFinanceCaisseActif(o.value);o.hidden=!a;o.disabled=!a;if(!a&&s.value===o.value)s.value=""});}
 
 
 /* ===========================================================

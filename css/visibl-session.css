@@ -1,0 +1,39 @@
+#visibl-session-status { display: none; }
+
+html[data-visibl-session-locked] body > :not(#visibl-session-status):not([data-visibl-public-loader]) {
+    display: none !important;
+}
+
+html[data-visibl-session-locked] body > [data-visibl-public-loader] {
+    transition: none;
+}
+
+html[data-visibl-session-locked] #visibl-session-status[aria-busy="false"] {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f4f7fb;
+    color: #172338;
+    font: 1rem/1.5 system-ui, sans-serif;
+    text-align: center;
+}
+
+#visibl-session-retry {
+    border: 0;
+    border-radius: 9px;
+    padding: .7rem 1rem;
+    background: #2459c9;
+    color: white;
+    font: inherit;
+    cursor: pointer;
+}
+
+#visibl-session-retry[hidden] { display: none !important; }
+
+html[data-visibl-session-locked] #visibl-session-status[aria-busy="false"] ~ [data-visibl-public-loader] {
+    display: none !important;
+}

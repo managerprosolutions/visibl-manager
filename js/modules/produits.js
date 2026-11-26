@@ -2763,30 +2763,6 @@ function ouvrirModificationProduit(idProduit) {
 }
 
 
-function selectionnerFournisseurProduit(valeur) {
-
-    const select = document.getElementById("product-main-supplier");
-    const idFournisseur = String(valeur || "").trim();
-
-    if (!select) {
-        return;
-    }
-
-    if (
-        idFournisseur &&
-        !Array.from(select.options).some(
-            option => option.value === idFournisseur
-        )
-    ) {
-        const option = document.createElement("option");
-        option.value = idFournisseur;
-        option.textContent = idFournisseur;
-        option.dataset.temporary = "true";
-        select.appendChild(option);
-    }
-
-    select.value = idFournisseur;
-}
 
 
 function afficherImageExistanteFormulaireProduit(url) {
@@ -4989,7 +4965,7 @@ function initialiserHeaderProduits() {
     initialiserRechercheHeaderProduits();
     initialiserNotificationsProduits();
     initialiserMenuProfilProduits();
-    initialiserDeconnexionProduits();
+
 }
 
 
@@ -5046,37 +5022,6 @@ function initialiserRechercheHeaderProduits() {
 }
 
 
-function initialiserNotificationsProduits() {
-
-    const bouton =
-        document.getElementById("notification-button");
-
-    const panneau =
-        document.getElementById("notification-panel");
-
-    if (!bouton || !panneau) {
-        return;
-    }
-
-    bouton.addEventListener("click", event => {
-
-        event.stopPropagation();
-
-        const ouvrir = panneau.hidden;
-
-        fermerMenusHeaderProduits();
-
-        panneau.hidden = !ouvrir;
-        bouton.setAttribute(
-            "aria-expanded",
-            ouvrir ? "true" : "false"
-        );
-    });
-
-    panneau.addEventListener("click", event => {
-        event.stopPropagation();
-    });
-}
 
 
 function initialiserMenuProfilProduits() {
@@ -5157,46 +5102,6 @@ function fermerMenusHeaderProduits() {
 }
 
 
-function initialiserDeconnexionProduits() {
-
-    const bouton =
-        document.getElementById("logout-button");
-
-    if (!bouton) {
-        return;
-    }
-
-    bouton.addEventListener("click", event => {
-
-        event.preventDefault();
-
-        fermerMenusHeaderProduits();
-
-        try {
-            if (typeof logoutUser === "function") {
-                logoutUser();
-            } else {
-                sessionStorage.clear();
-
-                [
-                    "user",
-                    "utilisateur",
-                    "currentUser",
-                    "authUser",
-                    "isAuthenticated",
-                    "token",
-                    "authToken"
-                ].forEach(cle => localStorage.removeItem(cle));
-            }
-        } catch (error) {
-            console.warn("Erreur pendant la déconnexion :", error);
-        }
-
-        window.setTimeout(() => {
-            window.location.replace("connexion.html");
-        }, 50);
-    });
-}
 
 /* ===========================================================
    NOTIFICATIONS DU HEADER
@@ -5962,8 +5867,9 @@ function exporterProduits(format) {
 }
 
 
-function exporterProduitsExcel(donnees) {
+async function exporterProduitsExcel(donnees) {
 
+    await chargerBibliothequeExport("excel");
     if (typeof XLSX === "undefined") {
         alert("La bibliothèque Excel n'est pas disponible.");
         return;
@@ -6023,10 +5929,10 @@ function exporterProduitsCSV(donnees) {
 }
 
 
-function exporterProduitsPDF(donnees) {
+async function exporterProduitsPDF(donnees) {
 
-    const jsPDF =
-        window.jspdf?.jsPDF;
+    const bibliothequePrete = await chargerBibliothequeExport("pdf");
+    const jsPDF = bibliothequePrete ? window.jspdf.jsPDF : null;
 
     if (!jsPDF) {
         alert("La bibliothèque PDF n'est pas disponible.");
@@ -6287,16 +6193,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if(!e.target.closest(".header .search-box")&&!e.target.closest(".header .notification-menu")){closeSearch();closeNotif();}
     });
 
-    /* Déconnexion : efface aussi visibl_user, puis replace pour empêcher le retour par URL. */
-    q("#logout-button")?.addEventListener("click",e=>{
-        e.preventDefault(); e.stopImmediatePropagation();
-        try{if(typeof logoutUser==="function") logoutUser();}catch(_){}
-        try{
-            sessionStorage.clear();
-            ["visibl_user","user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"].forEach(k=>localStorage.removeItem(k));
-        }catch(_){}
-        location.replace("connexion.html");
-    },true);
 
     /* Actions globales : reprend les boutons existants sans changer leurs handlers. */
     const menu=q("#products-main-actions-dropdown");

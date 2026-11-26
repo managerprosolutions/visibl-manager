@@ -28,6 +28,8 @@ function initialiserMouvementsStock() {
 
     ["header-stock-movements-search-input","stock-movement-type-filter","stock-movement-date-from"]
         .forEach(id => document.getElementById(id)?.addEventListener("input", appliquerFiltresMouvements));
+    document.getElementById("header-stock-movements-search-btn")
+        ?.addEventListener("click", appliquerFiltresMouvements);
 
     document.getElementById("reset-stock-movements-filters")
         ?.addEventListener("click", reinitialiserFiltresMouvements);
@@ -66,7 +68,11 @@ function initialiserMouvementsStock() {
     chargerMouvementsStock();
 }
 
-async function chargerMouvementsStock() {
+function chargerMouvementsStock(...args) {
+    return chargerEcranVisibl("Chargement des mouvements de stock…", () => chargerMouvementsStockDonnees(...args));
+}
+
+async function chargerMouvementsStockDonnees() {
     const tbody = document.getElementById("stock-movements-table-body");
     if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="table-message">Chargement des mouvements...</td></tr>`;
 
@@ -304,7 +310,7 @@ async function enregistrerAjustementManuel(event) {
 }
 
 
-function exporterMouvementsExcel() {
+async function exporterMouvementsExcel() {
     const lignes = mouvementsStockFiltres.length ? mouvementsStockFiltres : mouvementsStock;
     if (!lignes.length) {
         afficherToastLocal("Aucun mouvement à exporter.");
@@ -325,6 +331,7 @@ function exporterMouvementsExcel() {
         "Commentaire": m.commentaire || ""
     }));
 
+    await chargerBibliothequeExport("excel");
     if (window.XLSX?.utils) {
         const feuille = XLSX.utils.json_to_sheet(donnees);
         const classeur = XLSX.utils.book_new();

@@ -1,27 +1,35 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-visibl-session-locked>
 
 <head>
+    <script id="visibl-session-early">
+        (() => {
+            try {
+                const session = JSON.parse(localStorage.getItem("visibl_user"));
+                if (typeof session?.sessionToken === "string" && session.sessionToken.trim() &&
+                    typeof session.roleId === "string" && session.roleId.trim()) return;
+            } catch {}
+            location.replace("connexion.html");
+        })();
+    </script>
+    <script id="visibl-session-fallback">
+        (() => {
+            const recuperer = () => {
+                if (document.documentElement.hasAttribute("data-visibl-session-started")) return;
+                const status = document.getElementById("visibl-session-status");
+                if (!status || status.getAttribute("aria-busy") === "false") return;
+                document.getElementById("visibl-session-message").textContent = "Vérification indisponible. Réessayez.";
+                const retry = document.getElementById("visibl-session-retry");
+                retry.hidden = false;
+                retry.addEventListener("click", () => location.reload(), { once: true });
+                status.setAttribute("aria-busy", "false");
+            };
+            document.addEventListener("DOMContentLoaded", recuperer, { once: true });
+            window.setTimeout(recuperer, 12000);
+        })();
+    </script>
 
-<!-- VISIBL COMMON PATCH: anti-flash session -->
-<style id="visibl-common-auth-guard">
-html.visibl-auth-pending body{visibility:hidden!important}
-</style>
-<script id="visibl-common-auth-guard-script">
-(function(){
-  document.documentElement.classList.add("visibl-auth-pending");
-  try{
-    const raw=localStorage.getItem("visibl_user");
-    if(!raw){location.replace("connexion.html");return;}
-    const u=JSON.parse(raw);
-    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
-    document.documentElement.classList.remove("visibl-auth-pending");
-  }catch(e){
-    localStorage.removeItem("visibl_user");
-    location.replace("connexion.html");
-  }
-})();
-</script>
+
 
 
     <meta charset="UTF-8">
@@ -42,10 +50,26 @@ html.visibl-auth-pending body{visibility:hidden!important}
         rel="stylesheet"
         href="../css/fournisseurs.css"
     >
+    <link rel="stylesheet" href="../css/visibl-loading.css">
+    <link rel="stylesheet" href="../css/kpi.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" media="print" onload="this.media='all'">
 
+    <link rel="stylesheet" href="../css/visibl-ui.css">
+
+    <link rel="stylesheet" href="../css/visibl-session.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/visibl-loading.js" defer></script>
+    <script src="../js/visibl-session-page.js" defer></script>
 </head>
 
 <body>
+<section id="visibl-session-status" aria-label="Chargement" aria-busy="true">
+    <p id="visibl-session-message" role="status"></p>
+    <button type="button" id="visibl-session-retry" hidden>Réessayer</button>
+</section>
+<template id="visibl-private-content">
 
 <div class="container">
 
@@ -340,7 +364,7 @@ html.visibl-auth-pending body{visibility:hidden!important}
                 <li>
 
                     <a
-                        href="parametres.html"
+                        href="paramètres.html"
                         class="nav-link"
                     >
                         ⚙️ Paramètres
@@ -362,121 +386,120 @@ html.visibl-auth-pending body{visibility:hidden!important}
     <main class="main-content">
 
 
-        <!-- ===== Header ===== -->
-        <header class="header">
-
-            <div class="header-left">
-
-                <button id="sidebar-toggle" class="sidebar-toggle">
-                    ☰
-                </button>
-
-                <a href="dashboard.html" class="logo">
-                    <img src="../logo-vizibl.png" alt="Logo">
+        <!-- ===== Header global VISIBL ===== -->
+        <header class="header visibl-header" data-visibl-header>
+            <div class="header-left visibl-header-left">
+                <a href="dashboard.html" class="visibl-header-brand" aria-label="Accueil VISIBL">
+                    <img src="../logo-vizibl.png" alt="VISIBL">
                 </a>
-
-                <h2>Fournisseurs</h2>
-
+                <span class="visibl-header-separator" aria-hidden="true"></span>
+                <h2 class="visibl-header-page-title">Fournisseurs</h2>
             </div>
 
-            <div class="header-right">
-
-                <div class="search-box">
-
-                    <!-- Icône visible sur mobile -->
-                    <button class="icon-btn" id="mobile-search-btn">
-                        🔍
+            <div class="header-right visibl-header-right">
+                <div class="search-box visibl-search" data-header-panel="search">
+                    <button class="visibl-header-btn visibl-mobile-search-btn" id="mobile-search-btn" type="button" aria-label="Rechercher" aria-expanded="false">
+                        <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
 
-                    <!-- Barre de recherche -->
-                    <div class="search-container">
-
+                    <div class="search-container visibl-search-container">
+                        <i class="fa-solid fa-magnifying-glass visibl-search-icon" aria-hidden="true"></i>
                         <input
                             type="text"
-                            class="search-input"
+                            class="search-input visibl-search-input"
                             id="header-suppliers-search-input"
                             placeholder="Rechercher un fournisseur..."
+                            autocomplete="off"
                         >
-
-                        <button class="search-btn"
+                        <button
+                            class="search-btn visibl-search-submit"
                             id="header-suppliers-search-btn"
                             type="button"
-                            aria-label="Rechercher">
-                            🔍
+                            aria-label="Lancer la recherche"
+                        >
+                            <i class="fa-solid fa-arrow-right"></i>
                         </button>
-
                     </div>
-
                 </div>
 
-                <div class="header-icons">
-
-                    <div class="notification-menu">
-
-    <button
-        id="notification-button"
-        class="icon-btn notifications"
-        type="button"
-        aria-label="Afficher les notifications"
-        aria-expanded="false">
-
-        🔔
-        <span class="notification-badge" hidden>0</span>
-
-    </button>
-
-    <div
-        id="notification-panel"
-        class="notification-panel"
-        hidden>
-
-        <div class="notification-panel-header">
-            <h3>Notifications</h3>
-        </div>
-
-        <div class="notification-empty-state">
-            <span aria-hidden="true">🔔</span>
-            <p>Aucune nouvelle notification.</p>
-        </div>
-
-    </div>
-
-</div>
-
-                    <div class="profile-menu" id="supplier-profile-menu">
-
+                <div class="header-icons visibl-header-actions">
+                    <div class="notification-menu visibl-header-menu" data-header-panel="notifications">
                         <button
-                            class="icon-btn"
-                            id="profile-menu-button"
+                            id="notification-button"
+                            class="visibl-header-btn visibl-notification-btn notifications"
                             type="button"
-                            aria-label="Afficher le menu du profil"
-                            aria-expanded="false">
-                            👤
+                            aria-label="Afficher les notifications"
+                            aria-expanded="false"
+                        >
+                            <span class="visibl-action-icon visibl-action-icon-notification" aria-hidden="true">
+                                <i class="fa-regular fa-bell"></i>
+                            </span>
+                            <span class="notification-badge" hidden>0</span>
                         </button>
 
                         <div
-                            class="dropdown-menu"
-                            id="profile-dropdown"
-                            hidden>
+                            id="notification-panel"
+                            class="notification-panel visibl-header-dropdown visibl-notification-panel"
+                            hidden
+                        >
+                            <div class="notification-panel-header">
+                                <div>
+                                    <span class="visibl-dropdown-kicker">Centre d’activité</span>
+                                    <h3>Notifications</h3>
+                                </div>
+                                <span class="visibl-live-dot" aria-hidden="true"></span>
+                            </div>
 
-                            <a href="moncompte.html">
-                                Mon compte
-                            </a>
-
-                            <hr>
-
-                            <a href="#" class="logout" id="logout-button">
-        Déconnexion
-    </a>
-
+                            <div class="notification-empty-state">
+                                <span class="visibl-empty-icon" aria-hidden="true">
+                                    <i class="fa-regular fa-bell"></i>
+                                </span>
+                                <p>Aucune notification pour le moment.</p>
+                            </div>
                         </div>
-
                     </div>
 
+                    <div class="visibl-profile-menu visibl-header-menu" data-header-panel="profile">
+                        <button
+                            id="profile-button"
+                            class="visibl-header-btn visibl-profile-btn"
+                            type="button"
+                            aria-label="Ouvrir le profil"
+                            aria-expanded="false"
+                        >
+                            <span class="visibl-action-icon visibl-action-icon-profile" aria-hidden="true">
+                                <i class="fa-solid fa-user"></i>
+                            </span>
+                        </button>
+
+                        <div
+                            id="profile-panel"
+                            class="visibl-header-dropdown visibl-profile-panel"
+                            hidden
+                        >
+                            <div class="visibl-profile-heading">
+                                <span class="visibl-profile-avatar">
+                                    <i class="fa-regular fa-user"></i>
+                                </span>
+                                <div>
+                                    <strong>Mon profil</strong>
+                                    <small>Compte VISIBL</small>
+                                </div>
+                            </div>
+
+                            <a href="moncompte.html">
+                                <i class="fa-regular fa-user"></i>
+                                <span>Mon compte</span>
+                            </a>
+                            <hr>
+                            <a href="#" class="logout" id="logout-button">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                <span>Déconnexion</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-
             </div>
-
         </header>
 
 
@@ -490,7 +513,7 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
             <div class="welcome-section suppliers-welcome-section">
                 <div>
-                    <h2>Fournisseurs</h2>
+                    <h2>Gestion des fournisseurs</h2>
                     <p>
                         Gérez tous vos fournisseurs, leurs coordonnées,
                         leurs conditions commerciales et leurs performances.
@@ -502,42 +525,58 @@ html.visibl-auth-pending body{visibility:hidden!important}
                 </button>
             </div>
 
-            <div class="kpi-grid" id="suppliers-kpi-grid">
+            <div class="visibl-kpi-grid" id="suppliers-kpi-grid">
 
-                <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">🏢</div>
-                    <div class="kpi-content">
-                        <h3>Total fournisseurs</h3>
-                        <p class="kpi-value" id="kpi-total-suppliers" aria-live="polite">0</p>
-                        <small id="kpi-suppliers-month" aria-live="polite">+0 ce mois</small>
+                <article class="visibl-kpi-card is-loading" data-kpi-id="suppliers-total" data-theme="blue">
+                    <div class="visibl-kpi-top">
+                        <div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-building"></i></div>
                     </div>
+                    <div class="visibl-kpi-label" data-kpi-label>Total fournisseurs</div>
+                    <div class="visibl-kpi-value-row">
+                        <div class="visibl-kpi-value" id="kpi-total-suppliers" data-kpi-value>—</div>
+                    </div>
+                    <div class="visibl-kpi-subtitle" data-kpi-subtitle id="kpi-suppliers-month">—</div>
+                    <div class="visibl-kpi-body"></div>
+                    <div class="visibl-kpi-footer" data-kpi-footer>Fournisseurs enregistrés</div>
                 </article>
 
-                <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">🌍</div>
-                    <div class="kpi-content">
-                        <h3>Fournisseurs internationaux</h3>
-                        <p class="kpi-value" id="kpi-international-suppliers" aria-live="polite">0</p>
-                        <small id="kpi-international-percent" aria-live="polite">0 % du total</small>
+                <article class="visibl-kpi-card is-loading" data-kpi-id="suppliers-international" data-theme="orange">
+                    <div class="visibl-kpi-top">
+                        <div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-earth-africa"></i></div>
                     </div>
+                    <div class="visibl-kpi-label" data-kpi-label>Fournisseurs internationaux</div>
+                    <div class="visibl-kpi-value-row">
+                        <div class="visibl-kpi-value" id="kpi-international-suppliers" data-kpi-value>—</div>
+                    </div>
+                    <div class="visibl-kpi-subtitle" data-kpi-subtitle id="kpi-international-percent">—</div>
+                    <div class="visibl-kpi-body"></div>
+                    <div class="visibl-kpi-footer" data-kpi-footer>Part des fournisseurs internationaux</div>
                 </article>
 
-                <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">✅</div>
-                    <div class="kpi-content">
-                        <h3>Fournisseurs actifs</h3>
-                        <p class="kpi-value" id="kpi-active-suppliers" aria-live="polite">0</p>
-                        <small id="kpi-active-suppliers-percent" aria-live="polite">0 % du total</small>
+                <article class="visibl-kpi-card is-loading" data-kpi-id="suppliers-active" data-theme="green">
+                    <div class="visibl-kpi-top">
+                        <div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></div>
                     </div>
+                    <div class="visibl-kpi-label" data-kpi-label>Fournisseurs actifs</div>
+                    <div class="visibl-kpi-value-row">
+                        <div class="visibl-kpi-value" id="kpi-active-suppliers" data-kpi-value>—</div>
+                    </div>
+                    <div class="visibl-kpi-subtitle" data-kpi-subtitle id="kpi-active-suppliers-percent">—</div>
+                    <div class="visibl-kpi-body"></div>
+                    <div class="visibl-kpi-footer" data-kpi-footer>Fournisseurs actuellement actifs</div>
                 </article>
 
-                <article class="kpi-card">
-                    <div class="kpi-icon" aria-hidden="true">💳</div>
-                    <div class="kpi-content">
-                        <h3>Dette fournisseurs</h3>
-                        <p class="kpi-value" id="kpi-suppliers-debt" aria-live="polite">0 FCFA</p>
-                        <small id="kpi-suppliers-debt-detail" aria-live="polite">Reste total à payer</small>
+                <article class="visibl-kpi-card is-loading" data-kpi-id="suppliers-debt" data-theme="purple">
+                    <div class="visibl-kpi-top">
+                        <div class="visibl-kpi-icon" aria-hidden="true"><i class="fa-solid fa-wallet"></i></div>
                     </div>
+                    <div class="visibl-kpi-label">Dette fournisseurs</div>
+                    <div class="visibl-kpi-value-row">
+                        <div class="visibl-kpi-value" id="kpi-suppliers-debt" data-kpi-value>—</div>
+                    </div>
+                    <div class="visibl-kpi-subtitle" id="kpi-suppliers-debt-detail">Reste total à payer</div>
+                    <div class="visibl-kpi-body"></div>
+                    <div class="visibl-kpi-footer">Engagement fournisseur restant</div>
                 </article>
 
             </div>
@@ -564,10 +603,6 @@ html.visibl-auth-pending body{visibility:hidden!important}
                         </button>
 
                         <div class="suppliers-actions-dropdown" id="suppliers-actions-dropdown" hidden>
-                            <button type="button" id="refresh-suppliers-btn">
-                                🔄 <span>Actualiser</span>
-                            </button>
-
                             <div class="suppliers-export-menu" id="suppliers-export-menu">
                                 <button
                                     type="button"
@@ -600,6 +635,15 @@ html.visibl-auth-pending body{visibility:hidden!important}
                             </button>
                         </div>
                     </div>
+
+                    <button
+                        type="button"
+                        class="btn-secondary suppliers-refresh-btn"
+                        id="refresh-suppliers-btn"
+                        title="Actualiser la liste des fournisseurs"
+                    >
+                        🔄 <span>Actualiser</span>
+                    </button>
                 </div>
             </div>
 
@@ -621,7 +665,7 @@ html.visibl-auth-pending body{visibility:hidden!important}
             </div>
 
             <div class="sales-filters suppliers-simple-filters">
-                
+
 
                 <select
                     id="supplier-country-filter"
@@ -1278,14 +1322,15 @@ html.visibl-auth-pending body{visibility:hidden!important}
 
 <div id="toast-container"></div>
 
-<script src="../js/api.js"></script>
-<script src="../js/auth.js"></script>
+
+
 <script src="../js/app.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../js/header.js"></script>
+<script src="../js/kpi.js"></script>
 <script src="../js/modules/notifications.js"></script>
 <script src="../js/modules/fournisseurs.js"></script>
 
+<script src="../js/visibl-ui.js" defer></script>
+</template>
 </body>
 </html>

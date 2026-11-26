@@ -1,150 +1,114 @@
-/**
- * Gestion de l'authentification côté frontend.
- */
-
-const AUTH_CONFIG = {
-    USER_STORAGE_KEY: "visibl_user",
-    LOGIN_PAGE: "connexion.html",
-    DASHBOARD_PAGE: "dashboard.html"
-};
-
-/**
- * Récupère l'utilisateur actuellement enregistré.
- */
-function getCurrentUser() {
-    const storedUser = localStorage.getItem(
-        AUTH_CONFIG.USER_STORAGE_KEY
-    );
-
-    if (!storedUser) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(storedUser);
-    } catch (error) {
-        console.error(
-            "Données utilisateur invalides :",
-            error
-        );
-
-        localStorage.removeItem(
-            AUTH_CONFIG.USER_STORAGE_KEY
-        );
-
-        return null;
-    }
-}
-
-/**
- * Vérifie si un utilisateur est connecté.
- */
-function isAuthenticated() {
-    return getCurrentUser() !== null;
-}
-
-/**
- * Protège une page réservée aux utilisateurs connectés.
- */
-function requireAuth() {
-    if (!isAuthenticated()) {
-        window.location.replace(
-            AUTH_CONFIG.LOGIN_PAGE
-        );
-
-        return false;
-    }
-
-    return true;
-}
-
-/**
- * Empêche un utilisateur déjà connecté
- * de retourner sur la page de connexion.
- */
-function redirectAuthenticatedUser() {
-    if (!isAuthenticated()) {
-        return false;
-    }
-
-    const user = getCurrentUser();
-
-    const destination =
-        (
-            user &&
-            user.permissionsLoaded === true &&
-            Array.isArray(user.permissions) &&
-            typeof getFirstAuthorizedPageFromStoredUser ===
-                "function"
-        )
-            ? getFirstAuthorizedPageFromStoredUser(user)
-            : AUTH_CONFIG.DASHBOARD_PAGE;
-
-    window.location.replace(
-        destination || AUTH_CONFIG.LOGIN_PAGE
-    );
-
-    return true;
-}
-
-/**
- * Déconnecte l'utilisateur.
- */
-function logoutUser() {
-    /*
-     * Une déconnexion doit démarrer une nouvelle session ERP.
-     * Les modules optimisés conservent leurs données de navigation
-     * dans sessionStorage (Commandes, Ventes, Rapports, etc.).
-     * On vide donc ce cache uniquement lors d'une vraie déconnexion,
-     * afin que la prochaine connexion refasse le premier chargement.
-     *
-     * La navigation normale entre modules n'est pas concernée :
-     * leurs caches restent actifs tant que l'utilisateur est connecté.
-     */
-    try {
-        sessionStorage.clear();
-    } catch (error) {
-        console.warn(
-            "Impossible de vider le cache de session lors de la déconnexion :",
-            error
-        );
-    }
-
-    // Le Dashboard utilise un cache persistant dans localStorage.
-    // On supprime uniquement ses clés lors d'une vraie déconnexion
-    // pour forcer un chargement frais à la prochaine connexion.
-    try {
-        localStorage.removeItem("VISIBL_DASHBOARD_BROWSER_CACHE_V1");
-        localStorage.removeItem("VISIBL_DASHBOARD_REFRESH_SIGNAL");
-        localStorage.removeItem("VISIBL_DASHBOARD_REFRESH_TRAITE");
-    } catch (error) {
-        console.warn(
-            "Impossible de vider le cache Dashboard lors de la déconnexion :",
-            error
-        );
-    }
-
-    localStorage.removeItem(
-        AUTH_CONFIG.USER_STORAGE_KEY
-    );
-
-    window.location.replace(
-        AUTH_CONFIG.LOGIN_PAGE
-    );
-}
-
-
-/* =========================================================
-   AUTORISATIONS PAR RÔLE
-   Source backend : "Autorisations Rôles"
-========================================================= */
-
+const VISIBL_USER_KEY = "visibl_user";
 const VISIBL_PERMISSION_EVENT = "visibl:permissions-ready";
+let sessionConfirmeeVisibl = null;
+const VISIBL_CACHE_OWNER = "visibl:session-cache-owner";
 
-/**
- * Normalise un module/action pour éviter les écarts
- * d'accents, espaces et casse.
- */
+function profilSessionVisibl(user) {
+    return user && typeof user === "object" && !Array.isArray(user) &&
+        typeof user.roleId === "string" && user.roleId.trim() &&
+        typeof user.sessionToken === "string" && user.sessionToken.trim() ? user : null;
+}
+
+function lireSessionVisibl() {
+    try { return profilSessionVisibl(JSON.parse(localStorage.getItem(VISIBL_USER_KEY))); }
+    catch { return null; }
+}
+
+function memeSessionVisibl(a, b) {
+    return Boolean(a && b && a.sessionToken === b.sessionToken &&
+        a.roleId === b.roleId && a.idUtilisateur === b.idUtilisateur && a.cacheScope === b.cacheScope);
+}
+
+function getCurrentUser() {
+    return memeSessionVisibl(sessionConfirmeeVisibl, lireSessionVisibl()) ? sessionConfirmeeVisibl : null;
+}
+
+function isAuthenticated() { return Boolean(getCurrentUser()); }
+function requireAuth() { return isAuthenticated(); }
+
+function verrouillerSessionVisibl() {
+    sessionConfirmeeVisibl = null;
+    document.documentElement.setAttribute("data-visibl-session-locked", "");
+}
+
+function nettoyerCachesSessionVisibl() {
+    const clesPrivees = new Set([
+        "user", "utilisateur", "currentUser", "authUser", "isAuthenticated", "token", "authToken",
+        "visibl_permissions", VISIBL_CACHE_OWNER, "visibl_commande_a_convertir_en_vente",
+        "visibl_stock_alert_states", "visibl_fournisseurs_loader_deja_affiche",
+        "VISIBL_DASHBOARD_BROWSER_CACHE_V1", "VISIBL_DASHBOARD_SESSION_SNAPSHOT_V1",
+        "VISIBL_DASHBOARD_REFRESH_SIGNAL", "VISIBL_DASHBOARD_REFRESH_TRAITE", "VISIBL_RAPPORTS_REFRESH_SIGNAL"
+    ]);
+    for (const type of ["localStorage", "sessionStorage"]) {
+        try {
+            const storage = window[type];
+            for (const key of Object.keys(storage)) {
+                if (clesPrivees.has(key) || /^visibl:[^:]+:nav-cache:|^visibl_fournisseurs_cache_navigation_v/i.test(key)) {
+                    storage.removeItem(key);
+                }
+            }
+        } catch {}
+    }
+}
+
+function terminerSessionVisibl({ effacerSession = true, avertir = false } = {}) {
+    verrouillerSessionVisibl();
+    if (effacerSession) {
+        try { localStorage.removeItem(VISIBL_USER_KEY); } catch {}
+    }
+    nettoyerCachesSessionVisibl();
+    for (const child of [...document.body.children]) {
+        if (child.id !== "visibl-session-status") child.remove();
+    }
+    const raison = avertir ? "locale" : effacerSession ? "" : "change";
+    window.location.replace(raison ? "connexion.html?session=" + raison : "connexion.html");
+}
+
+function logoutUser() {
+    terminerSessionVisibl({ avertir: Boolean(lireSessionVisibl()) });
+}
+
+function refusSessionVisibl(result) {
+    const code = String(result?.code || result?.errorCode || result?.error?.code || "").trim().toUpperCase();
+    const message = normaliserPermissionVisibl(result?.message);
+    return [401, 403].includes(Number(result?.status)) ||
+        /^(?:INVALID_SESSION|SESSION_(?:INVALID|EXPIRED|REVOKED|REQUIRED)|UNAUTHENTICATED|UNAUTHORIZED|AUTH_REQUIRED)$/.test(code) ||
+        /^(?:session_(?:invalide|expiree|revoquee)|(?:invalid|expired|revoked)_session|session_(?:invalid|expired|revoked))$/.test(message);
+}
+
+async function verifierSessionVisibl(user) {
+    const resultat = await apiPost("getPermissions", { roleId: user.roleId, _session: user.sessionToken });
+    if (refusSessionVisibl(resultat) || resultat?.success !== true || !Array.isArray(resultat.permissions)) {
+        const erreur = new Error("La session n’a pas pu être confirmée.");
+        erreur.sessionRefusee = refusSessionVisibl(resultat);
+        throw erreur;
+    }
+    const idRetourne = resultat.user?.id ?? resultat.user?.idUtilisateur;
+    const idProfil = user.id ?? user.idUtilisateur;
+    if ((resultat.user?.roleId && resultat.user.roleId !== user.roleId) ||
+        (idRetourne != null && String(idRetourne) !== String(idProfil ?? "").trim())) {
+        const erreur = new Error("L’identité de la session a changé.");
+        erreur.sessionRefusee = true;
+        throw erreur;
+    }
+    return { ...user, permissions: resultat.permissions, permissionsLoaded: true };
+}
+
+function ouvrirSessionVisibl(user) {
+    nettoyerCachesSessionVisibl();
+    const cacheScope = globalThis.crypto?.randomUUID?.() || String(Date.now());
+    localStorage.setItem(VISIBL_USER_KEY, JSON.stringify({ ...user, cacheScope }));
+}
+
+function confirmerSessionVisibl(user) {
+    const owner = JSON.stringify([user.idUtilisateur ?? null, user.roleId, user.cacheScope || null]);
+    try {
+        if (!user.cacheScope || sessionStorage.getItem(VISIBL_CACHE_OWNER) !== owner) nettoyerCachesSessionVisibl();
+        sessionStorage.setItem(VISIBL_CACHE_OWNER, owner);
+    } catch {}
+    sessionConfirmeeVisibl = user;
+}
+
 function normaliserPermissionVisibl(valeur) {
     return String(valeur || "")
         .trim()
@@ -161,6 +125,7 @@ function normaliserPermissionVisibl(valeur) {
 ========================================================= */
 
 const VISIBL_AUTH_PAGE_MODULE_MAP = {
+    "moncompte.html": null,
     "dashboard.html": "dashboard",
     "clients.html": "clients",
     "commandes.html": "commandes",
@@ -169,6 +134,7 @@ const VISIBL_AUTH_PAGE_MODULE_MAP = {
     "livreurs.html": "livreurs",
     "produits.html": "produits",
     "stock.html": "stock",
+    "mouvement_stock.html": "mouvements_stock",
     "mouvements-stock.html": "mouvements_stock",
     "mouvements_stock.html": "mouvements_stock",
     "approvisionnements.html": "approvisionnements",
@@ -193,7 +159,7 @@ const VISIBL_AUTH_MODULE_PAGE_MAP = {
     livreurs: "livreurs.html",
     produits: "produits.html",
     stock: "stock.html",
-    mouvements_stock: "mouvements-stock.html",
+    mouvements_stock: "mouvement_stock.html",
     approvisionnements: "approvisionnements.html",
     fournisseurs: "fournisseurs.html",
     transitaires: "transitaires.html",
@@ -208,14 +174,6 @@ const VISIBL_AUTH_MODULE_PAGE_MAP = {
 function getFirstAuthorizedPageFromStoredUser(user) {
     if (!user) {
         return "";
-    }
-
-    if (
-        String(user.roleId || "")
-            .trim()
-            .toUpperCase() === "ROL0001"
-    ) {
-        return "dashboard.html";
     }
 
     const ordre = [
@@ -268,313 +226,31 @@ function getFirstAuthorizedPageFromStoredUser(user) {
         : "";
 }
 
-/**
- * Vérification SYNCHRONE avec les permissions déjà enregistrées
- * lors du login. Cela empêche le contournement par modification
- * manuelle de l'URL.
- */
-function enforceStoredPagePermissionImmediately() {
-    const user = getCurrentUser();
-
-    if (!user) {
-        return false;
-    }
-
-    const fichierCourant =
-        decodeURIComponent(
-            window.location.pathname
-                .split("/")
-                .pop()
-        );
-
-    // La page de connexion n'est pas un module métier.
-    if (
-        fichierCourant === "connexion.html" ||
-        fichierCourant === ""
-    ) {
-        return true;
-    }
-
-    const moduleCourant =
-        VISIBL_AUTH_PAGE_MODULE_MAP[
-            fichierCourant
-        ];
-
-    if (!moduleCourant) {
-        return true;
-    }
-
-    // ROL0001 conserve son accès complet.
-    if (
-        String(user.roleId || "")
-            .trim()
-            .toUpperCase() === "ROL0001"
-    ) {
-        return true;
-    }
-
-    /*
-     * Depuis le correctif de connexion, les permissions sont
-     * chargées AVANT la redirection. On peut donc refuser
-     * immédiatement une URL interdite.
-     */
-    if (
-        user.permissionsLoaded === true &&
-        Array.isArray(user.permissions)
-    ) {
-        const autorise = user.permissions.some(
-            (permission) =>
-                normaliserPermissionVisibl(
-                    permission?.module
-                ) === moduleCourant &&
-                normaliserPermissionVisibl(
-                    permission?.action
-                ) === "voir"
-        );
-
-        if (autorise) {
-            return true;
-        }
-
-        const destination =
-            getFirstAuthorizedPageFromStoredUser(
-                user
-            );
-
-        if (destination) {
-            window.location.replace(destination);
-        } else {
-            logoutUser();
-        }
-
-        return false;
-    }
-
-    /*
-     * Ancienne session sans permissions en cache :
-     * on masque immédiatement le document pendant la lecture
-     * serveur, afin qu'une page interdite ne soit pas exposée.
-     */
-    if (document.documentElement) {
-        document.documentElement.style.visibility =
-            "hidden";
-    }
-
-    return null;
+function autorisationVisibl(user, module, action) {
+    return Boolean(user?.permissions?.some(permission =>
+        normaliserPermissionVisibl(permission?.module) === normaliserPermissionVisibl(module) &&
+        normaliserPermissionVisibl(permission?.action) === normaliserPermissionVisibl(action)));
 }
 
-const VISIBL_EARLY_ACCESS_STATE =
-    enforceStoredPagePermissionImmediately();
-
-
-/**
- * Enregistre la version enrichie de l'utilisateur.
- */
-function saveCurrentUser(user) {
-    if (!user) {
-        return;
-    }
-
-    localStorage.setItem(
-        AUTH_CONFIG.USER_STORAGE_KEY,
-        JSON.stringify(user)
-    );
-}
-
-/**
- * Retourne les permissions déjà mises en cache.
- */
-function getCurrentPermissions() {
-    const user = getCurrentUser();
-
-    if (!user || !Array.isArray(user.permissions)) {
-        return [];
-    }
-
-    return user.permissions;
-}
-
-/**
- * Vérifie une autorisation.
- *
- * Exemple :
- * hasPermission("ventes", "voir")
- * hasPermission("ventes", "creer")
- */
+function getCurrentPermissions() { return getCurrentUser()?.permissions || []; }
 function hasPermission(module, action = "voir") {
+    return autorisationVisibl(getCurrentUser(), module, action);
+}
+
+function appliquerNavigationUtilisateur() {
     const user = getCurrentUser();
+    if (!user) return;
 
-    if (!user) {
-        return false;
+    for (const link of document.querySelectorAll(".sidebar nav a[href]")) {
+        const url = new URL(link.href, window.location.href);
+        const module = VISIBL_AUTH_PAGE_MODULE_MAP[decodeURIComponent(url.pathname.split("/").pop())];
+        if (!module) continue;
+        const item = link.closest("li") || link;
+        item.toggleAttribute("data-visibl-denied", !hasPermission(module, "voir"));
     }
-
-    if (
-        String(user.roleId || "")
-            .trim()
-            .toUpperCase() === "ROL0001"
-    ) {
-        return true;
+    for (const group of document.querySelectorAll(".sidebar .menu-category")) {
+        const items = [...group.querySelectorAll(".submenu li")];
+        group.toggleAttribute("data-visibl-denied", items.length > 0 &&
+            items.every(item => item.hasAttribute("data-visibl-denied")));
     }
-
-    const moduleRecherche =
-        normaliserPermissionVisibl(module);
-
-    const actionRecherche =
-        normaliserPermissionVisibl(action);
-
-    return getCurrentPermissions().some(
-        (permission) =>
-            normaliserPermissionVisibl(
-                permission?.module
-            ) === moduleRecherche &&
-            normaliserPermissionVisibl(
-                permission?.action
-            ) === actionRecherche
-    );
-}
-
-/**
- * Charge les autorisations correspondant au rôle
- * actuellement connecté et les stocke avec l'utilisateur.
- */
-async function refreshCurrentUserPermissions(force = false) {
-    const user = getCurrentUser();
-
-    if (!user || !user.roleId) {
-        return {
-            success: false,
-            permissions: []
-        };
-    }
-
-    if (
-        !force &&
-        user.permissionsLoaded === true &&
-        Array.isArray(user.permissions)
-    ) {
-        return {
-            success: true,
-            permissions: user.permissions
-        };
-    }
-
-    if (typeof apiPost !== "function") {
-        console.error(
-            "apiPost est indisponible : impossible de charger les permissions."
-        );
-
-        return {
-            success: false,
-            permissions: []
-        };
-    }
-
-    try {
-        const resultat = await apiPost(
-            "getPermissions",
-            {
-                roleId: user.roleId
-            }
-        );
-
-        if (!resultat || resultat.success !== true) {
-            throw new Error(
-                resultat?.message ||
-                "Impossible de récupérer les permissions."
-            );
-        }
-
-        const utilisateurMisAJour = {
-            ...user,
-            permissions: Array.isArray(
-                resultat.permissions
-            )
-                ? resultat.permissions
-                : [],
-            permissionsLoaded: true,
-            permissionsLoadedAt:
-                new Date().toISOString()
-        };
-
-        saveCurrentUser(utilisateurMisAJour);
-
-        // Si une ancienne session avait été masquée en attendant
-        // les permissions, on contrôle la page avant de la révéler.
-        const accesApresActualisation =
-            enforceStoredPagePermissionImmediately();
-
-        if (
-            accesApresActualisation === true &&
-            document.documentElement
-        ) {
-            document.documentElement.style.visibility =
-                "";
-        }
-
-        window.dispatchEvent(
-            new CustomEvent(
-                VISIBL_PERMISSION_EVENT,
-                {
-                    detail: {
-                        user: utilisateurMisAJour,
-                        permissions:
-                            utilisateurMisAJour.permissions
-                    }
-                }
-            )
-        );
-
-        return {
-            success: true,
-            permissions:
-                utilisateurMisAJour.permissions
-        };
-    } catch (error) {
-        console.error(
-            "Erreur de chargement des permissions :",
-            error
-        );
-
-        window.dispatchEvent(
-            new CustomEvent(
-                VISIBL_PERMISSION_EVENT,
-                {
-                    detail: {
-                        user: user,
-                        permissions:
-                            getCurrentPermissions(),
-                        error: true
-                    }
-                }
-            )
-        );
-
-        return {
-            success: false,
-            permissions:
-                getCurrentPermissions()
-        };
-    }
-}
-
-/**
- * Recharge systématiquement les permissions au démarrage
- * d'une page afin qu'une modification faite dans Paramètres
- * soit prise en compte à la prochaine navigation/reconnexion.
- */
-function initialiserPermissionsUtilisateur() {
-    if (!isAuthenticated()) {
-        return;
-    }
-
-    refreshCurrentUserPermissions(true);
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener(
-        "DOMContentLoaded",
-        initialiserPermissionsUtilisateur
-    );
-} else {
-    initialiserPermissionsUtilisateur();
 }

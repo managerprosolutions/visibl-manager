@@ -50,6 +50,8 @@
 
 .content {
     width: 100%;
+    max-width: 1450px;
+    margin: 0 auto;
     padding: 24px;
     overflow-x: hidden;
 }
@@ -60,18 +62,22 @@
 ========================================================= */
 
 .welcome-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
     margin-bottom: 24px;
 }
 
 .welcome-section h2 {
-    margin: 0 0 8px;
+    margin: 0 0 6px;
     color: var(--suppliers-gray-900);
     font-size: 28px;
     font-weight: 700;
 }
 
 .welcome-section p {
-    max-width: 850px;
+    max-width: 720px;
     margin: 0;
     color: var(--suppliers-gray-500);
     font-size: 15px;
@@ -5290,3 +5296,965 @@ body.suppliers-selection-mode .suppliers-advanced-table td.selection-column {
     }
 }
 
+
+
+/* =========================================================
+   HARMONISATION VISUELLE — RÉFÉRENCE CLIENTS
+========================================================= */
+
+/* Le composant KPI partagé prend la main sur les anciennes cartes Fournisseurs. */
+#suppliers-kpi-grid.visibl-kpi-grid {
+    margin-bottom: 24px;
+}
+
+#suppliers-kpi-grid .visibl-kpi-value {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+}
+
+/* Actualiser séparé, immédiatement à côté de Actions. */
+.suppliers-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.suppliers-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    white-space: nowrap;
+}
+
+/* Loader doux création / modification, même comportement que Clients. */
+#supplier-form {
+    position: relative;
+}
+
+.supplier-save-soft-loader {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(248, 250, 252, 0.88);
+    backdrop-filter: blur(3px);
+    border-radius: inherit;
+}
+
+.supplier-save-soft-loader.is-visible {
+    display: flex;
+}
+
+.supplier-save-soft-loader-card {
+    position: relative;
+    width: min(420px, 100%);
+    padding: 30px 26px;
+    text-align: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.13);
+}
+
+.supplier-save-loading-view,
+.supplier-save-success-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.supplier-save-loading-view[aria-hidden="true"],
+.supplier-save-success-view[aria-hidden="true"] {
+    display: none;
+}
+
+.supplier-save-soft-spinner,
+.supplier-button-spinner {
+    display: inline-block;
+    border-radius: 999px;
+    border-style: solid;
+    animation: supplier-spin .75s linear infinite;
+}
+
+.supplier-save-soft-spinner {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 18px;
+    border-width: 4px;
+    border-color: #dbeafe;
+    border-top-color: #2563eb;
+}
+
+.supplier-button-spinner {
+    width: 15px;
+    height: 15px;
+    border-width: 2px;
+    border-color: rgba(255,255,255,.45);
+    border-top-color: currentColor;
+}
+
+@keyframes supplier-spin {
+    to { transform: rotate(360deg); }
+}
+
+.supplier-save-soft-loader-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.supplier-save-soft-loader-title,
+.supplier-save-success-title {
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 750;
+}
+
+.supplier-save-soft-loader-text,
+.supplier-save-success-text {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.supplier-save-success-icon {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    margin-bottom: 10px;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 800;
+    background: #16a34a;
+    border-radius: 50%;
+    box-shadow: 0 10px 25px rgba(22, 163, 74, .24);
+}
+
+.supplier-save-success-confetti {
+    display: flex;
+    gap: 8px;
+    margin: 2px 0 12px;
+    color: #2563eb;
+    font-size: 9px;
+}
+
+.supplier-save-success-confetti span:nth-child(even) {
+    color: #f59e0b;
+}
+
+.supplier-save-success-reference {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 190px;
+    margin: 16px 0 4px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.supplier-save-success-reference strong {
+    color: #0f172a;
+    font-size: 13px;
+}
+
+.supplier-save-success-btn {
+    min-height: 40px;
+    margin-top: 18px;
+    padding: 9px 18px;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #2563eb;
+    border: 0;
+    border-radius: 9px;
+}
+
+#confirm-delete-supplier-btn.is-processing {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+@media (max-width: 560px) {
+    .suppliers-toolbar-actions {
+        gap: 7px;
+    }
+
+    .suppliers-refresh-btn {
+        width: auto !important;
+        min-width: 0 !important;
+        min-height: 38px;
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        line-height: 1.1;
+        flex: 0 0 auto;
+    }
+
+    .supplier-save-soft-loader {
+        padding: 14px;
+    }
+}
+
+
+/* =========================================================
+   POINT 02 — En-tête de présentation harmonisé avec Clients
+   Styles limités au module Fournisseurs.
+========================================================= */
+.suppliers-welcome-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+.suppliers-welcome-section > div {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.suppliers-welcome-section h2 {
+    margin: 0 0 6px;
+}
+.suppliers-welcome-section p {
+    max-width: 720px;
+    margin: 0;
+    line-height: 1.6;
+}
+.suppliers-welcome-section #new-supplier-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+@media (max-width: 640px) {
+    .suppliers-welcome-section {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .suppliers-welcome-section #new-supplier-btn {
+        width: 100%;
+        white-space: normal;
+    }
+}
+
+
+/* =========================================================
+   POINT 03 — KPI FOURNISSEURS / HARMONISATION CLIENTS
+   Périmètre volontairement limité à la grille KPI.
+   Le composant commun ../css/kpi.css reste la référence.
+========================================================= */
+#suppliers-kpi-grid.visibl-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+    min-width: 0;
+}
+#suppliers-kpi-grid .visibl-kpi-card {
+    min-width: 0;
+    box-sizing: border-box;
+}
+#suppliers-kpi-grid .visibl-kpi-label,
+#suppliers-kpi-grid .visibl-kpi-subtitle,
+#suppliers-kpi-grid .visibl-kpi-footer {
+    overflow-wrap: anywhere;
+}
+#suppliers-kpi-grid .visibl-kpi-value {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1200px) {
+    #suppliers-kpi-grid.visibl-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 680px) {
+    #suppliers-kpi-grid.visibl-kpi-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+}
+
+
+/* =========================================================
+   POINT 04 — BARRE D'ACTIONS (référence : module Clients)
+   Ajustements strictement visuels : identifiants, menus,
+   événements et fonctionnalités existants inchangés.
+========================================================= */
+.suppliers-toolbar-refined {
+    gap: 18px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+}
+.suppliers-toolbar-summary {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.suppliers-visible-count {
+    color: #64748b;
+    font-size: 13px;
+    white-space: normal;
+}
+.suppliers-visible-count strong { color: #0f172a; }
+.suppliers-toolbar-refined .suppliers-toolbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+.suppliers-toolbar-refined .suppliers-actions-trigger,
+.suppliers-toolbar-refined .suppliers-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 9px;
+}
+.suppliers-toolbar-refined .suppliers-actions-dropdown {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, .16);
+}
+@media (max-width: 560px) {
+    .suppliers-toolbar-refined {
+        gap: 10px;
+        padding: 12px;
+    }
+    .suppliers-toolbar-refined .suppliers-toolbar-actions { gap: 7px; }
+    .suppliers-toolbar-refined .suppliers-actions-trigger,
+    .suppliers-toolbar-refined .suppliers-refresh-btn {
+        min-height: 38px;
+        padding: 0 10px !important;
+        font-size: 12px;
+    }
+}
+
+/* =========================================================
+   POINT 05 — FILTRES FOURNISSEURS (référence : module Clients)
+   Ajustements visuels uniquement. La recherche existante
+   dans l'en-tête VISIBL et les filtres JS restent inchangés.
+   Aucun bouton de réinitialisation non fonctionnel n'est ajouté.
+========================================================= */
+.sales-filters.suppliers-simple-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 16px;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: none;
+}
+.sales-filters.suppliers-simple-filters > select {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 0 12px;
+    color: #334155;
+    font-family: inherit;
+    font-size: 13px;
+    background: #ffffff;
+    border: 1px solid #dbe2ea;
+    border-radius: 9px;
+    outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+.sales-filters.suppliers-simple-filters > select:focus-visible {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+}
+@media (max-width: 760px) {
+    .sales-filters.suppliers-simple-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 560px) {
+    .sales-filters.suppliers-simple-filters {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 12px;
+    }
+}
+
+
+/* =========================================================
+   POINT 06 — HARMONISATION DU TABLEAU FOURNISSEURS
+   Référence : clients.css. Ajustements purement visuels.
+   Préserve la largeur intrinsèque des colonnes, les menus
+   d'actions, les sélections et la pagination existants.
+========================================================= */
+.sales-table-container {
+    min-width: 0;
+    border-color: #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    overscroll-behavior-inline: contain;
+}
+.sales-table.suppliers-advanced-table {
+    border-spacing: 0;
+    font-size: 12.5px;
+}
+.sales-table.suppliers-advanced-table th,
+.sales-table.suppliers-advanced-table td {
+    padding: 13px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid #eef2f7;
+}
+.sales-table.suppliers-advanced-table th {
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: #f8fafc;
+}
+.sales-table.suppliers-advanced-table td {
+    color: #334155;
+    font-size: 12.5px;
+}
+.sales-table.suppliers-advanced-table tbody tr:hover td {
+    background: #f8fbff;
+}
+.sales-table.suppliers-advanced-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.sales-table.suppliers-advanced-table .selection-column {
+    width: 42px;
+    min-width: 42px;
+    text-align: center;
+}
+.sales-table.suppliers-advanced-table .selection-column input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+    cursor: pointer;
+}
+@media (max-width: 760px) {
+    .sales-table.suppliers-advanced-table th,
+    .sales-table.suppliers-advanced-table td {
+        padding: 12px 10px;
+    }
+}
+
+
+/* =========================================================
+   POINT 07 — BOUTONS D’ACTION ET BADGES DE STATUT
+   Alignement visuel avec clients.css uniquement.
+   Aucune modification des sélections ni des événements JS.
+========================================================= */
+.sales-table.suppliers-advanced-table .table-actions,
+.sales-table.suppliers-advanced-table .supplier-actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    white-space: nowrap;
+}
+.sales-table.suppliers-advanced-table .table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.sales-table.suppliers-advanced-table .table-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, .12);
+}
+.sales-table.suppliers-advanced-table .table-action-btn:active {
+    transform: scale(.96);
+}
+.sales-table.suppliers-advanced-table .table-action-btn.view-btn {
+    color: #2563eb;
+    background: #dbeafe;
+}
+.sales-table.suppliers-advanced-table .table-action-btn.edit-btn {
+    color: #d97706;
+    background: #fef3c7;
+}
+.sales-table.suppliers-advanced-table .table-action-btn.delete-btn {
+    color: #dc2626;
+    background: #fee2e2;
+}
+.sales-table.suppliers-advanced-table .status-badge,
+.sales-table.suppliers-advanced-table .supplier-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.sales-table.suppliers-advanced-table .status-active,
+.sales-table.suppliers-advanced-table .status-actif {
+    color: #15803d;
+    background: #dcfce7;
+}
+.sales-table.suppliers-advanced-table .status-inactive,
+.sales-table.suppliers-advanced-table .status-inactif {
+    color: #475569;
+    background: #e2e8f0;
+}
+.sales-table.suppliers-advanced-table .status-suspended,
+.sales-table.suppliers-advanced-table .status-suspendu {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+.sales-table.suppliers-advanced-table .status-archived,
+.sales-table.suppliers-advanced-table .status-archive {
+    color: #475569;
+    background: #f1f5f9;
+}
+
+/* =========================================================
+   POINT 08 — PAGINATION ET ÉTATS SANS RÉSULTAT
+   Harmonisation visuelle avec le module Clients.
+   Aucun changement HTML, JS, sélection ou logique métier.
+========================================================= */
+.sales-table-container .suppliers-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 14px 16px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+}
+.sales-table-container .suppliers-pagination-size {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: #64748b;
+    font-size: 12px;
+}
+.sales-table-container .suppliers-pagination-size select {
+    height: 34px;
+    padding: 0 28px 0 10px;
+    color: #334155;
+    border: 1px solid #dbe2ea;
+    border-radius: 8px;
+    background: #fff;
+}
+.sales-table-container .suppliers-pagination-summary {
+    color: #64748b;
+    font-size: 12px;
+    text-align: center;
+}
+.sales-table-container .suppliers-pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.sales-table-container .suppliers-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0 10px;
+    color: #475569;
+    background: #fff;
+    border: 1px solid #dbe2ea;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.sales-table-container .suppliers-page-btn:hover:not(:disabled),
+.sales-table-container .suppliers-page-btn.active,
+.sales-table-container .suppliers-page-btn[aria-current="page"] {
+    color: #fff;
+    background: #2563eb;
+    border-color: #2563eb;
+}
+.sales-table-container .suppliers-page-btn:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+}
+.sales-table-container .sales-table td.table-message {
+    padding: 48px 20px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: center;
+    white-space: normal;
+}
+@media (max-width: 760px) {
+    .sales-table-container .suppliers-pagination {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .sales-table-container .suppliers-pagination-summary { text-align: left; }
+    .sales-table-container .suppliers-pagination-controls { justify-content: flex-start; }
+}
+
+
+/* ============================================================
+   POINT 09 — Formulaire fournisseur aligné sur le module Clients
+   Styles ciblés : création et modification, sans changer le DOM
+   ni les événements JavaScript.
+   ============================================================ */
+#supplier-modal.modal-overlay {
+    padding: 24px;
+    background: rgba(15,23,42,.58);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+#supplier-modal .supplier-modal-container {
+    width: min(920px,100%);
+    max-height: calc(100vh - 48px);
+    background: #fff;
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 24px 70px rgba(15,23,42,.28);
+}
+#supplier-modal .modal-header {
+    padding: 20px 24px;
+    color: #0f172a;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+}
+#supplier-modal .modal-header h2 {
+    margin: 0 0 5px;
+    color: #0f172a;
+    font-size: 21px;
+}
+#supplier-modal .modal-header p { color:#64748b; font-size:13px; }
+#supplier-modal .modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+}
+#supplier-modal .modal-close:hover {
+    color: #dc2626;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+#supplier-modal #supplier-form {
+    max-height: calc(100vh - 150px);
+    background: #fff;
+}
+#supplier-modal .modal-body {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 24px;
+    background: #f8fafc;
+}
+#supplier-modal .form-section {
+    padding: 20px;
+    margin-bottom: 16px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 13px;
+    box-shadow: none;
+}
+#supplier-modal .form-section:last-child { margin-bottom:0; }
+#supplier-modal .form-section::before { content:none; }
+#supplier-modal .form-section h3 {
+    margin: 0 0 18px;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+}
+#supplier-modal .form-grid { gap: 16px; }
+#supplier-modal .form-group { gap: 7px; }
+#supplier-modal .form-group label {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+}
+#supplier-modal .form-group input,
+#supplier-modal .form-group select,
+#supplier-modal .form-group textarea {
+    min-width: 0;
+    border: 1px solid #dbe2ea;
+    border-radius: 9px;
+    color: #334155;
+    font-size: 13px;
+}
+#supplier-modal .form-group input:focus,
+#supplier-modal .form-group select:focus,
+#supplier-modal .form-group textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+#supplier-modal .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+}
+@media (max-width: 680px) {
+    #supplier-modal.modal-overlay { padding: 0; }
+    #supplier-modal .supplier-modal-container {
+        width: 100%;
+        max-height: 96vh;
+        border-radius: 16px 16px 0 0;
+    }
+    #supplier-modal #supplier-form { max-height: calc(96vh - 95px); }
+    #supplier-modal .modal-header { padding: 18px 16px; }
+    #supplier-modal .modal-body { padding: 16px; }
+    #supplier-modal .form-section { padding: 16px; margin-bottom: 14px; }
+    #supplier-modal .form-grid { grid-template-columns: minmax(0,1fr); }
+    #supplier-modal .modal-footer { padding: 14px 16px; flex-wrap: wrap; }
+}
+
+
+/* =============================================================
+   POINT 10 — MODALES DE CONFIRMATION ET DE SUPPRESSION
+   Harmonisation visuelle avec Clients, sans modification du DOM
+   ni des actions JavaScript existantes.
+   ============================================================= */
+#delete-supplier-modal,
+#bulk-delete-suppliers-modal {
+    background: rgba(15,23,42,.68);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    padding: 20px;
+}
+#delete-supplier-modal .delete-supplier-modal-container,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-modal {
+    box-sizing: border-box;
+    width: min(510px, 100%);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    padding: 32px;
+    background: #fff;
+    border: 1px solid rgba(226,232,240,.9);
+    border-radius: 22px;
+    box-shadow: 0 30px 80px rgba(15,23,42,.30), 0 8px 24px rgba(15,23,42,.12);
+    animation: supplierDeleteModalIn .28s ease-out;
+}
+@keyframes supplierDeleteModalIn {
+    from { opacity: 0; transform: translateY(22px) scale(.94); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+#delete-supplier-modal .delete-supplier-icon,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-icon {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 30px;
+    border: 1px solid #fee2e2;
+}
+#delete-supplier-modal h2,
+#bulk-delete-suppliers-modal h2 {
+    margin: 0 0 10px;
+    color: #0f172a;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.35;
+    text-align: center;
+}
+#delete-supplier-modal #delete-supplier-modal-description,
+#bulk-delete-suppliers-modal p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.65;
+    text-align: center;
+}
+#delete-supplier-modal .delete-supplier-summary {
+    margin-top: 22px;
+    padding: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+}
+#delete-supplier-modal .delete-supplier-actions,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-actions {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+    gap: 12px;
+    margin-top: 24px;
+}
+#delete-supplier-modal .delete-supplier-actions button,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-actions button {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 750;
+    line-height: 1.3;
+    transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+#delete-supplier-modal .delete-supplier-actions .btn-secondary,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-actions .btn-secondary {
+    color: #334155;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+}
+#delete-supplier-modal .delete-supplier-actions .btn-secondary:hover,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-actions .btn-secondary:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+}
+#delete-supplier-modal .delete-supplier-actions .btn-danger,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-actions .btn-danger {
+    color: #fff;
+    background: #dc2626;
+    border: 1px solid #dc2626;
+}
+#delete-supplier-modal .delete-supplier-actions .btn-danger:hover,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-actions .btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+#delete-supplier-modal .delete-supplier-actions button:focus-visible,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-actions button:focus-visible {
+    outline: 3px solid rgba(59,130,246,.28);
+    outline-offset: 2px;
+}
+#delete-supplier-modal .delete-supplier-actions button:disabled,
+#bulk-delete-suppliers-modal .bulk-delete-suppliers-actions button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+}
+@media (max-width: 560px) {
+    #delete-supplier-modal,
+    #bulk-delete-suppliers-modal { padding: 12px; }
+    #delete-supplier-modal .delete-supplier-modal-container,
+    #bulk-delete-suppliers-modal .bulk-delete-suppliers-modal {
+        max-height: calc(100dvh - 24px);
+        padding: 24px 18px;
+        border-radius: 18px;
+    }
+    #delete-supplier-modal .delete-supplier-actions,
+    #bulk-delete-suppliers-modal .bulk-delete-suppliers-actions {
+        grid-template-columns: minmax(0,1fr);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #delete-supplier-modal .delete-supplier-modal-container,
+    #bulk-delete-suppliers-modal .bulk-delete-suppliers-modal {
+        animation: none;
+    }
+}
+
+/* POINT 11 — Harmonisation des états de chargement et messages */
+.suppliers-advanced-table .loading-row,
+.suppliers-advanced-table .empty-table-message,
+.suppliers-advanced-table .error-row {
+  padding: 40px 20px !important;
+  text-align: center !important;
+  font-size: 13px;
+  line-height: 1.6;
+  background: #fff !important;
+}
+.suppliers-advanced-table .loading-row { color: #64748b !important; }
+.suppliers-advanced-table .empty-table-message { color: #64748b !important; }
+.suppliers-advanced-table .error-row { color: #b91c1c !important; }
+#supplier-form-message { border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.5; }
+#supplier-form-message.info { color: #1e40af; background: #eff6ff; border-color: #bfdbfe; }
+#supplier-form-message.success { color: #166534; background: #f0fdf4; border-color: #bbf7d0; }
+#supplier-form-message.error { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
+.supplier-save-soft-loader-card { max-width: 420px; border-radius: 18px; border-color: #e2e8f0; }
+.supplier-save-soft-loader-title, .supplier-save-success-title { color: #0f172a; }
+.supplier-save-soft-loader-text, .supplier-save-success-text { color: #64748b; }
+@media (prefers-reduced-motion: reduce) {
+  .supplier-save-soft-spinner, .supplier-button-spinner,
+  .supplier-save-success-confetti span { animation: none !important; }
+}
+
+
+/* =========================================================
+   POINT 12 — RESPONSIVE FOURNISSEURS
+   Ajustements ciblés sans masquer les colonnes, les actions,
+   les sélections existantes ni modifier le comportement JS.
+========================================================= */
+@media (max-width: 1024px) {
+  #suppliers-kpi-grid.visibl-kpi-grid { gap: 14px; }
+  .suppliers-toolbar-refined { flex-wrap: wrap; }
+  .suppliers-toolbar-refined .toolbar-left,
+  .suppliers-toolbar-refined .toolbar-right { min-width: 0; }
+  .sales-table-container { max-width: 100%; }
+}
+@media (max-width: 760px) {
+  .suppliers-welcome-section { min-width: 0; }
+  .suppliers-welcome-section h1,
+  .suppliers-welcome-section p { overflow-wrap: anywhere; }
+  .suppliers-toolbar-refined { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 12px; }
+  .suppliers-toolbar-refined .toolbar-left,
+  .suppliers-toolbar-refined .toolbar-right { width: 100%; min-width: 0; }
+  .suppliers-toolbar-refined .toolbar-right { display: flex; flex-wrap: wrap; gap: 8px; }
+  .suppliers-toolbar-refined .toolbar-right > * { max-width: 100%; }
+  .sales-table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .sales-table.suppliers-advanced-table { min-width: 950px; }
+  .sales-table-container .suppliers-pagination { padding: 12px; }
+  #supplier-modal.modal-overlay { padding: 12px; }
+  #supplier-modal .supplier-modal-container { width: 100%; max-height: calc(100dvh - 24px); }
+}
+@media (max-width: 560px) {
+  #suppliers-kpi-grid.visibl-kpi-grid { grid-template-columns: minmax(0,1fr); }
+  .sales-filters.suppliers-simple-filters { grid-template-columns: minmax(0,1fr); gap: 10px; }
+  .suppliers-toolbar-refined .suppliers-refresh-btn,
+  .suppliers-toolbar-refined .suppliers-actions-trigger { min-height: 40px; }
+  .sales-table-container .suppliers-pagination-controls { flex-wrap: wrap; gap: 6px; }
+  #supplier-modal .modal-footer { display: flex; flex-wrap: wrap; gap: 10px; }
+  #supplier-modal .modal-footer button { max-width: 100%; }
+  #delete-supplier-modal .delete-supplier-modal-container,
+  #bulk-delete-suppliers-modal .bulk-delete-suppliers-modal { width: 100%; box-sizing: border-box; }
+}

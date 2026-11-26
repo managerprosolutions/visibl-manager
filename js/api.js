@@ -9,6 +9,9 @@ const API_CONFIG = {
  * Le backend place ce jeton dans visibl_user.sessionToken au login.
  */
 function obtenirSessionTokenVisiblApi_() {
+  if (document.getElementById("visibl-session-status")) {
+    return typeof getCurrentUser === "function" ? getCurrentUser()?.sessionToken || "" : "";
+  }
   try {
     const brut = localStorage.getItem("visibl_user");
     if (!brut) return "";
@@ -29,10 +32,34 @@ function obtenirSessionTokenVisiblApi_() {
   }
 }
 
+function sessionPourRequeteVisibl(action, verification = false) {
+  if (!document.getElementById("visibl-session-status")) return null;
+  if (verification && action === "getPermissions") return null;
+  const token = obtenirSessionTokenVisiblApi_();
+  if (!token) throw new Error("Session non confirmée.");
+  return token;
+}
+
+function verifierReponseSessionVisibl(token, response, result) {
+  if (!token) return;
+  if (token !== obtenirSessionTokenVisiblApi_()) throw new Error("La session a changé.");
+  if (response.status === 401 || (result?.success === false && refusSessionVisibl(result))) {
+    terminerSessionVisibl();
+    throw new Error("Session refusée.");
+  }
+}
+
+function erreurHttpVisibl(response) {
+  const error = new Error(`Erreur HTTP : ${response.status}`);
+  error.status = response.status;
+  return error;
+}
+
 /**
  * Envoie une requête GET vers VISIBL Backend.
  */
 async function apiGet(action, params = {}) {
+  const session = sessionPourRequeteVisibl(action);
   const url = new URL(API_CONFIG.BASE_URL);
 
   url.searchParams.set("action", action);
@@ -52,6 +79,7 @@ async function apiGet(action, params = {}) {
       url.searchParams.set(key, value);
     }
   });
+  if (session) url.searchParams.set("_session", session);
 
   // Ces lectures doivent toujours interroger réellement le backend.
   // Cela évite qu'un navigateur, un appareil mobile ou un cache HTTP
@@ -63,7 +91,10 @@ async function apiGet(action, params = {}) {
     "getRapportsVersion",
     "getRapportsPatch",
     "getClients",
-    "getEtatSyncClients"
+    "getEtatSyncClients",
+    "getProduits",
+    "getProduitsPage",
+    "getEtatSyncProduits"
   ]);
 
   const sansCache = ACTIONS_GET_SANS_CACHE.has(action);
@@ -73,14 +104,15 @@ async function apiGet(action, params = {}) {
   }
 
   const response = await fetch(url.toString(), {
-    cache: sansCache ? "no-store" : "default"
+    cache: sansCache || session ? "no-store" : "default",
+    signal: typeof globalThis.AbortSignal?.timeout === "function" ? AbortSignal.timeout(20000) : undefined
   });
 
-  if (!response.ok) {
-    throw new Error(`Erreur HTTP : ${response.status}`);
-  }
-
-  return response.json();
+  verifierReponseSessionVisibl(session, response);
+  if (!response.ok) throw erreurHttpVisibl(response);
+  const resultat = await response.json();
+  verifierReponseSessionVisibl(session, response, resultat);
+  return resultat;
 }
 
 /**
@@ -165,30 +197,30 @@ function signalerActualisationRapports(action) {
  * Envoie une requête POST vers VISIBL Backend.
  */
 async function apiPost(action, data = {}) {
+  const verification = action === "getPermissions" && Boolean(data._session);
+  const session = sessionPourRequeteVisibl(action, verification);
   const response = await fetch(API_CONFIG.BASE_URL, {
     method: "POST",
+    cache: "no-store",
+    signal: (verification || action === "login") && typeof globalThis.AbortSignal?.timeout === "function"
+      ? AbortSignal.timeout(20000)
+      : undefined,
     headers: {
       "Content-Type": "text/plain;charset=utf-8"
     },
     body: JSON.stringify({
       action,
       ...data,
-      ...(
-        data && data._session
-          ? {}
-          : {
-              _session:
-                obtenirSessionTokenVisiblApi_()
-            }
-      )
+      _session: session || data._session ||
+        (action === "login" ? "" : obtenirSessionTokenVisiblApi_())
     })
   });
 
-  if (!response.ok) {
-    throw new Error(`Erreur HTTP : ${response.status}`);
-  }
+  verifierReponseSessionVisibl(session, response);
+  if (!response.ok) throw erreurHttpVisibl(response);
 
   const resultat = await response.json();
+  verifierReponseSessionVisibl(session, response, resultat);
 
   if (resultat && resultat.success !== false) {
     signalerActualisationDashboard(action);

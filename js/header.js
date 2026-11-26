@@ -16,6 +16,13 @@
         const searchToggle = header.querySelector("#mobile-search-btn");
         const searchContainer = header.querySelector(".visibl-search-container");
         const searchInput = header.querySelector(".visibl-search-input");
+        if (document.querySelector("[data-visibl-sidebar]")) {
+            header.addEventListener("keydown", event => {
+                if (event.target !== searchInput || event.key !== "Enter" || event.defaultPrevented) return;
+                event.preventDefault();
+                header.querySelector(".visibl-search-submit")?.click();
+            });
+        }
 
         const notificationMenu = header.querySelector('[data-header-panel="notifications"]');
         const notificationButton = header.querySelector("#notification-button");
@@ -73,7 +80,7 @@
             if (!sidebar || !sidebarToggle) return;
 
             const appareilCompact =
-                window.matchMedia("(max-width: 720px)").matches;
+                window.matchMedia("(max-width: 768px)").matches;
 
             /*
              * Sur téléphone : hamburger toujours présent.
@@ -280,14 +287,14 @@
 
         searchToggle?.addEventListener("click", function (event) {
             event.preventDefault();
-            event.stopPropagation();
+            event.stopImmediatePropagation();
             const willOpen = !searchBox?.classList.contains("is-open");
             closeAll("search");
             searchBox?.classList.toggle("is-open", willOpen);
             searchContainer?.classList.toggle("active", willOpen);
             setExpanded(searchToggle, willOpen);
             if (willOpen) window.setTimeout(() => searchInput?.focus(), 100);
-        });
+        }, true);
 
         // La cloche est déjà pilotée par modules/notifications.js sur cette page.
         // On ne lui ajoute donc PAS un deuxième gestionnaire de clic.
@@ -425,7 +432,7 @@
         };
     }
 
-    if (document.readyState === "loading") {
+    if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
         document.addEventListener("DOMContentLoaded", initVisiblHeader);
     } else {
         initVisiblHeader();

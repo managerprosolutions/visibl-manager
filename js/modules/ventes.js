@@ -25,6 +25,7 @@ const pagesVentesServeur = new Map();
 let totalVentesServeur = 0;
 let totalPagesVentesServeur = 1;
 let prechargementVentesPromise = null;
+let chargementCompletVentes = null;
 let generationChargementVentes = 0;
 let versionVentesServeur = "";
 
@@ -3927,7 +3928,7 @@ async function revaliderVentesDepuisServeurApresCache() {
 
 function planifierPrechargementVentesEnArrierePlan(debutPage, generation) {
     const lancer = () => {
-        if (generation !== generationChargementVentes) return;
+        if (generation !== generationChargementVentes || chargementCompletVentes?.generation === generation) return;
 
         if (document.hidden) {
             window.setTimeout(lancer, 1500);
@@ -3935,10 +3936,7 @@ function planifierPrechargementVentesEnArrierePlan(debutPage, generation) {
         }
 
         prechargementVentesPromise =
-            prechargerPagesVentesEnCascade(
-                debutPage,
-                generation
-            );
+            prechargerPagesVentesEnCascade(debutPage, generation, debutPage + 1);
     };
 
     if (typeof window.requestIdleCallback === "function") {
@@ -3977,6 +3975,11 @@ async function chargerVentes(options = {}) {
     }
 
     const generation = ++generationChargementVentes;
+    const terminerChargement = silencieux ? null : window.VisiblLoading?.open({
+        scope: ".content",
+        tableBody: null,
+        message: "Chargement des ventes…"
+    });
     pagesVentesServeur.clear();
     totalVentesServeur = 0;
     totalPagesVentesServeur = 1;
@@ -3990,7 +3993,6 @@ async function chargerVentes(options = {}) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="13" class="empty-table sales-loading-cell">
-                    <span class="sales-loader" aria-hidden="true"></span>
                     <span>Chargement des 10 dernières ventes...</span>
                 </td>
             </tr>`;
@@ -4024,6 +4026,7 @@ async function chargerVentes(options = {}) {
         }
         afficherToastVente(error.message || "Impossible de charger les ventes.", "error");
     } finally {
+        terminerChargement?.();
         document.body.classList.remove("sales-data-loading");
         ["total-sales-value","sales-revenue-value","sales-paid-value","sales-balance-value"]
             .forEach(id => {
@@ -4110,8 +4113,8 @@ function afficherKPIVentesServeur(kpi) {
     });
 }
 
-async function prechargerPagesVentesEnCascade(debutPage, generation) {
-    for (let page = debutPage; page <= totalPagesVentesServeur; page++) {
+async function prechargerPagesVentesEnCascade(debutPage, generation, dernierePage = Infinity) {
+    for (let page = debutPage; page <= Math.min(totalPagesVentesServeur, dernierePage); page++) {
         if (generation !== generationChargementVentes) return;
         if (pagesVentesServeur.has(page)) continue;
         try {
@@ -4125,6 +4128,22 @@ async function prechargerPagesVentesEnCascade(debutPage, generation) {
         }
     }
     if (generation === generationChargementVentes) reconstruireVentesDepuisPagesServeur();
+}
+
+function completerPagesVentes() {
+    const generation = generationChargementVentes;
+    if (toutesPagesVentesChargees()) return Promise.resolve(true);
+    if (chargementCompletVentes?.generation === generation) return chargementCompletVentes.promise;
+
+    const promise = Promise.resolve(prechargementVentesPromise).then(async () => {
+        if (generation !== generationChargementVentes) return false;
+        await prechargerPagesVentesEnCascade(1, generation);
+        return generation === generationChargementVentes && toutesPagesVentesChargees();
+    }).finally(() => {
+        if (chargementCompletVentes?.promise === promise) chargementCompletVentes = null;
+    });
+    chargementCompletVentes = { generation, promise };
+    return promise;
 }
 
 function toutesPagesVentesChargees() {
@@ -4165,34 +4184,14 @@ async function allerPageVentes(page) {
 }
 
 function appliquerFiltresVentes(
-    conserverPage = false
+    conserverPage = false, chargerPages = true
 ) {
     const filtresDemandes =
         filtresVentesActifs();
 
-    /*
-     * Même correction que Commandes :
-     * le filtre agit immédiatement sur les ventes déjà chargées.
-     * Si le préchargement continue, le résultat est recalculé
-     * automatiquement lorsqu'il se termine.
-     */
-    if (
-        filtresDemandes &&
-        !toutesPagesVentesChargees() &&
-        prechargementVentesPromise
-    ) {
-        const promesseEnCours =
-            prechargementVentesPromise;
-
-        promesseEnCours.then(() => {
-            if (
-                prechargementVentesPromise ===
-                promesseEnCours
-            ) {
-                appliquerFiltresVentes(
-                    conserverPage
-                );
-            }
+    if (filtresDemandes && chargerPages && !toutesPagesVentesChargees()) {
+        void completerPagesVentes().then(termine => {
+            if (termine) appliquerFiltresVentes(true, false);
         });
     }
     const recherche =
@@ -4296,9 +4295,7 @@ function appliquerFiltresVentes(
             }
         );
 
-    if (!conserverPage) {
-        pageVentesActuelle = 1;
-    }
+    if (conserverPage !== true) pageVentesActuelle = 1;
 
     afficherTableauVentes();
 }
@@ -4849,8 +4846,9 @@ function afficherFactureDepuisVente(f){
   const c=String(f.commentaire||"").trim(),box=document.getElementById("sale-invoice-comment-box");if(box)box.hidden=!c;texteFactureVente("sale-invoice-comment",c);
 }
 function fermerFactureDepuisVente(){const m=document.getElementById("sale-invoice-modal");m?.classList.remove("active");m?.setAttribute("aria-hidden","true");document.body.classList.remove("modal-open");}
-function telechargerFactureDepuisVente(f){
+async function telechargerFactureDepuisVente(f){
   try{
+    await chargerBibliothequeExport("pdf");
     const JSPDF=window.jspdf?.jsPDF;
     if(!JSPDF)throw new Error("Le générateur PDF n’est pas disponible.");
     const pdf=new JSPDF({unit:"mm",format:"a4"});
@@ -8496,7 +8494,12 @@ function initialiserInteractionsHeaderVente() {
 
 
 
-function exporterVentesFiltreesCSV() {
+async function exporterVentesFiltreesCSV() {
+    if (!await completerPagesVentes()) {
+        afficherToastVente("Impossible de charger toutes les ventes.", "error");
+        return;
+    }
+    appliquerFiltresVentes(true, false);
     if (!Array.isArray(ventesFiltrees) || !ventesFiltrees.length) {
         afficherToastVente(
             "Aucune vente à exporter.",

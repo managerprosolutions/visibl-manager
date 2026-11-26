@@ -332,7 +332,7 @@
 
 /* Mobile : le header reste sur UNE ligne.
    La recherche devient un panneau secondaire sous le header. */
-@media (max-width: 720px) {
+@media (max-width: 768px) {
     /* Sur téléphone/tablette compacte, le hamburger est toujours présent,
        indépendamment des anciens styles de module. */
     .visibl-header .visibl-menu-btn {
@@ -707,7 +707,7 @@
     min-width: 0;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
     .visibl-header .visibl-notification-panel.visibl-header-dropdown {
         width: calc(100vw - 20px) !important;
         max-width: 390px !important;
@@ -744,7 +744,7 @@
 /* ==========================================================
    HEADER GLOBAL — SIDEBAR RESPONSIVE V4.4
 ========================================================== */
-@media (max-width: 720px) {
+@media (max-width: 768px) {
     body.visibl-sidebar-open {
         overflow: hidden;
     }

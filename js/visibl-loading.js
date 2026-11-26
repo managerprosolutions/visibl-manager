@@ -20,9 +20,11 @@
   };
 
   let overlay = null;
+  let revision = 0;
+  const operations = new Set();
 
   function q(selector, root) {
-    return (root || document).querySelector(selector);
+    return selector ? (root || document).querySelector(selector) : null;
   }
 
   function getScope(options) {
@@ -189,19 +191,9 @@
     return overlay;
   }
 
-  function start(options) {
-    options = Object.assign({}, DEFAULTS, options || {});
-
-    const scope = getScope(options);
+  function afficherOverlay(options) {
     const inferred = inferFromMessage(options.message);
     const central = ensureOverlay();
-
-    scope.classList.add("visibl-loading-scope");
-    scope.classList.add("is-loading");
-    scope.setAttribute("aria-busy", "true");
-
-    const tbody = q(options.tableBody, scope);
-    if (tbody) buildSkeletonRows(tbody, options.rows);
 
     const title = central.querySelector(".vl-title");
     const message = central.querySelector(".vl-message");
@@ -239,12 +231,43 @@
 
     central.classList.add("is-visible");
     central.setAttribute("aria-hidden", "false");
+    return central;
+  }
+
+  function preparerOuverture(nomModule) {
+    const version = revision;
+    const central = afficherOverlay({
+      ...DEFAULTS,
+      message: "Chargement — " + nomModule,
+      title: "Chargement — " + nomModule
+    });
+    central.setAttribute("data-visibl-public-loader", "");
+
+    return () => {
+      // Le module reprend le même élément quand il démarre son propre chargement.
+      if (revision !== version || operations.size) return;
+      central.classList.remove("is-visible");
+      central.setAttribute("aria-hidden", "true");
+    };
+  }
+
+  function start(options) {
+    revision++;
+    options = Object.assign({}, DEFAULTS, options || {});
+    const scope = getScope(options);
+    scope.classList.add("visibl-loading-scope");
+    scope.classList.add("is-loading");
+    scope.setAttribute("aria-busy", "true");
+    const tbody = q(options.tableBody, scope);
+    if (tbody) buildSkeletonRows(tbody, options.rows);
+    afficherOverlay(options);
     document.body.style.overflow = "hidden";
 
     return scope;
   }
 
   function stop(options) {
+    const version = ++revision;
     options = Object.assign({}, DEFAULTS, options || {});
 
     const scope = getScope(options);
@@ -252,35 +275,55 @@
 
     clearSkeletonRows(tbody);
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scope.classList.remove("is-loading");
-        scope.classList.add("is-ready");
-        scope.setAttribute("aria-busy", "false");
+    const reveal = () => {
+      if (version !== revision || operations.size) return;
+      scope.classList.remove("is-loading");
+      scope.classList.add("is-ready");
+      scope.setAttribute("aria-busy", "false");
+      if (overlay) {
+        overlay.classList.remove("is-visible");
+        overlay.setAttribute("aria-hidden", "true");
+      }
+      document.body.style.overflow = "";
+      revision++;
+    };
+    requestAnimationFrame(() => requestAnimationFrame(reveal));
+    // Les onglets masqués peuvent suspendre les demandes de rendu.
+    window.setTimeout(reveal, 150);
+  }
 
-        if (overlay) {
-          overlay.classList.remove("is-visible");
-          overlay.setAttribute("aria-hidden", "true");
-        }
-
-        document.body.style.overflow = "";
-      });
-    });
+  function open(options) {
+    const operation = { options };
+    if (!operations.size) start(options);
+    operations.add(operation);
+    return () => {
+      if (!operations.delete(operation) || operations.size) return;
+      stop(options);
+    };
   }
 
   async function wrap(promiseOrFactory, options) {
-    start(options);
-
+    const close = open(options);
     try {
       if (typeof promiseOrFactory === "function") {
         return await promiseOrFactory();
       }
       return await promiseOrFactory;
     } finally {
-      stop(options);
+      close();
     }
   }
 
-  window.VisiblLoading = { start, stop, wrap };
+  window.VisiblLoading = { start, stop, wrap, open, preparerOuverture };
 
 })(window, document);
+
+function chargerEcranVisibl(message, operation) {
+    document.querySelectorAll(".content .kpi-value, .content .finance-kpi-value")
+        .forEach(value => value.setAttribute("data-kpi-value", ""));
+    return window.VisiblLoading.wrap(operation, {
+        scope: ".content",
+        tableBody: null,
+        message
+    });
+}

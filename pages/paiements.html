@@ -1,84 +1,63 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-visibl-session-locked>
 <head>
+    <script id="visibl-session-early">
+        (() => {
+            try {
+                const session = JSON.parse(localStorage.getItem("visibl_user"));
+                if (typeof session?.sessionToken === "string" && session.sessionToken.trim() &&
+                    typeof session.roleId === "string" && session.roleId.trim()) return;
+            } catch {}
+            location.replace("connexion.html");
+        })();
+    </script>
+    <script id="visibl-session-fallback">
+        (() => {
+            const recuperer = () => {
+                if (document.documentElement.hasAttribute("data-visibl-session-started")) return;
+                const status = document.getElementById("visibl-session-status");
+                if (!status || status.getAttribute("aria-busy") === "false") return;
+                document.getElementById("visibl-session-message").textContent = "Vérification indisponible. Réessayez.";
+                const retry = document.getElementById("visibl-session-retry");
+                retry.hidden = false;
+                retry.addEventListener("click", () => location.reload(), { once: true });
+                status.setAttribute("aria-busy", "false");
+            };
+            document.addEventListener("DOMContentLoaded", recuperer, { once: true });
+            window.setTimeout(recuperer, 12000);
+        })();
+    </script>
 
-<!-- VISIBL COMMON PATCH: anti-flash session -->
-<style id="visibl-common-auth-guard">
-html.visibl-auth-pending body{visibility:hidden!important}
-</style>
-<script id="visibl-common-auth-guard-script">
-(function(){
-  document.documentElement.classList.add("visibl-auth-pending");
-  try{
-    const raw=localStorage.getItem("visibl_user");
-    if(!raw){location.replace("connexion.html");return;}
-    const u=JSON.parse(raw);
-    if(!u||typeof u!=="object"){localStorage.removeItem("visibl_user");location.replace("connexion.html");return;}
-    document.documentElement.classList.remove("visibl-auth-pending");
-  }catch(e){
-    localStorage.removeItem("visibl_user");
-    location.replace("connexion.html");
-  }
-})();
-</script>
+
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paiements</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/paiements.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="../css/visibl-loading.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/visibl-ui.css">
+    <link rel="stylesheet" href="../css/visibl-clients-layout.css">
+
+    <link rel="stylesheet" href="../css/visibl-session.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/visibl-loading.js" defer></script>
+    <script src="../js/visibl-session-page.js" defer></script>
 </head>
 <body>
+<section id="visibl-session-status" aria-label="Chargement" aria-busy="true">
+    <p id="visibl-session-message" role="status"></p>
+    <button type="button" id="visibl-session-retry" hidden>Réessayer</button>
+</section>
+<template id="visibl-private-content">
 <div class="container">
-    <aside id="sidebar" class="sidebar">
-        <button id="sidebar-close" class="sidebar-close" type="button">✖</button>
-        <a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
-        <nav><ul>
-            <li><a href="dashboard.html" class="nav-link">📊 Tableau de bord</a></li>
-            <li class="menu-category"><a href="#" class="nav-link category-title"><span>🛒 Commercial</span><span class="arrow">▼</span></a><ul class="submenu">
-                <li><a href="ventes.html" class="nav-link">Ventes</a></li><li><a href="commandes.html" class="nav-link">Commandes</a></li><li><a href="clients.html" class="nav-link">Clients</a></li><li><a href="livraisons.html" class="nav-link">Livraisons</a></li><li><a href="livreurs.html" class="nav-link">Livreurs</a></li>
-            </ul></li>
-            <li class="menu-category"><a href="#" class="nav-link category-title"><span>📦 Stock & Approvisionnement</span><span class="arrow">▼</span></a><ul class="submenu">
-                <li><a href="produits.html" class="nav-link">Produits</a></li><li><a href="stock.html" class="nav-link">Stock & Mouvements</a></li><li><a href="approvisionnements.html" class="nav-link">Approvisionnements</a></li><li><a href="fournisseurs.html" class="nav-link">Fournisseurs</a></li><li><a href="transitaires.html" class="nav-link">Transitaires</a></li>
-            </ul></li>
-            <li class="menu-category"><a href="#" class="nav-link category-title"><span>💰 Finance</span><span class="arrow">▼</span></a><ul class="submenu">
-                <li><a href="caisse.html" class="nav-link">Caisse</a></li><li><a href="paiements.html" class="nav-link active" aria-current="page">Paiements</a></li><li><a href="factures.html" class="nav-link">Factures</a></li><li><a href="comptabilité.html" class="nav-link">Comptabilité</a></li>
-            </ul></li>
-            <li><a href="rapports.html" class="nav-link">📈 Rapports</a></li><li><a href="paramètres.html" class="nav-link">⚙️ Paramètres</a></li>
-        </ul></nav>
-    </aside>
+    <div data-visibl-sidebar-slot></div>
 
     <main class="main-content">
-        <header class="header">
-            <div class="header-left">
-                <button id="sidebar-toggle" class="sidebar-toggle" type="button">☰</button>
-                <a href="dashboard.html" class="logo"><img src="../logo-vizibl.png" alt="Logo"></a>
-                <h2>Paiements</h2>
-            </div>
-            <div class="header-right">
-                <div class="search-box">
-                    <button class="icon-btn" id="mobile-search-btn" type="button" aria-label="Rechercher">🔍</button>
-                    <div class="search-container">
-                        <input type="text" class="search-input" id="header-payment-search" placeholder="Rechercher un paiement...">
-                        <button class="search-btn" id="header-payment-search-btn" type="button" aria-label="Lancer la recherche">🔍</button>
-                    </div>
-                </div>
-                <div class="header-icons">
-                    <div class="notification-menu">
-                        <button id="notification-button" class="icon-btn notifications" type="button" aria-label="Afficher les notifications" aria-expanded="false">🔔</button>
-                        <div id="notification-panel" class="notification-panel" hidden>
-                            <div class="notification-panel-header"><h3>Notifications</h3></div>
-                            <div class="notification-empty">Aucune notification.</div>
-                        </div>
-                    </div>
-                    <div class="profile-menu">
-                        <button class="icon-btn" type="button" aria-label="Profil">👤</button>
-                        <div class="dropdown-menu"><a href="moncompte.html">Mon compte</a><hr><a href="#" class="logout" id="logout-button">Déconnexion</a></div>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <div data-visibl-header-slot data-title="Paiements" data-search="Rechercher un paiement..." data-search-id="header-payment-search" data-search-button="header-payment-search-btn"></div>
 
         <section class="content">
             <div class="welcome-section"><div><h2>Suivi des paiements clients</h2><p>Consultez l’ensemble des encaissements commerciaux provenant des ventes et des livraisons, sans double saisie.</p></div></div>
@@ -197,10 +176,16 @@ html.visibl-auth-pending body{visibility:hidden!important}
 </div>
 
 <div id="toast-container"></div>
-<script src="../js/api.js"></script>
-<script src="../js/auth.js"></script>
+<script src="../js/visibl-clients-layout.js"></script>
+
+
 <script src="../js/app.js"></script>
 <script src="../js/modules/notifications.js"></script>
+<script src="../js/header.js"></script>
+
+
 <script src="../js/modules/paiements.js"></script>
+<script src="../js/visibl-ui.js" defer></script>
+</template>
 </body>
 </html>

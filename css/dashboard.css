@@ -2,6 +2,15 @@
    PAGE DASHBOARD
    Styles spécifiques au tableau de bord
 ========================================================== */
+.dashboard-alerts {
+    margin-top: 24px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: white;
+}
+
+.dashboard-alerts:empty { display: none; }
 
 /* ===== DASHBOARD GRID ===== */
 

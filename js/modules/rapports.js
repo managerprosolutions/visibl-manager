@@ -15,8 +15,6 @@ let rapportsSynchronisationEnCours = false;
 let rapportsDerniereVerification = 0;
 let rapportsTimerVersion = null;
 let rapportsVerificationTimer = null;
-let rapportsLoaderTimer = null;
-let rapportsLoaderProgress = 8;
 
 // V13.2 — cache de navigation de l’onglet uniquement.
 // Il évite de retélécharger tout Rapports quand on quitte la page puis qu’on y revient.
@@ -51,56 +49,20 @@ function restaurerCacheNavigationRapports(){
     }
 }
 
-function afficherLoaderSynchronisationRapports(){
-    const loader=document.getElementById("rapports-sync-loader");
-    if(!loader) return;
-
-    const dejaVisible=!loader.hidden && loader.getAttribute("aria-busy")==="true";
-    loader.hidden=false;
-    loader.setAttribute("aria-busy","true");
-
-    // Un même cycle de synchronisation ne repart jamais à zéro.
-    if(!dejaVisible){
-        rapportsLoaderProgress=Math.max(8,rapportsLoaderProgress||0);
-        mettreAJourProgressionLoaderRapports(rapportsLoaderProgress);
-    }
-
-    if(rapportsLoaderTimer) return;
-    rapportsLoaderTimer=setInterval(()=>{
-        if(rapportsLoaderProgress>=95) return;
-        const reste=95-rapportsLoaderProgress;
-        rapportsLoaderProgress=Math.min(95,rapportsLoaderProgress+Math.max(1,Math.ceil(reste*.10)));
-        mettreAJourProgressionLoaderRapports(rapportsLoaderProgress);
-    },350);
+let terminerChargementRapports = null;
+function afficherLoaderSynchronisationRapports() {
+    terminerChargementRapports ??= window.VisiblLoading?.open({
+        scope: ".content", tableBody: null, message: "Chargement des rapports…"
+    });
 }
 
-function mettreAJourProgressionLoaderRapports(valeur){
-    const p=Math.max(0,Math.min(100,Math.round(valeur)));
-    const barre=document.getElementById("rapports-sync-progress-bar");
-    const texte=document.getElementById("rapports-sync-percent");
-    if(barre) barre.style.width=p+"%";
-    if(texte) texte.textContent=p+"%";
+function masquerLoaderSynchronisationRapports() {
+    terminerChargementRapports?.();
+    terminerChargementRapports = null;
 }
 
-function masquerLoaderSynchronisationRapports(){
-    const loader=document.getElementById("rapports-sync-loader");
-    if(!loader) return;
-    if(rapportsLoaderTimer){ clearInterval(rapportsLoaderTimer); rapportsLoaderTimer=null; }
-    rapportsLoaderProgress=100;
-    mettreAJourProgressionLoaderRapports(100);
-    setTimeout(()=>{
-        loader.hidden=true;
-        loader.setAttribute("aria-busy","false");
-        rapportsLoaderProgress=8;
-    },260);
-}
-
-function masquerLoaderRapportsImmediatement(){
-    const loader=document.getElementById("rapports-sync-loader");
-    if(!loader) return;
-    if(rapportsLoaderTimer){ clearInterval(rapportsLoaderTimer); rapportsLoaderTimer=null; }
-    loader.hidden=true;
-    loader.setAttribute("aria-busy","false");
+function masquerLoaderRapportsImmediatement() {
+    masquerLoaderSynchronisationRapports();
 }
 
 // ===========================================================
@@ -294,7 +256,7 @@ document.addEventListener("visibilitychange",()=>{
     if(document.visibilityState==="visible") reprendreSynchronisationRapports();
 });
 
-if(document.readyState==="loading"){
+if((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))){
     document.addEventListener("DOMContentLoaded", initialiserRapports);
 }else{
     initialiserRapports();
@@ -371,12 +333,13 @@ async function regenererRapportDepuisServeur(){
     }
 }
 
-function exporterRapportPDF(){
+async function exporterRapportPDF(){
     if(!lignesRapportFiltrees.length){
         toastRapport("Aucune donnée à exporter en PDF.","info");
         return;
     }
 
+    await chargerBibliothequeExport("pdf");
     const jsPDFCtor=window.jspdf?.jsPDF;
     if(typeof jsPDFCtor!=="function"){
         toastRapport("Le moteur PDF n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.","error");

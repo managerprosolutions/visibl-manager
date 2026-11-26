@@ -238,7 +238,7 @@ function initialiserLivreurs() {
     }
 
     document.documentElement.classList.remove("visibl-auth-pending");
-    initialiserDeconnexionLivreurs();
+
     appliquerPermissionsUILivreurs();
 
     window.addEventListener(
@@ -261,7 +261,7 @@ function initialiserLivreurs() {
 }
 
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
     document.addEventListener(
         "DOMContentLoaded",
         initialiserLivreurs
@@ -275,40 +275,6 @@ if (document.readyState === "loading") {
    DÉCONNEXION
 =========================================================== */
 
-function initialiserDeconnexionLivreurs() {
-    const bouton =
-        document.getElementById(
-            "logout-button"
-        );
-
-    if (!bouton) {
-        return;
-    }
-
-    if (
-        bouton.dataset.logoutInitialized ===
-        "true"
-    ) {
-        return;
-    }
-
-    bouton.dataset.logoutInitialized =
-        "true";
-
-    bouton.addEventListener(
-        "click",
-        event => {
-            event.preventDefault();
-
-            if (
-                typeof logoutUser ===
-                "function"
-            ) {
-                logoutUser();
-            }
-        }
-    );
-}
 
 
 /* ===========================================================
@@ -3126,16 +3092,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 
   /* Déconnexion robuste et redirection directe. */
-  q("#logout-button")?.addEventListener("click",e=>{
-    e.preventDefault();e.stopImmediatePropagation();
-    try{ if(typeof logoutUser==="function") logoutUser(); }catch(_){}
-    try{
-      sessionStorage.clear();
-      ["visibl_user","user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"]
-        .forEach(k=>localStorage.removeItem(k));
-    }catch(_){}
-    location.replace("connexion.html");
-  },true);
 
   /* Supprime les notifications de démonstration, conserve une cloche vide. */
   if(notif){

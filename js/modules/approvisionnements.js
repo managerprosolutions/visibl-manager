@@ -46,7 +46,7 @@ function initialiserApprovisionnements() {
 
     requireAuth();
 
-    initialiserDeconnexionApprovisionnements();
+
     initialiserModalesApprovisionnements();
     initialiserActionsTableauApprovisionnements();
     initialiserRechercheEtFiltresApprovisionnements();
@@ -68,23 +68,9 @@ function initialiserApprovisionnements() {
 }
 
 
-function initialiserDeconnexionApprovisionnements() {
-
-    const logoutButton =
-        document.getElementById("logout-button");
-
-    logoutButton?.addEventListener(
-        "click",
-        function (event) {
-
-            event.preventDefault();
-            logoutUser();
-        }
-    );
-}
 
 
-if (document.readyState === "loading") {
+if ((document.readyState === "loading" || document.documentElement.hasAttribute("data-visibl-session-locked"))) {
 
     document.addEventListener(
         "DOMContentLoaded",
@@ -101,116 +87,16 @@ if (document.readyState === "loading") {
    CHARGEMENT GLOBAL
 ========================================================== */
 
-async function chargerDonneesApprovisionnements(options = {}) {
-
-    const afficherChargement =
-        options.afficherChargement === true;
-
-    if (afficherChargement) {
-        afficherChargementActualisationApprovisionnements();
-    }
-
-    const debutChargement =
-        Date.now();
-
-    await Promise.allSettled([
-        chargerFournisseursApprovisionnement(),
-        chargerTransitairesApprovisionnement(),
-        chargerProduitsApprovisionnement()
-    ]);
-
-    await chargerApprovisionnements();
-
-    if (afficherChargement) {
-        /*
-         * On garde l'état de chargement un très court instant pour que
-         * l'utilisateur perçoive clairement que la liste a été rechargée,
-         * même si l'API répond presque instantanément.
-         */
-        const tempsEcoule =
-            Date.now() - debutChargement;
-
-        if (tempsEcoule < 350) {
-            await new Promise(resolve =>
-                setTimeout(
-                    resolve,
-                    350 - tempsEcoule
-                )
-            );
-        }
-
-        terminerChargementActualisationApprovisionnements();
-    }
-}
-
-
-function afficherChargementActualisationApprovisionnements() {
-
-    document.body.classList.add(
-        "approvisionnements-refreshing"
-    );
-
-    const tbody =
-        document.getElementById(
-            "approvisionnements-table-body"
-        );
-
-    if (tbody) {
-        tbody.innerHTML = `
-            <tr class="approvisionnements-refresh-row">
-                <td colspan="11">
-                    <div class="approvisionnements-refresh-state">
-                        <span
-                            class="approvisionnements-refresh-spinner"
-                            aria-hidden="true"
-                        ></span>
-
-                        <div>
-                            <strong>
-                                Actualisation des approvisionnements…
-                            </strong>
-                            <small>
-                                Synchronisation des données en cours
-                            </small>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }
-
-    [
-        "total-approvisionnements-value",
-        "in-transit-approvisionnements-value",
-        "received-approvisionnements-value",
-        "total-purchases-value"
-    ].forEach(id => {
-        document
-            .getElementById(id)
-            ?.classList.add(
-                "is-refreshing"
-            );
+function chargerDonneesApprovisionnements() {
+    return chargerEcranVisibl("Chargement des approvisionnements…", async () => {
+        await Promise.allSettled([
+            chargerFournisseursApprovisionnement(),
+            chargerTransitairesApprovisionnement(),
+            chargerProduitsApprovisionnement()
+        ]);
+        await chargerApprovisionnements();
     });
 }
-
-
-function terminerChargementActualisationApprovisionnements() {
-
-    document.body.classList.remove(
-        "approvisionnements-refreshing"
-    );
-
-    document
-        .querySelectorAll(
-            ".approvisionnements-kpi-grid .is-refreshing"
-        )
-        .forEach(element =>
-            element.classList.remove(
-                "is-refreshing"
-            )
-        );
-}
-
 
 async function chargerApprovisionnements() {
 
@@ -8342,16 +8228,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
 
   /* Déconnexion robuste et redirection directe. */
-  q("#logout-button")?.addEventListener("click",e=>{
-    e.preventDefault();e.stopImmediatePropagation();
-    try{ if(typeof logoutUser==="function") logoutUser(); }catch(_){}
-    try{
-      sessionStorage.clear();
-      ["visibl_user","user","utilisateur","currentUser","authUser","isAuthenticated","token","authToken"]
-        .forEach(k=>localStorage.removeItem(k));
-    }catch(_){}
-    location.replace("connexion.html");
-  },true);
 
   /* Supprime les notifications de démonstration, conserve une cloche vide. */
   if(notif){
